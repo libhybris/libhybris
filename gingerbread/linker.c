@@ -41,10 +41,8 @@
 
 #include <sys/mman.h>
 
-#include <sys/atomics.h>
-
 /* special private C library header - see Android.mk */
-#include <bionic_tls.h>
+#include "bionic_tls.h"
 
 #include "linker.h"
 #include "linker_debug.h"
@@ -128,18 +126,6 @@ unsigned bitmask[4096];
 #ifndef PT_ARM_EXIDX
 #define PT_ARM_EXIDX    0x70000001      /* .ARM.exidx segment */
 #endif
-
-#define HOODLUM(name, ret, ...)                                               \
-    ret name __VA_ARGS__                                                      \
-    {                                                                         \
-        char errstr[] = "ERROR: " #name " called from the dynamic linker!\n"; \
-        write(2, errstr, sizeof(errstr));                                     \
-        abort();                                                              \
-    }
-HOODLUM(malloc, void *, (size_t size));
-HOODLUM(free, void, (void *ptr));
-HOODLUM(realloc, void *, (void *ptr, size_t size));
-HOODLUM(calloc, void *, (size_t cnt, size_t size));
 
 static char tmp_err_buf[768];
 static char __linker_dl_err_buf[768];

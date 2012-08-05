@@ -32,7 +32,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <elf.h>
-#include <sys/exec_elf.h>
 
 #undef PAGE_MASK
 #undef PAGE_SIZE
