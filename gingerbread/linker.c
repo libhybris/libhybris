@@ -339,7 +339,7 @@ const char *addr_to_name(unsigned addr)
  * This function is exposed via dlfcn.c and libdl.so.
  */
 #ifdef ANDROID_ARM_LINKER
-_Unwind_Ptr dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
+_Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
 {
     soinfo *si;
     unsigned addr = (unsigned)pc;
@@ -357,7 +357,7 @@ _Unwind_Ptr dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
 /* Here, we only have to provide a callback to iterate across all the
  * loaded libraries. gcc_eh does the rest. */
 int
-dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),
+android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),
                 void *data)
 {
     soinfo *si;
