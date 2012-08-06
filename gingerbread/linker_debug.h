@@ -38,7 +38,7 @@
 /* set LINKER_DEBUG_TO_LOG to 1 to send the logs to logcat,
  * or 0 to use stdout instead.
  */
-#define LINKER_DEBUG_TO_LOG  1
+#define LINKER_DEBUG_TO_LOG  0
 #define TRACE_DEBUG          1
 #define DO_TRACE_LOOKUP      1
 #define DO_TRACE_RELO        1
