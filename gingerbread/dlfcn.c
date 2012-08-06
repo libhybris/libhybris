@@ -18,6 +18,7 @@
 #include <pthread.h>
 #include <time.h>
 #include <stdio.h>
+#include <string.h>
 #include "linker.h"
 #include "linker_format.h"
 
@@ -166,6 +167,7 @@ int android_dlclose(void *handle)
     return 0;
 }
 
+
 #if defined(ANDROID_ARM_LINKER)
 //                     0000000 00011111 111112 22222222 2333333 333344444444445555555
 //                     0123456 78901234 567890 12345678 9012345 678901234567890123456
@@ -177,6 +179,10 @@ int android_dlclose(void *handle)
 //                     0123456 78901234 567890 12345678 9012345 6789012345678901
 #define ANDROID_LIBDL_STRTAB \
                       "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_iterate_phdr\0"
+int
+android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),
+                void *data);
+
 #else
 #error Unsupported architecture. Only ARM and x86 are presently supported.
 #endif
@@ -195,7 +201,7 @@ static Elf32_Sym libdl_symtab[] = {
       st_shndx: 1,
     },
     { st_name: 7,
-      st_value: (Elf32_Addr) &andrid_dlclose,
+      st_value: (Elf32_Addr) &android_dlclose,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },

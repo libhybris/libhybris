@@ -2029,7 +2029,9 @@ static unsigned __linker_init_post_relocation(unsigned **elfdata)
      *       to point to a different location to ensure that no other
      *       shared library constructor can access it.
      */
+#if 0
     __libc_init_tls(elfdata);
+#endif
 
     pid = getpid();
 
@@ -2059,7 +2061,9 @@ sanitize:
     if (program_is_setuid)
         linker_env_secure();
 
+#if 0
     debugger_init();
+#endif
 
     /* Get a few environment variables */
     {
