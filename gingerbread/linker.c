@@ -1283,7 +1283,17 @@ static int reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
               si->name, idx);
         if(sym != 0) {
             sym_name = (char *)(strtab + symtab[sym].st_name);
-            s = _do_lookup(si, sym_name, &base);
+            sym_addr = NULL;
+            if ((sym_addr = get_hooked_symbol(sym_name)) != NULL) {
+               printf("hooked symbol %s\n", sym_name);
+            }
+            else
+            {
+               s = _do_lookup(si, sym_name, &base);
+            }
+            if(sym_addr != NULL)
+            {
+            } else
             if(s == NULL) {
                 /* We only allow an undefined symbol if this is a weak
                    reference..   */
@@ -2077,8 +2087,8 @@ sanitize:
         /* Normally, these are cleaned by linker_env_secure, but the test
          * against program_is_setuid doesn't cost us anything */
         if (!program_is_setuid) {
-            ldpath_env = linker_env_get("LD_LIBRARY_PATH");
-            ldpreload_env = linker_env_get("LD_PRELOAD");
+            ldpath_env = getenv("LD_LIBRARY_PATH");
+            ldpreload_env = getenv("LD_PRELOAD");
         }
     }
 

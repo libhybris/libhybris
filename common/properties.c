@@ -1,3 +1,7 @@
+#include <stddef.h>
+#include <string.h>
+#include <stdio.h>
+
 int property_get(const char *key, char *value, const char *default_value)
 {  
  char *ret = NULL; 
