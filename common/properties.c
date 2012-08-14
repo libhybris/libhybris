@@ -1,19 +1,101 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+static char *find_key(const char *key)
+{
+   FILE *f = fopen("/system/build.prop", "r");
+   
+   char buf[1024];
+   char *mkey, *value;
+   if (!f)
+      return NULL;
+   
+   while (fgets(buf, 1024, f) != NULL)
+   {
+       if (strchr(buf, '\r'))
+        *(strchr(buf, '\r')) = '\0';
+       if (strchr(buf, '\n'))
+        *(strchr(buf, '\n')) = '\0';
+        
+       mkey = strtok(buf, "=");
+       
+       if (!mkey)
+        continue;
+       
+       value = strtok(NULL, "=");
+       if (!value)
+        continue;
+        
+       if (strcmp(key, mkey) == 0)
+       {
+         fclose(f);
+         return strdup(value);
+       }
+   }
+   fclose(f);
+   return NULL;
+}
 
 int property_get(const char *key, char *value, const char *default_value)
 {  
  char *ret = NULL; 
- printf("property_get: %s\n", key);
+ //printf("property_get: %s\n", key);
  /* default */
- {  
-    ret = default_value;
+ ret = find_key(key);
+#if 0
+ if (strcmp(key, "ro.kernel.qemu") == 0)
+ {
+    ret = "0";
+ }  
+ else if (strcmp(key, "ro.hardware") == 0)
+ { 
+    ret = "tenderloin";
+ } 
+ else if (strcmp(key, "ro.product.board") == 0)
+ {
+    ret = "tenderloin";
+ }
+ else if (strcmp(key, "ro.board.platform") == 0)
+ { 
+    ret = "msm8660";
+ }
+ else if (strcmp(key, "ro.arch") == 0)
+ {
+    ret = "armeabi";
+ }
+ else if (strcmp(key, "debug.composition.type") == 0)
+ {
+    ret = "c2d"; 
+ }
+ else if (strcmp(key, "debug.sf.hw") == 0)
+ {
+   ret = "1";
+ }
+ else if (strcmp(key, "debug.gr.numframebuffers") == 0)
+ { 
+   ret = "1"; 
+ }  
+#endif
+ if (ret)
+ {
+     printf("found %s for %s\n", key, ret);
+ }
+ if (ret == NULL)
+ { 
+    if (default_value != NULL)
+    {
+     strcpy(value, default_value);
+     return strlen(value);
+    }
+    else return 0;
  }  
  if (ret)
  {
   strcpy(value, ret);
-  return strlen(ret);
+  free(ret);
+  return strlen(value);
  }
  else
  {

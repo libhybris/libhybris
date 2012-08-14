@@ -15,7 +15,7 @@ GINGERBREAD_SOURCES=gingerbread/linker.c gingerbread/dlfcn.c gingerbread/rt.c gi
 all: libhybris_gingerbread.so test_gingerbread
 
 libhybris_gingerbread.so: $(COMMON_SOURCES) $(GINGERBREAD_SOURCES)
-	$(CC) -g -shared -o $@ -ldl -fPIC -Igingerbread -Icommon -DLINKER_DEBUG=1 -DLINKER_TEXT_BASE=0xB0000100 -DLINKER_AREA_SIZE=0x01000000 $(ARCHFLAGS) \
+	$(CC) -g -shared -o $@ -ldl -pthread -fPIC -Igingerbread -Icommon -DLINKER_DEBUG=1 -DLINKER_TEXT_BASE=0xB0000100 -DLINKER_AREA_SIZE=0x01000000 $(ARCHFLAGS) \
 		$(GINGERBREAD_SOURCES) $(COMMON_SOURCES)
 
 test_gingerbread: libhybris_gingerbread.so test.c

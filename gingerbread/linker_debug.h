@@ -84,7 +84,7 @@ extern int format_fd(int, const char *, ...);
 #endif /* LINKER_DEBUG */
 
 #define PRINT(x...)          _PRINTVF(-1, FALSE, x)
-#define INFO(x...)           _PRINTVF(0, TRUE, x)
+#define INFO(x...)           _PRINTVF(1, TRUE, x)
 #define TRACE(x...)          _PRINTVF(1, TRUE, x)
 #define WARN(fmt,args...)    \
         _PRINTVF(-1, TRUE, "%s:%d| WARNING: " fmt, __FILE__, __LINE__, ## args)
