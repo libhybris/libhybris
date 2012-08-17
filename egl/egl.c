@@ -1,6 +1,8 @@
+#define MESA_EGL_NO_X11_HEADERS
 /* EGL function pointers */
 #include <EGL/egl.h>
 #include <dlfcn.h>
+#include <stddef.h>
 
 static void *_libegl = NULL;
 static void *_libui = NULL;
