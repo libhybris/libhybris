@@ -32,7 +32,6 @@ static int my_pthread_mutex_lock (pthread_mutex_t *__mutex)
       *((int *)__mutex) = (int) realmutex;
       pthread_mutex_init(realmutex, NULL);     
   }
-  printf("lock %x\n", __mutex);
   return pthread_mutex_lock(realmutex);
 }
 
@@ -45,7 +44,6 @@ static int my_pthread_mutex_trylock (pthread_mutex_t *__mutex)
       *((int *)__mutex) = (int) realmutex;
       pthread_mutex_init(realmutex, NULL);     
   }
-  printf("trylock %x\n", __mutex);
   return pthread_mutex_trylock(realmutex);
 }
 
@@ -53,7 +51,6 @@ static int my_pthread_mutex_trylock (pthread_mutex_t *__mutex)
 static int my_pthread_mutex_unlock (pthread_mutex_t *__mutex)
 {
   pthread_mutex_t *realmutex = (pthread_mutex_t *) *(int *) __mutex;
-  printf("unlock %x\n", __mutex);
   return pthread_mutex_unlock(realmutex);
 }
 
@@ -61,7 +58,6 @@ static int my_pthread_mutex_destroy (pthread_mutex_t *__mutex)
 {
   pthread_mutex_t *realmutex = (pthread_mutex_t *) *(int *) __mutex;
   int ret = 0;
-  printf("unlock %x\n", __mutex);
   ret = pthread_mutex_destroy(realmutex);
   free(realmutex);
   return ret;
@@ -71,9 +67,18 @@ static int my_pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *
 {
   pthread_cond_t *realcond = malloc(sizeof(pthread_cond_t));
   *((int *) cond) = (int) realcond;
-  printf("cond init %x\n", cond);
   return pthread_cond_init(realcond, attr);    
 }
+
+static int my_pthread_cond_destroy (pthread_cond_t *cond)
+{
+  pthread_cond_t *realcond = (pthread_cond_t *) *(int *) cond;
+  int ret = 0;
+  ret = pthread_cond_destroy(realcond);
+  free(realcond);
+  return ret;
+}                               
+
 
 static int my_pthread_cond_broadcast(pthread_cond_t *cond)
 {
@@ -100,6 +105,21 @@ static int my_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
   }
   
   return pthread_cond_wait(realcond, realmutex);    
+}
+
+static int my_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime)
+{
+  pthread_cond_t *realcond = (pthread_cond_t *) *(int *) cond;
+
+  pthread_mutex_t *realmutex = (pthread_mutex_t *) *(int *) mutex;
+  if (realmutex == NULL)
+  {
+      realmutex = malloc(sizeof(pthread_mutex_t));
+      *((int *)mutex) = (int) realmutex;
+      pthread_mutex_init(realmutex, NULL);     
+  }
+  
+  return pthread_cond_timedwait(realcond, realmutex, abstime);    
 }
 
 
@@ -185,10 +205,10 @@ static struct _hook hooks[] = {
   {"pthread_getspecific", pthread_getspecific},
   {"pthread_cond_init", my_pthread_cond_init},
   {"pthread_cond_broadcast", my_pthread_cond_broadcast},
-  {"pthread_cond_destroy", (void *)2000},
+  {"pthread_cond_destroy", my_pthread_cond_destroy},
   {"pthread_cond_signal", my_pthread_cond_signal},
   {"pthread_cond_wait", my_pthread_cond_wait},
-  {"pthread_cond_timedwait", (void *)2004},
+  {"pthread_cond_timedwait", my_pthread_cond_timedwait},
     {NULL, NULL},
 };
 
