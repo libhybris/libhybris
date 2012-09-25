@@ -31,7 +31,7 @@
 
 #include <unistd.h>
 #include <sys/types.h>
-#include <linux/elf.h>
+#include <elf.h>
 
 #undef PAGE_MASK
 #undef PAGE_SIZE

@@ -41,10 +41,8 @@
 
 #include <sys/mman.h>
 
-#include <sys/atomics.h>
-
 /* special private C library header - see Android.mk */
-#include <bionic_tls.h>
+#include "bionic_tls.h"
 
 #include "linker.h"
 #include "linker_debug.h"
@@ -108,7 +106,10 @@ static const char *ldpreload_names[LDPRELOAD_MAX + 1];
 
 static soinfo *preloads[LDPRELOAD_MAX + 1];
 
+#if LINKER_DEBUG
 int debug_verbosity;
+#endif
+
 static int pid;
 
 /* This boolean is set if the program being loaded is setuid */
@@ -125,18 +126,6 @@ unsigned bitmask[4096];
 #ifndef PT_ARM_EXIDX
 #define PT_ARM_EXIDX    0x70000001      /* .ARM.exidx segment */
 #endif
-
-#define HOODLUM(name, ret, ...)                                               \
-    ret name __VA_ARGS__                                                      \
-    {                                                                         \
-        char errstr[] = "ERROR: " #name " called from the dynamic linker!\n"; \
-        write(2, errstr, sizeof(errstr));                                     \
-        abort();                                                              \
-    }
-HOODLUM(malloc, void *, (size_t size));
-HOODLUM(free, void, (void *ptr));
-HOODLUM(realloc, void *, (void *ptr, size_t size));
-HOODLUM(calloc, void *, (size_t cnt, size_t size));
 
 static char tmp_err_buf[768];
 static char __linker_dl_err_buf[768];
@@ -313,15 +302,6 @@ static void free_info(soinfo *si)
     freelist = si;
 }
 
-#ifndef LINKER_TEXT_BASE
-#error "linker's makefile must define LINKER_TEXT_BASE"
-#endif
-#ifndef LINKER_AREA_SIZE
-#error "linker's makefile must define LINKER_AREA_SIZE"
-#endif
-#define LINKER_BASE ((LINKER_TEXT_BASE) & 0xfff00000)
-#define LINKER_TOP  (LINKER_BASE + (LINKER_AREA_SIZE))
-
 const char *addr_to_name(unsigned addr)
 {
     soinfo *si;
@@ -330,10 +310,6 @@ const char *addr_to_name(unsigned addr)
         if((addr >= si->base) && (addr < (si->base + si->size))) {
             return si->name;
         }
-    }
-
-    if((addr >= LINKER_BASE) && (addr < LINKER_TOP)){
-        return "linker";
     }
 
     return "";
@@ -349,27 +325,25 @@ const char *addr_to_name(unsigned addr)
  * This function is exposed via dlfcn.c and libdl.so.
  */
 #ifdef ANDROID_ARM_LINKER
-_Unwind_Ptr dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
+_Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
 {
     soinfo *si;
     unsigned addr = (unsigned)pc;
 
-    if ((addr < LINKER_BASE) || (addr >= LINKER_TOP)) {
-        for (si = solist; si != 0; si = si->next){
-            if ((addr >= si->base) && (addr < (si->base + si->size))) {
-                *pcount = si->ARM_exidx_count;
-                return (_Unwind_Ptr)(si->base + (unsigned long)si->ARM_exidx);
-            }
+    for (si = solist; si != 0; si = si->next){
+        if ((addr >= si->base) && (addr < (si->base + si->size))) {
+            *pcount = si->ARM_exidx_count;
+            return (_Unwind_Ptr)(si->base + (unsigned long)si->ARM_exidx);
         }
     }
    *pcount = 0;
     return NULL;
 }
-#elif defined(ANDROID_X86_LINKER) || defined(ANDROID_SH_LINKER)
+#elif defined(ANDROID_X86_LINKER)
 /* Here, we only have to provide a callback to iterate across all the
  * loaded libraries. gcc_eh does the rest. */
 int
-dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),
+android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),
                 void *data)
 {
     soinfo *si;
@@ -521,6 +495,8 @@ Elf32_Sym *lookup(const char *name, soinfo **found, soinfo *start)
     unsigned elf_hash = elfhash(name);
     Elf32_Sym *s = NULL;
     soinfo *si;
+
+    printf("Lookup %s\n", name);
 
     if(start == NULL) {
         start = solist;
@@ -707,7 +683,11 @@ verify_elf_object(void *base, const char *name)
     if (hdr->e_ident[EI_MAG3] != ELFMAG3) return -1;
 
     /* TODO: Should we verify anything else in the header? */
-
+#ifdef ANDROID_ARM_LINKER
+    if (hdr->e_machine != EM_ARM) return -1;
+#elif defined(ANDROID_X86_LINKER)
+    if (hdr->e_machine != EM_386) return -1;
+#endif
     return 0;
 }
 
@@ -879,7 +859,7 @@ load_segments(int fd, void *header, soinfo *si)
 {
     Elf32_Ehdr *ehdr = (Elf32_Ehdr *)header;
     Elf32_Phdr *phdr = (Elf32_Phdr *)((unsigned char *)header + ehdr->e_phoff);
-    unsigned char *base = (unsigned char *)si->base;
+    unsigned char *base = (Elf32_Addr) si->base;
     int cnt;
     unsigned len;
     unsigned char *tmp;
@@ -948,7 +928,7 @@ load_segments(int fd, void *header, soinfo *si)
              *                  |                     |
              *                 _+---------------------+  page boundary
              */
-            tmp = (unsigned char *)(((unsigned)pbase + len + PAGE_SIZE - 1) &
+            tmp = (Elf32_Addr)(((unsigned)pbase + len + PAGE_SIZE - 1) &
                                     (~PAGE_MASK));
             if (tmp < (base + phdr->p_vaddr + phdr->p_memsz)) {
                 extra_len = base + phdr->p_vaddr + phdr->p_memsz - tmp;
@@ -1224,6 +1204,7 @@ unsigned unload_library(soinfo *si)
         TRACE("%5d unloading '%s'\n", pid, si->name);
         call_destructors(si);
 
+
         for(d = si->dynamic; *d; d += 2) {
             if(d[0] == DT_NEEDED){
                 soinfo *lsi = (soinfo *)d[1];
@@ -1272,11 +1253,22 @@ static int reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
         unsigned sym_addr = 0;
         char *sym_name = NULL;
 
-        DEBUG("%5d Processing '%s' relocation at index %d\n", pid,
-              si->name, idx);
+        //printf("%5d Processing '%s' relocation at index %d\n", pid,
+        //      si->name, idx);
         if(sym != 0) {
             sym_name = (char *)(strtab + symtab[sym].st_name);
-            s = _do_lookup(si, sym_name, &base);
+            //printf("Sym name =%s\n",sym_name);
+            sym_addr = NULL;
+              if ((sym_addr = get_hooked_symbol(sym_name)) != NULL) {
+                //printf("hooked symbol %s to %x\n", sym_name, sym_addr);
+              }
+              else
+                {
+                  s = _do_lookup(si, sym_name, &base);
+                }
+            if(sym_addr != NULL)
+            {
+            } else
             if(s == NULL) {
                 /* We only allow an undefined symbol if this is a weak
                    reference..   */
@@ -1592,6 +1584,13 @@ static void call_array(unsigned *ctor, int count, int reverse)
 
 static void call_constructors(soinfo *si)
 {
+#if 0
+  if (strcmp(si->name,"libc.so") == 0) {
+    printf("=============> Skipping libc.so\n");
+    return;
+  }
+#endif
+
     if (si->flags & FLAG_EXE) {
         TRACE("[ %5d Calling preinit_array @ 0x%08x [%d] for '%s' ]\n",
               pid, (unsigned)si->preinit_array, si->preinit_array_count,
@@ -2090,7 +2089,7 @@ unsigned __linker_init(unsigned **elfdata)
     /* Setup a temporary TLS area that is used to get a working
      * errno for system calls.
      */
-    __set_tls(__tls_area);
+    //__set_tls(__tls_area);
 
     pid = getpid();
 
@@ -2107,10 +2106,16 @@ unsigned __linker_init(unsigned **elfdata)
      *       to point to a different location to ensure that no other
      *       shared library constructor can access it.
      */
-    __tls_area[TLS_SLOT_BIONIC_PREINIT] = elfdata;
+#if 0
+    __libc_init_tls(elfdata);
+#endif
 
-    /* Are we setuid? */
-    program_is_setuid = (getuid() != geteuid()) || (getgid() != getegid());
+    pid = getpid();
+
+#if TIMING
+    struct timeval t0, t1;
+    gettimeofday(&t0, 0);
+#endif
 
     /* Initialize environment functions, and get to the ELF aux vectors table */
     vecs = linker_env_init(vecs);
@@ -2119,7 +2124,7 @@ unsigned __linker_init(unsigned **elfdata)
     if (program_is_setuid)
         linker_env_secure();
 
-    debugger_init();
+    //debugger_init();
 
     /* Get a few environment variables */
     {
