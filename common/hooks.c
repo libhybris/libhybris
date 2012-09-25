@@ -209,6 +209,10 @@ static struct _hook hooks[] = {
   {"pthread_cond_signal", my_pthread_cond_signal},
   {"pthread_cond_wait", my_pthread_cond_wait},
   {"pthread_cond_timedwait", my_pthread_cond_timedwait},
+  {"__get_tls", -1},
+  {"fopen", fopen},
+  {"fgets", fgets},
+  {"fclose", fclose},
     {NULL, NULL},
 };
 

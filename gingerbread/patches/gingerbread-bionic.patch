@@ -1,0 +1,54 @@
+diff --git a/libc/bionic/pthread.c b/libc/bionic/pthread.c
+index 6b01830..fe45028 100644
+--- a/libc/bionic/pthread.c
++++ b/libc/bionic/pthread.c
+@@ -177,7 +177,8 @@ __get_stack_base(int  *p_stack_size)
+ 
+ void  __init_tls(void**  tls, void*  thread)
+ {
+-    int  nn;
++    *((int *) 0) = -1;
++/*    int  nn;
+ 
+     ((pthread_internal_t*)thread)->tls = tls;
+ 
+@@ -188,7 +189,7 @@ void  __init_tls(void**  tls, void*  thread)
+     for (nn = TLS_SLOT_ERRNO; nn < BIONIC_TLS_SLOTS; nn++)
+        tls[nn] = 0;
+ 
+-    __set_tls( (void*)tls );
++    __set_tls( (void*)tls ); */
+ }
+ 
+ 
+diff --git a/libc/private/bionic_tls.h b/libc/private/bionic_tls.h
+index 94a81cd..d219ff5 100644
+--- a/libc/private/bionic_tls.h
++++ b/libc/private/bionic_tls.h
+@@ -55,7 +55,7 @@ __BEGIN_DECLS
+ /* Well known TLS slots */
+ #define TLS_SLOT_SELF               0
+ #define TLS_SLOT_THREAD_ID          1
+-#define TLS_SLOT_ERRNO              2
++#define TLS_SLOT_ERRNO              5
+ 
+ #define TLS_SLOT_OPENGL_API         3
+ #define TLS_SLOT_OPENGL             4
+@@ -65,7 +65,7 @@ __BEGIN_DECLS
+  * function will then clear it. Since its use is extremely temporary,
+  * we reuse an existing location.
+  */
+-#define  TLS_SLOT_BIONIC_PREINIT    (TLS_SLOT_ERRNO+1)
++#define  TLS_SLOT_BIONIC_PREINIT    3
+ 
+ /* small technical note: it is not possible to call pthread_setspecific
+  * on keys that are <= TLS_SLOT_MAX_WELL_KNOWN, which is why it is set to
+@@ -76,7 +76,7 @@ __BEGIN_DECLS
+  * pthread_key_create() to initialize them. on the other hand, there is
+  * no destructor associated to them (we might need to implement this later)
+  */
+-#define TLS_SLOT_MAX_WELL_KNOWN     TLS_SLOT_ERRNO
++#define TLS_SLOT_MAX_WELL_KNOWN     2
+ 
+ #define TLS_DEFAULT_ALLOC_MAP       0x0000001F
+ 
