@@ -21,7 +21,7 @@ libhybris_gingerbread.so: $(COMMON_SOURCES) $(GINGERBREAD_SOURCES)
 test_gingerbread: libhybris_gingerbread.so test.c
 	$(CC) -g -o $@ -ldl test.c $<
 
-libEGL.so.1.0: egl/egl.c
+libEGL.so.1.0: egl/egl.c libhybris_gingerbread.so
 	$(CC) -g -shared -o $@ -fPIC -Wl,-soname,libEGL.so.1 $< libhybris_gingerbread.so
 	
 libEGL.so.1: libEGL.so.1.0
@@ -30,7 +30,7 @@ libEGL.so.1: libEGL.so.1.0
 test_egl: libEGL.so.1 egl/test.c libhybris_gingerbread.so
 	$(CC) -g -o $@ libEGL.so.1 libhybris_gingerbread.so egl/test.c
  
-libGLESv2.so.2.0: glesv2/gl2.c
+libGLESv2.so.2.0: glesv2/gl2.c libhybris_gingerbread.so
 	$(CC) -g -shared -o $@ -fPIC -Wl,-soname,libGLESv2.so.2 $< libhybris_gingerbread.so
 	
 libGLESv2.so.2: libGLESv2.so.2.0
