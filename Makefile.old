@@ -23,9 +23,12 @@ libhybris_gingerbread.so.1: $(COMMON_SOURCES) $(GINGERBREAD_SOURCES)
 test_gingerbread: libhybris_gingerbread.so.1 test.c
 	$(CC) -g -o $@ -ldl test.c $<
 
-libEGL.so.1.0: egl/egl.c libhybris_gingerbread.so.1
-	$(CC) -g -shared -Iinclude -o $@ -fPIC -Wl,-soname,libEGL.so.1 $< libhybris_gingerbread.so.1
-	
+libEGL.so.1.0: egl/egl.c libhybris_gingerbread.so.1 libhardware.so.1
+	$(CC) -g -shared -Iinclude -o $@ -fPIC -Wl,-soname,libEGL.so.1 $< libhybris_gingerbread.so.1 libhardware.so.1
+
+libhardware.so.1: hardware/hardware.c libhybris_gingerbread.so.1
+	$(CC) -g -shared -Iinclude -o $@ -fPIC -Wl,-soname,libhardware.so.1 $< libhybris_gingerbread.so.1
+
 libEGL.so.1: libEGL.so.1.0
 	ln -sf libEGL.so.1.0 libEGL.so.1
 

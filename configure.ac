@@ -45,6 +45,7 @@ AC_CONFIG_FILES([
 	common/Makefile
 	egl/Makefile
 	glesv2/Makefile
+	hardware/Makefile
 	include/Makefile
 	tests/Makefile
 ])
