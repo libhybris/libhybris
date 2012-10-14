@@ -372,6 +372,9 @@ static Elf32_Sym *_elf_lookup(soinfo *si, unsigned hash, const char *name)
 
     TRACE_TYPE(LOOKUP, "%5d SEARCH %s in %s@0x%08x %08x %d\n", pid,
                name, si->name, si->base, hash, hash % si->nbucket);
+    if (si->nbucket == 0) {
+        return NULL;
+    }
     n = hash % si->nbucket;
 
     for(n = si->bucket[hash % si->nbucket]; n != 0; n = si->chain[n]){
