@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 	display = eglGetDisplay(NULL);
 
 	eglInitialize(display, 0, 0);
-        eglChooseConfig((EGLDisplay) display, attr, &ecfg, 1, &num_config);
+        assert(eglChooseConfig((EGLDisplay) display, attr, &ecfg, 1, &num_config) == EGL_TRUE);
 	surface = eglCreateWindowSurface((EGLDisplay) display, ecfg, (EGLNativeWindowType)NULL, NULL);
 	assert(surface != EGL_NO_SURFACE);
 	context = eglCreateContext((EGLDisplay) display, ecfg, EGL_NO_CONTEXT, ctxattr);

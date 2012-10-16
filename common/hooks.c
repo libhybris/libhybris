@@ -98,13 +98,6 @@ static int my_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
   pthread_cond_t *realcond = (pthread_cond_t *) *(int *) cond;
 
   pthread_mutex_t *realmutex = (pthread_mutex_t *) *(int *) mutex;
-  if (realmutex == NULL)
-  {
-      realmutex = malloc(sizeof(pthread_mutex_t));
-      *((int *)mutex) = (int) realmutex;
-      pthread_mutex_init(realmutex, NULL);     
-  }
-  
   return pthread_cond_wait(realcond, realmutex);    
 }
 
@@ -113,12 +106,6 @@ static int my_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mute
   pthread_cond_t *realcond = (pthread_cond_t *) *(int *) cond;
 
   pthread_mutex_t *realmutex = (pthread_mutex_t *) *(int *) mutex;
-  if (realmutex == NULL)
-  {
-      realmutex = malloc(sizeof(pthread_mutex_t));
-      *((int *)mutex) = (int) realmutex;
-      pthread_mutex_init(realmutex, NULL);     
-  }
   
   return pthread_cond_timedwait(realcond, realmutex, abstime);    
 }
