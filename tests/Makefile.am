@@ -1,6 +1,7 @@
 bin_PROGRAMS = \
 	test_egl \
-	test_glesv2
+	test_glesv2 \
+	test_offscreen_rendering
 
 test_egl_SOURCES = test_egl.c
 test_egl_CFLAGS = \
@@ -15,5 +16,19 @@ test_glesv2_CFLAGS = \
 test_glesv2_LDADD = \
 	-lm \
 	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/egl/libEGL.la \
+	$(top_builddir)/glesv2/libGLESv2.la
+
+test_offscreen_rendering_SOURCES = \
+	test_offscreen_rendering.cpp \
+	fbdev_window.cpp \
+	nativewindowbase.cpp \
+	offscreen_window.cpp
+test_offscreen_rendering_CXXFLAGS = \
+	-I$(top_srcdir)/include
+test_offscreen_rendering_LDADD = \
+	-lm \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/hardware/libhardware.la \
 	$(top_builddir)/egl/libEGL.la \
 	$(top_builddir)/glesv2/libGLESv2.la

@@ -14,6 +14,7 @@ m4_define([hybris_lt_revision], [0])
 m4_define([hybris_lt_age], [0])
 
 AC_PROG_CC
+AC_PROG_CXX
 AM_PROG_CC_C_O
 AC_GNU_SOURCE
 AC_DISABLE_STATIC
