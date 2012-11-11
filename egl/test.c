@@ -1,7 +1,9 @@
 #define MESA_EGL_NO_X11_HEADERS
+
 #include <EGL/egl.h>
 #include <assert.h>
 #include <stdio.h>
+
 int main(int argc, char **argv)
 {
 	EGLDisplay display;
@@ -13,12 +15,13 @@ int main(int argc, char **argv)
 		EGL_OPENGL_ES2_BIT,
 		EGL_NONE
 	};
- 	EGLSurface surface;
+	EGLSurface surface;
 	EGLint ctxattr[] = {
- 		EGL_CONTEXT_CLIENT_VERSION, 2,
+		EGL_CONTEXT_CLIENT_VERSION, 2,
 		EGL_NONE
 	};
- 	EGLContext context;
+	EGLContext context;
+
 	display = eglGetDisplay(NULL);
 
 	eglInitialize(display, 0, 0);
@@ -29,6 +32,7 @@ int main(int argc, char **argv)
         assert(surface != EGL_NO_CONTEXT);
 	assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
 	printf("stop\n");
+
 #if 0
 (*egldestroycontext)((EGLDisplay) display, context);
     printf("destroyed context\n");
