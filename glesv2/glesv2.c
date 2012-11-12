@@ -1,6 +1,6 @@
 #define MESA_EGL_NO_X11_HEADERS
 
-#include 	GLES2/gl2.h>
+#include <GLES2/gl2.h>
 #include <dlfcn.h>
 #include <stddef.h>
 
