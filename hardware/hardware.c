@@ -32,7 +32,7 @@ static void _init_lib_hardware()
 int hw_get_module(const char *id, const struct hw_module_t **module)
 {
 	HARDWARE_DLSYM(&_hw_get_module, "hw_get_module");
-	return (*hw_get_module)(id, module);
+	return (*_hw_get_module)(id, module);
 }
 
 // vim:ts=4:sw=4:noexpandtab
