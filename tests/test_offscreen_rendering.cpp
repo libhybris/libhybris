@@ -10,6 +10,9 @@
 #include <stdlib.h>
 #include "fbdev_window.h"
 #include "offscreen_window.h"
+#include "fdpass.h"
+
+
 PFNEGLCREATEIMAGEKHRPROC eglCreateImageKHR=0;
 PFNEGLDESTROYIMAGEKHRPROC eglDestroyImageKHR=0;
 PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES=0;
@@ -150,7 +153,7 @@ public:
 
         printf("INFO: Initialized display with default configuration\n");
 
-        window = new OffscreenNativeWindow(720, 1280);
+        window = new OffscreenNativeWindow(400, 400);
         printf("INFO: Created native window %p\n", window);
         printf("creating window surface...\n");
         surface = eglCreateWindowSurface((EGLDisplay) display, ecfg, *window, NULL);
@@ -162,12 +165,13 @@ public:
         frame=0;
     };
     void render() {
+            frame = 1;
             assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
             printf("INFO: Made context and surface current for display\n");
-            glViewport ( 0 , 0 , 1280, 720);
+            glViewport ( 0 , 0 , 200, 200);
             printf("client frame %i\n", frame++);
-            glClearColor ( 1.00 , (frame & 1) * 1.0f , ((float)(frame % 255))/255.0f, 1.);    // background color
-            glClear(GL_COLOR_BUFFER_BIT);
+            glClearColor ( 0.20 , 0.50 , 0.50 , 1.);  
+            glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
             eglSwapBuffers(display, surface);
             printf("client swapped\n");
     }
@@ -218,7 +222,6 @@ public:
         assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
         printf("INFO: Made context and surface current for display\n");
         frame=0;
-        glGenTextures(1, &texture);
         
         gProgram = createProgram(gVertexShader, gFragmentShader);
         if (!gProgram) {
@@ -234,69 +237,66 @@ public:
         fprintf(stderr, "glGetUniformLocation(\"yuvTexSampler\") = %d\n",
                 gYuvTexSamplerHandle);
 
-        glViewport(0, 0, 1280, 720);
+        glViewport(0, 0, 1024, 768);
         checkGlError("glViewport");
 
     };
-    void render(OffscreenNativeWindow* window) {
-            assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
-            printf("INFO: Made context and surface current for display\n");
+	void render(OffscreenNativeWindowBuffer* buffer) {
+		assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
+		printf("INFO: Made context and surface current for display\n");
+		window->registerBuffer(buffer->getHandle());        
+		EGLClientBuffer cbuf = (EGLClientBuffer) buffer;
+		EGLint attrs[] = {
+			EGL_IMAGE_PRESERVED_KHR,    EGL_TRUE,
+			EGL_NONE,
+		};
+		EGLImageKHR image = eglCreateImageKHR(display, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_ANDROID, cbuf, attrs);
+		if (image == EGL_NO_IMAGE_KHR) {
+			EGLint error = eglGetError();
+			printf("error creating EGLImage: %#x", error);
+		}
+		printf("got egl image %p\n", image);
+
+		glGenTextures(1, &texture);
+		checkGlError("glGenTextures");
+
+		glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture);
+		checkGlError("glBindTexture");
+		glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES, (GLeglImageOES)image);
+		checkGlError("glEGLImageTargetTexture2DOES");
+
+		glViewport ( 0 , 0 , 1024, 768);
+		printf("compositor frame %i\n", frame++);
+		float c = (frame % 64) / 64.0f;
+		glClearColor(0.50f , 0.50f , 0.50f, 1.0 );         
+		checkGlError("glClearColor");
 
 
-            EGLClientBuffer cbuf = (EGLClientBuffer) window->getFrontBuffer();
-            EGLint attrs[] = {
-                EGL_IMAGE_PRESERVED_KHR,    EGL_TRUE,
-                EGL_NONE,
-            };
-            EGLImageKHR image = eglCreateImageKHR(display, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_ANDROID, cbuf, attrs);
-            if (image == EGL_NO_IMAGE_KHR) {
-                EGLint error = eglGetError();
-                printf("error creating EGLImage: %#x", error);
-            }
-            printf("got egl image %p\n", image);
+		glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+		checkGlError("glClear");
 
-            glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture);
-            int err;
-            if(err = glGetError()) printf("%i gl error %x\n", __LINE__, err);
-            glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES, (GLeglImageOES)image);
-            if(err = glGetError()) printf("%i gl error %x\n", __LINE__, err);
-            glEnable(GL_TEXTURE_EXTERNAL_OES);
-            if(err = glGetError()) printf("%i gl error %x\n", __LINE__, err);
+		glUseProgram(gProgram);
+		checkGlError("glUseProgram");
 
+		glVertexAttribPointer(gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
+		checkGlError("glVertexAttribPointer");
+		glEnableVertexAttribArray(gvPositionHandle);
+		checkGlError("glEnableVertexAttribArray");
 
+		glUniform1i(gYuvTexSamplerHandle, 0);
+		checkGlError("glUniform1i");
+		glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture);
+		checkGlError("glBindTexture");
 
-            glViewport ( 0 , 0 , 1280, 720);
-            printf("compositor frame %i\n", frame++);
-            float c = (frame % 64) / 64.0f;
-            glClearColor ( c , c , c, 1.);    // background color
-    checkGlError("glClearColor");
-
-
-    glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-    checkGlError("glClear");
-
-    glUseProgram(gProgram);
-    checkGlError("glUseProgram");
-
-    glVertexAttribPointer(gvPositionHandle, 2, GL_FLOAT, GL_FALSE, 0, gTriangleVertices);
-    checkGlError("glVertexAttribPointer");
-    glEnableVertexAttribArray(gvPositionHandle);
-    checkGlError("glEnableVertexAttribArray");
-
-    glUniform1i(gYuvTexSamplerHandle, 0);
-    checkGlError("glUniform1i");
-    glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture);
-    checkGlError("glBindTexture");
-
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    checkGlError("glDrawArrays");
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+		checkGlError("glDrawArrays");
 
 
 
-            eglSwapBuffers(display, surface);
-            eglDestroyImageKHR(display, image);
-            printf("compositor swapped\n");
-    }
+		eglSwapBuffers(display, surface);
+		eglDestroyImageKHR(display, image);
+		printf("compositor swapped\n");
+	}
     int frame;
     EGLDisplay display;
     EGLContext context;
@@ -306,17 +306,54 @@ public:
     EGLImageKHR image;
 };
 
+int parent(int fd)
+{
+	EGLCompositor compositor;
+	eglCreateImageKHR = (PFNEGLCREATEIMAGEKHRPROC) eglGetProcAddress("eglCreateImageKHR");
+	eglDestroyImageKHR = (PFNEGLDESTROYIMAGEKHRPROC) eglGetProcAddress("eglDestroyImageKHR");
+	glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) eglGetProcAddress("glEGLImageTargetTexture2DOES");
+	printf ("*** initialized compositor\n");
+	OffscreenNativeWindowBuffer *client = new OffscreenNativeWindowBuffer(fd); 
+	printf("*** got buffer from client\n");
+	compositor.render(client);
+	printf("*** compositor rendered\n"); 
+	while (1) {}
+}
+
+int child(int fd)
+{
+	EGLClient client;
+	printf ("**** initialized client\n");
+	client.render();
+	OffscreenNativeWindowBuffer *buf = client.window->getFrontBuffer();
+	buf->writeToFd(fd);
+	printf("*** client rendered\n");
+	while (1) {} 
+} 
+
 int main(int argc, char **argv)
 {
-    EGLCompositor compositor;
-    eglCreateImageKHR = (PFNEGLCREATEIMAGEKHRPROC) eglGetProcAddress("eglCreateImageKHR");
-    eglDestroyImageKHR = (PFNEGLDESTROYIMAGEKHRPROC) eglGetProcAddress("eglDestroyImageKHR");
-    glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) eglGetProcAddress("glEGLImageTargetTexture2DOES");
+        int     sv[2];
+        int     pid;
 
-    
-    EGLClient client;
-    while(1) {
-        client.render();
-        compositor.render(client.window);
-    }
+        if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sv) < 0) {
+                perror("socketpair");
+                exit(1);
+        }
+        switch ((pid = fork())) {
+        case 0:
+                close(sv[0]);
+                child(sv[1]);
+                break;
+        case -1:
+                perror("fork");
+                exit(1);
+        default:
+                close(sv[1]);
+                parent(sv[0]);
+                break;
+        }
+        return 0;
 }
+
+// vim:ts=4:sw=4:noexpandtab

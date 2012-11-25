@@ -4,74 +4,76 @@
 #include <linux/matroxfb.h> // for FBIO_WAITFORVSYNC
 #include <sys/mman.h> //mmap, munmap
 #include <errno.h>
+#include <fdpass.h>
+
 
 void printUsage(int usage) {
-    if(usage & GRALLOC_USAGE_SW_READ_NEVER) {
+    if((usage & GRALLOC_USAGE_SW_READ_NEVER) == GRALLOC_USAGE_SW_READ_NEVER) {
         TRACE("GRALLOC_USAGE_SW_READ_NEVER | ");
     }
     /* buffer is rarely read in software */
-    if(usage & GRALLOC_USAGE_SW_READ_RARELY) {
+    if((usage & GRALLOC_USAGE_SW_READ_RARELY) == GRALLOC_USAGE_SW_READ_RARELY) {
         TRACE("GRALLOC_USAGE_SW_READ_RARELY | ");
     }
     /* buffer is often read in software */
-    if(usage & GRALLOC_USAGE_SW_READ_OFTEN) {
+    if((usage & GRALLOC_USAGE_SW_READ_OFTEN) == GRALLOC_USAGE_SW_READ_OFTEN) {
         TRACE("GRALLOC_USAGE_SW_READ_OFTEN | ");
     }
     /* mask for the software read values */
-    if(usage & GRALLOC_USAGE_SW_READ_MASK) {
+    if((usage & GRALLOC_USAGE_SW_READ_MASK) == GRALLOC_USAGE_SW_READ_MASK) {
         TRACE("GRALLOC_USAGE_SW_READ_MASK | ");
     }
     
     /* buffer is never written in software */
-    if(usage & GRALLOC_USAGE_SW_WRITE_NEVER) {
+    if((usage & GRALLOC_USAGE_SW_WRITE_NEVER) == GRALLOC_USAGE_SW_WRITE_NEVER) {
         TRACE("GRALLOC_USAGE_SW_WRITE_NEVER | ");
     }
     /* buffer is never written in software */
-    if(usage & GRALLOC_USAGE_SW_WRITE_RARELY) {
+    if((usage & GRALLOC_USAGE_SW_WRITE_RARELY) == GRALLOC_USAGE_SW_WRITE_RARELY) {
         TRACE("GRALLOC_USAGE_SW_WRITE_RARELY | ");
     }
     /* buffer is never written in software */
-    if(usage & GRALLOC_USAGE_SW_WRITE_OFTEN) {
+    if((usage & GRALLOC_USAGE_SW_WRITE_OFTEN) == GRALLOC_USAGE_SW_WRITE_OFTEN) {
         TRACE("GRALLOC_USAGE_SW_WRITE_OFTEN | ");
     }
     /* mask for the software write values */
-    if(usage & GRALLOC_USAGE_SW_WRITE_MASK) {
+    if((usage & GRALLOC_USAGE_SW_WRITE_MASK) == GRALLOC_USAGE_SW_WRITE_MASK) {
         TRACE("GRALLOC_USAGE_SW_WRITE_MASK | ");
     }
 
     /* buffer will be used as an OpenGL ES texture */
-    if(usage & GRALLOC_USAGE_HW_TEXTURE) {
+    if((usage & GRALLOC_USAGE_HW_TEXTURE) == GRALLOC_USAGE_HW_TEXTURE) {
         TRACE("GRALLOC_USAGE_HW_TEXTURE | ");
     }
     /* buffer will be used as an OpenGL ES render target */
-    if(usage & GRALLOC_USAGE_HW_RENDER) {
+    if((usage & GRALLOC_USAGE_HW_RENDER) == GRALLOC_USAGE_HW_RENDER) {
         TRACE("GRALLOC_USAGE_HW_RENDER | ");
     }
     /* buffer will be used by the 2D hardware blitter */
-    if(usage & GRALLOC_USAGE_HW_2D) {
+    if((usage & GRALLOC_USAGE_HW_2D) == GRALLOC_USAGE_HW_2D) {
         TRACE("GRALLOC_USAGE_HW_2D | ");
     }
     /* buffer will be used by the HWComposer HAL module */
-    if(usage & GRALLOC_USAGE_HW_COMPOSER) {
+    if((usage & GRALLOC_USAGE_HW_COMPOSER) == GRALLOC_USAGE_HW_COMPOSER) {
         TRACE("GRALLOC_USAGE_HW_COMPOSER | ");
     }
     /* buffer will be used with the framebuffer device */
-    if(usage & GRALLOC_USAGE_HW_FB) {
+    if((usage & GRALLOC_USAGE_HW_FB) == GRALLOC_USAGE_HW_FB) {
         TRACE("GRALLOC_USAGE_HW_FB | ");
     }
     /* buffer will be used with the HW video encoder */
-    if(usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) {
+    if((usage & GRALLOC_USAGE_HW_VIDEO_ENCODER) == GRALLOC_USAGE_HW_VIDEO_ENCODER) {
         TRACE("GRALLOC_USAGE_HW_VIDEO_ENCODER | ");
     }
     /* mask for the software usage bit-mask */
-    if(usage & GRALLOC_USAGE_HW_MASK) {
+    if((usage & GRALLOC_USAGE_HW_MASK) == GRALLOC_USAGE_HW_MASK) {
         TRACE("GRALLOC_USAGE_HW_MASK | ");
     }
 
     /* buffer should be displayed full-screen on an external display when
      * possible
      */
-    if(usage & GRALLOC_USAGE_EXTERNAL_DISP) {
+    if((usage & GRALLOC_USAGE_EXTERNAL_DISP) == GRALLOC_USAGE_EXTERNAL_DISP) {
         TRACE("GRALLOC_USAGE_EXTERNAL_DISP | ");
     }
 
@@ -81,24 +83,24 @@ void printUsage(int usage) {
      * external sink, or (less desirable) do not route the entire
      * composition to the external sink.
      */
-    if(usage & GRALLOC_USAGE_PROTECTED) {
+    if((usage & GRALLOC_USAGE_PROTECTED) == GRALLOC_USAGE_PROTECTED) {
         TRACE("GRALLOC_USAGE_PROTECTED | ");
     }
 
     /* implementation-specific private usage flags */
-    if(usage & GRALLOC_USAGE_PRIVATE_0) {
+    if((usage & GRALLOC_USAGE_PRIVATE_0) == GRALLOC_USAGE_PRIVATE_0) {
         TRACE("GRALLOC_USAGE_PRIVATE_0 | ");
     }
-    if(usage & GRALLOC_USAGE_PRIVATE_1) {
+    if((usage & GRALLOC_USAGE_PRIVATE_1) == GRALLOC_USAGE_PRIVATE_1) {
         TRACE("GRALLOC_USAGE_PRIVATE_1 | ");
     }
-    if(usage & GRALLOC_USAGE_PRIVATE_2) {
+    if((usage & GRALLOC_USAGE_PRIVATE_2) == GRALLOC_USAGE_PRIVATE_2) {
         TRACE("GRALLOC_USAGE_PRIVATE_2 |");
     }
-    if(usage & GRALLOC_USAGE_PRIVATE_3) {
+    if((usage & GRALLOC_USAGE_PRIVATE_3) == GRALLOC_USAGE_PRIVATE_3) {
         TRACE("GRALLOC_USAGE_PRIVATE_3 |");
     }
-    if(usage & GRALLOC_USAGE_PRIVATE_MASK) {
+    if((usage & GRALLOC_USAGE_PRIVATE_MASK) == GRALLOC_USAGE_PRIVATE_MASK) {
         TRACE("GRALLOC_USAGE_PRIVATE_MASK |");
     }
     printf("\n");
@@ -112,7 +114,7 @@ OffscreenNativeWindow::OffscreenNativeWindow(unsigned int aWidth, unsigned int a
     , m_format(aFormat)
 {
 	hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t**)&m_gralloc);
-    m_usage=GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_2D | GRALLOC_USAGE_SW_READ_RARELY;
+    m_usage=GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
     int err = gralloc_open((hw_module_t*)m_gralloc, &m_alloc);
     TRACE("got alloc %p err:%s\n", m_alloc, strerror(-err));
 
@@ -127,7 +129,71 @@ OffscreenNativeWindow::~OffscreenNativeWindow() {
     TRACE("%s\n",__PRETTY_FUNCTION__);
 }
 OffscreenNativeWindowBuffer* OffscreenNativeWindow::getFrontBuffer() {
-    return m_buffers[m_frontbuffer];
+     OffscreenNativeWindowBuffer *buf = m_buffers[0];
+     printf("Front buffer is %p %i\n", buf, m_frontbuffer);    
+/* int err = m_gralloc->lock(m_gralloc,
+            buf->handle, 
+            buf->usage,
+            0,0, m_width, m_height,
+            &buf->vaddr
+            );
+    TRACE("front buffer lock %s vaddr %p\n", strerror(-err), buf->vaddr);
+*/
+    return buf;
+
+}
+
+
+void OffscreenNativeWindowBuffer::writeToFd(int fd)
+{
+    write(fd, &width, sizeof(width));
+    write(fd, &height, sizeof(height));
+    write(fd, &stride, sizeof(stride));
+    write(fd, &format, sizeof(format));
+    write(fd, &usage, sizeof(format));
+    write(fd, &handle->numFds, sizeof(handle->numFds));
+    write(fd, &handle->numInts, sizeof(handle->numInts));
+    int j;
+    
+    for (j = 0; j < handle->numFds; j++)
+    {
+	    sock_fd_write(fd, (void *)"1", 1, handle->data[j]);
+    }
+    for (j = handle->numFds; j < handle->numFds + handle->numInts; j++)
+    {
+	    write(fd, &handle->data[j], sizeof(handle->data[0]));
+	    printf("Send handle data %i\n", handle->data[j]);
+    }
+}
+
+OffscreenNativeWindowBuffer::OffscreenNativeWindowBuffer(int fd)
+{
+    char buf[10];
+    read(fd, &width, sizeof(width));
+    read(fd, &height, sizeof(height));
+    read(fd, &stride, sizeof(stride));
+    read(fd, &format, sizeof(format));
+    read(fd, &usage, sizeof(format));
+    int version, numFds, numInts; 
+    read(fd, &numFds, sizeof(numFds));
+    read(fd, &numInts, sizeof(numInts));
+    handle = native_handle_create(numFds, numInts);
+    int i;
+    for (i = 0; i < numFds; i++)
+    {
+	sock_fd_read(fd, buf, sizeof(buf), (int *) &handle->data[i]);
+    }
+    for (i = numFds; i < numFds + numInts; i++)
+    {
+	read(fd, (void *) &handle->data[i], sizeof(handle->data[i]));
+        printf("child: Got handle data %i\n", handle->data[i]);
+    }
+
+}
+
+buffer_handle_t OffscreenNativeWindowBuffer::getHandle()
+{
+  return handle;
 }
 
 // overloads from BaseNativeWindow
@@ -141,6 +207,7 @@ int OffscreenNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer){
     if(m_buffers[m_tailbuffer] == 0) {
         m_buffers[m_tailbuffer] = new OffscreenNativeWindowBuffer(width(), height(), m_format, m_usage);
         int usage = m_buffers[m_tailbuffer]->usage;
+        usage |= GRALLOC_USAGE_HW_TEXTURE;
         printf("alloc usage: ");
         printUsage(usage);
         int err = m_alloc->alloc(m_alloc,
@@ -235,6 +302,7 @@ unsigned int OffscreenNativeWindow::transformHint() const {
 
 int OffscreenNativeWindow::setBuffersFormat(int format) {
     TRACE("%s format %i\n",__PRETTY_FUNCTION__, format);
+    m_format = format;
     return NO_ERROR;
 }
 

@@ -20,6 +20,10 @@ class OffscreenNativeWindowBuffer : public BaseNativeWindowBuffer
         ANativeWindowBuffer::usage = usage;
     };
     void* vaddr;
+    public:
+    void writeToFd(int fd);
+    buffer_handle_t getHandle();
+    OffscreenNativeWindowBuffer(int fd);
 };
 
 class OffscreenNativeWindow : public BaseNativeWindow

@@ -142,6 +142,46 @@ private:
         TRACE("now pointer dest %p, contains %p\n", buffer, *buffer);
         return ret;
     }
+    
+    static const char *_native_window_operation(int what)
+    {
+    		switch (what) {
+			case NATIVE_WINDOW_SET_USAGE: return "NATIVE_WINDOW_SET_USAGE";
+			case NATIVE_WINDOW_CONNECT: return "NATIVE_WINDOW_CONNECT";
+			case NATIVE_WINDOW_DISCONNECT: return "NATIVE_WINDOW_DISCONNECT";
+			case NATIVE_WINDOW_SET_CROP: return "NATIVE_WINDOW_SET_CROP";
+			case NATIVE_WINDOW_SET_BUFFER_COUNT: return "NATIVE_WINDOW_SET_BUFFER_COUNT";
+			case NATIVE_WINDOW_SET_BUFFERS_GEOMETRY: return "NATIVE_WINDOW_SET_BUFFERS_GEOMETRY";
+			case NATIVE_WINDOW_SET_BUFFERS_TRANSFORM: return "NATIVE_WINDOW_SET_BUFFERS_TRANSFORM";
+			case NATIVE_WINDOW_SET_BUFFERS_TIMESTAMP: return "NATIVE_WINDOW_SET_BUFFERS_TIMESTAMP";
+			case NATIVE_WINDOW_SET_BUFFERS_DIMENSIONS: return "NATIVE_WINDOW_SET_BUFFERS_DIMENSIONS";
+			case NATIVE_WINDOW_SET_BUFFERS_FORMAT: return "NATIVE_WINDOW_SET_BUFFERS_FORMAT";
+			case NATIVE_WINDOW_SET_SCALING_MODE: return "NATIVE_WINDOW_SET_SCALING_MODE";
+			case NATIVE_WINDOW_LOCK: return "NATIVE_WINDOW_LOCK";
+			case NATIVE_WINDOW_UNLOCK_AND_POST: return "NATIVE_WINDOW_UNLOCK_AND_POST";
+			case NATIVE_WINDOW_API_CONNECT: return "NATIVE_WINDOW_API_CONNECT";
+			case NATIVE_WINDOW_API_DISCONNECT: return "NATIVE_WINDOW_API_DISCONNECT";
+			case NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS: return "NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS";
+			case NATIVE_WINDOW_SET_POST_TRANSFORM_CROP: return "NATIVE_WINDOW_SET_POST_TRANSFORM_CROP";
+			default: return "NATIVE_UNKNOWN_OPERATION";
+		}
+    }
+    static const char *_native_query_operation(int what)
+    {
+    		switch (what) {
+			case NATIVE_WINDOW_WIDTH: return "NATIVE_WINDOW_WIDTH";
+			case NATIVE_WINDOW_HEIGHT: return "NATIVE_WINDOW_HEIGHT";
+			case NATIVE_WINDOW_FORMAT: return "NATIVE_WINDOW_FORMAT";
+			case NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS: return "NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS";
+			case NATIVE_WINDOW_QUEUES_TO_WINDOW_COMPOSER: return "NATIVE_WINDOW_QUEUES_TO_WINDOW_COMPOSER";
+			case NATIVE_WINDOW_CONCRETE_TYPE: return "NATIVE_WINDOW_CONCRETE_TYPE";
+			case NATIVE_WINDOW_DEFAULT_WIDTH: return "NATIVE_WINDOW_DEFAULT_WIDTH";
+			case NATIVE_WINDOW_DEFAULT_HEIGHT: return "NATIVE_WINDOW_DEFAULT_HEIGHT";
+			case NATIVE_WINDOW_TRANSFORM_HINT: return "NATIVE_WINDOW_TRANSFORM_HINT";
+			case NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND: return "NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND";
+			default: return "NATIVE_UNKNOWN_QUERY";
+		}
+    }
 
     static int _lockBuffer(struct ANativeWindow* window, ANativeWindowBuffer* buffer)
     {
@@ -158,7 +198,7 @@ private:
 
     static int _query(const struct ANativeWindow* window, int what, int* value)
     {
-        printf("_query window %p %i %p\n", window, what, value);
+        printf("_query window %p %s %p\n", window, _native_query_operation(what), value);
         const BaseNativeWindow* self=static_cast<const BaseNativeWindow*>(window);
         switch (what) {
             case NATIVE_WINDOW_WIDTH:
@@ -186,6 +226,9 @@ private:
             case NATIVE_WINDOW_TRANSFORM_HINT:
                 *value = self->transformHint();
                 return NO_ERROR;
+            case NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS:
+                *value = 1;
+                return NO_ERROR;
         }
         printf("huh?\n");
         TRACE("EGL error: unkown window attribute!\n");
@@ -200,7 +243,7 @@ private:
         va_start(args, operation);
 
         // FIXME
-        TRACE("%s operation = %i\n", __PRETTY_FUNCTION__, operation);
+        TRACE("%s operation = %s\n", __PRETTY_FUNCTION__, _native_window_operation(operation));
         switch(operation) {
         case NATIVE_WINDOW_SET_USAGE                 : //  0,
         {
