@@ -17,3 +17,24 @@ gles2include_HEADERS = \
 	GLES2/gl2.h \
 	GLES2/gl2ext.h \
 	GLES2/gl2platform.h
+
+khrincludedir = $(includedir)/KHR
+khrinclude_HEADERS = \
+	KHR/khrplatform.h
+
+clincludedir = $(includedir)/CL
+clinclude_HEADERS = \
+	CL/cl_ext.h \
+	CL/cl_gl_ext.h \
+	CL/cl_gl.h \
+	CL/cl.h \
+	CL/cl.hpp \
+	CL/cl_platform.h \
+	CL/opencl.h
+
+vgincludedir = $(includedir)/VG
+vginclude_HEADERS = \
+	VG/openvg.h \
+	VG/vgext.h \
+	VG/vgplatform.h \
+	VG/vgu.h
