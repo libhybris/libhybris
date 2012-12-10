@@ -33,6 +33,11 @@ int _whatWS()
 	{
 		return WS_NULL;
 	}
+	else if (strcmp(egl_platform, "fbdev") == 0)
+	{
+		return WS_FBDEV;
+	}
+
 	return -1;
 }
 
@@ -41,6 +46,7 @@ int ws_IsValidDisplay(EGLNativeDisplayType display)
 	switch (_whatWS())
 	{
 		case WS_NULL: return 1;
+		case WS_FBDEV: return ws_fbdev_IsValidDisplay(display);
 		default: ;
 	}	
 	return -1;
@@ -51,6 +57,7 @@ EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayTyp
 	switch (_whatWS())
 	{
 		case WS_NULL: if (win == 0) { return android_createDisplaySurface(); } else { return win; } 
+		case WS_FBDEV: return ws_fbdev_CreateWindow(win, display);
 		default: ;
 	}	
 	return -1;
