@@ -1,7 +1,7 @@
 lib_LTLIBRARIES = \
 	libEGL.la
 
-libEGL_la_SOURCES = egl.c
+libEGL_la_SOURCES = egl.c ws.c
 libEGL_la_CFLAGS = -I$(top_srcdir)/include
 if WANT_DEBUG
 libEGL_la_CFLAGS += -ggdb -O0 -DDEBUG

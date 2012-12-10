@@ -21,6 +21,7 @@
 #include <EGL/egl.h>
 #include <dlfcn.h>
 #include <stddef.h>
+#include "ws.h"
 
 static void *_libegl = NULL;
 static void *_libui = NULL;
@@ -34,24 +35,24 @@ static EGLBoolean  (*_eglTerminate)(EGLDisplay dpy) = NULL;
 static const char *  (*_eglQueryString)(EGLDisplay dpy, EGLint name) = NULL;
 
 static EGLBoolean  (*_eglGetConfigs)(EGLDisplay dpy, EGLConfig *configs,
-			 EGLint config_size, EGLint *num_config) = NULL;
+		EGLint config_size, EGLint *num_config) = NULL;
 static EGLBoolean  (*_eglChooseConfig)(EGLDisplay dpy, const EGLint *attrib_list,
-			   EGLConfig *configs, EGLint config_size,
-			   EGLint *num_config) = NULL;
+		EGLConfig *configs, EGLint config_size,
+		EGLint *num_config) = NULL;
 static EGLBoolean  (*_eglGetConfigAttrib)(EGLDisplay dpy, EGLConfig config,
-				  EGLint attribute, EGLint *value) = NULL;
+		EGLint attribute, EGLint *value) = NULL;
 
 static EGLSurface  (*_eglCreateWindowSurface)(EGLDisplay dpy, EGLConfig config,
-				  EGLNativeWindowType win,
-				  const EGLint *attrib_list) = NULL;
+		EGLNativeWindowType win,
+		const EGLint *attrib_list) = NULL;
 static EGLSurface  (*_eglCreatePbufferSurface)(EGLDisplay dpy, EGLConfig config,
-				   const EGLint *attrib_list) = NULL;
+		const EGLint *attrib_list) = NULL;
 static EGLSurface  (*_eglCreatePixmapSurface)(EGLDisplay dpy, EGLConfig config,
-				  EGLNativePixmapType pixmap,
-				  const EGLint *attrib_list) = NULL;
+		EGLNativePixmapType pixmap,
+		const EGLint *attrib_list) = NULL;
 static EGLBoolean  (*_eglDestroySurface)(EGLDisplay dpy, EGLSurface surface) = NULL;
 static EGLBoolean  (*_eglQuerySurface)(EGLDisplay dpy, EGLSurface surface,
-			   EGLint attribute, EGLint *value) = NULL;
+		EGLint attribute, EGLint *value) = NULL;
 
 static EGLBoolean  (*_eglBindAPI)(EGLenum api) = NULL;
 static EGLenum  (*_eglQueryAPI)(void) = NULL;
@@ -61,11 +62,11 @@ static EGLBoolean  (*_eglWaitClient)(void) = NULL;
 static EGLBoolean  (*_eglReleaseThread)(void) = NULL;
 
 static EGLSurface  (*_eglCreatePbufferFromClientBuffer)(
-		  EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer,
-		  EGLConfig config, const EGLint *attrib_list) = NULL;
+		EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer,
+		EGLConfig config, const EGLint *attrib_list) = NULL;
 
 static EGLBoolean  (*_eglSurfaceAttrib)(EGLDisplay dpy, EGLSurface surface,
-				EGLint attribute, EGLint value) = NULL;
+		EGLint attribute, EGLint value) = NULL;
 static EGLBoolean  (*_eglBindTexImage)(EGLDisplay dpy, EGLSurface surface, EGLint buffer) = NULL;
 static EGLBoolean  (*_eglReleaseTexImage)(EGLDisplay dpy, EGLSurface surface, EGLint buffer) = NULL;
 
@@ -74,23 +75,23 @@ static EGLBoolean  (*_eglSwapInterval)(EGLDisplay dpy, EGLint interval) = NULL;
 
 
 static EGLContext  (*_eglCreateContext)(EGLDisplay dpy, EGLConfig config,
-				EGLContext share_context,
-				const EGLint *attrib_list) = NULL;
+		EGLContext share_context,
+		const EGLint *attrib_list) = NULL;
 static EGLBoolean  (*_eglDestroyContext)(EGLDisplay dpy, EGLContext ctx) = NULL;
 static EGLBoolean  (*_eglMakeCurrent)(EGLDisplay dpy, EGLSurface draw,
-			  EGLSurface read, EGLContext ctx) = NULL;
+		EGLSurface read, EGLContext ctx) = NULL;
 
 static EGLContext  (*_eglGetCurrentContext)(void) = NULL;
 static EGLSurface  (*_eglGetCurrentSurface)(EGLint readdraw) = NULL;
 static EGLDisplay  (*_eglGetCurrentDisplay)(void) = NULL;
 static EGLBoolean  (*_eglQueryContext)(EGLDisplay dpy, EGLContext ctx,
-			   EGLint attribute, EGLint *value) = NULL;
+		EGLint attribute, EGLint *value) = NULL;
 
 static EGLBoolean  (*_eglWaitGL)(void) = NULL;
 static EGLBoolean  (*_eglWaitNative)(EGLint engine) = NULL;
 static EGLBoolean  (*_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface) = NULL;
 static EGLBoolean  (*_eglCopyBuffers)(EGLDisplay dpy, EGLSurface surface,
-			  EGLNativePixmapType target) = NULL;
+		EGLNativePixmapType target) = NULL;
 
 static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char *procname);
 
@@ -101,14 +102,9 @@ static void _init_androidegl()
 	_libegl = (void *) android_dlopen("/system/lib/libEGL.so", RTLD_LAZY);
 }
 
-static void _init_androidui()
-{
-	_libui = (void *) android_dlopen("/system/lib/libui.so", RTLD_LAZY);
-}
+
 
 #define EGL_DLSYM(fptr, sym) do { if (_libegl == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libegl, sym); } } while (0) 
-
-#define UI_DLSYM(fptr, sym) do { if (_libui == NULL) { _init_androidui(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libui, sym); } } while (0) 
 
 EGLint eglGetError(void)
 {
@@ -116,10 +112,64 @@ EGLint eglGetError(void)
 	return (*_eglGetError)();
 }
 
+struct _eglDisplayMapping {
+	EGLNativeDisplayType ndt;
+	EGLDisplay display;
+};
+
+#define _EGL_MAX_DISPLAYS 100
+
+struct _eglDisplayMapping *_displayMappings[_EGL_MAX_DISPLAYS];
+
+void _addMapping(EGLNativeDisplayType display_id, EGLDisplay display)
+{
+	int i;
+	for (i = 0; i < _EGL_MAX_DISPLAYS; i++)
+	{
+		if (_displayMappings[i] == NULL)
+		{
+			_displayMappings[i] = (struct _eglDisplayMapping *) malloc(sizeof(struct _eglDisplayMapping));
+			_displayMappings[i]->ndt = display_id;
+			_displayMappings[i]->display = display;
+			return;
+		}
+	}
+}
+
+EGLNativeDisplayType _egldisplay2NDT(EGLDisplay display)
+{
+	int i;
+	for (i = 0; i < _EGL_MAX_DISPLAYS; i++)
+	{
+		if (_displayMappings[i])
+		{
+			if (_displayMappings[i]->display == display)
+			{
+				return _displayMappings[i]->ndt;
+			}
+
+		}
+	}
+	return EGL_NO_DISPLAY;
+}
+
 EGLDisplay eglGetDisplay(EGLNativeDisplayType display_id)
 {
 	EGL_DLSYM(&_eglGetDisplay, "eglGetDisplay");
-	return (*_eglGetDisplay)(display_id);
+	EGLNativeDisplayType real_display;
+
+	if (!ws_IsValidDisplay(display_id))
+	{
+		return EGL_NO_DISPLAY;
+	}
+
+	real_display = (*_eglGetDisplay)(EGL_DEFAULT_DISPLAY);
+	if (real_display == EGL_NO_DISPLAY)
+	{
+		return EGL_NO_DISPLAY;
+	}
+	_addMapping(display_id, real_display);
+	return real_display;
 }
 
 EGLBoolean eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
@@ -141,55 +191,50 @@ const char * eglQueryString(EGLDisplay dpy, EGLint name)
 }
 
 EGLBoolean eglGetConfigs(EGLDisplay dpy, EGLConfig *configs,
-			 EGLint config_size, EGLint *num_config)
+		EGLint config_size, EGLint *num_config)
 {
 	EGL_DLSYM(&_eglGetConfigs, "eglGetConfigs");
 	return (*_eglGetConfigs)(dpy, configs, config_size, num_config);
 }
 
 EGLBoolean eglChooseConfig(EGLDisplay dpy, const EGLint *attrib_list,
-			   EGLConfig *configs, EGLint config_size,
-			   EGLint *num_config)
+		EGLConfig *configs, EGLint config_size,
+		EGLint *num_config)
 {
 	EGL_DLSYM(&_eglChooseConfig, "eglChooseConfig");
 	return (*_eglChooseConfig)(dpy, attrib_list,
-			   configs, config_size,
-			   num_config);
+			configs, config_size,
+			num_config);
 }
 
 EGLBoolean eglGetConfigAttrib(EGLDisplay dpy, EGLConfig config,
-				  EGLint attribute, EGLint *value)
+		EGLint attribute, EGLint *value)
 {
 	EGL_DLSYM(&_eglGetConfigAttrib, "eglGetConfigAttrib");
 	return (*_eglGetConfigAttrib)(dpy, config,
-				  attribute, value);
+			attribute, value);
 }
 
 EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
-				  EGLNativeWindowType win,
-				  const EGLint *attrib_list)
+		EGLNativeWindowType win,
+		const EGLint *attrib_list)
 {
 	EGL_DLSYM(&_eglCreateWindowSurface, "eglCreateWindowSurface");
-	UI_DLSYM(&_androidCreateDisplaySurface, "android_createDisplaySurface");
 
-	if (win == 0)
-	{
-		win = (EGLNativeWindowType) (*_androidCreateDisplaySurface)();
-	}
-
+	win = ws_CreateWindow(win,  _egldisplay2NDT(dpy));
 	return (*_eglCreateWindowSurface)(dpy, config, win, attrib_list);
 }
 
 EGLSurface eglCreatePbufferSurface(EGLDisplay dpy, EGLConfig config,
-				   const EGLint *attrib_list)
+		const EGLint *attrib_list)
 {
 	EGL_DLSYM(&_eglCreatePbufferSurface, "eglCreatePbufferSurface");
 	return (*_eglCreatePbufferSurface)(dpy, config, attrib_list);
 }
 
 EGLSurface eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
-				  EGLNativePixmapType pixmap,
-				  const EGLint *attrib_list)
+		EGLNativePixmapType pixmap,
+		const EGLint *attrib_list)
 {
 	EGL_DLSYM(&_eglCreatePixmapSurface, "eglCreatePixmapSurface");
 	return (*_eglCreatePixmapSurface)(dpy, config, pixmap, attrib_list);
@@ -202,7 +247,7 @@ EGLBoolean eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 }
 
 EGLBoolean eglQuerySurface(EGLDisplay dpy, EGLSurface surface,
-			   EGLint attribute, EGLint *value)
+		EGLint attribute, EGLint *value)
 {
 	EGL_DLSYM(&_eglQuerySurface, "eglQuerySurface");
 	return (*_eglQuerySurface)(dpy, surface, attribute, value);
@@ -234,15 +279,15 @@ EGLBoolean eglReleaseThread(void)
 }
 
 EGLSurface eglCreatePbufferFromClientBuffer(
-		  EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer,
-		  EGLConfig config, const EGLint *attrib_list)
+		EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer,
+		EGLConfig config, const EGLint *attrib_list)
 {
 	EGL_DLSYM(&_eglCreatePbufferFromClientBuffer, "eglCreatePbufferFromClientBuffer");
 	return (*_eglCreatePbufferFromClientBuffer)(dpy, buftype, buffer, config, attrib_list);
 }
 
 EGLBoolean eglSurfaceAttrib(EGLDisplay dpy, EGLSurface surface,
-				EGLint attribute, EGLint value)
+		EGLint attribute, EGLint value)
 {
 	EGL_DLSYM(&_eglSurfaceAttrib, "eglSurfaceAttrib");
 	return (*_eglSurfaceAttrib)(dpy, surface, attribute, value);
@@ -267,8 +312,8 @@ EGLBoolean eglSwapInterval(EGLDisplay dpy, EGLint interval)
 }
 
 EGLContext eglCreateContext(EGLDisplay dpy, EGLConfig config,
-				EGLContext share_context,
-				const EGLint *attrib_list)
+		EGLContext share_context,
+		const EGLint *attrib_list)
 {
 	EGL_DLSYM(&_eglCreateContext, "eglCreateContext");
 	return (*_eglCreateContext)(dpy, config, share_context, attrib_list);
@@ -281,7 +326,7 @@ EGLBoolean eglDestroyContext(EGLDisplay dpy, EGLContext ctx)
 }
 
 EGLBoolean eglMakeCurrent(EGLDisplay dpy, EGLSurface draw,
-			  EGLSurface read, EGLContext ctx)
+		EGLSurface read, EGLContext ctx)
 {
 	EGL_DLSYM(&_eglMakeCurrent, "eglMakeCurrent");
 	return (*_eglMakeCurrent)(dpy, draw, read, ctx);
@@ -306,7 +351,7 @@ EGLDisplay eglGetCurrentDisplay(void)
 }
 
 EGLBoolean eglQueryContext(EGLDisplay dpy, EGLContext ctx,
-			   EGLint attribute, EGLint *value)
+		EGLint attribute, EGLint *value)
 {
 	EGL_DLSYM(&_eglQueryContext, "eglQueryContext");
 	return (*_eglQueryContext)(dpy, ctx, attribute, value);
@@ -331,7 +376,7 @@ EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 }
 
 EGLBoolean eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
-			  EGLNativePixmapType target)
+		EGLNativePixmapType target)
 {
 	EGL_DLSYM(&_eglCopyBuffers, "eglCopyBuffers");
 	return (*_eglCopyBuffers)(dpy, surface, target);
