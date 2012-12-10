@@ -19,12 +19,15 @@
 #define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 #include <dlfcn.h>
 #include <stddef.h>
 #include <malloc.h>
 #include "ws.h"
 
 static void *_libegl = NULL;
+static void *_libgles = NULL;
 
 static EGLint  (*_eglGetError)(void) = NULL;
 
@@ -97,14 +100,18 @@ static EGLBoolean  (*_eglCopyBuffers)(EGLDisplay dpy, EGLSurface surface,
 static EGLImageKHR (*_eglCreateImageKHR)(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list) = NULL;
 static EGLBoolean (*_eglDestroyImageKHR) (EGLDisplay dpy, EGLImageKHR image) = NULL;
 
+static void (*_glEGLImageTargetTexture2DOES) (GLenum target, GLeglImageOES image) = NULL;
+
 static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char *procname) = NULL;
 
 static void _init_androidegl()
 {
-	_libegl = (void *) android_dlopen("/system/lib/libEGL.so", RTLD_LAZY);
+	_libegl = (void *) android_dlopen(getenv("LIBEGL") ? getenv("LIBEGL") : "/system/lib/libEGL.so", RTLD_LAZY);
+	_libgles = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("LIBGLESV2") : "/system/lib/libGLESv2.so", RTLD_LAZY);
 }
 
 #define EGL_DLSYM(fptr, sym) do { if (_libegl == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libegl, sym); } } while (0) 
+#define GLESv2_DLSYM(fptr, sym) do { if (_libgles == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libgles, sym); } } while (0) 
 
 EGLint eglGetError(void)
 {
@@ -387,12 +394,18 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 	EGL_DLSYM(&_eglCreateImageKHR, "eglCreateImageKHR");
 	EGLenum newtarget = target;
 	EGLClientBuffer newbuffer = buffer;
-	
+
 	ws_passthroughImageKHR(&newtarget, &newbuffer);
 	EGLImageKHR ret = (*_eglCreateImageKHR)(dpy, EGL_NO_CONTEXT, newtarget, newbuffer, attrib_list);
 	return ret;
 }
 
+static void _my_glEGLImageTargetTexture2DOES(GLenum target, GLeglImageOES image)
+{
+	GLESv2_DLSYM(&_glEGLImageTargetTexture2DOES, "glEGLImageTargetTexture2DOES");
+	(*_glEGLImageTargetTexture2DOES)(target, image);
+	return;
+}
 
 __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 {
@@ -401,6 +414,10 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 	{
 		return _my_eglCreateImageKHR;
 	} 
+	else if (strcmp(procname, "glEGLImageTargetTexture2DOES") == 0)
+	{
+		return _my_glEGLImageTargetTexture2DOES;
+	}
 	__eglMustCastToProperFunctionPointerType ret = ws_eglGetProcAddress(procname);
 	if (ret == NULL)
 		return (*_eglGetProcAddress)(procname);
