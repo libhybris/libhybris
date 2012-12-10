@@ -168,10 +168,10 @@ static void         (*_glViewport)(GLint x, GLint y, GLsizei width, GLsizei heig
 
 static void _init_androidglesv2()
 {
-	_libglesv2 = (void *) android_dlopen("/system/lib/libGLESv2.so", RTLD_LAZY);
+	_libglesv2 = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("libGLESv2") : "/system/lib/libGLESv2.so", RTLD_LAZY);
 }
 
-#define GLES2_DLSYM(sym) do { if (_libglesv2 == NULL) { _init_androidglesv2(); }; if (*(_ ## sym) == NULL) { *(&_ ## sym) = (void *) android_dlsym(_libglesv2, #sym); } } while (0) 
+#define GLES2_DLSYM(sym) do { /* printf("%i: %s()\n", getpid(), #sym); */ if (_libglesv2 == NULL) { _init_androidglesv2(); }; if (*(_ ## sym) == NULL) { *(&_ ## sym) = (void *) android_dlsym(_libglesv2, #sym); } } while (0) 
 
 void glActiveTexture (GLenum texture)
 {
