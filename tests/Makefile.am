@@ -25,10 +25,7 @@ test_glesv2_LDADD = \
 	$(top_builddir)/egl/libEGL.la \
 	$(top_builddir)/glesv2/libGLESv2.la
 
-test_offscreen_rendering_SOURCES = \
-	test_offscreen_rendering.cpp \
-	fbdev_window.cpp \
-	nativewindowbase.cpp
+test_offscreen_rendering_SOURCES = test_offscreen_rendering.cpp
 test_offscreen_rendering_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/egl

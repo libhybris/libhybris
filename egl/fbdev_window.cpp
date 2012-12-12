@@ -7,10 +7,16 @@
 #include <assert.h>
 
 
-FbDevNativeWindow::FbDevNativeWindow(gralloc_module_t* gralloc, alloc_device_t* alloc, framebuffer_device_t* fbDev)
-{  
-    m_gralloc = alloc;
-    m_fbDev = fbDev;
+FbDevNativeWindow::FbDevNativeWindow()
+{
+    hw_module_t const* pmodule = NULL;
+    hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &pmodule);
+    int err = framebuffer_open(pmodule, &m_fbDev);
+    printf("open framebuffer HAL (%s) format %i", strerror(-err), m_fbDev->format);
+ 
+    h_gralloc = (gralloc_module_t *) pmodule;
+    err = gralloc_open(pmodule, &m_gralloc);
+    printf("got gralloc %p err:%s\n", m_gralloc, strerror(-err));
 
     for(unsigned int i = 0; i < FRAMEBUFFER_PARTITIONS; i++) {
         m_buffers[i] = new FbDevNativeWindowBuffer(width(), height(), m_fbDev->format, GRALLOC_USAGE_HW_FB);
@@ -28,6 +34,8 @@ FbDevNativeWindow::FbDevNativeWindow(gralloc_module_t* gralloc, alloc_device_t* 
     }
     m_frontbuffer = 0;
     m_tailbuffer = 1;
+
+
 }
 
 FbDevNativeWindow::~FbDevNativeWindow() {
@@ -38,6 +46,11 @@ FbDevNativeWindow::~FbDevNativeWindow() {
 int FbDevNativeWindow::setSwapInterval(int interval) {
     printf("%s\n",__PRETTY_FUNCTION__);
     return 0;
+}
+
+void FbDevNativeWindow::registerBuffer(buffer_handle_t handle) {
+    int err = h_gralloc->registerBuffer(h_gralloc, handle);
+    assert (err == 0);
 }
 
 int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer){
