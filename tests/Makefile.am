@@ -28,17 +28,16 @@ test_glesv2_LDADD = \
 test_offscreen_rendering_SOURCES = \
 	test_offscreen_rendering.cpp \
 	fbdev_window.cpp \
-	nativewindowbase.cpp \
-	offscreen_window.cpp \
-	fdpass.c \
-	native_handle.c
+	nativewindowbase.cpp
 test_offscreen_rendering_CXXFLAGS = \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/egl
 if WANT_MESA
 test_offscreen_rendering_CXXFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
 test_offscreen_rendering_CFLAGS = \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/egl
 if WANT_MESA
 test_offscreen_rendering_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
