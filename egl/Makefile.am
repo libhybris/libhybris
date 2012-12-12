@@ -9,7 +9,8 @@ libEGL_la_SOURCES = \
 	fbdev_window.cpp \
 	fdpass.c \
 	native_handle.c \
-	offscreen_window.cpp
+	offscreen_window.cpp \
+	offscreen_window_buffer.cpp
 libEGL_la_CFLAGS = -I$(top_srcdir)/include
 if WANT_MESA
 libEGL_la_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
