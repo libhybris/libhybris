@@ -132,7 +132,7 @@ OffscreenNativeWindow::~OffscreenNativeWindow()
 
 OffscreenNativeWindowBuffer* OffscreenNativeWindow::getFrontBuffer()
 {
-	 OffscreenNativeWindowBuffer *buf = m_buffers[0];
+	 OffscreenNativeWindowBuffer *buf = m_buffers[m_frontbuffer - 1];
 	 printf("Front buffer is %p %i\n", buf, m_frontbuffer);    
 /* int err = m_gralloc->lock(m_gralloc,
 			buf->handle, 
