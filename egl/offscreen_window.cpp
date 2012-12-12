@@ -200,12 +200,13 @@ int OffscreenNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
 int OffscreenNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer)
 {
 	OffscreenNativeWindowBuffer* buf = static_cast<OffscreenNativeWindowBuffer*>(buffer);
+
 	m_frontbuffer++;
-	if(m_frontbuffer == NUM_BUFFERS)
+	if (m_frontbuffer == NUM_BUFFERS)
 		m_frontbuffer = 0;
-	int res = 0;
-	//fixme
-	TRACE("%s %s =+++++=====================================\n",__PRETTY_FUNCTION__,strerror(-res));
+
+	postBuffer(buf);
+
 	return NO_ERROR;
 }
 

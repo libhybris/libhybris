@@ -32,6 +32,8 @@ public:
     OffscreenNativeWindow(unsigned int width, unsigned int height, unsigned int format = 5);
     ~OffscreenNativeWindow();
     OffscreenNativeWindowBuffer* getFrontBuffer();
+
+    virtual void postBuffer(OffscreenNativeWindowBuffer *buffer) { }
 protected:
     // overloads from BaseNativeWindow
     virtual int setSwapInterval(int interval);
