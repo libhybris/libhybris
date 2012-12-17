@@ -38,3 +38,18 @@ vginclude_HEADERS = \
 	VG/vgext.h \
 	VG/vgplatform.h \
 	VG/vgu.h
+
+cutilsincludedir = $(includedir)/cutils
+cutilsinclude_HEADERS = \
+	cutils/native_handle.h
+
+systemincludedir = $(includedir)/system
+systeminclude_HEADERS = \
+	system/window.h \
+	system/graphics.h
+
+hardwareincludedir = $(includedir)/hardware
+hardwareinclude_HEADERS = \
+	hardware/fb.h \
+	hardware/gralloc.h \
+	hardware/hardware.h
