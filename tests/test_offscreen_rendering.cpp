@@ -344,7 +344,8 @@ int parent(int fd)
 	eglDestroyImageKHR = (PFNEGLDESTROYIMAGEKHRPROC) eglGetProcAddress("eglDestroyImageKHR");
 	glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) eglGetProcAddress("glEGLImageTargetTexture2DOES");
 	printf ("*** initialized compositor\n");
-	OffscreenNativeWindowBuffer *client = new OffscreenNativeWindowBuffer(fd); 
+	OffscreenNativeWindowBuffer *client = new OffscreenNativeWindowBuffer();
+	client->readFromFd(fd);
 	printf("*** got buffer from client\n");
 	compositor.render(client);
 	printf("*** compositor rendered\n"); 

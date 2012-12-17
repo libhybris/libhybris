@@ -21,9 +21,10 @@ class OffscreenNativeWindowBuffer : public BaseNativeWindowBuffer
     };
     void* vaddr;
     public:
+    OffscreenNativeWindowBuffer();
     void writeToFd(int fd);
     buffer_handle_t getHandle();
-    OffscreenNativeWindowBuffer(int fd);
+    void readFromFd(int fd);
 };
 
 class OffscreenNativeWindow : public BaseNativeWindow

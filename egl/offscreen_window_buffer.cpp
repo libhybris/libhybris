@@ -7,6 +7,10 @@
 
 #include "offscreen_window.h"
 
+OffscreenNativeWindowBuffer::OffscreenNativeWindowBuffer()
+{
+}
+
 void OffscreenNativeWindowBuffer::writeToFd(int fd)
 {
 	write(fd, &width, sizeof(width));
@@ -29,7 +33,7 @@ void OffscreenNativeWindowBuffer::writeToFd(int fd)
 	}
 }
 
-OffscreenNativeWindowBuffer::OffscreenNativeWindowBuffer(int fd)
+void OffscreenNativeWindowBuffer::readFromFd(int fd)
 {
 	char buf[10];
 	read(fd, &width, sizeof(width));
