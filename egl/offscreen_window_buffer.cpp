@@ -5,11 +5,21 @@
 #include <errno.h>
 #include <fdpass.h>
 
+#include "nativewindowbase.h"
 #include "offscreen_window.h"
 
 OffscreenNativeWindowBuffer::OffscreenNativeWindowBuffer()
 {
 }
+
+OffscreenNativeWindowBuffer::OffscreenNativeWindowBuffer(unsigned int width, unsigned int height,
+														unsigned int format, unsigned int usage)
+{
+	ANativeWindowBuffer::width = width;
+	ANativeWindowBuffer::height = height;
+	ANativeWindowBuffer::format = format;
+	ANativeWindowBuffer::usage = usage;
+};
 
 void OffscreenNativeWindowBuffer::writeToFd(int fd)
 {

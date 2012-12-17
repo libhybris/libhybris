@@ -26,9 +26,14 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <stdlib.h>
-#include "fbdev_window.h"
-#include "offscreen_window.h"
-#include "fdpass.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <signal.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "eglhybris.h"
 
 PFNEGLCREATEIMAGEKHRPROC eglCreateImageKHR=0;
 PFNEGLDESTROYIMAGEKHRPROC eglDestroyImageKHR=0;

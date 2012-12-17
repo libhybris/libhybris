@@ -29,3 +29,10 @@ libEGL_la_LDFLAGS = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/hardware/libhardware.la \
 	-version-info "1":"0":"0"
+
+eglincludedir = $(includedir)/EGL
+eglinclude_HEADERS = \
+	eglhybris.h \
+	offscreen_window.h \
+	fbdev_window.h \
+	nativewindowbase.h

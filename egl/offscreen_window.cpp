@@ -4,6 +4,9 @@
 #include <sys/mman.h> //mmap, munmap
 #include <errno.h>
 
+#include <hardware/gralloc.h>
+
+#include "nativewindowbase.h"
 #include "offscreen_window.h"
 
 void printUsage(int usage)
