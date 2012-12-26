@@ -6,6 +6,8 @@
 #include <errno.h>
 #include <assert.h>
 
+#define TRACE(fmt, ...) 
+
 FbDevNativeWindow::FbDevNativeWindow(gralloc_module_t* gralloc, alloc_device_t* alloc, framebuffer_device_t* fbDev)
 {
     m_gralloc = alloc;
