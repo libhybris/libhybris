@@ -52,4 +52,5 @@ hardwareincludedir = $(includedir)/hardware
 hardwareinclude_HEADERS = \
 	hardware/fb.h \
 	hardware/gralloc.h \
-	hardware/hardware.h
+	hardware/hardware.h \
+	hardware/sensors.h
