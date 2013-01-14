@@ -41,6 +41,12 @@ AC_ARG_ENABLE(debug,
   [debug="no"])
 AM_CONDITIONAL( [WANT_DEBUG], [test x"$debug" = x"yes"])
 
+AC_ARG_ENABLE(mesa,
+  [  --enable-mesa            Enable mesa headers (default=disabled)],
+  [mesa=$enableval],
+  [mesa="no"])
+AM_CONDITIONAL( [WANT_MESA], [test x"$mesa" = x"yes"])
+
 AC_CONFIG_FILES([
 	Makefile
 	common/Makefile

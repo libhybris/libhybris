@@ -1,4 +1,3 @@
-#define MESA_EGL_NO_X11_HEADERS
 //#define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>
 #include <EGL/eglext.h>

@@ -15,8 +15,6 @@
  *
  */
 
-#define MESA_EGL_NO_X11_HEADERS
-
 /* EGL function pointers */
 #define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>

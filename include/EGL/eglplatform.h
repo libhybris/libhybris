@@ -46,6 +46,10 @@
  * KHRONOS_APICALL and KHRONOS_APIENTRY are defined in KHR/khrplatform.h
  */
 
+#ifndef LIBHYBRIS_WANTS_MESA_X11_HEADERS
+#define MESA_EGL_NO_X11_HEADERS
+#endif
+
 #ifndef EGLAPI
 #define EGLAPI KHRONOS_APICALL
 #endif

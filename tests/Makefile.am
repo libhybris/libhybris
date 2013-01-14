@@ -6,6 +6,9 @@ bin_PROGRAMS = \
 test_egl_SOURCES = test_egl.c
 test_egl_CFLAGS = \
 	-I$(top_srcdir)/include
+if WANT_MESA
+test_egl_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
+endif
 test_egl_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/egl/libEGL.la
@@ -13,6 +16,9 @@ test_egl_LDADD = \
 test_glesv2_SOURCES = test_glesv2.c
 test_glesv2_CFLAGS = \
 	-I$(top_srcdir)/include
+if WANT_MESA
+test_glesv2_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
+endif
 test_glesv2_LDADD = \
 	-lm \
 	$(top_builddir)/common/libhybris-common.la \
@@ -28,8 +34,14 @@ test_offscreen_rendering_SOURCES = \
 	native_handle.c
 test_offscreen_rendering_CXXFLAGS = \
 	-I$(top_srcdir)/include
+if WANT_MESA
+test_offscreen_rendering_CXXFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
+endif
 test_offscreen_rendering_CFLAGS = \
 	-I$(top_srcdir)/include
+if WANT_MESA
+test_offscreen_rendering_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
+endif
 test_offscreen_rendering_LDADD = \
 	-lm \
 	$(top_builddir)/common/libhybris-common.la \

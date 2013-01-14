@@ -3,10 +3,16 @@ lib_LTLIBRARIES = \
 
 libEGL_la_SOURCES = egl.c ws.c ws_fbdev.cpp nativewindowbase.cpp fbdev_window.cpp
 libEGL_la_CFLAGS = -I$(top_srcdir)/include
+if WANT_MESA
+libEGL_la_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
+endif
 if WANT_DEBUG
 libEGL_la_CFLAGS += -ggdb -O0 -DDEBUG
 endif
 libEGL_la_CXXFLAGS = -I$(top_srcdir)/include
+if WANT_MESA
+libEGL_la_CXXFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
+endif
 if WANT_DEBUG
 libEGL_la_CXXFLAGS += -ggdb -O0 -DDEBUG
 endif
