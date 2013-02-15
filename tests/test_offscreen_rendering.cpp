@@ -191,19 +191,18 @@ public:
 		assert(surface != EGL_NO_CONTEXT);
 		printf("INFO: Created context for display\n");
 		frame = 0;
+		
+        assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
+		printf("client INFO: Made context and surface current for display\n");
+		glViewport ( 0 , 0 , 200, 200);
 	};
 
 	void render()
 	{
-		frame = 1;
-		assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
-		printf("INFO: Made context and surface current for display\n");
-		glViewport ( 0 , 0 , 200, 200);
-		printf("client frame %i\n", frame++);
-		glClearColor ( 0.20 , 0.50 , 0.50 , 1.);  
+		glClearColor ( 0.50 , 0.00 , frame & 1 , 1.);  
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		eglSwapBuffers(display, surface);
-		printf("client swapped\n");
+        frame++;
 	}
 
 	int frame;
@@ -273,12 +272,12 @@ public:
 
 		glViewport(0, 0, 1024, 768);
 		checkGlError("glViewport");
-	}
+	    frame=0;
+		assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
+    }
 
 	void render(OffscreenNativeWindowBuffer* buffer)
 	{
-		assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
-		printf("INFO: Made context and surface current for display\n");
 		window->registerBuffer(buffer->getHandle());
 		EGLClientBuffer cbuf = (EGLClientBuffer) buffer;
 		EGLint attrs[] = {
@@ -292,7 +291,6 @@ public:
 			printf("error creating EGLImage: %#x", error);
 		}
 
-		printf("got egl image %p\n", image);
 
 		glGenTextures(1, &texture);
 		checkGlError("glGenTextures");
@@ -303,7 +301,6 @@ public:
 		checkGlError("glEGLImageTargetTexture2DOES");
 
 		glViewport ( 0 , 0 , 1024, 768);
-		printf("compositor frame %i\n", frame++);
 		float c = (frame % 64) / 64.0f;
 		glClearColor(0.50f , 0.50f , 0.50f, 1.0 );         
 		checkGlError("glClearColor");
@@ -330,7 +327,7 @@ public:
 
 		eglSwapBuffers(display, surface);
 		eglDestroyImageKHR(display, image);
-		printf("compositor swapped\n");
+//		fprintf(stderr, "compositor frame %i\n", frame++);
 	}
 
 	int frame;
@@ -350,22 +347,24 @@ int parent(int fd)
 	glEGLImageTargetTexture2DOES = (PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) eglGetProcAddress("glEGLImageTargetTexture2DOES");
 	printf ("*** initialized compositor\n");
 	OffscreenNativeWindowBuffer *client = new OffscreenNativeWindowBuffer();
-	client->readFromFd(fd);
-	printf("*** got buffer from client\n");
-	compositor.render(client);
-	printf("*** compositor rendered\n"); 
-	while (1) {}
+
+	while (1) {
+        client->readFromFd(fd);
+    	compositor.render(client);
+    }
 }
 
 int child(int fd)
 {
-	EGLClient client;
+    EGLClient client;
 	printf ("**** initialized client\n");
-	client.render();
-	OffscreenNativeWindowBuffer *buf = client.window->getFrontBuffer();
-	buf->writeToFd(fd);
-	printf("*** client rendered\n");
-	while (1) {}
+
+	while (1) {
+        client.render();
+    	OffscreenNativeWindowBuffer *buf = client.window->getFrontBuffer();
+    	buf->writeToFd(fd);
+        fflush(NULL);
+    }
 } 
 
 int main(int argc, char **argv)
@@ -373,20 +372,20 @@ int main(int argc, char **argv)
 	int sv[2];
 	int pid;
 
-	if (socketpair(AF_LOCAL, SOCK_STREAM, 0, sv) < 0) {
+	if (socketpair(AF_LOCAL, SOCK_DGRAM, 0, sv) < 0) {
 		perror("socketpair");
 		exit(1);
 	}
 
 	switch ((pid = fork())) {
-	case 0:
+	case 0: //child process
 		close(sv[0]);
 		child(sv[1]);
 		break;
 	case -1:
 		perror("fork");
 		exit(1);
-	default:
+	default: //compositor process
 		close(sv[1]);
 		parent(sv[0]);
 		break;

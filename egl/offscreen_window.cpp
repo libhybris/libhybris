@@ -106,7 +106,7 @@ void printUsage(int usage)
 	if((usage & GRALLOC_USAGE_PRIVATE_MASK) == GRALLOC_USAGE_PRIVATE_MASK) {
 		TRACE("GRALLOC_USAGE_PRIVATE_MASK |");
 	}
-	printf("\n");
+	TRACE("\n");
 }
 
 OffscreenNativeWindow::OffscreenNativeWindow(unsigned int aWidth, unsigned int aHeight, unsigned int aFormat)
@@ -124,7 +124,7 @@ OffscreenNativeWindow::OffscreenNativeWindow(unsigned int aWidth, unsigned int a
 	for(unsigned int i = 0; i < NUM_BUFFERS; i++) {
 		m_buffers[i] = 0;
 	}
-	m_frontbuffer = 0;
+	m_frontbuffer = NUM_BUFFERS-1;
 	m_tailbuffer = 0;
 }
 
@@ -135,8 +135,7 @@ OffscreenNativeWindow::~OffscreenNativeWindow()
 
 OffscreenNativeWindowBuffer* OffscreenNativeWindow::getFrontBuffer()
 {
-	 OffscreenNativeWindowBuffer *buf = m_buffers[m_frontbuffer - 1];
-	 printf("Front buffer is %p %i\n", buf, m_frontbuffer);    
+	 OffscreenNativeWindowBuffer *buf = m_buffers[m_frontbuffer];
 /* int err = m_gralloc->lock(m_gralloc,
 			buf->handle, 
 			buf->usage,
@@ -163,7 +162,7 @@ int OffscreenNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer)
 		m_buffers[m_tailbuffer] = new OffscreenNativeWindowBuffer(width(), height(), m_format, m_usage);
 		int usage = m_buffers[m_tailbuffer]->usage;
 		usage |= GRALLOC_USAGE_HW_TEXTURE;
-		printf("alloc usage: ");
+		TRACE("alloc usage: ");
 		printUsage(usage);
 		int err = m_alloc->alloc(m_alloc,
 						width(), height(), m_format,
@@ -175,7 +174,7 @@ int OffscreenNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer)
 				strerror(-err), m_buffers[m_tailbuffer]->handle, m_buffers[m_tailbuffer]->stride);
 	}
 	*buffer = m_buffers[m_tailbuffer];
-	TRACE("dequeueing buffer %i %p\n",m_tailbuffer, m_buffers[m_tailbuffer]);
+	TRACE("dequeued buffer is %i %p\n",m_tailbuffer, m_buffers[m_tailbuffer]);
 	m_tailbuffer++;
 	if(m_tailbuffer == NUM_BUFFERS)
 		m_tailbuffer = 0;
@@ -202,12 +201,13 @@ int OffscreenNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
 
 int OffscreenNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer)
 {
-	OffscreenNativeWindowBuffer* buf = static_cast<OffscreenNativeWindowBuffer*>(buffer);
+    OffscreenNativeWindowBuffer* buf = static_cast<OffscreenNativeWindowBuffer*>(buffer);
 
 	m_frontbuffer++;
 	if (m_frontbuffer == NUM_BUFFERS)
 		m_frontbuffer = 0;
 
+    TRACE("queue buffer front now %i", m_frontbuffer);
 	postBuffer(buf);
 
 	return NO_ERROR;

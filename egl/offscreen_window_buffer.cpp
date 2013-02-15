@@ -7,6 +7,7 @@
 
 #include "nativewindowbase.h"
 #include "offscreen_window.h"
+#include <assert.h>
 
 OffscreenNativeWindowBuffer::OffscreenNativeWindowBuffer()
 {
@@ -23,48 +24,62 @@ OffscreenNativeWindowBuffer::OffscreenNativeWindowBuffer(unsigned int width, uns
 
 void OffscreenNativeWindowBuffer::writeToFd(int fd)
 {
-	write(fd, &width, sizeof(width));
-	write(fd, &height, sizeof(height));
-	write(fd, &stride, sizeof(stride));
-	write(fd, &format, sizeof(format));
-	write(fd, &usage, sizeof(format));
-	write(fd, &handle->numFds, sizeof(handle->numFds));
-	write(fd, &handle->numInts, sizeof(handle->numInts));
-	int j;
-	
-	for (j = 0; j < handle->numFds; j++)
-	{
-		sock_fd_write(fd, (void *)"1", 1, handle->data[j]);
-	}
-	for (j = handle->numFds; j < handle->numFds + handle->numInts; j++)
-	{
-		write(fd, &handle->data[j], sizeof(handle->data[0]));
-		printf("Send handle data %i\n", handle->data[j]);
-	}
+    assert(handle);
+    write(fd, &width, sizeof(width));
+    write(fd, &height, sizeof(height));
+    write(fd, &stride, sizeof(stride));
+    write(fd, &format, sizeof(format));
+    write(fd, &usage, sizeof(usage));
+
+    write(fd, &handle->numFds, sizeof(handle->numFds));
+    write(fd, &handle->numInts, sizeof(handle->numInts));
+
+    for (int i = 0; i < handle->numFds; i++) {
+        sock_fd_write(fd, (void *)"1", 1, handle->data[i]);
+    }
+    for (int i = handle->numFds; i < handle->numFds + handle->numInts; i++) {
+        write(fd, &handle->data[i], sizeof(handle->data[0]));
+    }
 }
 
 void OffscreenNativeWindowBuffer::readFromFd(int fd)
 {
-	char buf[10];
-	read(fd, &width, sizeof(width));
-	read(fd, &height, sizeof(height));
-	read(fd, &stride, sizeof(stride));
-	read(fd, &format, sizeof(format));
-	read(fd, &usage, sizeof(format));
-	int version, numFds, numInts; 
-	read(fd, &numFds, sizeof(numFds));
-	read(fd, &numInts, sizeof(numInts));
-	handle = native_handle_create(numFds, numInts);
-	int i;
-	for (i = 0; i < numFds; i++)
-	{
-	sock_fd_read(fd, buf, sizeof(buf), (int *) &handle->data[i]);
-	}
-	for (i = numFds; i < numFds + numInts; i++)
-	{
-	read(fd, (void *) &handle->data[i], sizeof(handle->data[i]));
-		printf("child: Got handle data %i\n", handle->data[i]);
-	}
+    int ret=0;
+    char buf[10];
+    ret = read(fd, &width, sizeof(width));
+    assert(ret == sizeof(width)); 
+
+    ret = read(fd, &height, sizeof(height));
+    assert(ret == sizeof(height));
+
+    ret = read(fd, &stride, sizeof(stride));
+    assert(ret == sizeof(stride));
+
+    ret = read(fd, &format, sizeof(format));
+    assert(ret == sizeof(format));
+
+    ret = read(fd, &usage, sizeof(usage));
+    assert(ret == sizeof(usage));
+
+    int numFds = 0;
+    int numInts =0;
+    ret = read(fd, &numFds, sizeof(numFds));
+    assert(ret == sizeof(numFds));
+    ret = read(fd, &numInts, sizeof(numInts));
+    assert(ret == sizeof(numInts));
+
+    if(handle) {
+        native_handle_close(handle);
+        native_handle_delete(const_cast<native_handle_t*>(handle));
+    }
+
+    handle = native_handle_create(numFds, numInts);
+    for (int i = 0; i < numFds; i++) {
+        sock_fd_read(fd, buf, sizeof(buf), (int *) &handle->data[i]);
+    }
+    for (int i = numFds; i < numFds + numInts; i++) {
+        read(fd, (void *) &handle->data[i], sizeof(handle->data[i]));
+    }
 
 }
 

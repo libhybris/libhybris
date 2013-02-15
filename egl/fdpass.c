@@ -64,7 +64,6 @@ sock_fd_read(int sock, void *buf, ssize_t bufsize, int *fd)
 			}
 
 			*fd = *((int *) CMSG_DATA(cmsg));
-			printf ("received fd %d\n", *fd);
 		} else
 			*fd = -1;
 	} else {
@@ -105,8 +104,6 @@ sock_fd_write(int sock, void *buf, ssize_t buflen, int fd)
 		cmsg->cmsg_len = CMSG_LEN(sizeof (int));
 		cmsg->cmsg_level = SOL_SOCKET;
 		cmsg->cmsg_type = SCM_RIGHTS;
-
-		printf ("passing fd %d\n", fd);
 		*((int *) CMSG_DATA(cmsg)) = fd;
 	} else {
 		msg.msg_control = NULL;

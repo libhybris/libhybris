@@ -150,7 +150,7 @@ int BaseNativeWindow::_queueBuffer(struct ANativeWindow* window, ANativeWindowBu
 
 int BaseNativeWindow::_query(const struct ANativeWindow* window, int what, int* value)
 {
-	printf("_query window %p %i %s %p\n", window, what, _native_query_operation(what), value);
+	TRACE("_query window %p %i %s %p\n", window, what, _native_query_operation(what), value);
 	const BaseNativeWindow* self=static_cast<const BaseNativeWindow*>(window);
 	switch (what) {
 		case NATIVE_WINDOW_WIDTH:
@@ -182,7 +182,6 @@ int BaseNativeWindow::_query(const struct ANativeWindow* window, int what, int* 
 			*value = 1;
 			return NO_ERROR;
 	}
-	printf("huh?\n");
 	TRACE("EGL error: unkown window attribute! %i\n", what);
 	*value = 0;
 	return BAD_VALUE;

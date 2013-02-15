@@ -7,7 +7,8 @@
 #define NO_ERROR                0L
 #define BAD_VALUE               -1
 
-#define TRACE printf
+//#define TRACE printf
+#define TRACE(...)
 
 /**
  * @brief A Class to do common ANativeBuffer initialization and thunk c-style
