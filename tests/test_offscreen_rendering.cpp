@@ -243,10 +243,8 @@ public:
 
 		printf("INFO: Initialized display with default configuration\n");
 
-		window = new FbDevNativeWindow();
-		printf("INFO: Created native window %p\n", window);
 		printf("creating window surface...\n");
-		surface = eglCreateWindowSurface((EGLDisplay) display, ecfg, *window, NULL);
+		surface = eglCreateWindowSurface((EGLDisplay) display, ecfg, (EGLNativeWindowType) NULL, NULL);
 		assert(surface != EGL_NO_SURFACE);
 		printf("INFO: Created our main window surface %p\n", surface);
 		context = eglCreateContext((EGLDisplay) display, ecfg, EGL_NO_CONTEXT, ctxattr);
@@ -278,7 +276,7 @@ public:
 
 	void render(OffscreenNativeWindowBuffer* buffer)
 	{
-		window->registerBuffer(buffer->getHandle());
+		hybris_register_buffer_handle(buffer->getHandle());
 		EGLClientBuffer cbuf = (EGLClientBuffer) buffer;
 		EGLint attrs[] = {
 			EGL_IMAGE_PRESERVED_KHR,    EGL_TRUE,
@@ -334,13 +332,13 @@ public:
 	EGLDisplay display;
 	EGLContext context;
 	EGLSurface surface;
-	FbDevNativeWindow* window;
 	GLuint texture;
 	EGLImageKHR image;
 };
 
 int parent(int fd)
 {
+	setenv("EGL_PLATFORM", "fbdev", 1);
 	EGLCompositor compositor;
 	eglCreateImageKHR = (PFNEGLCREATEIMAGEKHRPROC) eglGetProcAddress("eglCreateImageKHR");
 	eglDestroyImageKHR = (PFNEGLDESTROYIMAGEKHRPROC) eglGetProcAddress("eglDestroyImageKHR");
