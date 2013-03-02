@@ -16,10 +16,17 @@
  */
 
 #define MESA_EGL_NO_X11_HEADERS
-
+#define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 #include <dlfcn.h>
 #include <stddef.h>
+
+#ifdef __ARM_PCS_VFP
+#define FP_ATTRIB __attribute__((pcs("aapcs")))
+#else
+#define FP_ATTRIB
+#endif
 
 static void *_libglesv2 = NULL;
 
@@ -30,7 +37,7 @@ static void         (*_glBindBuffer)(GLenum target, GLuint buffer) = NULL;
 static void         (*_glBindFramebuffer)(GLenum target, GLuint framebuffer) = NULL;
 static void         (*_glBindRenderbuffer)(GLenum target, GLuint renderbuffer) = NULL;
 static void         (*_glBindTexture)(GLenum target, GLuint texture) = NULL;
-static void         (*_glBlendColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) = NULL;
+static void         (*_glBlendColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) FP_ATTRIB = NULL;
 static void         (*_glBlendEquation)(GLenum mode ) = NULL;
 static void         (*_glBlendEquationSeparate)(GLenum modeRGB, GLenum modeAlpha) = NULL;
 static void         (*_glBlendFunc)(GLenum sfactor, GLenum dfactor) = NULL;
@@ -39,8 +46,8 @@ static void         (*_glBufferData)(GLenum target, GLsizeiptr size, const GLvoi
 static void         (*_glBufferSubData)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data) = NULL;
 static GLenum       (*_glCheckFramebufferStatus)(GLenum target) = NULL;
 static void         (*_glClear)(GLbitfield mask) = NULL;
-static void         (*_glClearColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) = NULL;
-static void         (*_glClearDepthf)(GLclampf depth) = NULL;
+static void         (*_glClearColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) FP_ATTRIB = NULL;
+static void         (*_glClearDepthf)(GLclampf depth) FP_ATTRIB = NULL;
 static void         (*_glClearStencil)(GLint s) = NULL;
 static void         (*_glColorMask)(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha) = NULL;
 static void         (*_glCompileShader)(GLuint shader) = NULL;
@@ -59,7 +66,7 @@ static void         (*_glDeleteShader)(GLuint shader) = NULL;
 static void         (*_glDeleteTextures)(GLsizei n, const GLuint* textures) = NULL;
 static void         (*_glDepthFunc)(GLenum func) = NULL;
 static void         (*_glDepthMask)(GLboolean flag) = NULL;
-static void         (*_glDepthRangef)(GLclampf zNear, GLclampf zFar) = NULL;
+static void         (*_glDepthRangef)(GLclampf zNear, GLclampf zFar) FP_ATTRIB = NULL;
 static void         (*_glDetachShader)(GLuint program, GLuint shader) = NULL;
 static void         (*_glDisable)(GLenum cap) = NULL;
 static void         (*_glDisableVertexAttribArray)(GLuint index) = NULL;
@@ -111,14 +118,14 @@ static GLboolean    (*_glIsProgram)(GLuint program) = NULL;
 static GLboolean    (*_glIsRenderbuffer)(GLuint renderbuffer) = NULL;
 static GLboolean    (*_glIsShader)(GLuint shader) = NULL;
 static GLboolean    (*_glIsTexture)(GLuint texture) = NULL;
-static void         (*_glLineWidth)(GLfloat width) = NULL;
+static void         (*_glLineWidth)(GLfloat width) FP_ATTRIB = NULL;
 static void         (*_glLinkProgram)(GLuint program) = NULL;
 static void         (*_glPixelStorei)(GLenum pname, GLint param) = NULL;
-static void         (*_glPolygonOffset)(GLfloat factor, GLfloat units) = NULL;
+static void         (*_glPolygonOffset)(GLfloat factor, GLfloat units) FP_ATTRIB = NULL;
 static void         (*_glReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels) = NULL;
 static void         (*_glReleaseShaderCompiler)(void) = NULL;
 static void         (*_glRenderbufferStorage)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height) = NULL;
-static void         (*_glSampleCoverage)(GLclampf value, GLboolean invert) = NULL;
+static void         (*_glSampleCoverage)(GLclampf value, GLboolean invert) FP_ATTRIB = NULL;
 static void         (*_glScissor)(GLint x, GLint y, GLsizei width, GLsizei height) = NULL;
 static void         (*_glShaderBinary)(GLsizei n, const GLuint* shaders, GLenum binaryformat, const GLvoid* binary, GLsizei length) = NULL;
 static void         (*_glShaderSource)(GLuint shader, GLsizei count, const GLchar** string, const GLint* length) = NULL;
@@ -129,24 +136,24 @@ static void         (*_glStencilMaskSeparate)(GLenum face, GLuint mask) = NULL;
 static void         (*_glStencilOp)(GLenum fail, GLenum zfail, GLenum zpass) = NULL;
 static void         (*_glStencilOpSeparate)(GLenum face, GLenum fail, GLenum zfail, GLenum zpass) = NULL;
 static void         (*_glTexImage2D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels) = NULL;
-static void         (*_glTexParameterf)(GLenum target, GLenum pname, GLfloat param) = NULL;
+static void         (*_glTexParameterf)(GLenum target, GLenum pname, GLfloat param) FP_ATTRIB = NULL;
 static void         (*_glTexParameterfv)(GLenum target, GLenum pname, const GLfloat* params) = NULL;
 static void         (*_glTexParameteri)(GLenum target, GLenum pname, GLint param) = NULL;
 static void         (*_glTexParameteriv)(GLenum target, GLenum pname, const GLint* params) = NULL;
 static void         (*_glTexSubImage2D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels) = NULL;
-static void         (*_glUniform1f)(GLint location, GLfloat x) = NULL;
+static void         (*_glUniform1f)(GLint location, GLfloat x) FP_ATTRIB = NULL;
 static void         (*_glUniform1fv)(GLint location, GLsizei count, const GLfloat* v) = NULL;
 static void         (*_glUniform1i)(GLint location, GLint x) = NULL;
 static void         (*_glUniform1iv)(GLint location, GLsizei count, const GLint* v) = NULL;
-static void         (*_glUniform2f)(GLint location, GLfloat x, GLfloat y) = NULL;
+static void         (*_glUniform2f)(GLint location, GLfloat x, GLfloat y) FP_ATTRIB = NULL;
 static void         (*_glUniform2fv)(GLint location, GLsizei count, const GLfloat* v) = NULL;
 static void         (*_glUniform2i)(GLint location, GLint x, GLint y) = NULL;
 static void         (*_glUniform2iv)(GLint location, GLsizei count, const GLint* v) = NULL;
-static void         (*_glUniform3f)(GLint location, GLfloat x, GLfloat y, GLfloat z) = NULL;
+static void         (*_glUniform3f)(GLint location, GLfloat x, GLfloat y, GLfloat z) FP_ATTRIB = NULL;
 static void         (*_glUniform3fv)(GLint location, GLsizei count, const GLfloat* v) = NULL;
 static void         (*_glUniform3i)(GLint location, GLint x, GLint y, GLint z) = NULL;
 static void         (*_glUniform3iv)(GLint location, GLsizei count, const GLint* v) = NULL;
-static void         (*_glUniform4f)(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w) = NULL;
+static void         (*_glUniform4f)(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w) FP_ATTRIB = NULL;
 static void         (*_glUniform4fv)(GLint location, GLsizei count, const GLfloat* v) = NULL;
 static void         (*_glUniform4i)(GLint location, GLint x, GLint y, GLint z, GLint w) = NULL;
 static void         (*_glUniform4iv)(GLint location, GLsizei count, const GLint* v) = NULL;
@@ -155,45 +162,51 @@ static void         (*_glUniformMatrix3fv)(GLint location, GLsizei count, GLbool
 static void         (*_glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value) = NULL;
 static void         (*_glUseProgram)(GLuint program) = NULL;
 static void         (*_glValidateProgram)(GLuint program) = NULL;
-static void         (*_glVertexAttrib1f)(GLuint indx, GLfloat x) = NULL;
+static void         (*_glVertexAttrib1f)(GLuint indx, GLfloat x) FP_ATTRIB = NULL;
 static void         (*_glVertexAttrib1fv)(GLuint indx, const GLfloat* values) = NULL;
-static void         (*_glVertexAttrib2f)(GLuint indx, GLfloat x, GLfloat y) = NULL;
+static void         (*_glVertexAttrib2f)(GLuint indx, GLfloat x, GLfloat y) FP_ATTRIB = NULL;
 static void         (*_glVertexAttrib2fv)(GLuint indx, const GLfloat* values) = NULL;
-static void         (*_glVertexAttrib3f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z) = NULL;
+static void         (*_glVertexAttrib3f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z) FP_ATTRIB = NULL;
 static void         (*_glVertexAttrib3fv)(GLuint indx, const GLfloat* values) = NULL;
-static void         (*_glVertexAttrib4f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w) = NULL;
+static void         (*_glVertexAttrib4f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w) FP_ATTRIB = NULL;
 static void         (*_glVertexAttrib4fv)(GLuint indx, const GLfloat* values) = NULL;
 static void         (*_glVertexAttribPointer)(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* ptr) = NULL;
 static void         (*_glViewport)(GLint x, GLint y, GLsizei width, GLsizei height) = NULL;
+static void         (*_glEGLImageTargetTexture2DOES) (GLenum target, GLeglImageOES image) = NULL;
 
 static void _init_androidglesv2()
 {
 	_libglesv2 = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("libGLESv2") : "/system/lib/libGLESv2.so", RTLD_LAZY);
 }
 
-#define GLES2_DLSYM(sym) do { /* printf("%i: %s()\n", getpid(), #sym); */ if (_libglesv2 == NULL) { _init_androidglesv2(); }; if (*(_ ## sym) == NULL) { *(&_ ## sym) = (void *) android_dlsym(_libglesv2, #sym); } } while (0) 
+
+#define GLES2_DLSYM(sym) do { if (_libglesv2 == NULL) { _init_androidglesv2(); }; if (*(_ ## sym) == NULL) { *(&_ ## sym) = (void *) android_dlsym(_libglesv2, #sym); } } while (0) 
 
 void glActiveTexture (GLenum texture)
 {
 	GLES2_DLSYM(glActiveTexture);
+
 	return (*_glActiveTexture)(texture);
 }
 
 void glAttachShader (GLuint program, GLuint shader)
 {
 	GLES2_DLSYM(glAttachShader);
+
 	return (*_glAttachShader)(program, shader);
 }
 
 void glBindAttribLocation (GLuint program, GLuint index, const GLchar* name)
 {
 	GLES2_DLSYM(glBindAttribLocation);
+
 	return (*_glBindAttribLocation)(program, index, name);
 }
 
 void glBindBuffer (GLenum target, GLuint buffer)
 {
 	GLES2_DLSYM(glBindBuffer);
+
 	return (*_glBindBuffer)(target, buffer);
 }
 
@@ -207,66 +220,77 @@ void glBindFramebuffer (GLenum target, GLuint framebuffer)
 void glBindRenderbuffer (GLenum target, GLuint renderbuffer)
 {
 	GLES2_DLSYM(glBindRenderbuffer);
+
 	return (*_glBindRenderbuffer)(target, renderbuffer);
 }
 
 void glBindTexture (GLenum target, GLuint texture)
 {
 	GLES2_DLSYM(glBindTexture);
+
 	return (*_glBindTexture)(target, texture);
 }
 
 void glBlendColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
 	GLES2_DLSYM(glBlendColor);
+
 	return (*_glBlendColor)(red, green, blue, alpha);
 }
 
 void glBlendEquation ( GLenum mode )
 {
 	GLES2_DLSYM(glBlendEquation);
+
 	return (*_glBlendEquation)(mode);
 }
 
 void glBlendEquationSeparate (GLenum modeRGB, GLenum modeAlpha)
 {
 	GLES2_DLSYM(glBlendEquationSeparate);
+
 	return (*_glBlendEquationSeparate)(modeRGB, modeAlpha);
 }
 
 void glBlendFunc (GLenum sfactor, GLenum dfactor)
 {
 	GLES2_DLSYM(glBlendFunc);
+
 	return (*_glBlendFunc)(sfactor, dfactor);
 }
 
 void glBlendFuncSeparate (GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
 {
 	GLES2_DLSYM(glBlendFuncSeparate);
+
 	return (*_glBlendFuncSeparate)(srcRGB, dstRGB, srcAlpha, dstAlpha);
 }
 
 void glBufferData (GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage)
 {
 	GLES2_DLSYM(glBufferData);
+
 	return (*_glBufferData)(target, size, data, usage);
 }
 
 void glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data)
 {
 	GLES2_DLSYM(glBufferSubData);
+
 	return (*_glBufferSubData)(target, offset, size, data);
 }
 
 GLenum glCheckFramebufferStatus (GLenum target)
 {
 	GLES2_DLSYM(glCheckFramebufferStatus);
+
 	return (*_glCheckFramebufferStatus)(target);
 }
 
 void glClear (GLbitfield mask)
 {
 	GLES2_DLSYM(glClear);
+
 	return (*_glClear)(mask);
 }
 
@@ -1027,4 +1051,11 @@ void glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
 	return (*_glViewport)(x, y, width, height);
 }
 
-// vim:ts=4:sw=4:noexpandtab
+void glEGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
+{
+	GLES2_DLSYM(glEGLImageTargetTexture2DOES);
+	(*_glEGLImageTargetTexture2DOES)(target, image);
+}
+
+
+

@@ -18,6 +18,7 @@
 #define MESA_EGL_NO_X11_HEADERS
 
 /* EGL function pointers */
+#define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <dlfcn.h>
@@ -96,6 +97,8 @@ static EGLBoolean  (*_eglCopyBuffers)(EGLDisplay dpy, EGLSurface surface,
 
 
 static EGLImageKHR (*_eglCreateImageKHR)(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list) = NULL;
+static EGLBoolean (*_eglDestroyImageKHR) (EGLDisplay dpy, EGLImageKHR image) = NULL;
+
 static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char *procname) = NULL;
 
 static void _init_androidegl()
@@ -405,5 +408,12 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 		return (*_eglGetProcAddress)(procname);
 	else return ret;
 }
+
+EGLBoolean eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
+{
+	EGL_DLSYM(&_eglDestroyImageKHR, "eglDestroyImageKHR");
+	return (*_eglDestroyImageKHR)(dpy, image);
+}
+
 
 // vim:ts=4:sw=4:noexpandtab
