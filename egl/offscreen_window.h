@@ -19,9 +19,11 @@ protected:
 
 public:
 	OffscreenNativeWindowBuffer();
-	void writeToFd(int fd);
+
+	int writeToFd(int fd);
+	int readFromFd(int fd);
+
 	buffer_handle_t getHandle();
-	void readFromFd(int fd);
 };
 
 class OffscreenNativeWindow : public BaseNativeWindow
