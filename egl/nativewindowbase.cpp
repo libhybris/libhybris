@@ -161,7 +161,6 @@ int BaseNativeWindow::_query(const struct ANativeWindow* window, int what, int* 
 			return NO_ERROR;
 		case NATIVE_WINDOW_FORMAT:
 			*value = self->format();
-			printf("done\n");
 			return NO_ERROR;
 		case NATIVE_WINDOW_CONCRETE_TYPE:
 			*value = self->type();
