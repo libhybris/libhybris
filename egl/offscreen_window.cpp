@@ -192,6 +192,7 @@ int OffscreenNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer)
 				strerror(-err), m_buffers[m_tailbuffer]->handle, m_buffers[m_tailbuffer]->stride);
 	}
 	*buffer = m_buffers[m_tailbuffer];
+	waitForBuffer(m_buffers[m_tailbuffer]);
 	TRACE("dequeued buffer is %i %p\n",m_tailbuffer, m_buffers[m_tailbuffer]);
 	m_tailbuffer++;
 	if(m_tailbuffer == NUM_BUFFERS)
