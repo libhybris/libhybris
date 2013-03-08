@@ -38,11 +38,13 @@ struct buffer_info_header {
 };
 
 OffscreenNativeWindowBuffer::OffscreenNativeWindowBuffer()
+	: _locked(false)
 {
 }
 
 OffscreenNativeWindowBuffer::OffscreenNativeWindowBuffer(unsigned int width, unsigned int height,
 							 unsigned int format, unsigned int usage)
+	: _locked(false)
 {
 	ANativeWindowBuffer::width = width;
 	ANativeWindowBuffer::height = height;

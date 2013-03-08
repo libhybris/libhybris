@@ -139,9 +139,9 @@ OffscreenNativeWindow::OffscreenNativeWindow(unsigned int aWidth, unsigned int a
 	int err = gralloc_open((hw_module_t*)m_gralloc, &m_alloc);
 	TRACE("got alloc %p err:%s\n", m_alloc, strerror(-err));
 
-	for(unsigned int i = 0; i < NUM_BUFFERS; i++) {
+	for(unsigned int i = 0; i < NUM_BUFFERS; i++)
 		m_buffers[i] = 0;
-	}
+
 	m_frontbuffer = NUM_BUFFERS-1;
 	m_tailbuffer = 0;
 }
@@ -173,60 +173,77 @@ int OffscreenNativeWindow::setSwapInterval(int interval)
 	return 0;
 }
 
+OffscreenNativeWindowBuffer* OffscreenNativeWindow::allocateBuffer()
+{
+	OffscreenNativeWindowBuffer *buffer = 0;
+
+	buffer = new OffscreenNativeWindowBuffer(width(), height(), m_format, m_usage);
+
+	int usage = buffer->usage;
+	usage |= GRALLOC_USAGE_HW_TEXTURE;
+
+	TRACE("alloc usage: ");
+	printUsage(usage);
+
+	int err = m_alloc->alloc(m_alloc, width(), height(), m_format,
+				usage, &buffer->handle, &buffer->stride);
+
+	return buffer;
+}
+
 int OffscreenNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer)
 {
 	TRACE("%s ===================================\n",__PRETTY_FUNCTION__);
+
 	if(m_buffers[m_tailbuffer] == 0) {
-		m_buffers[m_tailbuffer] = new OffscreenNativeWindowBuffer(width(), height(), m_format, m_usage);
-		int usage = m_buffers[m_tailbuffer]->usage;
-		usage |= GRALLOC_USAGE_HW_TEXTURE;
-		TRACE("alloc usage: ");
-		printUsage(usage);
-		int err = m_alloc->alloc(m_alloc,
-						width(), height(), m_format,
-						usage,
-						&m_buffers[m_tailbuffer]->handle,
-						&m_buffers[m_tailbuffer]->stride);
-		TRACE("buffer %i is at %p (native %p) err=%s handle=%i stride=%i\n", 
+		m_buffers[m_tailbuffer] = allocateBuffer();
+
+		TRACE("buffer %i is at %p (native %p) handle=%i stride=%i\n",
 				m_tailbuffer, m_buffers[m_tailbuffer], (ANativeWindowBuffer*) m_buffers[m_tailbuffer],
-				strerror(-err), m_buffers[m_tailbuffer]->handle, m_buffers[m_tailbuffer]->stride);
+				m_buffers[m_tailbuffer]->handle, m_buffers[m_tailbuffer]->stride);
 	}
-	*buffer = m_buffers[m_tailbuffer];
-	waitForBuffer(m_buffers[m_tailbuffer]);
-	TRACE("dequeued buffer is %i %p\n",m_tailbuffer, m_buffers[m_tailbuffer]);
+
+	OffscreenNativeWindowBuffer *selectedBuffer = m_buffers[m_tailbuffer];
+	if (selectedBuffer->width != m_width || selectedBuffer->height != m_height) {
+		TRACE("%s buffer and window size doesn't match: resizing buffer ...\n", __PRETTY_FUNCTION__);
+		resizeBuffer(m_tailbuffer, selectedBuffer, m_width, m_height);
+	}
+
+	*buffer = selectedBuffer;
+
+	waitForBuffer(selectedBuffer);
+
+	TRACE("dequeued buffer is %i %p\n", m_tailbuffer, selectedBuffer);
+
 	m_tailbuffer++;
+
 	if(m_tailbuffer == NUM_BUFFERS)
 		m_tailbuffer = 0;
+
 	return NO_ERROR;
 }
 
 int OffscreenNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
 {
 	TRACE("%s ===================\n",__PRETTY_FUNCTION__);
-/*    OffscreenNativeWindowBuffer *buf = static_cast<OffscreenNativeWindowBuffer*>(buffer);
-	int usage = buf->usage | GRALLOC_USAGE_SW_READ_RARELY;
-	printf("lock usage: ");
-	printUsage(usage);
-	int err = m_gralloc->lock(m_gralloc,
-			buf->handle, 
-			usage,
-			0,0, m_width, m_height,
-			&buf->vaddr
-			);
-	TRACE("lock %s vaddr %p\n", strerror(-err), buf->vaddr);
-	return err;*/
+
+	OffscreenNativeWindowBuffer *buf = static_cast<OffscreenNativeWindowBuffer*>(buffer);
+	buf->lock();
+
 	return NO_ERROR;
 }
 
 int OffscreenNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer)
 {
-    OffscreenNativeWindowBuffer* buf = static_cast<OffscreenNativeWindowBuffer*>(buffer);
+	OffscreenNativeWindowBuffer* buf = static_cast<OffscreenNativeWindowBuffer*>(buffer);
+
+	buf->unlock();
 
 	m_frontbuffer++;
 	if (m_frontbuffer == NUM_BUFFERS)
 		m_frontbuffer = 0;
 
-    TRACE("queue buffer front now %i", m_frontbuffer);
+    TRACE("queue buffer front now %i\n", m_frontbuffer);
 	postBuffer(buf);
 
 	return NO_ERROR;
@@ -235,6 +252,10 @@ int OffscreenNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer)
 int OffscreenNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer)
 {
 	TRACE("%s\n",__PRETTY_FUNCTION__);
+
+	OffscreenNativeWindowBuffer *buf = static_cast<OffscreenNativeWindowBuffer*>(buffer);
+	buf->unlock();
+
 	return 0;
 }
 
@@ -305,4 +326,48 @@ int OffscreenNativeWindow::setUsage(int usage)
 	printUsage(usage);
 	m_usage = usage;
 	return NO_ERROR;
+}
+
+void OffscreenNativeWindow::resize(unsigned int width, unsigned int height)
+{
+	TRACE("%s width=%i height=%i\n", __PRETTY_FUNCTION__, width, height);
+
+	m_width = width;
+	m_defaultWidth = width;
+	m_height = height;
+	m_defaultHeight = height;
+
+	for (int n = 0; n < NUM_BUFFERS; n++) {
+		OffscreenNativeWindowBuffer *buffer = m_buffers[n];
+
+		if (!buffer) {
+			TRACE("%s buffer %i isn't used so we ignore it\n", __PRETTY_FUNCTION__, n);
+			continue;
+		}
+
+		if (!buffer->locked()) {
+			TRACE("%s buffer %i is locked so we ignore it\n", __PRETTY_FUNCTION__, n);
+			continue;
+		}
+
+		resizeBuffer(n, buffer, width, height);
+	}
+}
+
+void OffscreenNativeWindow::resizeBuffer(int id, OffscreenNativeWindowBuffer *buffer, unsigned int width,
+										 unsigned int height)
+{
+	if (buffer->handle) {
+		TRACE("%s freeing buffer %i ...\n", __PRETTY_FUNCTION__, id);
+		m_alloc->free(m_alloc, buffer->handle);
+		buffer->handle = 0;
+	}
+
+	int usage = buffer->usage;
+	usage |= GRALLOC_USAGE_HW_TEXTURE;
+	int err = m_alloc->alloc(m_alloc, this->width(), this->height(), m_format,
+				usage, &buffer->handle, &buffer->stride);
+
+	buffer->width = width;
+	buffer->height = height;
 }

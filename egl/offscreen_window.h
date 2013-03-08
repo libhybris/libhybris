@@ -24,6 +24,13 @@ public:
 	int readFromFd(int fd);
 
 	buffer_handle_t getHandle();
+
+	bool locked() { return _locked; }
+	void lock() { _locked = true; }
+	void unlock() { _locked = false; }
+
+private:
+	bool _locked;
 };
 
 class OffscreenNativeWindow : public BaseNativeWindow
@@ -35,6 +42,9 @@ public:
 
 	virtual void postBuffer(OffscreenNativeWindowBuffer *buffer) { }
 	virtual void waitForBuffer(OffscreenNativeWindowBuffer *buffer) { }
+
+	void resize(unsigned int width, unsigned int height);
+
 protected:
 	// overloads from BaseNativeWindow
 	virtual int setSwapInterval(int interval);
@@ -66,6 +76,11 @@ private:
 	OffscreenNativeWindowBuffer* m_buffers[NUM_BUFFERS];
 	alloc_device_t* m_alloc;
 	const gralloc_module_t* m_gralloc;
+private:
+	OffscreenNativeWindowBuffer* allocateBuffer();
+	void resizeBuffer(int id, OffscreenNativeWindowBuffer *buffer, unsigned int width,
+				unsigned int height);
+
 };
 
 #endif
