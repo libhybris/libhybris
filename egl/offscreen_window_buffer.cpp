@@ -102,12 +102,14 @@ int OffscreenNativeWindowBuffer::readFromFd(int fd)
 	if (ret < 0 || ret != sizeof(struct buffer_info_header))
 		return -EIO;
 
-	printf("Buffer info: width=%i, height=%i, stride=%i, numFds=%i, numInts=%i\n",
-		   hdr.width, hdr.height, hdr.stride, hdr.num_fds, hdr.num_ints);
+	printf("Buffer info: width=%i, height=%i, stride=%i, format=%i usage=%i numFds=%i, numInts=%i\n",
+		   hdr.width, hdr.height, hdr.stride, hdr.format, hdr.usage, hdr.num_fds, hdr.num_ints);
 
 	width = hdr.width;
 	height = hdr.height;
 	stride = hdr.stride;
+	format = hdr.format;
+	usage = hdr.usage;
 
 	if (handle) {
 		native_handle_close(handle);
