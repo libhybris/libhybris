@@ -56,9 +56,8 @@ static const char gVertexShader[] =
 	"}\n";
 
 static const char gFragmentShader[] = 
-	"#extension GL_OES_EGL_image_external : require\n"
 	"precision mediump float;\n"
-	"uniform samplerExternalOES yuvTexSampler;\n"
+	"uniform sampler2D yuvTexSampler;\n"
 	"varying vec2 yuvTexCoords;\n"
 	"void main() {\n"
 	"  gl_FragColor = texture2D(yuvTexSampler, yuvTexCoords);\n"
@@ -293,10 +292,16 @@ public:
 		glGenTextures(1, &texture);
 		checkGlError("glGenTextures");
 
-		glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture);
+		glBindTexture(GL_TEXTURE_2D, texture);
 		checkGlError("glBindTexture");
-		glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES, (GLeglImageOES)image);
+		glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, (GLeglImageOES)image);
 		checkGlError("glEGLImageTargetTexture2DOES");
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+
 
 		glViewport ( 0 , 0 , 1024, 768);
 		float c = (frame % 64) / 64.0f;
@@ -317,11 +322,12 @@ public:
 
 		glUniform1i(gYuvTexSamplerHandle, 0);
 		checkGlError("glUniform1i");
-		glBindTexture(GL_TEXTURE_EXTERNAL_OES, texture);
-		checkGlError("glBindTexture");
-
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 		checkGlError("glDrawArrays");
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+		checkGlError("glBindTexture");
+		glUseProgram(0);
 
 		eglSwapBuffers(display, surface);
 		eglDestroyImageKHR(display, image);
