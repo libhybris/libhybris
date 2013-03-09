@@ -356,13 +356,17 @@ int child(int fd)
 {
     EGLClient client;
 	printf ("**** initialized client\n");
-
-	while (1) {
-        client.render();
-    	OffscreenNativeWindowBuffer *buf = client.window->getFrontBuffer();
-    	buf->writeToFd(fd);
-        fflush(NULL);
-    }
+        while (1) {
+	        client.render();
+	    	OffscreenNativeWindowBuffer *buf = client.window->getFrontBuffer();
+	    	buf->writeToFd(fd);
+	        fflush(NULL);
+		// Breaks on Qualcomm otherwise
+		if (getenv("ONLYONCE"))
+		{
+			while (1) {}
+		}
+	}        
 } 
 
 int main(int argc, char **argv)
