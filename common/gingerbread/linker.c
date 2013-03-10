@@ -1288,7 +1288,7 @@ static int reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
             sym_name = (char *)(strtab + symtab[sym].st_name);
             sym_addr = NULL;
             if ((sym_addr = get_hooked_symbol(sym_name)) != NULL) {
-               printf("hooked symbol %s to %x\n", sym_name, sym_addr);
+               DEBUG("hooked symbol %s to %x\n", sym_name, sym_addr);
             }
             else
             {
