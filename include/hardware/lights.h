@@ -130,6 +130,13 @@ struct light_device_t {
             struct light_state_t const* state);
 };
 
+/** convenience API for opening and closing a device */
+
+static inline int lights_open(const struct hw_module_t* module, const char *id,
+        struct light_device_t** device)
+{
+    return module->methods->open(module, id, (struct hw_device_t**)device);
+}
 
 __END_DECLS
 
