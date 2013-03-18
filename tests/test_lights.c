@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 	hw_get_module(LIGHTS_HARDWARE_MODULE_ID, (const hw_module_t**) &hwmod);
 	assert(hwmod != NULL);
 
-	assert(lights_open(hwmod, LIGHT_ID_NOTIFICATIONS, &notifications) == 0);
+	assert(light_device_open(hwmod, LIGHT_ID_NOTIFICATIONS, &notifications) == 0);
 	assert(notifications != 0);
 
 	memset(&notification_state, 0, sizeof(struct light_state_t));
@@ -39,6 +39,8 @@ int main(int argc, char **argv)
 	notification_state.flashOffMS = 1000;
 
 	assert(notifications->set_light(notifications, &notification_state) == 0);
+
+	light_device_close(notifications);
 
 	return 0;
 }

@@ -132,10 +132,18 @@ struct light_device_t {
 
 /** convenience API for opening and closing a device */
 
-static inline int lights_open(const struct hw_module_t* module, const char *id,
+static inline int light_device_open(const struct hw_module_t* module, const char *id,
         struct light_device_t** device)
 {
     return module->methods->open(module, id, (struct hw_device_t**)device);
+}
+
+static inline void light_device_close(const struct light_device_t *device)
+{
+    if (!device)
+        return;
+
+    device->common.close(device);
 }
 
 __END_DECLS
