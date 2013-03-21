@@ -98,6 +98,7 @@ AC_CONFIG_FILES([
 	egl/Makefile
 	glesv2/Makefile
 	hardware/Makefile
+	ui/Makefile
 	include/Makefile
 	tests/Makefile
 ])
