@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <cutils/native_handle.h>
+#include <android/cutils/native_handle.h>
 
 native_handle_t* native_handle_create(int numFds, int numInts)
 {

@@ -39,19 +39,19 @@ vginclude_HEADERS = \
 	VG/vgplatform.h \
 	VG/vgu.h
 
-cutilsincludedir = $(includedir)/cutils
+cutilsincludedir = $(includedir)/android/cutils
 cutilsinclude_HEADERS = \
-	cutils/native_handle.h
+	android/cutils/native_handle.h
 
-systemincludedir = $(includedir)/system
+systemincludedir = $(includedir)/android/system
 systeminclude_HEADERS = \
-	system/window.h \
-	system/graphics.h
+	android/system/window.h \
+	android/system/graphics.h
 
-hardwareincludedir = $(includedir)/hardware
+hardwareincludedir = $(includedir)/android/hardware
 hardwareinclude_HEADERS = \
-	hardware/fb.h \
-	hardware/gralloc.h \
-	hardware/hardware.h \
-	hardware/sensors.h \
-	hardware/lights.h
+	android/hardware/fb.h \
+	android/hardware/gralloc.h \
+	android/hardware/hardware.h \
+	android/hardware/sensors.h \
+	android/hardware/lights.h

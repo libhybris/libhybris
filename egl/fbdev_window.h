@@ -2,7 +2,7 @@
 #define FBDEV_WINDOW_H
 #include "nativewindowbase.h"
 #include <linux/fb.h>
-#include <hardware/gralloc.h>
+#include <android/hardware/gralloc.h>
 #define FRAMEBUFFER_PARTITIONS 2
 
 class FbDevNativeWindowBuffer : public BaseNativeWindowBuffer

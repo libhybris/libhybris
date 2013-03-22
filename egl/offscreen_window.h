@@ -2,7 +2,7 @@
 #define OFFSCREEN_WINDOW_H
 
 #include <linux/fb.h>
-#include <hardware/gralloc.h>
+#include <android/hardware/gralloc.h>
 
 #include "nativewindowbase.h"
 

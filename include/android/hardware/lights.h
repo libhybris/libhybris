@@ -21,7 +21,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#include <hardware/hardware.h>
+#include <android/hardware/hardware.h>
 
 __BEGIN_DECLS
 

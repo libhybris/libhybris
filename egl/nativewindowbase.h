@@ -1,7 +1,7 @@
 #ifndef NATIVEWINDOWBASE_H
 #define NATIVEWINDOWBASE_H
 
-#include <system/window.h>
+#include <android/system/window.h>
 #include <EGL/egl.h>
 
 #define NO_ERROR                0L

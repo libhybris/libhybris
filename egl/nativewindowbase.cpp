@@ -1,5 +1,5 @@
-#include <system/window.h>
-#include <hardware/gralloc.h>
+#include <android/system/window.h>
+#include <android/hardware/gralloc.h>
 #include "support.h"
 #include <stdarg.h>
 
