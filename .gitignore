@@ -24,3 +24,13 @@ ltmain.sh
 ylwrap
 compile
 stamp-h1
+
+aclocal-copy
+arm-*-linux-gnueabi-libtool
+
+tests/test_egl
+tests/test_glesv2
+tests/test_lights
+tests/test_offscreen_rendering
+tests/test_sensors
+tests/test_ui
