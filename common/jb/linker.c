@@ -41,10 +41,8 @@
 
 #include <sys/mman.h>
 
-#include <sys/atomics.h>
-
 /* special private C library header - see Android.mk */
-#include <bionic_tls.h>
+//#include "bionic_tls.h"
 
 #include "linker.h"
 #include "linker_debug.h"
@@ -339,7 +337,7 @@ const char *addr_to_name(unsigned addr)
  * This function is exposed via dlfcn.c and libdl.so.
  */
 #ifdef ANDROID_ARM_LINKER
-_Unwind_Ptr dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
+_Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
 {
     soinfo *si;
     unsigned addr = (unsigned)pc;
@@ -357,7 +355,7 @@ _Unwind_Ptr dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
 /* Here, we only have to provide a callback to iterate across all the
  * loaded libraries. gcc_eh does the rest. */
 int
-dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),
+android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),
                 void *data)
 {
     soinfo *si;
@@ -1520,6 +1518,10 @@ void call_constructors_recursive(soinfo *si)
 {
     if (si->constructors_called)
         return;
+    if (strcmp(si->name,"libc.so") == 0) {
+	printf("=============> Skipping libc.so\n");
+	return;
+    }
 
     // Set this before actually calling the constructors, otherwise it doesn't
     // protect against recursive constructor calls. One simple example of
@@ -2043,7 +2045,7 @@ static unsigned __linker_init_post_relocation(unsigned **elfdata)
      *       to point to a different location to ensure that no other
      *       shared library constructor can access it.
      */
-    __libc_init_tls(elfdata);
+    //__libc_init_tls(elfdata);
 
     pid = getpid();
 
@@ -2073,7 +2075,7 @@ sanitize:
     if (program_is_setuid)
         linker_env_secure();
 
-    debugger_init();
+    //debugger_init();
 
     /* Get a few environment variables */
     {
