@@ -47,6 +47,51 @@ AC_ARG_ENABLE(mesa,
   [mesa="no"])
 AM_CONDITIONAL( [WANT_MESA], [test x"$mesa" = x"yes"])
 
+AC_ARG_ENABLE(arch,
+  [  --enable-arch[=arch]     Compile specific CPU target(default=arm)
+                              arm: compile for ARM
+                              x86: Compile for x86],
+  [ if   test "x$enableval" = "xarm" ; then
+      arch="arm"
+   elif test "x$enableval" = "xx86" ; then
+      arch="x86"
+   else
+      echo
+      echo "Error!"
+      echo "Unknown architecture' type"
+      exit -1
+   fi
+  ],
+  [arch="arm"]
+  )
+AM_CONDITIONAL([WANT_ARCH_ARM], [test x$arch = xarm])
+AM_CONDITIONAL([WANT_ARCH_X86], [test x$arch = xx86])
+
+AC_ARG_ENABLE(alinker,
+  [  --enable-alinker[=linker]      Compile specific Android Linker (default=gingerbread)
+                                    gb: gingerbread
+                                    ics: Ice Cream sandwich
+                                    jb: Jelly Bean],
+  [ if   test "x$enableval" = "xgb" ; then
+      alinker="gb"
+   elif test "x$enableval" = "xics" ; then
+      alinker="ics"
+   elif test "x$enableval" = "xjb" ; then
+      alinker="jb"
+   else
+      echo
+      echo "Error!"
+      echo "Unknown android version"
+      exit -1
+   fi
+  ],
+  [alinker="gingerbread"]
+  )
+AM_CONDITIONAL([WANT_GB], [test x$alinker = xbg])
+AM_CONDITIONAL([WANT_ICS], [test x$alinker = xics])
+AM_CONDITIONAL([WANT_JB], [test x$alinker = xjb])
+
+
 AC_CONFIG_FILES([
 	Makefile
 	common/Makefile
@@ -68,6 +113,10 @@ echo
 echo "  debug build.............: $debug"
 echo
 echo "  prefix..................: $prefix"
+echo
+echo "  arch  ..................: $arch"
+echo
+echo "  linker..................: $alinker"
 echo
 echo "------------------------------------------------------------------------"
 echo
