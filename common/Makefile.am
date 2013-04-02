@@ -1,24 +1,43 @@
 lib_LTLIBRARIES = \
 	libhybris-common.la
 
-# FIXME this has to be detected at configuration phase
+if WANT_ARCH_ARM
 ARCHFLAGS = -DHAVE_ARM_TLS_REGISTER -DANDROID_ARM_LINKER
-# ARCHFLAGS = -DANDROID_X86_LINKER
+endif
+
+if  WANT_ARCH_X86
+ARCHFLAGS = -DANDROID_X86_LINKER
+endif
+
+if  WANT_GB
+LNKR = gingerbread
+endif
+
+if  WANT_ICS
+LNKR = ics
+endif
+
+if  WANT_JB
+LNKR = jb
+endif
+
+
+
 
 libhybris_common_la_SOURCES = \
 	hooks.c \
 	properties.c \
 	strlcpy.c
 libhybris_common_la_SOURCES += \
-	gingerbread/dlfcn.c \
-	gingerbread/linker.c \
-	gingerbread/linker_environ.c \
-	gingerbread/linker_format.c \
-	gingerbread/rt.c
+	$(LNKR)/dlfcn.c \
+	$(LNKR)/linker.c \
+	$(LNKR)/linker_environ.c \
+	$(LNKR)/linker_format.c \
+	$(LNKR)/rt.c
 libhybris_common_la_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/common \
-	-I$(top_srcdir)/common/gingerbread \
+	-I$(top_srcdir)/common/$(LNKR) \
 	-DLINKER_DEBUG=1 \
 	-DLINKER_TEXT_BASE=0xB0000100 \
 	-DLINKER_AREA_SIZE=0x01000000 \

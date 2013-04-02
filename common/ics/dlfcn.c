@@ -180,6 +180,8 @@ _Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
 #define ANDROID_LIBDL_STRTAB \
                       "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_iterate_phdr\0"
 
+int android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),void *data);
+
 #elif defined(ANDROID_SH_LINKER)
 //                     0000000 00011111 111112 22222222 2333333 3333444444444455
 //                     0123456 78901234 567890 12345678 9012345 6789012345678901

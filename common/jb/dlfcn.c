@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define _GNU_SOURCE
 #include <dlfcn.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -42,7 +43,7 @@ static const char *dl_errors[] = {
 #define likely(expr)   __builtin_expect (expr, 1)
 #define unlikely(expr) __builtin_expect (expr, 0)
 
-pthread_mutex_t dl_lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER;
+static pthread_mutex_t dl_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static void set_dlerror(int err)
 {
@@ -51,7 +52,7 @@ static void set_dlerror(int err)
     dl_err_str = (const char *)&dl_err_buf[0];
 };
 
-void *dlopen(const char *filename, int flag)
+void *android_dlopen(const char *filename, int flag)
 {
     soinfo *ret;
 
@@ -67,14 +68,14 @@ void *dlopen(const char *filename, int flag)
     return ret;
 }
 
-const char *dlerror(void)
+const char *android_dlerror(void)
 {
     const char *tmp = dl_err_str;
     dl_err_str = NULL;
     return (const char *)tmp;
 }
 
-void *dlsym(void *handle, const char *symbol)
+void *android_dlsym(void *handle, const char *symbol)
 {
     soinfo *found;
     Elf32_Sym *sym;
@@ -125,7 +126,7 @@ err:
     return 0;
 }
 
-int dladdr(const void *addr, Dl_info *info)
+int android_dladdr(const void *addr, Dl_info *info)
 {
     int ret = 0;
 
@@ -156,7 +157,7 @@ int dladdr(const void *addr, Dl_info *info)
     return ret;
 }
 
-int dlclose(void *handle)
+int android_dlclose(void *handle)
 {
     pthread_mutex_lock(&dl_lock);
     (void)unload_library((soinfo*)handle);
@@ -170,12 +171,23 @@ int dlclose(void *handle)
 #define ANDROID_LIBDL_STRTAB \
                       "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_unwind_find_exidx\0"
 
+_Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
+
 #elif defined(ANDROID_X86_LINKER)
 //                     0000000 00011111 111112 22222222 2333333 3333444444444455
 //                     0123456 78901234 567890 12345678 9012345 6789012345678901
 #define ANDROID_LIBDL_STRTAB \
                       "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_iterate_phdr\0"
-#else
+
+int android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *data),void *data);
+
+#elif defined(ANDROID_SH_LINKER)
+//                     0000000 00011111 111112 22222222 2333333 3333444444444455
+//                     0123456 78901234 567890 12345678 9012345 6789012345678901
+#define ANDROID_LIBDL_STRTAB \
+                      "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_iterate_phdr\0"
+
+#else /* !defined(ANDROID_ARM_LINKER) && !defined(ANDROID_X86_LINKER) */
 #error Unsupported architecture. Only ARM and x86 are presently supported.
 #endif
 
@@ -188,39 +200,45 @@ static Elf32_Sym libdl_symtab[] = {
     { st_name: sizeof(ANDROID_LIBDL_STRTAB) - 1,
     },
     { st_name: 0,   // starting index of the name in libdl_info.strtab
-      st_value: (Elf32_Addr) &dlopen,
+      st_value: (Elf32_Addr) &android_dlopen,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 7,
-      st_value: (Elf32_Addr) &dlclose,
+      st_value: (Elf32_Addr) &android_dlclose,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 15,
-      st_value: (Elf32_Addr) &dlsym,
+      st_value: (Elf32_Addr) &android_dlsym,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 21,
-      st_value: (Elf32_Addr) &dlerror,
+      st_value: (Elf32_Addr) &android_dlerror,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 29,
-      st_value: (Elf32_Addr) &dladdr,
+      st_value: (Elf32_Addr) &android_dladdr,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
 #ifdef ANDROID_ARM_LINKER
     { st_name: 36,
-      st_value: (Elf32_Addr) &dl_unwind_find_exidx,
+      st_value: (Elf32_Addr) &android_dl_unwind_find_exidx,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
 #elif defined(ANDROID_X86_LINKER)
     { st_name: 36,
-      st_value: (Elf32_Addr) &dl_iterate_phdr,
+      st_value: (Elf32_Addr) &android_dl_iterate_phdr,
+      st_info: STB_GLOBAL << 4,
+      st_shndx: 1,
+    },
+#elif defined(ANDROID_SH_LINKER)
+    { st_name: 36,
+      st_value: (Elf32_Addr) &android_dl_iterate_phdr,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
