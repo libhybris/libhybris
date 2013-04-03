@@ -65,19 +65,22 @@ BaseNativeWindow::BaseNativeWindow()
 	ANativeWindow::common.decRef = _decRef;
 	ANativeWindow::common.incRef = _incRef;
 
-	ANativeWindow::flags = 0;
-	ANativeWindow::minSwapInterval = 0;
-	ANativeWindow::maxSwapInterval = 0;
-	ANativeWindow::xdpi = 0;
-	ANativeWindow::ydpi = 0;
+	const_cast<uint32_t&>(ANativeWindow::flags) = 0;
+	const_cast<float&>(ANativeWindow::xdpi) = 0;
+	const_cast<float&>(ANativeWindow::ydpi) = 0;
+	const_cast<int&>(ANativeWindow::minSwapInterval) = 0;
+	const_cast<int&>(ANativeWindow::maxSwapInterval) = 0;
 
 	ANativeWindow::setSwapInterval = _setSwapInterval;
-	ANativeWindow::lockBuffer = &_lockBuffer;
-	ANativeWindow::dequeueBuffer = &_dequeueBuffer;
+	ANativeWindow::lockBuffer_DEPRECATED = &_lockBuffer_DEPRECATED;
+	ANativeWindow::dequeueBuffer_DEPRECATED = &_dequeueBuffer_DEPRECATED;
+	ANativeWindow::queueBuffer_DEPRECATED = &_queueBuffer_DEPRECATED;
+	ANativeWindow::cancelBuffer_DEPRECATED = &_cancelBuffer_DEPRECATED;
 	ANativeWindow::queueBuffer = &_queueBuffer;
+	ANativeWindow::dequeueBuffer = &_dequeueBuffer;
+	ANativeWindow::cancelBuffer = &_cancelBuffer;
 	ANativeWindow::query = &_query;
 	ANativeWindow::perform = &_perform;
-	ANativeWindow::cancelBuffer = &_cancelBuffer;
 
 	refcount = 0;
 }
@@ -111,20 +114,61 @@ void BaseNativeWindow::_incRef(struct android_native_base_t* base)
 
 int BaseNativeWindow::_setSwapInterval(struct ANativeWindow* window, int interval)
 {
-	TRACE("%s interval=%i\n",__PRETTY_FUNCTION__, interval);
 	return static_cast<BaseNativeWindow*>(window)->setSwapInterval(interval);
 }
 
-int BaseNativeWindow::_dequeueBuffer(ANativeWindow* window, ANativeWindowBuffer** buffer)
+int BaseNativeWindow::_dequeueBuffer_DEPRECATED(ANativeWindow* window, ANativeWindowBuffer** buffer)
 {
-	TRACE("%s pointer dest %p, contains %p\n",__PRETTY_FUNCTION__, buffer, *buffer);
 	BaseNativeWindowBuffer* temp = static_cast<BaseNativeWindowBuffer*>(*buffer);
-	TRACE("temp %p\n", temp);
-	int ret = static_cast<BaseNativeWindow*>(window)->dequeueBuffer(&temp);
-	TRACE("temp now %p\n", temp);
+	int fenceFd = -1;
+	int ret = static_cast<BaseNativeWindow*>(window)->dequeueBuffer(&temp, &fenceFd);
 	*buffer = static_cast<ANativeWindowBuffer*>(temp);
-	TRACE("now pointer dest %p, contains %p\n", buffer, *buffer);
 	return ret;
+}
+
+int BaseNativeWindow::_dequeueBuffer(struct ANativeWindow *window, ANativeWindowBuffer **buffer, int *fenceFd)
+{
+	BaseNativeWindowBuffer *nativeBuffer = static_cast<BaseNativeWindowBuffer*>(*buffer);
+	int ret = static_cast<BaseNativeWindow*>(window)->dequeueBuffer(&nativeBuffer, fenceFd);
+	*buffer = static_cast<ANativeWindowBuffer*>(nativeBuffer);
+	return ret;
+}
+
+int BaseNativeWindow::_queueBuffer_DEPRECATED(struct ANativeWindow* window, ANativeWindowBuffer* buffer)
+{
+	BaseNativeWindow *nativeWindow = static_cast<BaseNativeWindow*>(window);
+	BaseNativeWindowBuffer *nativeBuffer = static_cast<BaseNativeWindowBuffer*>(buffer);
+
+	return nativeWindow->queueBuffer(nativeBuffer, -1);
+}
+
+int BaseNativeWindow::_queueBuffer(struct ANativeWindow *window, ANativeWindowBuffer *buffer, int fenceFd)
+{
+	BaseNativeWindow *nativeWindow = static_cast<BaseNativeWindow*>(window);
+	BaseNativeWindowBuffer *nativeBuffer = static_cast<BaseNativeWindowBuffer*>(buffer);
+
+	return nativeWindow->queueBuffer(nativeBuffer, fenceFd);
+}
+
+int BaseNativeWindow::_cancelBuffer_DEPRECATED(struct ANativeWindow* window, ANativeWindowBuffer* buffer)
+{
+	BaseNativeWindow *nativeWindow = static_cast<BaseNativeWindow*>(window);
+	BaseNativeWindowBuffer *nativeBuffer = static_cast<BaseNativeWindowBuffer*>(buffer);
+
+	return nativeWindow->cancelBuffer(nativeBuffer, -1);
+}
+
+int BaseNativeWindow::_cancelBuffer(struct ANativeWindow *window, ANativeWindowBuffer *buffer, int fenceFd)
+{
+	BaseNativeWindow *nativeWindow = static_cast<BaseNativeWindow*>(window);
+	BaseNativeWindowBuffer *nativeBuffer = static_cast<BaseNativeWindowBuffer*>(buffer);
+
+	return nativeWindow->cancelBuffer(nativeBuffer, fenceFd);
+}
+
+int BaseNativeWindow::_lockBuffer_DEPRECATED(struct ANativeWindow* window, ANativeWindowBuffer* buffer)
+{
+	return static_cast<BaseNativeWindow*>(window)->lockBuffer(static_cast<BaseNativeWindowBuffer*>(buffer));
 }
 
 const char *BaseNativeWindow::_native_window_operation(int what)
@@ -165,19 +209,6 @@ const char *BaseNativeWindow::_native_query_operation(int what)
 		case NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND: return "NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND";
 		default: return "NATIVE_UNKNOWN_QUERY";
 	}
-}
-
-int BaseNativeWindow::_lockBuffer(struct ANativeWindow* window, ANativeWindowBuffer* buffer)
-{
-	TRACE("%s buffer=%p\n",__PRETTY_FUNCTION__, buffer);
-	return static_cast<BaseNativeWindow*>(window)->lockBuffer(static_cast<BaseNativeWindowBuffer*>(buffer));
-}
-
-int BaseNativeWindow::_queueBuffer(struct ANativeWindow* window, ANativeWindowBuffer* buffer)
-{
-	TRACE("%s buffer=%p\n",__PRETTY_FUNCTION__, buffer);
-	return static_cast<BaseNativeWindow*>(window)->queueBuffer(static_cast<BaseNativeWindowBuffer*>(buffer));
-	return 0;
 }
 
 int BaseNativeWindow::_query(const struct ANativeWindow* window, int what, int* value)
@@ -292,10 +323,3 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 	}
 	return NO_ERROR;
 }
-
-int BaseNativeWindow::_cancelBuffer(struct ANativeWindow* window, ANativeWindowBuffer* buffer)
-{
-	TRACE("%s buffer = %p\n",__PRETTY_FUNCTION__, buffer);
-	return static_cast<BaseNativeWindow*>(window)->cancelBuffer(static_cast<BaseNativeWindowBuffer*>(buffer));
-}
-
