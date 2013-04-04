@@ -85,9 +85,9 @@ AC_ARG_ENABLE(alinker,
       exit -1
    fi
   ],
-  [alinker="gingerbread"]
+  [alinker="gb"]
   )
-AM_CONDITIONAL([WANT_GB], [test x$alinker = xbg])
+AM_CONDITIONAL([WANT_GB], [test x$alinker = xgb])
 AM_CONDITIONAL([WANT_ICS], [test x$alinker = xics])
 AM_CONDITIONAL([WANT_JB], [test x$alinker = xjb])
 
