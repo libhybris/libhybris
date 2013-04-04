@@ -22,9 +22,8 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#include <cutils/native_handle.h>
-
-#include <hardware/hardware.h>
+#include <android/cutils/native_handle.h>
+#include <android/hardware/hardware.h>
 
 __BEGIN_DECLS
 

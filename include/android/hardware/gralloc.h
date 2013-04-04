@@ -18,17 +18,17 @@
 #ifndef ANDROID_GRALLOC_INTERFACE_H
 #define ANDROID_GRALLOC_INTERFACE_H
 
-#include <system/window.h>
-#include <hardware/hardware.h>
+#include <android/system/window.h>
+#include <android/hardware/hardware.h>
 
 #include <stdint.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#include <cutils/native_handle.h>
+#include <android/cutils/native_handle.h>
 
-#include <hardware/hardware.h>
-#include <hardware/fb.h>
+#include <android/hardware/hardware.h>
+#include <android/hardware/fb.h>
 
 __BEGIN_DECLS
 

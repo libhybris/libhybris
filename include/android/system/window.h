@@ -22,8 +22,8 @@
 #include <string.h>
 #include <sys/cdefs.h>
 
-#include <system/graphics.h>
-#include <cutils/native_handle.h>
+#include <android/system/graphics.h>
+#include <android/cutils/native_handle.h>
 
 __BEGIN_DECLS
 

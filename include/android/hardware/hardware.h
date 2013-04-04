@@ -20,8 +20,8 @@
 #include <stdint.h>
 #include <sys/cdefs.h>
 
-#include <cutils/native_handle.h>
-#include <system/graphics.h>
+#include <android/cutils/native_handle.h>
+#include <android/system/graphics.h>
 
 __BEGIN_DECLS
 

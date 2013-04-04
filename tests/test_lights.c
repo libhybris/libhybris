@@ -18,7 +18,7 @@
 #include <memory.h>
 #include <assert.h>
 #include <stdio.h>
-#include <hardware/lights.h>
+#include <android/hardware/lights.h>
 
 int main(int argc, char **argv)
 {
