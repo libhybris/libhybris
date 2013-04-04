@@ -3,7 +3,8 @@ bin_PROGRAMS = \
 	test_glesv2 \
 	test_offscreen_rendering \
 	test_sensors \
-	test_lights
+	test_lights \
+	test_ui
 
 test_egl_SOURCES = test_egl.c
 test_egl_CFLAGS = \
@@ -60,3 +61,10 @@ test_lights_CFLAGS = \
 test_lights_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/hardware/libhardware.la
+
+test_ui_SOURCES = test_ui.c
+test_ui_CFLAGS = \
+	-I$(top_srcdir)/include
+test_ui_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/ui/libui.la
