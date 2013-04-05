@@ -683,6 +683,32 @@ static int my_set_errno(int oi_errno)
     return -1;
 }
 
+/* 
+ * redirection for bionic's __sF, which is defined as:
+ *   FILE __sF[3];
+ *   #define stdin  &__sF[0];
+ *   #define stdout &__sF[1];
+ *   #define stderr &__sF[2];
+ *   So the goal here is to catch the call to file methods where the FILE* pointer
+ *   is either stdin, stdout or stderr, and translate that pointer to a valid glibc
+ *   pointer.
+ *   Currently, only fputs is managed.
+ */
+static char my_sF[3*84] = {0};
+
+static int my_fputs(const char *s, FILE *fp)
+{
+    char *c_fp = (char*)fp;
+    if( c_fp == &my_sF[0] )
+        return fputs(s, stdin);
+    else if( c_fp == &my_sF[84] )
+        return fputs(s, stdout);
+    else if( c_fp == &my_sF[84*2] )
+        return fputs(s, stderr);
+
+    return fputs(s, fp);
+}
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -824,10 +850,11 @@ static struct _hook hooks[] = {
     {"pthread_rwlock_timedrdlock", my_pthread_rwlock_timedrdlock},
     {"pthread_rwlock_timedwrlock", my_pthread_rwlock_timedwrlock},
     /* stdio.h */
+    {"__sF", &my_sF},
     {"fopen", fopen},
     {"fgets", fgets},
     {"fclose", fclose},
-    {"fputs", fputs},
+    {"fputs", my_fputs},
     {"fseeko", fseeko},
     {"fwrite", fwrite},
     {"puts", puts},
