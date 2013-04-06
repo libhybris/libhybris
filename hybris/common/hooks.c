@@ -694,16 +694,17 @@ static int my_set_errno(int oi_errno)
  *   pointer.
  *   Currently, only fputs is managed.
  */
-static char my_sF[3*84] = {0};
+#define BIONIC_SIZEOF_FILE 84
+static char my_sF[3*BIONIC_SIZEOF_FILE] = {0};
 
 static int my_fputs(const char *s, FILE *fp)
 {
     char *c_fp = (char*)fp;
     if( c_fp == &my_sF[0] )
         return fputs(s, stdin);
-    else if( c_fp == &my_sF[84] )
+    else if( c_fp == &my_sF[BIONIC_SIZEOF_FILE] )
         return fputs(s, stdout);
-    else if( c_fp == &my_sF[84*2] )
+    else if( c_fp == &my_sF[BIONIC_SIZEOF_FILE*2] )
         return fputs(s, stderr);
 
     return fputs(s, fp);
