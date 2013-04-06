@@ -3,6 +3,9 @@
 
 #include <android/system/window.h>
 #include <EGL/egl.h>
+#include "support.h"
+#include <stdarg.h>
+#include <assert.h>
 
 #define NO_ERROR                0L
 #define BAD_VALUE               -1
@@ -18,7 +21,7 @@ class BaseNativeWindowBuffer : public ANativeWindowBuffer
 {
 protected:
 	BaseNativeWindowBuffer();
-
+	virtual ~BaseNativeWindowBuffer() {}
 private:
 	unsigned int refcount;
 	static void _decRef(struct android_native_base_t* base);

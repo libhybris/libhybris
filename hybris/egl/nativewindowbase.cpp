@@ -20,19 +20,26 @@ BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 	ANativeWindowBuffer::format = 0;
 	ANativeWindowBuffer::usage = 0;
 	ANativeWindowBuffer::handle = 0;
+
+	refcount = 0;
 }
 
 void BaseNativeWindowBuffer::_decRef(struct android_native_base_t* base)
 {
+	/* FIXME: This really should be atomic / locked */
 	ANativeWindowBuffer* self = container_of(base, ANativeWindowBuffer, common);
 	static_cast<BaseNativeWindowBuffer*>(self)->refcount--;
-};
+	if (static_cast<BaseNativeWindowBuffer*>(self)->refcount == 0)
+	{
+	    delete static_cast<BaseNativeWindowBuffer *>(self);
+	}
+}
 
 void BaseNativeWindowBuffer::_incRef(struct android_native_base_t* base)
 {
 	ANativeWindowBuffer* self = container_of(base, ANativeWindowBuffer, common);
-	static_cast<BaseNativeWindowBuffer*>(self)->refcount++;
-};
+        static_cast<BaseNativeWindowBuffer*>(self)->refcount++;
+}
 
 BaseNativeWindow::BaseNativeWindow()
 {
