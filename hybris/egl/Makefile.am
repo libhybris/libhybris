@@ -35,4 +35,5 @@ eglinclude_HEADERS = \
 	eglhybris.h \
 	offscreen_window.h \
 	fbdev_window.h \
-	nativewindowbase.h
+	nativewindowbase.h \
+	support.h
