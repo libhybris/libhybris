@@ -95,6 +95,9 @@ AM_CONDITIONAL([WANT_JB], [test x$alinker = xjb])
 AC_CONFIG_FILES([
 	Makefile
 	common/Makefile
+	common/gingerbread/Makefile
+	common/ics/Makefile
+	common/jb/Makefile
 	egl/Makefile
 	glesv2/Makefile
 	hardware/Makefile
