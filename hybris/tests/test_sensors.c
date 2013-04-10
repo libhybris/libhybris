@@ -17,6 +17,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <android/hardware/sensors.h>
 
 int main(int argc, char **argv)
