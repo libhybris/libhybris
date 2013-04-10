@@ -143,7 +143,7 @@ static inline void light_device_close(const struct light_device_t *device)
     if (!device)
         return;
 
-    device->common.close(device);
+    device->common.close((struct hw_device_t*) device);
 }
 
 __END_DECLS
