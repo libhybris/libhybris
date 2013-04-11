@@ -1,24 +1,20 @@
+SUBDIRS = platforms
+
 lib_LTLIBRARIES = \
 	libEGL.la
 
 libEGL_la_SOURCES = \
 	egl.c \
-	ws.c \
-	ws_fbdev.cpp \
-	nativewindowbase.cpp \
-	fbdev_window.cpp \
-	fdpass.c \
-	native_handle.c \
-	offscreen_window.cpp \
-	offscreen_window_buffer.cpp
-libEGL_la_CFLAGS = -I$(top_srcdir)/include
+	ws.c
+
+libEGL_la_CFLAGS = -I$(top_srcdir)/include -DPKGLIBDIR="\"$(pkglibdir)/\""
 if WANT_MESA
 libEGL_la_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
 if WANT_DEBUG
 libEGL_la_CFLAGS += -ggdb -O0 -DDEBUG
 endif
-libEGL_la_CXXFLAGS = -I$(top_srcdir)/include
+libEGL_la_CXXFLAGS = -I$(top_srcdir)/include -DPKGLIBDIR="\"$(pkglibdir)/\""
 if WANT_MESA
 libEGL_la_CXXFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
@@ -33,7 +29,4 @@ libEGL_la_LDFLAGS = \
 eglincludedir = $(includedir)/EGL
 eglinclude_HEADERS = \
 	eglhybris.h \
-	offscreen_window.h \
-	fbdev_window.h \
-	nativewindowbase.h \
 	support.h

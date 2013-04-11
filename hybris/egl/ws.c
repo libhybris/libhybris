@@ -3,72 +3,51 @@
 #include <ws.h>
 #include <stdlib.h>
 #include <dlfcn.h>
+#include <stdlib.h>
+#include <assert.h>
+static struct ws_module *ws = NULL;
 
-#define WS_NULL 0
-#define WS_FBDEV 1
-
-static void * (*_androidCreateDisplaySurface)();
-static void *_libui = NULL;
-
-static void _init_androidui()
+static void _init_ws()
 {
-       _libui = (void *) android_dlopen("/system/lib/libui.so", RTLD_LAZY);
-}
-
-#define UI_DLSYM(fptr, sym) do { if (_libui == NULL) { _init_androidui(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libui, sym); } } while (0) 
-
-EGLNativeWindowType android_createDisplaySurface()
-{
-	UI_DLSYM(&_androidCreateDisplaySurface, "android_createDisplaySurface");
-	return (EGLNativeWindowType) (*_androidCreateDisplaySurface)();
-}
-
-
-int _whatWS()
-{
-	char *egl_platform = getenv("EGL_PLATFORM");
-	if (egl_platform == NULL)
-		return WS_NULL;
-	if (strcmp(egl_platform, "null") == 0)
+	if (ws == NULL)
 	{
-		return WS_NULL;
+		char *egl_platform = getenv("EGL_PLATFORM");
+		char ws_name[2048];
+		
+		if (egl_platform == NULL)
+			egl_platform = "null";
+	
+		snprintf(ws_name, 2048, PKGLIBDIR "eglplatform_%s.so", egl_platform);	
+			
+		void *wsmod = (void *) dlopen(ws_name, RTLD_LAZY);
+		assert(wsmod != NULL);
+		ws = dlsym(wsmod, "ws_module_info");
+		assert(ws != NULL);
 	}
-	else if (strcmp(egl_platform, "fbdev") == 0)
-	{
-		return WS_FBDEV;
-	}
-
-	return -1;
 }
+
 
 int ws_IsValidDisplay(EGLNativeDisplayType display)
 {
-	switch (_whatWS())
-	{
-		case WS_NULL: return 1;
-		case WS_FBDEV: return ws_fbdev_IsValidDisplay(display);
-		default: ;
-	}	
-	return -1;
+	_init_ws();
+	return ws->IsValidDisplay(display);
 }
 
 EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
 {
-	switch (_whatWS())
-	{
-		case WS_NULL: if (win == 0) { return android_createDisplaySurface(); } else { return win; } 
-		case WS_FBDEV: return ws_fbdev_CreateWindow(win, display);
-		default: ;
-	}	
-	return -1;
+	_init_ws();
+	return ws->CreateWindow(win, display);
 }
 
 __eglMustCastToProperFunctionPointerType ws_eglGetProcAddress(const char *procname) 
 {
-	return NULL;
+	_init_ws();
+	return ws->eglGetProcAddress(procname);
 }
 
 void ws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 {
+	_init_ws();
+	return ws->passthroughImageKHR(target, buffer);
 }
 
