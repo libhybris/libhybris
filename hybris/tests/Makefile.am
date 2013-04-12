@@ -1,7 +1,6 @@
 bin_PROGRAMS = \
 	test_egl \
 	test_glesv2 \
-	test_offscreen_rendering \
 	test_sensors \
 	test_lights \
 	test_ui
@@ -25,26 +24,6 @@ endif
 test_glesv2_LDADD = \
 	-lm \
 	$(top_builddir)/common/libhybris-common.la \
-	$(top_builddir)/egl/libEGL.la \
-	$(top_builddir)/glesv2/libGLESv2.la
-
-test_offscreen_rendering_SOURCES = test_offscreen_rendering.cpp
-test_offscreen_rendering_CXXFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/egl
-if WANT_MESA
-test_offscreen_rendering_CXXFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
-endif
-test_offscreen_rendering_CFLAGS = \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/egl
-if WANT_MESA
-test_offscreen_rendering_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
-endif
-test_offscreen_rendering_LDADD = \
-	-lm \
-	$(top_builddir)/common/libhybris-common.la \
-	$(top_builddir)/hardware/libhardware.la \
 	$(top_builddir)/egl/libEGL.la \
 	$(top_builddir)/glesv2/libGLESv2.la
 
