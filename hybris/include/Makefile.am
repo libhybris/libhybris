@@ -55,3 +55,7 @@ hardwareinclude_HEADERS = \
 	android/hardware/hardware.h \
 	android/hardware/sensors.h \
 	android/hardware/lights.h
+
+hybrisincludedir = $(includedir)/hybris
+hybrisinclude_HEADERS = \
+	hybris/ui_compatibility_layer.h
