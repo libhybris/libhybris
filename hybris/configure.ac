@@ -99,6 +99,10 @@ AC_CONFIG_FILES([
 	common/ics/Makefile
 	common/jb/Makefile
 	egl/Makefile
+	egl/platforms/Makefile
+	egl/platforms/common/Makefile
+	egl/platforms/null/Makefile
+	egl/platforms/fbdev/Makefile
 	glesv2/Makefile
 	hardware/Makefile
 	ui/Makefile

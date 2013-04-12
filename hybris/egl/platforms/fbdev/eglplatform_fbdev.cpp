@@ -13,13 +13,13 @@ static gralloc_module_t *gralloc = 0;
 static framebuffer_device_t *framebuffer = 0;
 static alloc_device_t *alloc = 0;
 
-int hybris_register_buffer_handle(buffer_handle_t handle)
+static int hybris_register_buffer_handle(buffer_handle_t handle)
 {
 	assert(inited == 1);
 	return gralloc->registerBuffer(gralloc, handle);
 }
 
-extern "C" int ws_fbdev_IsValidDisplay(EGLNativeDisplayType display)
+extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 {
 	if (inited == 0)
 	{
@@ -34,8 +34,29 @@ extern "C" int ws_fbdev_IsValidDisplay(EGLNativeDisplayType display)
 	return display == EGL_DEFAULT_DISPLAY; 
 }
 
-extern "C" EGLNativeWindowType ws_fbdev_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
+extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
 {
 	assert (inited == 1);
 	return (EGLNativeWindowType) *(new FbDevNativeWindow(gralloc, alloc, framebuffer));
 }
+
+extern "C" __eglMustCastToProperFunctionPointerType fbdevws_eglGetProcAddress(const char *procname) 
+{
+	return NULL;
+}
+
+extern "C" void fbdevws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
+{
+}
+
+struct ws_module ws_module_info = {
+	fbdevws_IsValidDisplay,
+	fbdevws_CreateWindow,
+	fbdevws_eglGetProcAddress,
+	fbdevws_passthroughImageKHR
+};
+
+
+
+
+
