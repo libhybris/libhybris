@@ -45,11 +45,17 @@ static void nullws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 {
 }
 
+const char *nullws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name))
+{
+	return (*real_eglQueryString(dpy, name));
+}
+
 
 struct ws_module ws_module_info = {
 	.IsValidDisplay = nullws_IsValidDisplay,
 	.CreateWindow = nullws_CreateWindow,
 	.eglGetProcAddress = nullws_eglGetProcAddress,
-	.passthroughImageKHR = nullws_passthroughImageKHR
+	.passthroughImageKHR = nullws_passthroughImageKHR,
+	.eglQueryString = nullws_eglQueryString
 };
 

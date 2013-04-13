@@ -194,7 +194,7 @@ EGLBoolean eglTerminate(EGLDisplay dpy)
 const char * eglQueryString(EGLDisplay dpy, EGLint name)
 {
 	EGL_DLSYM(&_eglQueryString, "eglQueryString");
-	return (*_eglQueryString)(dpy, name);
+	return ws_eglQueryString(dpy, name, _eglQueryString);
 }
 
 EGLBoolean eglGetConfigs(EGLDisplay dpy, EGLConfig *configs,
