@@ -35,26 +35,26 @@ struct server_wlegl_buffer;
 class RemoteWindowBuffer : public BaseNativeWindowBuffer
 {
 	public:
-	RemoteWindowBuffer(unsigned int width,
-			unsigned int height,
-			unsigned int stride,
-			unsigned int format,
-			unsigned int usage,
-			buffer_handle_t handle,
-			const gralloc_module_t *gralloc	
-			) {
-		// Base members
-        		ANativeWindowBuffer::width = width;
-		        ANativeWindowBuffer::height = height;
-		        ANativeWindowBuffer::format = format;
+		RemoteWindowBuffer(unsigned int width,
+				unsigned int height,
+				unsigned int stride,
+				unsigned int format,
+				unsigned int usage,
+				buffer_handle_t handle,
+				const gralloc_module_t *gralloc	
+				) {
+			// Base members
+			ANativeWindowBuffer::width = width;
+			ANativeWindowBuffer::height = height;
+			ANativeWindowBuffer::format = format;
 			ANativeWindowBuffer::usage = usage;
 			ANativeWindowBuffer::stride = stride;
 			ANativeWindowBuffer::handle = handle;
 			this->m_gralloc = gralloc;
 		};
-	~RemoteWindowBuffer();
+		~RemoteWindowBuffer();
 	private:
-	const gralloc_module_t *m_gralloc;
+		const gralloc_module_t *m_gralloc;
 };
 
 struct server_wlegl_buffer {
