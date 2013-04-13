@@ -31,7 +31,7 @@ EGLBoolean eglplatformcommon_eglUnbindWaylandDisplayWL(EGLDisplay dpy, struct wl
 #endif
 
 
-void
+	void
 eglplatformcommon_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 {
 #ifdef WANT_WAYLAND
@@ -57,19 +57,19 @@ __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProcAddress(con
 		return eglUnbindWaylandDisplayWL;
 	}
 #endif
- 	return NULL;
+	return NULL;
 }
 
 const char *eglplatformcommon_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name))
 {
 #ifdef WANT_WAYLAND
-        if (name == EGL_EXTENSIONS)
-        {
+	if (name == EGL_EXTENSIONS)
+	{
 		const char *ret = (*real_eglQueryString)(dpy, name);
 		assert(ret != NULL)
-                strcat(ret, "EGL_WL_bind_wayland_display ");
+			strcat(ret, "EGL_WL_bind_wayland_display ");
 		return ret;
-        }
+	}
 #endif
 	return (*real_eglQueryString(dpy, name));
 }

@@ -24,6 +24,8 @@ AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 
+PKG_PROG_PKG_CONFIG
+
 LT_CURRENT=hybris_lt_current
 LT_REVISION=hybris_lt_revision
 LT_AGE=hybris_lt_age
@@ -48,7 +50,6 @@ AM_CONDITIONAL( [WANT_MESA], [test x"$mesa" = x"yes"])
 AC_ARG_ENABLE(wayland,
   [  --enable-wayland            Enable wayland support (default=disabled)],
   [wayland=$enableval
-	PKG_PROG_PKG_CONFIG
 	PKG_CHECK_MODULES(WAYLAND_CLIENT, wayland-client,, exit)
 	PKG_CHECK_MODULES(WAYLAND_SERVER, wayland-server,, exit)
 	WAYLAND_PREFIX=`$PKG_CONFIG --variable=prefix wayland-client`
