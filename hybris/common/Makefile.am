@@ -29,5 +29,6 @@ libhybris_common_la_CFLAGS += -ggdb -O0 -DDEBUG
 endif
 libhybris_common_la_LDFLAGS = \
 	-ldl \
+	-lrt \
 	-pthread \
 	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"
