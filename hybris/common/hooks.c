@@ -418,6 +418,36 @@ static int my_pthread_mutex_unlock(pthread_mutex_t *__mutex)
     return pthread_mutex_unlock(realmutex);
 }
 
+static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned __msecs)
+{
+    struct timespec tv;
+    pthread_mutex_t *realmutex;
+    int value = (*(int *) __mutex);
+
+    if (hybris_check_android_shared_mutex(value)) {
+        LOGD("Shared mutex with Android, not lock timeout np.");
+        return 0;
+    }
+
+    realmutex = (pthread_mutex_t *) value;
+
+    if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
+        realmutex = hybris_alloc_init_mutex(value);
+        *((int *)__mutex) = (int) realmutex;
+    }
+
+    /* TODO: Android uses CLOCK_MONOTONIC here but I am not sure which one to use */
+    clock_gettime(CLOCK_REALTIME, &tv);
+    tv.tv_sec += __msecs/1000;
+    tv.tv_nsec += (__msecs % 1000) * 1000000;
+    if (tv.tv_nsec >= 1000000000) {
+      tv.tv_sec++;
+      tv.tv_nsec -= 1000000000;
+    }
+
+    return pthread_mutex_timedlock(realmutex, &tv);
+}
+
 static int my_pthread_mutexattr_setpshared(pthread_mutexattr_t *__attr,
                                            int pshared)
 {
@@ -767,6 +797,7 @@ static struct _hook hooks[] = {
     {"pthread_mutex_lock", my_pthread_mutex_lock},
     {"pthread_mutex_unlock", my_pthread_mutex_unlock},
     {"pthread_mutex_trylock", my_pthread_mutex_trylock},
+    {"pthread_mutex_lock_timeout_np", my_pthread_mutex_lock_timeout_np},
     {"pthread_mutexattr_init", pthread_mutexattr_init},
     {"pthread_mutexattr_destroy", pthread_mutexattr_destroy},
     {"pthread_mutexattr_getttype", pthread_mutexattr_gettype},
