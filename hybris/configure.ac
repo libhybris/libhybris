@@ -24,8 +24,6 @@ AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 
-PKG_PROG_PKG_CONFIG
-
 LT_CURRENT=hybris_lt_current
 LT_REVISION=hybris_lt_revision
 LT_AGE=hybris_lt_age
@@ -46,6 +44,21 @@ AC_ARG_ENABLE(mesa,
   [mesa=$enableval],
   [mesa="no"])
 AM_CONDITIONAL( [WANT_MESA], [test x"$mesa" = x"yes"])
+
+AC_ARG_ENABLE(wayland,
+  [  --enable-wayland            Enable wayland support (default=disabled)],
+  [wayland=$enableval
+	PKG_PROG_PKG_CONFIG
+	PKG_CHECK_MODULES(WAYLAND_CLIENT, wayland-client,, exit)
+	PKG_CHECK_MODULES(WAYLAND_SERVER, wayland-server,, exit)
+	WAYLAND_PREFIX=`$PKG_CONFIG --variable=prefix wayland-client`
+
+	AC_PATH_PROG([WAYLAND_SCANNER], [wayland-scanner],, [${WAYLAND_PREFIX}/bin$PATH_SEPARATOR$PATH])
+	AC_DEFINE(WANT_WAYLAND, [], [We want Wayland support])
+],
+  [wayland="no"])
+AM_CONDITIONAL( [WANT_WAYLAND], [test x"$wayland" = x"yes"])
+
 
 AC_ARG_ENABLE(arch,
   [  --enable-arch[=arch]     Compile specific CPU target(default=arm)
