@@ -51,3 +51,9 @@ void ws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 	return ws->passthroughImageKHR(target, buffer);
 }
 
+const char *ws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name))
+{
+	_init_ws();
+	return ws->eglQueryString(dpy, name, real_eglQueryString);
+}
+

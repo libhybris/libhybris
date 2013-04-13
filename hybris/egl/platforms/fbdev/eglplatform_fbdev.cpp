@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <assert.h>
+#include <eglplatformcommon.h>
 
 static int inited = 0;
 static gralloc_module_t *gralloc = 0;
@@ -29,6 +30,7 @@ extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
 		printf("got gralloc %p err:%s\n", gralloc, strerror(-err));
 		inited = 1;
+		eglplatformcommon_init(gralloc);
 	}
 
 	return display == EGL_DEFAULT_DISPLAY; 
@@ -42,18 +44,20 @@ extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, EGL
 
 extern "C" __eglMustCastToProperFunctionPointerType fbdevws_eglGetProcAddress(const char *procname) 
 {
-	return NULL;
+	return eglplatformcommon_eglGetProcAddress(procname);
 }
 
 extern "C" void fbdevws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 {
+	eglplatformcommon_passthroughImageKHR(target, buffer);
 }
 
 struct ws_module ws_module_info = {
 	fbdevws_IsValidDisplay,
 	fbdevws_CreateWindow,
 	fbdevws_eglGetProcAddress,
-	fbdevws_passthroughImageKHR
+	fbdevws_passthroughImageKHR,
+	eglplatformcommon_eglQueryString
 };
 
 
