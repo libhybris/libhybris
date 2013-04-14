@@ -19,6 +19,8 @@
 #include "properties.h"
 #define _GNU_SOURCE
 #include <stdio.h>
+#include <stdarg.h>
+#include <stdio_ext.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -713,6 +715,283 @@ static int my_set_errno(int oi_errno)
     return -1;
 }
 
+/*
+ * __isthreaded is used in bionic's stdio.h to choose between a fast internal implementation
+ * and a more classic stdio function call.
+ * For example:
+ * #define	__sfeof(p)	(((p)->_flags & __SEOF) != 0)
+ * #define	feof(p)		(!__isthreaded ? __sfeof(p) : (feof)(p))
+ *
+ * We see here that if __isthreaded is false, then it will use directly the bionic's FILE structure
+ * instead of calling one of the hooked methods.
+ * Therefore we need to set __isthreaded to true, even if we are not in a multi-threaded context.
+ */
+static int __my_isthreaded = 1;
+
+/* 
+ * redirection for bionic's __sF, which is defined as:
+ *   FILE __sF[3];
+ *   #define stdin  &__sF[0];
+ *   #define stdout &__sF[1];
+ *   #define stderr &__sF[2];
+ *   So the goal here is to catch the call to file methods where the FILE* pointer
+ *   is either stdin, stdout or stderr, and translate that pointer to a valid glibc
+ *   pointer.
+ *   Currently, only fputs is managed.
+ */
+#define BIONIC_SIZEOF_FILE 84
+static char my_sF[3*BIONIC_SIZEOF_FILE] = {0};
+static FILE *_get_actual_fp(FILE *fp)
+{
+    char *c_fp = (char*)fp;
+    if( c_fp == &my_sF[0] )
+        return stdin;
+    else if( c_fp == &my_sF[BIONIC_SIZEOF_FILE] )
+        return stdout;
+    else if( c_fp == &my_sF[BIONIC_SIZEOF_FILE*2] )
+        return stderr;
+
+    return fp;
+}
+
+static void my_clearerr(FILE *fp)
+{
+    clearerr(_get_actual_fp(fp));
+}
+
+static int my_fclose(FILE *fp)
+{
+    return fclose(_get_actual_fp(fp));
+}
+
+static int my_feof(FILE *fp)
+{
+    return feof(_get_actual_fp(fp));
+}
+
+static int my_ferror(FILE *fp)
+{
+    return ferror(_get_actual_fp(fp));
+}
+
+static int my_fflush(FILE *fp)
+{
+    return fflush(_get_actual_fp(fp));
+}
+
+static int my_fgetc(FILE *fp)
+{
+    return fgetc(_get_actual_fp(fp));
+}
+
+static int my_fgetpos(FILE *fp, fpos_t *pos)
+{
+    return fgetpos(_get_actual_fp(fp), pos);
+}
+
+static char* my_fgets(char *s, int n, FILE *fp)
+{
+    return fgets(s, n, _get_actual_fp(fp));
+}
+
+static int my_fprintf(FILE *fp, const char *fmt, ...)
+{
+	int ret = 0;
+	
+    va_list args;
+    va_start(args,fmt);
+    ret = vfprintf(_get_actual_fp(fp), fmt, args);
+    va_end(args);
+    
+    return ret;
+}
+
+static int my_fputc(int c, FILE *fp)
+{
+    return fputc(c, _get_actual_fp(fp));
+}
+
+static int my_fputs(const char *s, FILE *fp)
+{
+    return fputs(s, _get_actual_fp(fp));
+}
+
+static size_t my_fread(void *ptr, size_t size, size_t nmemb, FILE *fp)
+{
+    return fread(ptr, size, nmemb, _get_actual_fp(fp));
+}
+
+static FILE* my_freopen(const char *filename, const char *mode, FILE *fp)
+{
+    return freopen(filename, mode, _get_actual_fp(fp));
+}
+
+static int my_fscanf(FILE *fp, const char *fmt, ...)
+{
+	int ret = 0;
+	
+    va_list args;
+    va_start(args,fmt);
+    ret = vfscanf(_get_actual_fp(fp), fmt, args);
+    va_end(args);
+    
+    return ret;
+}
+
+static int my_fseek(FILE *fp, long offset, int whence)
+{
+    return fseek(_get_actual_fp(fp), offset, whence);
+}
+
+static int my_fseeko(FILE *fp, off_t offset, int whence)
+{
+    return fseeko(_get_actual_fp(fp), offset, whence);
+}
+
+static int my_fsetpos(FILE *fp, const fpos_t *pos)
+{
+    return fsetpos(_get_actual_fp(fp), pos);
+}
+
+static long my_ftell(FILE *fp)
+{
+    return ftell(_get_actual_fp(fp));
+}
+
+static off_t my_ftello(FILE *fp)
+{
+    return ftello(_get_actual_fp(fp));
+}
+
+static size_t my_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *fp)
+{
+    return fwrite(ptr, size, nmemb, _get_actual_fp(fp));
+}
+
+static int my_getc(FILE *fp)
+{
+    return getc(_get_actual_fp(fp));
+}
+
+static ssize_t my_getdelim(char ** lineptr, size_t *n, int delimiter, FILE * fp)
+{
+    return getdelim(lineptr, n, delimiter, _get_actual_fp(fp));
+}
+
+static ssize_t my_getline(char **lineptr, size_t *n, FILE *fp)
+{
+    return getline(lineptr, n, _get_actual_fp(fp));
+}
+
+
+static int my_putc(int c, FILE *fp)
+{
+    return putc(c, _get_actual_fp(fp));
+}
+
+static void my_rewind(FILE *fp)
+{
+    rewind(_get_actual_fp(fp));
+}
+
+static void my_setbuf(FILE *fp, char *buf)
+{
+    setbuf(_get_actual_fp(fp), buf);
+}
+
+static int my_setvbuf(FILE *fp, char *buf, int mode, size_t size)
+{
+    return setvbuf(_get_actual_fp(fp), buf, mode, size);
+}
+
+static int my_ungetc(int c, FILE *fp)
+{
+    return ungetc(c, _get_actual_fp(fp));
+}
+
+static int my_vfprintf(FILE *fp, const char *fmt, va_list arg)
+{
+    return vfprintf(_get_actual_fp(fp), fmt, arg);
+}
+
+
+static int my_vfscanf(FILE *fp, const char *fmt, va_list arg)
+{
+    return vfscanf(_get_actual_fp(fp), fmt, arg);
+}
+
+static int my_fileno(FILE *fp)
+{
+    return fileno(_get_actual_fp(fp));
+}
+
+
+static int my_pclose(FILE *fp)
+{
+    return pclose(_get_actual_fp(fp));
+}
+
+static void my_flockfile(FILE *fp)
+{
+    return flockfile(_get_actual_fp(fp));
+}
+
+static int my_ftrylockfile(FILE *fp)
+{
+    return ftrylockfile(_get_actual_fp(fp));
+}
+
+static void my_funlockfile(FILE *fp)
+{
+    return funlockfile(_get_actual_fp(fp));
+}
+
+
+static int my_getc_unlocked(FILE *fp)
+{
+    return getc_unlocked(_get_actual_fp(fp));
+}
+
+static int my_putc_unlocked(int c, FILE *fp)
+{
+    return putc_unlocked(c, _get_actual_fp(fp));
+}
+
+/* exists only on the BSD platform
+static char* my_fgetln(FILE *fp, size_t *len)
+{
+    return fgetln(_get_actual_fp(fp), len);
+}
+*/
+static int my_fpurge(FILE *fp)
+{
+    __fpurge(_get_actual_fp(fp));
+
+    return 0;
+}
+
+static int my_getw(FILE *fp)
+{
+    return getw(_get_actual_fp(fp));
+}
+
+static int my_putw(int w, FILE *fp)
+{
+    return putw(w, _get_actual_fp(fp));
+}
+
+static void my_setbuffer(FILE *fp, char *buf, int size)
+{
+    setbuffer(_get_actual_fp(fp), buf, size);
+}
+
+static int my_setlinebuf(FILE *fp)
+{
+    setlinebuf(_get_actual_fp(fp));
+    
+    return 0;
+}
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -855,19 +1134,59 @@ static struct _hook hooks[] = {
     {"pthread_rwlock_timedrdlock", my_pthread_rwlock_timedrdlock},
     {"pthread_rwlock_timedwrlock", my_pthread_rwlock_timedwrlock},
     /* stdio.h */
+    {"__isthreaded", &__my_isthreaded},
+    {"__sF", &my_sF},
     {"fopen", fopen},
-    {"fgets", fgets},
-    {"fclose", fclose},
-    {"fputs", fputs},
-    {"fseeko", fseeko},
-    {"fwrite", fwrite},
+    {"fdopen", fdopen},
+    {"popen", popen},
     {"puts", puts},
-    {"putw", putw},
     {"sprintf", sprintf},
     {"snprintf", snprintf},
-    {"vfprintf", vfprintf},
     {"vsprintf", vsprintf},
     {"vsnprintf", vsnprintf},
+    {"clearerr", my_clearerr},
+    {"fclose", my_fclose},
+    {"feof", my_feof},
+    {"ferror", my_ferror},
+    {"fflush", my_fflush},
+    {"fgetc", my_fgetc},
+    {"fgetpos", my_fgetpos},
+    {"fgets", my_fgets},
+    {"fprintf", my_fprintf},
+    {"fputc", my_fputc},
+    {"fputs", my_fputs},
+    {"fread", my_fread},
+    {"freopen", my_freopen},
+    {"fscanf", my_fscanf},
+    {"fseek", my_fseek},
+    {"fseeko", my_fseeko},
+    {"fsetpos", my_fsetpos},
+    {"ftell", my_ftell},
+    {"ftello", my_ftello},
+    {"fwrite", my_fwrite},
+    {"getc", my_getc},
+    {"getdelim", my_getdelim},
+    {"getline", my_getline},
+    {"putc", my_putc},
+    {"rewind", my_rewind},
+    {"setbuf", my_setbuf},
+    {"setvbuf", my_setvbuf},
+    {"ungetc", my_ungetc},
+    {"vfprintf", my_vfprintf},
+    {"vfscanf", my_vfscanf},
+    {"fileno", my_fileno},
+    {"pclose", my_pclose},
+    {"flockfile", my_flockfile},
+    {"ftrylockfile", my_ftrylockfile},
+    {"funlockfile", my_funlockfile},
+    {"getc_unlocked", my_getc_unlocked},
+    {"putc_unlocked", my_putc_unlocked},
+    //{"fgetln", my_fgetln},
+    {"fpurge", my_fpurge},
+    {"getw", my_getw},
+    {"putw", my_putw},
+    {"setbuffer", my_setbuffer},
+    {"setlinebuf", my_setlinebuf},
     {"__errno", __errno_location},
     {"__set_errno", my_set_errno},
     /* net specifics, to avoid __res_get_state */
