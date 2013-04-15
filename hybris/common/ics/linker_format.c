@@ -166,11 +166,13 @@ format_buffer(char *buff, size_t buffsize, const char *format, ...)
  * We define our version of the function here to avoid dragging
  * about 25 KB of C library routines related to formatting.
  */
+#if 0
 int
 vsnprintf(char *buff, size_t bufsize, const char *format, va_list args)
 {
     return format_buffer(buff, bufsize, format, args);
 }
+#endif
 
 #if LINKER_DEBUG
 
