@@ -66,8 +66,10 @@ const char *eglplatformcommon_eglQueryString(EGLDisplay dpy, EGLint name, const 
 	if (name == EGL_EXTENSIONS)
 	{
 		const char *ret = (*real_eglQueryString)(dpy, name);
+		static char buf[512];
 		assert(ret != NULL)
-			strcat(ret, "EGL_WL_bind_wayland_display ");
+		snprintf(buf, 510, "%sEGL_WL_bind_wayland_display ", ret)
+		ret = buf;
 		return ret;
 	}
 #endif
