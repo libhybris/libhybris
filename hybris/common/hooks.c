@@ -1195,6 +1195,7 @@ static struct _hook hooks[] = {
     {"gethostbyname", gethostbyname},
     {"gethostbyname2", gethostbyname2},
     {"gethostent", gethostent},
+    {"strftime", strftime},
     {NULL, NULL},
 };
 
