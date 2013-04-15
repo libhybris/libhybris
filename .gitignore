@@ -28,9 +28,9 @@ stamp-h1
 aclocal-copy
 arm-*-linux-gnueabi-libtool
 
-tests/test_egl
-tests/test_glesv2
-tests/test_lights
-tests/test_offscreen_rendering
-tests/test_sensors
-tests/test_ui
+hybris/tests/test_egl
+hybris/tests/test_glesv2
+hybris/tests/test_lights
+hybris/tests/test_offscreen_rendering
+hybris/tests/test_sensors
+hybris/tests/test_ui
