@@ -47,7 +47,7 @@ static void nullws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 
 const char *nullws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name))
 {
-	return (*real_eglQueryString(dpy, name));
+	return (*real_eglQueryString)(dpy, name);
 }
 
 
