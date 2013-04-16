@@ -18,27 +18,38 @@ import re
 import subprocess
 
 class LoadSymFiles(gdb.Command):
-    """Add symbol files for files in /proc/pid/maps:  load-sym-file symbols-directory"""
+    """Add symbol files for files in /proc/pid/maps:  load-sym-file [symbols-directory] [lib-directory]"""
     def __init__(self):
         gdb.Command.__init__(self, "load-sym-files", gdb.COMMAND_FILES, gdb.COMPLETE_FILENAME, True)
 
     def invoke(self, arg, from_tty):
         arg_list = gdb.string_to_argv(arg)
+        symdir = "/system/symbols"
+        libdir = "/system/lib"
 
-        if len(arg_list) < 1:
-            print "usage: load-sym-files symbols-dir"
+        if len(arg_list) == 1:
+            symdir = arg_list[0]
+        if not os.path.isdir(symdir):
+            print "error: symbol directory is invalid"
+            print "usage: load-sym-files [symbols-dir] [lib-dir]"
             return
 
-        symdir = arg_list[0]
-        if not os.path.isdir(symdir):
-            print "symbol directory is invalid"
+        if len(arg_list) == 2:
+            libdir = arg_list[1]
+        if not os.path.isdir(libdir):
+            print "error: library directory is invalid"
+            print "usage: load-sym-files [symbols-dir] [lib-dir]"
             return
 
         pid = gdb.selected_inferior().pid
+        if pid == 0:
+            print "error: debugee not started yet"
+            return
+
         maps = open("/proc/%d/maps"%pid,"rb")
         for line in maps:
             # b7fc9000-b7fcf000 r-xp 00000000 08:01 1311443    /system/lib/liblog.so
-            m = re.match("([0-9A-Fa-f]+)-[0-9A-Fa-f]+\s+r-xp.*(/system/lib.*)", line)
+            m = re.match("([0-9A-Fa-f]+)-[0-9A-Fa-f]+\s+r-xp.*(%s.*)"%libdir,line)
             if not m:
                 continue
 
@@ -53,9 +64,9 @@ class LoadSymFiles(gdb.Command):
                 if t:
                     text_addr = int(t.group(2),16)
                     break
-            symfile = symdir+lib
+            symfile = symdir + lib
             if os.path.isfile(symfile):
-                gdb.execute("add-symbol-file %s 0x%X" % (symfile,start_addr+text_addr))
+                gdb.execute("add-symbol-file %s 0x%X" % (symfile, start_addr+text_addr))
 
 
 LoadSymFiles()
