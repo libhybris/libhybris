@@ -127,6 +127,8 @@ unsigned bitmask[4096];
 #define PT_ARM_EXIDX    0x70000001      /* .ARM.exidx segment */
 #endif
 
+#if 0
+// disable abort() since this is not a linker anymore
 #define HOODLUM(name, ret, ...)                                               \
     ret name __VA_ARGS__                                                      \
     {                                                                         \
@@ -138,6 +140,7 @@ HOODLUM(malloc, void *, (size_t size));
 HOODLUM(free, void, (void *ptr));
 HOODLUM(realloc, void *, (void *ptr, size_t size));
 HOODLUM(calloc, void *, (size_t cnt, size_t size));
+#endif
 
 static char tmp_err_buf[768];
 static char __linker_dl_err_buf[768];
@@ -1295,7 +1298,14 @@ static int reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
               si->name, idx);
         if(sym != 0) {
             sym_name = (char *)(strtab + symtab[sym].st_name);
-            s = _do_lookup(si, sym_name, &base);
+            //printf("symbol %s \n", sym_name);
+            sym_addr = get_hooked_symbol(sym_name);
+            if (sym_addr != NULL) {
+               //printf("hooked symbol %s to %x\n", sym_name, sym_addr);
+            } else {
+               s = _do_lookup(si, sym_name, &base);
+            }
+            if(sym_addr == NULL)
             if(s == NULL) {
                 /* We only allow an undefined symbol if this is a weak
                    reference..   */
