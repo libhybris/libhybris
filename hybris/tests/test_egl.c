@@ -37,14 +37,28 @@ int main(int argc, char **argv)
 	};
 	EGLContext context;
 
-	display = eglGetDisplay(NULL);
+	EGLBoolean rv;
 
-	eglInitialize(display, 0, 0);
-        assert(eglChooseConfig((EGLDisplay) display, attr, &ecfg, 1, &num_config) == EGL_TRUE);
+	display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(display != EGL_NO_DISPLAY);
+
+	rv = eglInitialize(display, NULL, NULL);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(rv == EGL_TRUE);
+
+	rv = eglChooseConfig((EGLDisplay) display, attr, &ecfg, 1, &num_config);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(rv == EGL_TRUE);
+
 	surface = eglCreateWindowSurface((EGLDisplay) display, ecfg, (EGLNativeWindowType)NULL, NULL);
+	assert(eglGetError() == EGL_SUCCESS);
 	assert(surface != EGL_NO_SURFACE);
+
 	context = eglCreateContext((EGLDisplay) display, ecfg, EGL_NO_CONTEXT, ctxattr);
-        assert(surface != EGL_NO_CONTEXT);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(surface != EGL_NO_CONTEXT);
+
 	assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
 	printf("stop\n");
 
