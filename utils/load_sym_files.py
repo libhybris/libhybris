@@ -19,6 +19,16 @@ import subprocess
 
 class LoadSymFiles(gdb.Command):
     """Add symbol files for files in /proc/pid/maps:  load-sym-file [symbols-directory] [lib-directory]"""
+    """Usage example:
+        start           # breakpoint 1
+        set confirm off
+        b dlfcn.c:56    # breakpoint 2, android_dlopen
+        commands 2      # commands to run when breakpoint 2 is hit
+        source ../utils/load_sym_files.py
+        load-sym-files
+        continue
+        end             # end of commands for bkpt 2
+    """
     def __init__(self):
         gdb.Command.__init__(self, "load-sym-files", gdb.COMMAND_FILES, gdb.COMPLETE_FILENAME, True)
 
