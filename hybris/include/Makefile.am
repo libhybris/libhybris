@@ -46,7 +46,8 @@ cutilsinclude_HEADERS = \
 systemincludedir = $(includedir)/android/system
 systeminclude_HEADERS = \
 	android/system/window.h \
-	android/system/graphics.h
+	android/system/graphics.h \
+	android/system/camera.h
 
 hardwareincludedir = $(includedir)/android/hardware
 hardwareinclude_HEADERS = \
