@@ -4,7 +4,7 @@ lib_LTLIBRARIES = \
 libhybris_eglplatformcommon_la_SOURCES = \
 	native_handle.c \
 	nativewindowbase.cpp \
-	eglplatformcommon.c
+	eglplatformcommon.cpp
 
 if WANT_WAYLAND
 lib_LTLIBRARIES += libwayland-egl.la
@@ -12,7 +12,8 @@ lib_LTLIBRARIES += libwayland-egl.la
 libhybris_eglplatformcommon_la_SOURCES += \
 	server_wlegl.cpp \
 	server_wlegl_handle.cpp \
-	server_wlegl_buffer.cpp
+	server_wlegl_buffer.cpp \
+	wayland-android-protocol.c
 
 BUILT_SOURCES = wayland-android-protocol.c \
 		wayland-android-client-protocol.h \
