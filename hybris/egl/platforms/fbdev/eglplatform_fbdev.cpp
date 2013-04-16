@@ -7,7 +7,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <assert.h>
+extern "C" {
 #include <eglplatformcommon.h>
+};
 
 static int inited = 0;
 static gralloc_module_t *gralloc = 0;
