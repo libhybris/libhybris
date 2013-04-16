@@ -3,6 +3,7 @@
 #include <dlfcn.h>
 #include <android/hardware/gralloc.h>
 #include <assert.h>
+#include "config.h"
 
 #ifdef WANT_WAYLAND
 #include <wayland-client.h>
@@ -12,26 +13,26 @@
 
 static gralloc_module_t *my_gralloc = 0;
 
-void eglplatformcommon_init(gralloc_module_t *gralloc)
+extern "C" void eglplatformcommon_init(gralloc_module_t *gralloc)
 {
 	my_gralloc = gralloc;
 }
 
 #ifdef WANT_WAYLAND
 
-EGLBoolean eglplatformcommon_eglBindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
+extern "C" EGLBoolean eglplatformcommon_eglBindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
 {
 	assert(my_gralloc != NULL);
 	server_wlegl_create(display, my_gralloc);
 }
 
-EGLBoolean eglplatformcommon_eglUnbindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
+extern "C" EGLBoolean eglplatformcommon_eglUnbindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
 {
 }
 #endif
 
 
-	void
+extern "C" void
 eglplatformcommon_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 {
 #ifdef WANT_WAYLAND
@@ -44,34 +45,34 @@ eglplatformcommon_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 #endif
 }
 
-__eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProcAddress(const char *procname) 
+extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProcAddress(const char *procname) 
 {
 #ifdef WANT_WAYLAND
 	if (strcmp(procname, "eglBindWaylandDisplayWL") == 0)
 	{
-		return eglBindWaylandDisplayWL;	
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglBindWaylandDisplayWL;	
 	}
 	else
 	if (strcmp(procname, "eglUnbindWaylandDisplayWL") == 0)
 	{
-		return eglUnbindWaylandDisplayWL;
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglUnbindWaylandDisplayWL;
 	}
 #endif
 	return NULL;
 }
 
-const char *eglplatformcommon_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name))
+extern "C" const char *eglplatformcommon_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name))
 {
 #ifdef WANT_WAYLAND
 	if (name == EGL_EXTENSIONS)
 	{
 		const char *ret = (*real_eglQueryString)(dpy, name);
-		static char buf[512];
-		assert(ret != NULL)
-		snprintf(buf, 510, "%sEGL_WL_bind_wayland_display ", ret)
-		ret = buf;
+		static char eglextensionsbuf[512];
+		assert(ret != NULL);
+		snprintf(eglextensionsbuf, 510, "%sEGL_WL_bind_wayland_display ", ret);
+		ret = eglextensionsbuf;
 		return ret;
 	}
 #endif
-	return (*real_eglQueryString(dpy, name));
+	return (*real_eglQueryString)(dpy, name);
 }
