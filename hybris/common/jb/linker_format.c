@@ -273,8 +273,10 @@ static int log_vprint(int prio, const char *tag, const char *fmt, va_list  args)
 
     if (log_fd < 0) {
         log_fd = open("/dev/log/main", O_WRONLY);
-        if (log_fd < 0)
+        if (log_fd < 0) {
+            log_fd = fileno(stdout); // kernel doesn't have android log
             return result;
+        }
     }
 
     {
