@@ -34,6 +34,9 @@
 #include <sys/types.h>
 #include <sys/xattr.h>
 
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
 #include <netdb.h>
 
 /* TODO:
@@ -66,6 +69,17 @@
 #define LOGD(message, args...)
 #endif
 
+/* Structure of the shared memory region */
+static int _hybris_shm_memid = -1;
+#define HYBRIS_MAX_PSHARED_MUTEX	1000
+struct _hybris_shm_data_t {
+	pthread_mutex_t shm_access_mutex;
+	int nb_mutex;
+	pthread_mutex_t array_mutex[HYBRIS_MAX_PSHARED_MUTEX];
+	int nb_cond;
+	pthread_cond_t  array_cond[HYBRIS_MAX_PSHARED_MUTEX];
+	int next_shm_mem_id; /* chain to the next pool */
+} *_hybris_shm_data = NULL;
 
 struct _hook {
     const char *name;
@@ -94,6 +108,15 @@ static int hybris_check_android_shared_cond(int cond_addr)
                     (cond_addr & ANDROID_COND_SHARED_MASK))
         return 1;
 
+    return 0;
+}
+
+static int hybris_check_pointer_in_shm(void *ptr)
+{
+    if ((_hybris_shm_data != NULL) &&
+        (ptr >= (void*)_hybris_shm_data) &&
+        (ptr <  (void*)(_hybris_shm_data+1)))
+        return 1;
     return 0;
 }
 
@@ -339,8 +362,31 @@ static int my_pthread_getattr_np(pthread_t thid, pthread_attr_t *__attr)
 static int my_pthread_mutex_init(pthread_mutex_t *__mutex,
                           __const pthread_mutexattr_t *__mutexattr)
 {
-    pthread_mutex_t *realmutex = malloc(sizeof(pthread_mutex_t));
+    pthread_mutex_t *realmutex = NULL;
+
+	int pshared = 0;
+	if( __mutexattr )
+		pthread_mutexattr_getpshared(__mutexattr, &pshared);
+
+	if( !pshared )
+	{
+		// non shared, standard mutex: use malloc
+		realmutex = malloc(sizeof(pthread_mutex_t));
+	}
+	else if( _hybris_shm_data && _hybris_shm_data->nb_mutex < HYBRIS_MAX_PSHARED_MUTEX )
+	{
+		pthread_mutex_lock(&(_hybris_shm_data->shm_access_mutex));
+		
+		// process-shared mutex: use the shared memory segment
+		realmutex = &(_hybris_shm_data->array_mutex[_hybris_shm_data->nb_mutex++]);
+		
+		LOGD("Allocated a process shared mutex (nb = %d, mutex = %x)", _hybris_shm_data->nb_mutex, realmutex);
+		
+		pthread_mutex_unlock(&(_hybris_shm_data->shm_access_mutex));
+	}
+
     *((int *)__mutex) = (int) realmutex;
+
     return pthread_mutex_init(realmutex, __mutexattr);
 }
 
@@ -350,7 +396,10 @@ static int my_pthread_mutex_destroy(pthread_mutex_t *__mutex)
     pthread_mutex_t *realmutex = (pthread_mutex_t *) *(int *) __mutex;
 
     ret = pthread_mutex_destroy(realmutex);
-    free(realmutex);
+    if( !hybris_check_pointer_in_shm((void*)realmutex) )
+    	free(realmutex);
+    
+    *((int *)__mutex) = 0;
 
     return ret;
 }
@@ -467,7 +516,30 @@ static int my_pthread_mutexattr_setpshared(pthread_mutexattr_t *__attr,
 static int my_pthread_cond_init(pthread_cond_t *cond,
                                 const pthread_condattr_t *attr)
 {
-    pthread_cond_t *realcond = malloc(sizeof(pthread_cond_t));
+    pthread_cond_t *realcond = NULL;
+
+    int pshared = 0;
+
+    if( attr )
+        pthread_condattr_getpshared(attr, &pshared);
+
+    if( !pshared )
+    {
+        // non shared, standard cond: use malloc
+        realcond = malloc(sizeof(pthread_cond_t));
+    }
+    else if( _hybris_shm_data && _hybris_shm_data->nb_cond < HYBRIS_MAX_PSHARED_MUTEX )
+    {
+		pthread_mutex_lock(&(_hybris_shm_data->shm_access_mutex));
+		
+        // process-shared cond: use the shared memory segment
+        realcond = &(_hybris_shm_data->array_cond[_hybris_shm_data->nb_cond++]);
+        
+        LOGD("Allocated a process shared condition (nb = %d, cond=%x)", _hybris_shm_data->nb_cond, realcond);
+		
+		pthread_mutex_unlock(&(_hybris_shm_data->shm_access_mutex));
+    }
+
     *((int *) cond) = (int) realcond;
 
     return pthread_cond_init(realcond, attr);
@@ -479,7 +551,10 @@ static int my_pthread_cond_destroy(pthread_cond_t *cond)
     pthread_cond_t *realcond = (pthread_cond_t *) *(int *) cond;
 
     ret = pthread_cond_destroy(realcond);
-    free(realcond);
+    if( !hybris_check_pointer_in_shm((void*)realcond) )
+        free(realcond);
+    
+    *((int *)cond) = 0;
 
     return ret;
 }
@@ -1201,6 +1276,43 @@ static struct _hook hooks[] = {
 
 void *get_hooked_symbol(char *sym)
 {
+	if( _hybris_shm_memid < 0 )
+	{
+		// process-shared mutex: use the shared memory segment
+		key_t shmkey = 0x65A8F7A9;
+	
+		/* initialize or get shared memory segment */
+		_hybris_shm_memid = shmget(shmkey, sizeof(struct _hybris_shm_data_t), 0660);
+		if( _hybris_shm_memid < 0 )
+		{
+			LOGD("Creating a new shared memory segment.");
+			
+			_hybris_shm_memid = shmget(shmkey, sizeof(struct _hybris_shm_data_t), IPC_CREAT | 0660);
+			if( _hybris_shm_memid >= 0 )
+			{
+				_hybris_shm_data = (struct _hybris_shm_data_t *)shmat(_hybris_shm_memid, 0x50000000, 0);
+				memset(_hybris_shm_data, 0, sizeof(struct _hybris_shm_data_t));
+				
+				pthread_mutexattr_t attr;
+				pthread_mutexattr_init(&attr);
+				pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
+				pthread_mutex_init(&(_hybris_shm_data->shm_access_mutex), &attr);
+				pthread_mutexattr_destroy(&attr);
+				
+				void release_shm(void);
+				atexit(release_shm);
+			}
+			else
+			{
+				LOGD("ERROR: Couldn't create shared memory segment !");
+			}
+		}
+		else
+		{
+			_hybris_shm_data = (struct _hybris_shm_data_t *)shmat(_hybris_shm_memid, 0x50000000, 0);
+		}
+	}
+	
     struct _hook *ptr = &hooks[0];
     static int counter = -1;
 
@@ -1218,6 +1330,15 @@ void *get_hooked_symbol(char *sym)
         return (void *) counter;
     }
     return NULL;
+}
+
+void release_shm(void)
+{
+	if( _hybris_shm_memid >= 0 ) /* means we are the owner of the segment */
+		shmctl(_hybris_shm_memid, IPC_RMID, NULL); /* mark the segment for deletion when the ref counter will be zero */
+		
+	shmdt(_hybris_shm_data); /* detach the segment from this process */
+	_hybris_shm_data = NULL; /* pointer is no more valid */
 }
 
 void android_linker_init()
