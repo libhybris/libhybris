@@ -160,6 +160,7 @@ static struct wl_buffer_listener wl_buffer_listener = {
 
 void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 {
+	lock();
 	std::list<WaylandNativeWindowBuffer *>::iterator it = fronted.begin();
  
 	for (; it != fronted.end(); it++)
@@ -170,126 +171,43 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 	assert(it != fronted.end());
 	WaylandNativeWindowBuffer *buf = *it;
 	fronted.erase(it);
+	
+	for (it = buffers.begin(); it != buffers.end(); it++)
+	{
+		if ((*it) == buf)
+			break;
+	}
+	assert(it != buffers.end());
+
 	wl_buffer_destroy(buf->wlbuffer);
 	buf->wlbuffer = NULL;
-	assert(this->m_alloc->free(this->m_alloc, buf->getHandle()) == 0);
-	delete buf;
+//	assert(this->m_alloc->free(this->m_alloc, buf->getHandle()) == 0);
+//	delete buf;
+	printf("Release buffer %p\n", buffer);
+	buf->busy = 0;
+	unlock();
 }
 
 
 int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer){
     WaylandNativeWindowBuffer *backbuf;
-    lock();
 
-    wl_display_dispatch_queue_pending(m_display, this->wl_queue);
-    if (queued.empty())
-    { 
-	printf("!!! queued empty, but dequeuing\n");
-    }   
- 
-    if (!queued.empty())
-    { 
-        WaylandNativeWindowBuffer *front = queued.front();
-	int ret = 0;
-	queued.pop_front();
-
-	fronted.push_back(front);
-	printf("Fronted %p with %p inside\n", front, front->wlbuffer);
-	while (this->frame_callback && ret != -1)
-        	ret = wl_display_dispatch_queue(m_display, this->wl_queue);
-
-	wl_surface_attach(m_window->surface, front->wlbuffer, 0, 0); 
-        wl_surface_damage(m_window->surface, 0, 0, front->width, front->height);
-        wl_surface_commit(m_window->surface);
-
-
-        this->frame_callback = wl_surface_frame(m_window->surface);
-        wl_callback_add_listener(this->frame_callback, &frame_listener, this);
-        wl_proxy_set_queue((struct wl_proxy *) this->frame_callback, this->wl_queue);
-    }
-#if 0 
-    if (dequeued.empty())
-    { 
-#endif
-        backbuf = new WaylandNativeWindowBuffer(m_width, m_height, m_format, m_usage);
-        int err = m_alloc->alloc(m_alloc,
-                        backbuf->width ? backbuf->width : 1, backbuf->height ? backbuf->height : 1, backbuf->format,
-                        backbuf->usage,
-                        &backbuf->handle,
-                        &backbuf->stride);
-	assert(err == 0);
-
-	/* Register back buffer with compositor */
-	struct wl_array ints;
-	int *ints_data;
-	struct android_wlegl_handle *wlegl_handle;
-	buffer_handle_t handle;
-	
-	handle = backbuf->handle;
-
-	wl_array_init(&ints);
-	ints_data = (int*) wl_array_add(&ints, handle->numInts*sizeof(int));
-	memcpy(ints_data, handle->data + handle->numFds, handle->numInts*sizeof(int));
-	wlegl_handle = android_wlegl_create_handle(m_android_wlegl, handle->numFds, &ints);
-	wl_array_release(&ints);
-	for (int i = 0; i < handle->numFds; i++) {
-		android_wlegl_handle_add_fd(wlegl_handle, handle->data[i]);
-	}
-
-	backbuf->wlbuffer = android_wlegl_create_buffer(m_android_wlegl,
-			backbuf->width, backbuf->height, backbuf->stride,
-			backbuf->format, backbuf->usage, wlegl_handle);
-
-	android_wlegl_handle_destroy(wlegl_handle);
-	backbuf->common.incRef(&backbuf->common);
-
-
-	printf("Add listener for %p with %p inside\n", backbuf, backbuf->wlbuffer);
-	wl_buffer_add_listener(backbuf->wlbuffer, &wl_buffer_listener, this);
-	wl_proxy_set_queue((struct wl_proxy *) backbuf->wlbuffer,
-			this->wl_queue);
-
-	*buffer = backbuf;
-#if 0
-    }
-    else
+    while (1)
     {
-	backbuf = dequeued.front();
-	dequeued.pop_front();
-
-	assert(backbuf->wlbuffer == NULL);
-
-	/* Register back buffer with compositor */
-	struct wl_array ints;
-	int *ints_data;
-	struct android_wlegl_handle *wlegl_handle;
-	buffer_handle_t handle;
-	
-	handle = backbuf->handle;
-
-	wl_array_init(&ints);
-	ints_data = (int*) wl_array_add(&ints, handle->numInts*sizeof(int));
-	memcpy(ints_data, handle->data + handle->numFds, handle->numInts*sizeof(int));
-	wlegl_handle = android_wlegl_create_handle(m_android_wlegl, handle->numFds, &ints);
-	wl_array_release(&ints);
-	for (int i = 0; i < handle->numFds; i++) {
-		android_wlegl_handle_add_fd(wlegl_handle, handle->data[i]);
-	}
-
-	backbuf->wlbuffer = android_wlegl_create_buffer(m_android_wlegl,
-			backbuf->width, backbuf->height, backbuf->stride,
-			backbuf->format, backbuf->usage, wlegl_handle);
-
-	android_wlegl_handle_destroy(wlegl_handle);
-
-	wl_buffer_add_listener(backbuf->wlbuffer, &wl_buffer_listener, this);
-	wl_proxy_set_queue((struct wl_proxy *) backbuf->wlbuffer,
-			this->wl_queue);
-	backbuf->common.incRef(&backbuf->common);
-	*buffer = backbuf;
- 
-    } 
-#endif
+    	    lock();
+	    std::list<WaylandNativeWindowBuffer *>::iterator it = buffers.begin();
+	    for (; it != buffers.end(); it++)
+		if ((*it)->busy == 0)
+			break;
+	    if (it != buffers.end())
+	    {
+	        backbuf = *it; 
+	   	break;
+	    }
+	    unlock();
+    }
+    backbuf->busy = 1; 
+    *buffer = backbuf;
     unlock();
     return NO_ERROR;
 }
@@ -300,10 +218,66 @@ int WaylandNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer){
 }
 
 int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer){
+    WaylandNativeWindowBuffer *backbuf = (WaylandNativeWindowBuffer *) buffer;
+    int ret = 0;
+    lock();
+    backbuf->busy = 2;
+    unlock();
+    while (this->frame_callback && ret != -1)
+     	ret = wl_display_dispatch_queue(m_display, this->wl_queue);
+    
+    if (ret < 0)
+	return ret;
+
+    lock();
+    this->frame_callback = wl_surface_frame(m_window->surface);
+    wl_callback_add_listener(this->frame_callback, &frame_listener, this);
+    wl_proxy_set_queue((struct wl_proxy *) this->frame_callback, this->wl_queue);
+
+    
+    struct wl_array ints;
+    int *ints_data;
+    struct android_wlegl_handle *wlegl_handle;
+    buffer_handle_t handle;
+    	
+    handle = backbuf->handle;
+
+    wl_array_init(&ints);
+    ints_data = (int*) wl_array_add(&ints, handle->numInts*sizeof(int));
+    memcpy(ints_data, handle->data + handle->numFds, handle->numInts*sizeof(int));
+    wlegl_handle = android_wlegl_create_handle(m_android_wlegl, handle->numFds, &ints);
+    wl_array_release(&ints);
+    for (int i = 0; i < handle->numFds; i++) {
+	android_wlegl_handle_add_fd(wlegl_handle, handle->data[i]);
+    }
+
+    backbuf->wlbuffer = android_wlegl_create_buffer(m_android_wlegl,
+		backbuf->width, backbuf->height, backbuf->stride,
+		backbuf->format, backbuf->usage, wlegl_handle);
+
+    android_wlegl_handle_destroy(wlegl_handle);
+    backbuf->common.incRef(&backbuf->common);
+
+    printf("Add listener for %p with %p inside\n", backbuf, backbuf->wlbuffer);
+    wl_buffer_add_listener(backbuf->wlbuffer, &wl_buffer_listener, this);
+    wl_proxy_set_queue((struct wl_proxy *) backbuf->wlbuffer,
+			this->wl_queue);
+
+    wl_surface_attach(m_window->surface, backbuf->wlbuffer, 0, 0); 
+    wl_surface_damage(m_window->surface, 0, 0, backbuf->width, backbuf->height);
+    wl_surface_commit(m_window->surface);
+    fronted.push_back(backbuf);   
+ 
+    unlock();
+#if 0
+int ret = 0;
+    
+
    lock();
-   queued.push_back(static_cast<WaylandNativeWindowBuffer *>(buffer));
-   unlock();
-   return NO_ERROR;
+    fronted.push_back(backbuf);
+    unlock();
+#endif
+    return NO_ERROR;
 }
 
 int WaylandNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer){
@@ -356,6 +330,26 @@ int WaylandNativeWindow::setBuffersFormat(int format) {
     m_format = format;
     return NO_ERROR;
 }
+
+int WaylandNativeWindow::setBufferCount(int cnt) {
+    int i;
+    for (int i = 0; i < cnt; i++)
+    {
+        WaylandNativeWindowBuffer *backbuf = new WaylandNativeWindowBuffer(m_width, m_height, m_format, m_usage);
+    	int err = m_alloc->alloc(m_alloc,
+                        backbuf->width ? backbuf->width : 1, backbuf->height ? backbuf->height : 1, backbuf->format,
+                        backbuf->usage,
+                        &backbuf->handle,
+                        &backbuf->stride);
+	assert(err == 0);
+	buffers.push_back(backbuf);	
+    }
+
+    return NO_ERROR;
+}
+
+
+
 
 int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
     TRACE("%s size %ix%i\n",__PRETTY_FUNCTION__, width, height);

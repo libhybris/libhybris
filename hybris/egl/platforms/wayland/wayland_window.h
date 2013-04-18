@@ -53,11 +53,13 @@ class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
         ANativeWindowBuffer::format = format;
         ANativeWindowBuffer::usage = usage;
         this->wlbuffer = NULL;
+	this->busy = 0;
     };
     void* vaddr;
     public:
     buffer_handle_t getHandle();
     struct wl_buffer *wlbuffer;
+    int busy;
 };
 
 class WaylandNativeWindow : public BaseNativeWindow
@@ -95,9 +97,9 @@ protected:
     virtual int setUsage(int usage);
     virtual int setBuffersFormat(int format);
     virtual int setBuffersDimensions(int width, int height);
+    virtual int setBufferCount(int cnt);
 private:
-    std::list<WaylandNativeWindowBuffer *> dequeued; 
-    std::list<WaylandNativeWindowBuffer *> queued;
+    std::list<WaylandNativeWindowBuffer *> buffers; 
     std::list<WaylandNativeWindowBuffer *> fronted;
     struct wl_egl_window *m_window;
     struct wl_display *m_display;
