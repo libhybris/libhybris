@@ -98,19 +98,34 @@ int main(int argc, char **argv)
 	};
 	EGLContext context;
 
+	EGLBoolean rv;
+
 	display = eglGetDisplay(NULL);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(display != EGL_NO_DISPLAY);
 
-	eglInitialize(display, 0, 0);
+	rv = eglInitialize(display, 0, 0);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(rv == EGL_TRUE);
+
 	eglChooseConfig((EGLDisplay) display, attr, &ecfg, 1, &num_config);
-	surface = eglCreateWindowSurface((EGLDisplay) display, ecfg, (EGLNativeWindowType)NULL, NULL);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(rv == EGL_TRUE);
 
+	surface = eglCreateWindowSurface((EGLDisplay) display, ecfg, (EGLNativeWindowType)NULL, NULL);
+	assert(eglGetError() == EGL_SUCCESS);
 	assert(surface != EGL_NO_SURFACE);
 
 	context = eglCreateContext((EGLDisplay) display, ecfg, EGL_NO_CONTEXT, ctxattr);
-
-	assert(surface != EGL_NO_CONTEXT);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(context != EGL_NO_CONTEXT);
 
 	assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
+
+	const char *version = (const char *)glGetString(GL_VERSION);
+	assert(version);
+	printf("%s\n",version);
+
 
 	GLuint vertexShader   = load_shader ( vertex_src , GL_VERTEX_SHADER  );     // load vertex shader
 	GLuint fragmentShader = load_shader ( fragment_src , GL_FRAGMENT_SHADER );  // load fragment shader
