@@ -18,23 +18,67 @@
 
 #include "properties.h"
 #define _GNU_SOURCE
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdio_ext.h>
-#include <stddef.h>
-#include <stdlib.h>
+#include <arpa/inet.h>
+#include <dirent.h>
+#include <dlfcn.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <fnmatch.h>
+#include <fts.h>
+#include <ftw.h>
+#include <inttypes.h>
+#include <libgen.h>
+#include <locale.h>
 #include <malloc.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <poll.h>
+#include <pthread.h>
+#include <pwd.h>
+#include <regex.h>
+#include <search.h>
+#include <semaphore.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdio_ext.h>
+#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <dlfcn.h>
-#include <pthread.h>
-#include <signal.h>
-#include <errno.h>
-#include <dirent.h>
+#include <sys/epoll.h>
+#include <sys/eventfd.h>
+#include <sys/file.h>
+#include <sys/inotify.h>
+#include <sys/ioctl.h>
+#include <sys/ipc.h>
+#include <sys/klog.h>
+#include <sys/mman.h>
+#include <sys/mount.h>
+#include <sys/prctl.h>
+#include <sys/ptrace.h>
+#include <sys/resource.h>
+#include <sys/sendfile.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/sysinfo.h>
+#include <sys/time.h>
+#include <sys/timeb.h>
+#include <sys/times.h>
 #include <sys/types.h>
+#include <sys/vfs.h>
+#include <sys/wait.h>
 #include <sys/xattr.h>
+#include <syslog.h>
+#include <termios.h>
+#include <unistd.h>
+#include <utime.h>
+#include <utmp.h>
+#include <wchar.h>
+#include <wctype.h>
 
-#include <netdb.h>
 
 /* TODO:
 *  - Check if the int arguments at attr_set/get match the ones at Android
@@ -992,6 +1036,19 @@ static int my_setlinebuf(FILE *fp)
     return 0;
 }
 
+long my_sysconf(int name) {
+	if ( name == 0x27 ) return sysconf(_SC_PAGESIZE);
+
+	long rv = sysconf(name);
+	if ( rv == -1 ) {
+		printf("sysconf failed\n");
+		exit (-1);
+	}
+	printf("sysconf(%x/%x):%lu\n",name, _SC_PAGESIZE, rv);
+	return rv;
+}
+extern const char* __progname;
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -1196,6 +1253,8 @@ static struct _hook hooks[] = {
     {"gethostbyname2", gethostbyname2},
     {"gethostent", gethostent},
     {"strftime", strftime},
+    {"sysconf", my_sysconf},
+#include "entries.in"
     {NULL, NULL},
 };
 
