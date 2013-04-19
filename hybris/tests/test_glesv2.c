@@ -72,11 +72,11 @@ GLint offset_loc;
 GLint position_loc;
 
 const float vertexArray[] = {
-   0.0,  0.5,  0.0,
-  -0.5,  0.0,  0.0,
-   0.0, -0.5,  0.0,
-   0.5,  0.0,  0.0,
-   0.0,  0.5,  0.0 
+	0.0,  0.5,  0.0,
+	-0.5,  0.0,  0.0,
+	0.0, -0.5,  0.0,
+	0.5,  0.0,  0.0,
+	0.0,  0.5,  0.0
 };
 
 
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 	EGL_CONTEXT_CLIENT_VERSION, 2,
 		EGL_NONE
 	};
- 	EGLContext context;
+	EGLContext context;
 
 	display = eglGetDisplay(NULL);
 
