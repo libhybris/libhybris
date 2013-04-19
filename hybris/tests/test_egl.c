@@ -57,7 +57,7 @@ int main(int argc, char **argv)
 
 	context = eglCreateContext((EGLDisplay) display, ecfg, EGL_NO_CONTEXT, ctxattr);
 	assert(eglGetError() == EGL_SUCCESS);
-	assert(surface != EGL_NO_CONTEXT);
+	assert(context != EGL_NO_CONTEXT);
 
 	assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
 	printf("stop\n");

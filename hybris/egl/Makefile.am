@@ -22,6 +22,7 @@ if WANT_DEBUG
 libEGL_la_CXXFLAGS += -ggdb -O0 -DDEBUG
 endif
 libEGL_la_LDFLAGS = \
+	-ldl \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/hardware/libhardware.la \
 	-version-info "1":"0":"0"
