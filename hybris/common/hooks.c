@@ -1239,6 +1239,7 @@ static struct _hook hooks[] = {
     {"timer_gettime", timer_gettime},
     {"timer_delete", timer_delete},
     {"timer_getoverrun", timer_getoverrun},
+    {"abort", abort},
     {NULL, NULL},
 };
 
