@@ -217,8 +217,12 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 		TRACE("set crop\n");
 		break;
 	case NATIVE_WINDOW_SET_BUFFER_COUNT          : //  4,
-		TRACE("set buffer count\n");
+	{
+		int cnt = va_arg(args, int);
+		TRACE("set buffer count %i\n", cnt);
+		return self->setBufferCount(cnt);
 		break;
+	}
 	case NATIVE_WINDOW_SET_BUFFERS_GEOMETRY      : //  5,   /* deprecated */
 		TRACE("set buffers geometry\n");
 		break;
