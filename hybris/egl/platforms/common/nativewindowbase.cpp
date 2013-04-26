@@ -12,8 +12,8 @@ BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 	// common.version = sizeof(ANativeWindow);
 	// memset(common.reserved, 0, sizeof(window->native.common.reserved));
 
-	ANativeWindowBuffer::common.decRef = &_decRef;
-	ANativeWindowBuffer::common.incRef = &_incRef;
+	ANativeWindowBuffer::common.decRef = _decRef;
+	ANativeWindowBuffer::common.incRef = _incRef;
 	ANativeWindowBuffer::width = 0;
 	ANativeWindowBuffer::height = 0;
 	ANativeWindowBuffer::stride = 0;
@@ -24,22 +24,36 @@ BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 	refcount = 0;
 }
 
+
+BaseNativeWindowBuffer::~BaseNativeWindowBuffer()
+{
+	ANativeWindowBuffer::common.decRef = NULL;
+	ANativeWindowBuffer::common.incRef = NULL;
+	refcount = 0;
+}
+
+
 void BaseNativeWindowBuffer::_decRef(struct android_native_base_t* base)
 {
-	/* FIXME: This really should be atomic / locked */
 	ANativeWindowBuffer* self = container_of(base, ANativeWindowBuffer, common);
-	static_cast<BaseNativeWindowBuffer*>(self)->refcount--;
-	if (static_cast<BaseNativeWindowBuffer*>(self)->refcount == 0)
+	BaseNativeWindowBuffer* bnwb = static_cast<BaseNativeWindowBuffer*>(self) ;
+
+	if (__sync_fetch_and_sub(&bnwb->refcount,1) == 1)
 	{
-	    delete static_cast<BaseNativeWindowBuffer *>(self);
+		delete bnwb;
 	}
 }
+
+
 
 void BaseNativeWindowBuffer::_incRef(struct android_native_base_t* base)
 {
 	ANativeWindowBuffer* self = container_of(base, ANativeWindowBuffer, common);
-        static_cast<BaseNativeWindowBuffer*>(self)->refcount++;
+	BaseNativeWindowBuffer* bnwb= static_cast<BaseNativeWindowBuffer*>(self) ;
+
+	__sync_fetch_and_add(&bnwb->refcount,1);
 }
+
 
 BaseNativeWindow::BaseNativeWindow()
 {
@@ -48,8 +62,8 @@ BaseNativeWindow::BaseNativeWindow()
 	// common.magic = ANDROID_NATIVE_WINDOW_MAGIC;
 	// common.version = sizeof(ANativeWindow);
 	// memset(common.reserved, 0, sizeof(window->native.common.reserved));
-	common.decRef = &_decRef;
-	common.incRef = &_incRef;
+	ANativeWindow::common.decRef = _decRef;
+	ANativeWindow::common.incRef = _incRef;
 
 	ANativeWindow::flags = 0;
 	ANativeWindow::minSwapInterval = 0;
@@ -64,25 +78,36 @@ BaseNativeWindow::BaseNativeWindow()
 	ANativeWindow::query = &_query;
 	ANativeWindow::perform = &_perform;
 	ANativeWindow::cancelBuffer = &_cancelBuffer;
+
 	refcount = 0;
-};
+}
 
 BaseNativeWindow::~BaseNativeWindow()
 {
 	TRACE("%s\n",__PRETTY_FUNCTION__);
-};
+	ANativeWindow::common.decRef = NULL;
+	ANativeWindow::common.incRef = NULL;
+	refcount = 0;
+}
 
 void BaseNativeWindow::_decRef(struct android_native_base_t* base)
 {
 	ANativeWindow* self = container_of(base, ANativeWindow, common);
-	static_cast<BaseNativeWindow*>(self)->refcount--;
-};
+	BaseNativeWindow* bnw = static_cast<BaseNativeWindow*>(self);
+
+	if (__sync_fetch_and_sub(&bnw->refcount,1) == 1)
+	{
+		delete bnw;
+	}
+}
 
 void BaseNativeWindow::_incRef(struct android_native_base_t* base)
 {
 	ANativeWindow* self = container_of(base, ANativeWindow, common);
-	static_cast<BaseNativeWindow*>(self)->refcount++;
-};
+	BaseNativeWindow* bnw = static_cast<BaseNativeWindow*>(self);
+
+	__sync_fetch_and_add(&bnw->refcount,1);
+}
 
 int BaseNativeWindow::_setSwapInterval(struct ANativeWindow* window, int interval)
 {

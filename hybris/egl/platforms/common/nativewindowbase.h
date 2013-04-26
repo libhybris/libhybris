@@ -21,7 +21,7 @@ class BaseNativeWindowBuffer : public ANativeWindowBuffer
 {
 protected:
 	BaseNativeWindowBuffer();
-	virtual ~BaseNativeWindowBuffer() {}
+	virtual ~BaseNativeWindowBuffer() ;
 private:
 	unsigned int refcount;
 	static void _decRef(struct android_native_base_t* base);
