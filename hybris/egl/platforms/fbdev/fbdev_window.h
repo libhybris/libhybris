@@ -54,15 +54,15 @@ public:
 protected:
     // overloads from BaseNativeWindow
     virtual int setSwapInterval(int interval);
-    virtual int lockBuffer_DEPRECATED(BaseNativeWindowBuffer* buffer);
+    virtual int lockBuffer(BaseNativeWindowBuffer* buffer);
 
-    virtual int dequeueBuffer_DEPRECATED(BaseNativeWindowBuffer **buffer);
+    virtual int dequeueBuffer(BaseNativeWindowBuffer **buffer);
     virtual int dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd);
 
-    virtual int queueBuffer_DEPRECATED(BaseNativeWindowBuffer* buffer);
+    virtual int queueBuffer(BaseNativeWindowBuffer* buffer);
     virtual int queueBuffer(BaseNativeWindowBuffer *buffer, int fenceFd);
 
-    virtual int cancelBuffer_DEPRECATED(BaseNativeWindowBuffer* buffer);
+    virtual int cancelBuffer(BaseNativeWindowBuffer* buffer);
     virtual int cancelBuffer(BaseNativeWindowBuffer *buffer, int fenceFd);
 
     virtual unsigned int type() const;

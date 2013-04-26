@@ -5,10 +5,9 @@ libhybris_eglplatformcommon_la_SOURCES = \
 	native_handle.c \
 	nativewindowbase.cpp \
 	eglplatformcommon.cpp
-
 if WANT_WAYLAND
 lib_LTLIBRARIES += libwayland-egl.la
-	
+
 libhybris_eglplatformcommon_la_SOURCES += \
 	server_wlegl.cpp \
 	server_wlegl_handle.cpp \

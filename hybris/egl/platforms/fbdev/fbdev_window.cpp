@@ -92,7 +92,7 @@ int FbDevNativeWindow::setSwapInterval(int interval)
 
 
 
-int FbDevNativeWindow::dequeueBuffer_DEPRECATED(BaseNativeWindowBuffer **buffer)
+int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer)
 {
     TRACE("");
     int fenceFd=-1;
@@ -125,7 +125,7 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fence
 
 
 
-int FbDevNativeWindow::queueBuffer_DEPRECATED(BaseNativeWindowBuffer* buffer)
+int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer)
 {
     return queueBuffer(buffer,-1);
 }
@@ -148,7 +148,7 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer *buffer, int fenceFd)
 
 
 
-int FbDevNativeWindow::cancelBuffer_DEPRECATED(BaseNativeWindowBuffer* buffer)
+int FbDevNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer)
 {
     TRACE("");
     return cancelBuffer(buffer,-1);
@@ -162,7 +162,7 @@ int FbDevNativeWindow::cancelBuffer(BaseNativeWindowBuffer *buffer, int fenceFd)
 
 
 
-int FbDevNativeWindow::lockBuffer_DEPRECATED(BaseNativeWindowBuffer* buffer)
+int FbDevNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
 {
     TRACE("");
     return NO_ERROR;

@@ -56,15 +56,26 @@ BaseNativeWindow::BaseNativeWindow()
 	ANativeWindow::maxSwapInterval = 0;
 	ANativeWindow::xdpi = 0;
 	ANativeWindow::ydpi = 0;
-
-	ANativeWindow::setSwapInterval = _setSwapInterval;
-	ANativeWindow::lockBuffer = &_lockBuffer;
-	ANativeWindow::dequeueBuffer = &_dequeueBuffer;
-	ANativeWindow::queueBuffer = &_queueBuffer;
-	ANativeWindow::query = &_query;
-	ANativeWindow::perform = &_perform;
-	ANativeWindow::cancelBuffer = &_cancelBuffer;
+#if defined(ANDROID_VERSION) && ANDROID_VERSION < 0x402
+	ANativeWindow::setSwapInterval  = _setSwapInterval;
+	ANativeWindow::lockBuffer   = _lockBuffer;
+	ANativeWindow::dequeueBuffer= _dequeueBuffer;
+	ANativeWindow::queueBuffer  = _queueBuffer;
+	ANativeWindow::query        = _query;
+	ANativeWindow::perform      = _perform;
+	ANativeWindow::cancelBuffer = _cancelBuffer;
 	refcount = 0;
+#endif
+#if defined(ANDROID_VERSION) && ANDROID_VERSION >= 0x402
+	ANativeWindow::setSwapInterval  = _setSwapInterval;
+	ANativeWindow::lockBuffer   = _lockBuffer;
+	ANativeWindow::dequeueBuffer= _dequeueBuffer;
+	ANativeWindow::queueBuffer  = _queueBuffer;
+	ANativeWindow::query        = _query;
+	ANativeWindow::perform      = _perform;
+	ANativeWindow::cancelBuffer = _cancelBuffer;
+	refcount = 0;
+#endif
 };
 
 BaseNativeWindow::~BaseNativeWindow()
