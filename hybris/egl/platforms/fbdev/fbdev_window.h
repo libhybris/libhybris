@@ -45,6 +45,7 @@ protected:
     virtual int setUsage(int usage);
     virtual int setBuffersFormat(int format);
     virtual int setBuffersDimensions(int width, int height);
+    virtual int setBufferCount(int cnt);
 private:
     unsigned int m_frontbuffer;
     unsigned int m_tailbuffer;
