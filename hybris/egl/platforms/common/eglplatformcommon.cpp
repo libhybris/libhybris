@@ -29,6 +29,28 @@ extern "C" EGLBoolean eglplatformcommon_eglBindWaylandDisplayWL(EGLDisplay dpy, 
 extern "C" EGLBoolean eglplatformcommon_eglUnbindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
 {
 }
+
+extern "C" EGLBoolean eglplatformcommon_eglQueryWaylandBufferWL(EGLDisplay dpy,
+	struct wl_buffer *buffer, EGLint attribute, EGLint *value)
+{
+	server_wlegl_buffer *buf  = server_wlegl_buffer_from(buffer);
+	ANativeWindowBuffer* anwb = (ANativeWindowBuffer *) buf->buf;
+
+	if (attribute == EGL_TEXTURE_FORMAT) {
+		*value = anwb->format;
+		return EGL_TRUE;
+	}
+	if (attribute == EGL_WIDTH) {
+		*value = anwb->width;
+		return EGL_TRUE;
+	}
+	if (attribute == EGL_HEIGHT) {
+		*value = anwb->height;
+		return EGL_TRUE;
+	}
+	return EGL_FALSE ;
+}
+
 #endif
 
 
@@ -56,6 +78,10 @@ extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProc
 	if (strcmp(procname, "eglUnbindWaylandDisplayWL") == 0)
 	{
 		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglUnbindWaylandDisplayWL;
+	}else
+	if (strcmp(procname, "eglQueryWaylandBufferWL") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglQueryWaylandBufferWL;
 	}
 #endif
 	return NULL;
