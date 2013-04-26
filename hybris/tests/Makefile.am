@@ -3,7 +3,8 @@ bin_PROGRAMS = \
 	test_glesv2 \
 	test_sensors \
 	test_lights \
-	test_ui
+	test_ui \
+	test_gps
 
 test_egl_SOURCES = test_egl.c
 test_egl_CFLAGS = \
@@ -47,3 +48,11 @@ test_ui_CFLAGS = \
 test_ui_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/ui/libui.la
+
+test_gps_SOURCES = test_gps.c
+test_gps_CFLAGS = -pthread \
+	-I$(top_srcdir)/include
+test_gps_LDFLAGS = -pthread
+test_gps_LDADD =  \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/hardware/libhardware.la
