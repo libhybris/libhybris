@@ -70,7 +70,7 @@ protected:
 	virtual int setBuffersFormat(int format) = 0;
 	virtual int setBuffersDimensions(int width, int height) = 0;
 	virtual int setUsage(int usage) = 0;
-
+	virtual int setBufferCount(int cnt) = 0;
 private:
 	static int _setSwapInterval(struct ANativeWindow* window, int interval);
 	static int _dequeueBuffer(ANativeWindow* window, ANativeWindowBuffer** buffer);

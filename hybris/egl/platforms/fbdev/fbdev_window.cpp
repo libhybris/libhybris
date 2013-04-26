@@ -124,6 +124,12 @@ int FbDevNativeWindow::setBuffersFormat(int format) {
     return NO_ERROR;
 }
 
+int FbDevNativeWindow::setBufferCount(int cnt) {
+    TRACE("%s buffercount %i\n",__PRETTY_FUNCTION__, cnt);
+    return NO_ERROR;
+}
+
+
 int FbDevNativeWindow::setBuffersDimensions(int width, int height) {
     TRACE("%s size %ix%i\n",__PRETTY_FUNCTION__, width, height);
     return NO_ERROR;
