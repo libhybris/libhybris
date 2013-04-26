@@ -23,8 +23,12 @@
 #include <GLES2/gl2ext.h>
 #include <dlfcn.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <malloc.h>
 #include "ws.h"
+
+#include <hybris/internal/binding.h>
+#include <string.h>
 
 static void *_libegl = NULL;
 static void *_libgles = NULL;
