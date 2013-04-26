@@ -118,6 +118,7 @@ AC_CONFIG_FILES([
 	egl/platforms/common/Makefile
 	egl/platforms/null/Makefile
 	egl/platforms/fbdev/Makefile
+	egl/platforms/wayland/Makefile
 	glesv2/Makefile
 	hardware/Makefile
 	ui/Makefile
