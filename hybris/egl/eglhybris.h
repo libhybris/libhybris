@@ -18,9 +18,6 @@
 #ifndef EGL_HYBRIS_H_
 #define EGL_HYBRIS_H_
 
-#include "fbdev_window.h"
-#include "offscreen_window.h"
-
 int hybris_register_buffer_handle(buffer_handle_t handle);
 
 #endif
