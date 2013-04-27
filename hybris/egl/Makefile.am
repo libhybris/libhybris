@@ -29,5 +29,4 @@ libEGL_la_LDFLAGS = \
 
 eglincludedir = $(includedir)/EGL
 eglinclude_HEADERS = \
-	eglhybris.h \
-	support.h
+	eglhybris.h

@@ -69,6 +69,11 @@ libhybris_eglplatformcommon_la_LDFLAGS = \
 	$(top_builddir)/common/libhybris-common.la \
 	-version-info "1":"0":"0"
 
+eglplatformcommondir = $(includedir)/hybris/eglplatformcommon
+eglplatformcommon_HEADERS = \
+	support.h \
+	nativewindowbase.h
+
 if WANT_WAYLAND
 libhybris_eglplatformcommon_la_LDFLAGS += \
 	$(WAYLAND_CLIENT_LIBS) \
