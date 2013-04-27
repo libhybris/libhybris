@@ -35,6 +35,8 @@
 #include <sys/xattr.h>
 
 #include <netdb.h>
+#include <unistd.h>
+#include <syslog.h>
 
 /* TODO:
 *  - Check if the int arguments at attr_set/get match the ones at Android
@@ -992,6 +994,33 @@ static int my_setlinebuf(FILE *fp)
     return 0;
 }
 
+long my_sysconf(int name) { 
+  /*
+   * bionic has different values for the values below.
+   * TODO: compare the values between glibc and bionic and complete the mapping
+   */
+  switch (name) {
+  case 0x27:
+    return sysconf(_SC_PAGESIZE); 
+  case 0x60:
+    return sysconf(_SC_NPROCESSORS_CONF);
+  default:
+    break;
+  }
+
+
+  long rv = sysconf(name); 
+
+#ifdef DEBUG
+  if (rv == -1) {
+    printf("sysconf failed for %li\n", name); 
+    exit(-1);
+  } 
+#endif
+
+  return rv; 
+}
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -1196,6 +1225,21 @@ static struct _hook hooks[] = {
     {"gethostbyname2", gethostbyname2},
     {"gethostent", gethostent},
     {"strftime", strftime},
+    {"sysconf", my_sysconf},
+    {"sscanf", sscanf},
+    {"scanf", scanf},
+    {"vscanf", vscanf},
+    {"vsscanf", vsscanf},
+    {"openlog", openlog},
+    {"syslog", syslog},
+    {"closelog", closelog},
+    {"vsyslog", vsyslog},
+    {"timer_create", timer_create},
+    {"timer_settime", timer_settime},
+    {"timer_gettime", timer_gettime},
+    {"timer_delete", timer_delete},
+    {"timer_getoverrun", timer_getoverrun},
+    {"abort", abort},
     {NULL, NULL},
 };
 
