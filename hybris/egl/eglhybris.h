@@ -18,6 +18,8 @@
 #ifndef EGL_HYBRIS_H_
 #define EGL_HYBRIS_H_
 
+#include <android/hardware/gralloc.h>
+
 int hybris_register_buffer_handle(buffer_handle_t handle);
 
 #endif
