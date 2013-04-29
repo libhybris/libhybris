@@ -56,10 +56,11 @@ protected:
 
 	// these have to be implemented in the concrete implementation, eg. FBDEV or offscreen window
 	virtual int setSwapInterval(int interval) = 0;
-	virtual int dequeueBuffer(BaseNativeWindowBuffer **buffer) = 0;
-	virtual int lockBuffer(BaseNativeWindowBuffer* buffer) = 0;
-	virtual int queueBuffer(BaseNativeWindowBuffer* buffer) = 0;
-	virtual int cancelBuffer(BaseNativeWindowBuffer* buffer) = 0;
+
+	virtual int dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd) = 0;
+	virtual int queueBuffer(BaseNativeWindowBuffer *buffer, int fenceFd) = 0;
+	virtual int cancelBuffer(BaseNativeWindowBuffer *buffer, int fenceFd) = 0;
+	virtual int lockBuffer(BaseNativeWindowBuffer *buffer) = 0; // DEPRECATED
 
 	virtual unsigned int type() const = 0;
 	virtual unsigned int width() const = 0;
@@ -76,14 +77,17 @@ protected:
 	virtual int setBufferCount(int cnt) = 0;
 private:
 	static int _setSwapInterval(struct ANativeWindow* window, int interval);
-	static int _dequeueBuffer(ANativeWindow* window, ANativeWindowBuffer** buffer);
+	static int _dequeueBuffer_DEPRECATED(ANativeWindow* window, ANativeWindowBuffer** buffer);
 	static const char *_native_window_operation(int what);
 	static const char *_native_query_operation(int what);
-	static int _lockBuffer(struct ANativeWindow* window, ANativeWindowBuffer* buffer);
-	static int _queueBuffer(struct ANativeWindow* window, ANativeWindowBuffer* buffer);
+	static int _lockBuffer_DEPRECATED(struct ANativeWindow* window, ANativeWindowBuffer* buffer);
+	static int _queueBuffer_DEPRECATED(struct ANativeWindow* window, ANativeWindowBuffer* buffer);
 	static int _query(const struct ANativeWindow* window, int what, int* value);
 	static int _perform(struct ANativeWindow* window, int operation, ... );
-	static int _cancelBuffer(struct ANativeWindow* window, ANativeWindowBuffer* buffer);
+	static int _cancelBuffer_DEPRECATED(struct ANativeWindow* window, ANativeWindowBuffer* buffer);
+	static int _queueBuffer(struct ANativeWindow *window, ANativeWindowBuffer *buffer, int fenceFd);
+	static int _dequeueBuffer(struct ANativeWindow *window, ANativeWindowBuffer **buffer, int *fenceFd);
+	static int _cancelBuffer(struct ANativeWindow *window, ANativeWindowBuffer *buffer, int fenceFd);
 };
 
 #endif
