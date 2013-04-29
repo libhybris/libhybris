@@ -16,12 +16,12 @@
  ** License version 2.1 as published by the Free Software Foundation
  ** and appearing in the file license.lgpl included in the packaging
  ** of this file.
- ** 
+ **
  ** This library is distributed in the hope that it will be useful,
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  ** Lesser General Public License for more details.
- ** 
+ **
  ****************************************************************************************/
 
 
@@ -62,12 +62,11 @@ class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
     int busy;
 };
 
-class WaylandNativeWindow : public BaseNativeWindow
-{
+class WaylandNativeWindow : public BaseNativeWindow {
 public:
     WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, const gralloc_module_t* gralloc, alloc_device_t* alloc_device);
     ~WaylandNativeWindow();
-    
+
     void lock();
     void unlock();
     void frame();
