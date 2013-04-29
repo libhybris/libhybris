@@ -56,6 +56,9 @@ hardwareinclude_HEADERS = \
 	android/hardware/sensors.h \
 	android/hardware/lights.h
 
+syncincludedir = $(includedir)/android/sync
+syncinclude_HEADERS = android/sync/sync.h
+
 hybrisincludedir = $(includedir)/hybris
 hybrisinclude_HEADERS = \
 	hybris/ui_compatibility_layer.h

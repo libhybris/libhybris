@@ -26,13 +26,14 @@ class FbDevNativeWindow : public BaseNativeWindow
 public:
     FbDevNativeWindow(gralloc_module_t* gralloc, alloc_device_t* alloc, framebuffer_device_t* fbDev);
     ~FbDevNativeWindow();
+
 protected:
     // overloads from BaseNativeWindow
     virtual int setSwapInterval(int interval);
-    virtual int dequeueBuffer(BaseNativeWindowBuffer **buffer);
-    virtual int lockBuffer(BaseNativeWindowBuffer* buffer);
-    virtual int queueBuffer(BaseNativeWindowBuffer* buffer);
-    virtual int cancelBuffer(BaseNativeWindowBuffer* buffer);
+    virtual int dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd);
+    virtual int queueBuffer(BaseNativeWindowBuffer *buffer, int fenceFd);
+    virtual int cancelBuffer(BaseNativeWindowBuffer *buffer, int fenceFd);
+    virtual int lockBuffer(BaseNativeWindowBuffer *buffer);
     virtual unsigned int type() const;
     virtual unsigned int width() const;
     virtual unsigned int height() const;
@@ -46,6 +47,7 @@ protected:
     virtual int setBuffersFormat(int format);
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
+
 private:
     unsigned int m_frontbuffer;
     unsigned int m_tailbuffer;

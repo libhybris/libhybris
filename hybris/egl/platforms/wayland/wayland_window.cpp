@@ -189,7 +189,7 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 }
 
 
-int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer){
+int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd){
     WaylandNativeWindowBuffer *backbuf;
 
     while (1)
@@ -217,7 +217,7 @@ int WaylandNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer){
     return NO_ERROR;
 }
 
-int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer){
+int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd){
     WaylandNativeWindowBuffer *backbuf = (WaylandNativeWindowBuffer *) buffer;
     int ret = 0;
     lock();
@@ -280,7 +280,7 @@ int ret = 0;
     return NO_ERROR;
 }
 
-int WaylandNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer){
+int WaylandNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fenceFd){
     TRACE("%s\n",__PRETTY_FUNCTION__);
     return 0;
 }
