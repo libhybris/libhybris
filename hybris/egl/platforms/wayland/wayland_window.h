@@ -98,7 +98,7 @@ protected:
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
 private:
-    std::list<WaylandNativeWindowBuffer *> buffers; 
+    std::list<WaylandNativeWindowBuffer *> m_bufList;
     std::list<WaylandNativeWindowBuffer *> fronted;
     struct wl_egl_window *m_window;
     struct wl_display *m_display;
@@ -113,6 +113,8 @@ private:
     struct wl_registry *registry;
     const gralloc_module_t* m_gralloc;
     pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    int m_freeBufs;
     struct wl_callback *frame_callback;
     static int wayland_roundtrip(WaylandNativeWindow *display);
 };

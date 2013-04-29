@@ -1529,7 +1529,6 @@ void call_constructors_recursive(soinfo *si)
     if (si->constructors_called)
         return;
     if (strcmp(si->name,"libc.so") == 0) {
-	printf("=============> Skipping libc.so\n");
 	return;
     }
 

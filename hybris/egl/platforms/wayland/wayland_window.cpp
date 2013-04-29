@@ -102,7 +102,6 @@ static const struct wl_callback_listener frame_listener = {
 WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, const gralloc_module_t* gralloc, alloc_device_t* alloc_device)
 {
     int i;
-
     this->m_window = window;
     this->m_display = display;
     this->m_width = window->width;
@@ -125,19 +124,23 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
 
     m_usage=GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
     pthread_mutex_init(&mutex, NULL);
-
+    pthread_cond_init(&cond, NULL);
+    m_freeBufs = 0;
+    setBufferCount(5);
     TRACE("WaylandNativeWindow created in %p", pthread_self());
 }
 
 WaylandNativeWindow::~WaylandNativeWindow()
 {
-    //	FIXME:
-    //	We should destroy/free buffers upon deletion
-    //	wl_buffer_destroy(buf->wlbuffer);
-    //	buf->wlbuffer = NULL;
-    //	assert(this->m_alloc->free(this->m_alloc, buf->getHandle()) == 0);
-    //	delete buf;
-
+    std::list<WaylandNativeWindowBuffer *>::iterator it = m_bufList.begin();
+    for (; it != m_bufList.end(); it++)
+    {
+        WaylandNativeWindowBuffer* buf=*it;
+        wl_buffer_destroy(buf->wlbuffer);
+        buf->wlbuffer = NULL;
+        assert(this->m_alloc->free(this->m_alloc, buf->getHandle()) == 0);
+        delete buf;
+    }
 }
 
 buffer_handle_t WaylandNativeWindowBuffer::getHandle()
@@ -152,7 +155,7 @@ void WaylandNativeWindow::frame() {
 
 // overloads from BaseNativeWindow
 int WaylandNativeWindow::setSwapInterval(int interval) {
-    TRACE("");
+    TRACE("interval=%i", interval);
     return 0;
 }
 
@@ -169,6 +172,7 @@ static struct wl_buffer_listener wl_buffer_listener = {
 
 void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 {
+    TRACE("Release buffer %p", buffer);
     lock();
     std::list<WaylandNativeWindowBuffer *>::iterator it = fronted.begin();
 
@@ -178,74 +182,88 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
             break;
     }
     assert(it != fronted.end());
-    WaylandNativeWindowBuffer *buf = *it;
+
+    WaylandNativeWindowBuffer* wnb = *it;
     fronted.erase(it);
 
-    for (it = buffers.begin(); it != buffers.end(); it++)
+    for (it = m_bufList.begin(); it != m_bufList.end(); it++)
     {
-        if ((*it) == buf)
+        if ((*it) == wnb)
             break;
     }
-    assert(it != buffers.end());
+    assert(it != m_bufList.end());
     TRACE("Release buffer %p", buffer);
-    buf->busy = 0;
+    wnb->busy = 0;
+
+    ++m_freeBufs;
+    pthread_cond_signal(&cond);
     unlock();
 }
 
 
 int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd){
-    WaylandNativeWindowBuffer *backbuf;
+    TRACE("");
+    WaylandNativeWindowBuffer *wnb=NULL;
 
-    while (1)
-    {
-        lock();
-        std::list<WaylandNativeWindowBuffer *>::iterator it = buffers.begin();
-        for (; it != buffers.end(); it++)
-            if ((*it)->busy == 0)
-                break;
-        if (it != buffers.end())
-        {
-            backbuf = *it;
-            break;
-        }
-        unlock();
+    lock();
+    while (m_freeBufs==0) {
+        pthread_cond_wait(&cond,&mutex);
     }
-    backbuf->busy = 1;
-    *buffer = backbuf;
+    std::list<WaylandNativeWindowBuffer *>::iterator it = m_bufList.begin();
+    for (; it != m_bufList.end() && (*it)->busy; it++)
+    {}
+
+    if (it!=m_bufList.end())
+    {
+        wnb = *it;
+        assert(wnb!=NULL);
+        wnb->busy = 1;
+        *buffer = wnb;
+        --m_freeBufs;
+    }
+
     unlock();
     return NO_ERROR;
 }
 
 int WaylandNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer){
-    TRACE("===================");
+    TRACE("");
     return NO_ERROR;
 }
 
-int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd){
-    WaylandNativeWindowBuffer *backbuf = (WaylandNativeWindowBuffer *) buffer;
+int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
+{
+    TRACE("");
+    WaylandNativeWindowBuffer *wnb = (WaylandNativeWindowBuffer*) buffer;
     int ret = 0;
+
     lock();
-    backbuf->busy = 2;
+    wnb->busy = 1;
     unlock();
-    while (this->frame_callback && ret != -1)
-        ret = wl_display_dispatch_queue(m_display, this->wl_queue);
 
-    if (ret < 0)
+    while (this->frame_callback && ret != -1) {
+        ret = wl_display_dispatch_queue(m_display, this->wl_queue);
+    }
+
+    if (ret < 0) {
+        TRACE("wl_display_dispatch_queue returned an error");
         return ret;
+    }
 
     lock();
+
     this->frame_callback = wl_surface_frame(m_window->surface);
     wl_callback_add_listener(this->frame_callback, &frame_listener, this);
     wl_proxy_set_queue((struct wl_proxy *) this->frame_callback, this->wl_queue);
 
-    if (backbuf->wlbuffer == NULL)
+    if (wnb->wlbuffer == NULL)
     {
         struct wl_array ints;
         int *ints_data;
         struct android_wlegl_handle *wlegl_handle;
         buffer_handle_t handle;
 
-        handle = backbuf->handle;
+        handle = wnb->handle;
 
         wl_array_init(&ints);
         ints_data = (int*) wl_array_add(&ints, handle->numInts*sizeof(int));
@@ -256,29 +274,30 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
             android_wlegl_handle_add_fd(wlegl_handle, handle->data[i]);
         }
 
-        backbuf->wlbuffer = android_wlegl_create_buffer(m_android_wlegl,
-                backbuf->width, backbuf->height, backbuf->stride,
-                backbuf->format, backbuf->usage, wlegl_handle);
+        wnb->wlbuffer = android_wlegl_create_buffer(m_android_wlegl,
+                wnb->width, wnb->height, wnb->stride,
+                wnb->format, wnb->usage, wlegl_handle);
 
         android_wlegl_handle_destroy(wlegl_handle);
-        backbuf->common.incRef(&backbuf->common);
 
-        TRACE("Add listener for %p with %p inside", backbuf, backbuf->wlbuffer);
-        wl_buffer_add_listener(backbuf->wlbuffer, &wl_buffer_listener, this);
-        wl_proxy_set_queue((struct wl_proxy *) backbuf->wlbuffer,
-                this->wl_queue);
+        TRACE("Add listener for %p with %p inside", wnb, wnb->wlbuffer);
+        wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
+        wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
     }
-    wl_surface_attach(m_window->surface, backbuf->wlbuffer, 0, 0);
-    wl_surface_damage(m_window->surface, 0, 0, backbuf->width, backbuf->height);
+    TRACE("DAMAGE AREA: %dx%d",wnb->width, wnb->height);
+    wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
+    wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
     wl_surface_commit(m_window->surface);
-    fronted.push_back(backbuf);
-
+    //--m_freeBufs;
+    //pthread_cond_signal(&cond);
+    fronted.push_back(wnb);
     unlock();
+
     return NO_ERROR;
 }
 
 int WaylandNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fenceFd){
-    TRACE("");
+    TRACE("- WARN: STUB");
     return 0;
 }
 
@@ -308,7 +327,7 @@ unsigned int WaylandNativeWindow::defaultHeight() const {
 }
 
 unsigned int WaylandNativeWindow::queueLength() const {
-    TRACE("");
+    TRACE("WARN: stub");
     return 1;
 }
 
@@ -318,7 +337,7 @@ unsigned int WaylandNativeWindow::type() const {
 }
 
 unsigned int WaylandNativeWindow::transformHint() const {
-    TRACE("");
+    TRACE("WARN: stub");
     return 0;
 }
 
@@ -329,17 +348,22 @@ int WaylandNativeWindow::setBuffersFormat(int format) {
 }
 
 int WaylandNativeWindow::setBufferCount(int cnt) {
-    int i;
+
+    TRACE("cnt=%d", cnt);
+    m_freeBufs =0;
+
     for (int i = 0; i < cnt; i++)
     {
-        WaylandNativeWindowBuffer *backbuf = new WaylandNativeWindowBuffer(m_width, m_height, m_format, m_usage);
+        WaylandNativeWindowBuffer *wnb = new WaylandNativeWindowBuffer(m_width, m_height, m_format, m_usage);
         int err = m_alloc->alloc(m_alloc,
-                backbuf->width ? backbuf->width : 1, backbuf->height ? backbuf->height : 1, backbuf->format,
-                backbuf->usage,
-                &backbuf->handle,
-                &backbuf->stride);
+                wnb->width ? wnb->width : 1, wnb->height ? wnb->height : 1, wnb->format,
+                wnb->usage,
+                &wnb->handle,
+                &wnb->stride);
         assert(err == 0);
-        buffers.push_back(backbuf);
+        m_bufList.push_back(wnb);
+        wnb->common.incRef(&wnb->common);
+        ++m_freeBufs;
     }
 
     return NO_ERROR;
@@ -349,12 +373,12 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
 
 
 int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
-    TRACE("size %ix%i", width, height);
+    TRACE("size %ix%i - WARN STUB", width, height);
     return NO_ERROR;
 }
 
 int WaylandNativeWindow::setUsage(int usage) {
-    TRACE("");
+    TRACE("usage=x%x", usage);
     m_usage = usage | GRALLOC_USAGE_HW_TEXTURE;
     return NO_ERROR;
 }
