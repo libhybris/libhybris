@@ -124,7 +124,7 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
 	m_usage=GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
 	pthread_mutex_init(&mutex, NULL);
 
-        printf("WaylandNativeWindow created in %p\n", pthread_self());
+        TRACE("WaylandNativeWindow created in %p\n", pthread_self());
 }
 
 WaylandNativeWindow::~WaylandNativeWindow()
@@ -183,7 +183,7 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 	buf->wlbuffer = NULL;
 //	assert(this->m_alloc->free(this->m_alloc, buf->getHandle()) == 0);
 //	delete buf;
-	printf("Release buffer %p\n", buffer);
+	TRACE("Release buffer %p\n", buffer);
 	buf->busy = 0;
 	unlock();
 }
@@ -258,7 +258,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     android_wlegl_handle_destroy(wlegl_handle);
     backbuf->common.incRef(&backbuf->common);
 
-    printf("Add listener for %p with %p inside\n", backbuf, backbuf->wlbuffer);
+    TRACE("Add listener for %p with %p inside\n", backbuf, backbuf->wlbuffer);
     wl_buffer_add_listener(backbuf->wlbuffer, &wl_buffer_listener, this);
     wl_proxy_set_queue((struct wl_proxy *) backbuf->wlbuffer,
 			this->wl_queue);

@@ -7,6 +7,10 @@
 #include <stdarg.h>
 #include <assert.h>
 
+#ifdef DEBUG
+#include <stdio.h>
+#endif
+
 #define NO_ERROR                0L
 #define BAD_VALUE               -1
 

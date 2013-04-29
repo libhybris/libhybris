@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <android/hardware/gralloc.h>
+#include <stdio.h>
 #include <assert.h>
 #include "config.h"
 
