@@ -129,6 +129,13 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
 
 WaylandNativeWindow::~WaylandNativeWindow()
 {
+//	FIXME: 
+//	We should destroy/free buffers upon deletion
+//	wl_buffer_destroy(buf->wlbuffer);
+//	buf->wlbuffer = NULL;
+//	assert(this->m_alloc->free(this->m_alloc, buf->getHandle()) == 0);
+//	delete buf;
+	
 }
 
 buffer_handle_t WaylandNativeWindowBuffer::getHandle()
@@ -178,11 +185,6 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 			break;
 	}
 	assert(it != buffers.end());
-
-	wl_buffer_destroy(buf->wlbuffer);
-	buf->wlbuffer = NULL;
-//	assert(this->m_alloc->free(this->m_alloc, buf->getHandle()) == 0);
-//	delete buf;
 	TRACE("Release buffer %p\n", buffer);
 	buf->busy = 0;
 	unlock();
@@ -234,49 +236,42 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     wl_callback_add_listener(this->frame_callback, &frame_listener, this);
     wl_proxy_set_queue((struct wl_proxy *) this->frame_callback, this->wl_queue);
 
-    
-    struct wl_array ints;
-    int *ints_data;
-    struct android_wlegl_handle *wlegl_handle;
-    buffer_handle_t handle;
-    	
-    handle = backbuf->handle;
+    if (backbuf->wlbuffer == NULL)	
+    {
+	    struct wl_array ints;
+	    int *ints_data;
+	    struct android_wlegl_handle *wlegl_handle;
+	    buffer_handle_t handle;
+		
+	    handle = backbuf->handle;
 
-    wl_array_init(&ints);
-    ints_data = (int*) wl_array_add(&ints, handle->numInts*sizeof(int));
-    memcpy(ints_data, handle->data + handle->numFds, handle->numInts*sizeof(int));
-    wlegl_handle = android_wlegl_create_handle(m_android_wlegl, handle->numFds, &ints);
-    wl_array_release(&ints);
-    for (int i = 0; i < handle->numFds; i++) {
-	android_wlegl_handle_add_fd(wlegl_handle, handle->data[i]);
+	    wl_array_init(&ints);
+	    ints_data = (int*) wl_array_add(&ints, handle->numInts*sizeof(int));
+	    memcpy(ints_data, handle->data + handle->numFds, handle->numInts*sizeof(int));
+	    wlegl_handle = android_wlegl_create_handle(m_android_wlegl, handle->numFds, &ints);
+	    wl_array_release(&ints);
+	    for (int i = 0; i < handle->numFds; i++) {
+		android_wlegl_handle_add_fd(wlegl_handle, handle->data[i]);
+	    }
+
+	    backbuf->wlbuffer = android_wlegl_create_buffer(m_android_wlegl,
+			backbuf->width, backbuf->height, backbuf->stride,
+			backbuf->format, backbuf->usage, wlegl_handle);
+
+	    android_wlegl_handle_destroy(wlegl_handle);
+	    backbuf->common.incRef(&backbuf->common);
+
+	    TRACE("Add listener for %p with %p inside\n", backbuf, backbuf->wlbuffer);
+	    wl_buffer_add_listener(backbuf->wlbuffer, &wl_buffer_listener, this);
+	    wl_proxy_set_queue((struct wl_proxy *) backbuf->wlbuffer,
+				this->wl_queue);
     }
-
-    backbuf->wlbuffer = android_wlegl_create_buffer(m_android_wlegl,
-		backbuf->width, backbuf->height, backbuf->stride,
-		backbuf->format, backbuf->usage, wlegl_handle);
-
-    android_wlegl_handle_destroy(wlegl_handle);
-    backbuf->common.incRef(&backbuf->common);
-
-    TRACE("Add listener for %p with %p inside\n", backbuf, backbuf->wlbuffer);
-    wl_buffer_add_listener(backbuf->wlbuffer, &wl_buffer_listener, this);
-    wl_proxy_set_queue((struct wl_proxy *) backbuf->wlbuffer,
-			this->wl_queue);
-
     wl_surface_attach(m_window->surface, backbuf->wlbuffer, 0, 0); 
     wl_surface_damage(m_window->surface, 0, 0, backbuf->width, backbuf->height);
     wl_surface_commit(m_window->surface);
     fronted.push_back(backbuf);   
  
     unlock();
-#if 0
-int ret = 0;
-    
-
-   lock();
-    fronted.push_back(backbuf);
-    unlock();
-#endif
     return NO_ERROR;
 }
 
