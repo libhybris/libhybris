@@ -16,12 +16,6 @@ static gralloc_module_t *gralloc = 0;
 static framebuffer_device_t *framebuffer = 0;
 static alloc_device_t *alloc = 0;
 
-static int hybris_register_buffer_handle(buffer_handle_t handle)
-{
-	assert(inited == 1);
-	return gralloc->registerBuffer(gralloc, handle);
-}
-
 extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 {
 	if (__sync_fetch_and_add(&inited,1)==0)
