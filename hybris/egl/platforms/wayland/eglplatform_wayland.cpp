@@ -49,13 +49,12 @@ static alloc_device_t *alloc = 0;
 
 extern "C" int waylandws_IsValidDisplay(EGLNativeDisplayType display)
 {
-	int err;	
-	if (inited == 0)
+	int err;
+	if ( __sync_fetch_and_add(&inited,1)==0)
 	{
 		hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
 		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-		printf("got gralloc %p err:%s\n", gralloc, strerror(-err));
-		inited = 1;
+		printf("++ %u wayland: got gralloc %p err:%s\n", pthread_self(), gralloc, strerror(-err));
 		eglplatformcommon_init(gralloc);
 	}
 
