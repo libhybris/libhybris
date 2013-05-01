@@ -24,18 +24,17 @@ static int hybris_register_buffer_handle(buffer_handle_t handle)
 
 extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 {
-	if (inited == 0)
+	if (__sync_fetch_and_add(&inited,1)==0)
 	{
 		hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
 		int err = framebuffer_open((hw_module_t *) gralloc, &framebuffer);
-		printf("open framebuffer HAL (%s) format %i", strerror(-err), framebuffer->format);
+		printf("** open framebuffer HAL (%s) format x%x\n", strerror(-err), framebuffer->format);
 		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-		printf("got gralloc %p err:%s\n", gralloc, strerror(-err));
-		inited = 1;
+		printf("** got gralloc %p err:%s\n", gralloc, strerror(-err));
 		eglplatformcommon_init(gralloc);
 	}
 
-	return display == EGL_DEFAULT_DISPLAY; 
+	return display == EGL_DEFAULT_DISPLAY;
 }
 
 extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
