@@ -24,8 +24,11 @@ libhybris_common_la_SOURCES = \
 libhybris_common_la_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/common
+if WANT_TRACE
+libhybris_common_la_CFLAGS += -DDEBUG
+endif
 if WANT_DEBUG
-libhybris_common_la_CFLAGS += -ggdb -O0 -DDEBUG
+libhybris_common_la_CFLAGS += -ggdb -O0
 endif
 libhybris_common_la_LDFLAGS = \
 	-ldl \

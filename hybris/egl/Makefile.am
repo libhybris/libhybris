@@ -11,15 +11,22 @@ libEGL_la_CFLAGS = -I$(top_srcdir)/include -DPKGLIBDIR="\"$(pkglibdir)/\""
 if WANT_MESA
 libEGL_la_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
-if WANT_DEBUG
-libEGL_la_CFLAGS += -ggdb -O0 -DDEBUG
+if WANT_TRACE
+libEGL_la_CFLAGS += -DDEBUG
 endif
+if WANT_DEBUG
+libEGL_la_CFLAGS += -ggdb -O0
+endif
+
 libEGL_la_CXXFLAGS = -I$(top_srcdir)/include -DPKGLIBDIR="\"$(pkglibdir)/\""
 if WANT_MESA
 libEGL_la_CXXFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
+if WANT_TRACE
+libEGL_la_CXXFLAGS += -DDEBUG
+endif
 if WANT_DEBUG
-libEGL_la_CXXFLAGS += -ggdb -O0 -DDEBUG
+libEGL_la_CXXFLAGS += -ggdb -O0
 endif
 libEGL_la_LDFLAGS = \
 	-ldl \

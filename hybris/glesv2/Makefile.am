@@ -6,8 +6,11 @@ libGLESv2_la_CFLAGS = -I$(top_srcdir)/include
 if WANT_MESA
 libGLESv2_la_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
+if WANT_TRACE
+libGLESv2_la_CFLAGS += -DDEBUG
+endif
 if WANT_DEBUG
-libGLESv2_la_CFLAGS += -ggdb -O0 -DDEBUG
+libGLESv2_la_CFLAGS += -ggdb -O0
 endif
 libGLESv2_la_LDFLAGS = \
 	$(top_builddir)/common/libhybris-common.la \
