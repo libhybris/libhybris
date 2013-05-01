@@ -42,6 +42,12 @@ AC_ARG_ENABLE(debug,
   [debug="no"])
 AM_CONDITIONAL( [WANT_DEBUG], [test x"$debug" = x"yes"])
 
+AC_ARG_ENABLE(trace,
+  [  --enable-trace            Enable TRACE statements (default=disabled)],
+  [trace=$enableval],
+  [trace="no"])
+AM_CONDITIONAL( [WANT_TRACE], [test x"$trace" = x"yes"])
+
 AC_ARG_ENABLE(mesa,
   [  --enable-mesa            Enable mesa headers (default=disabled)],
   [mesa=$enableval],
@@ -135,6 +141,8 @@ echo
 echo "Configuration Options:"
 echo
 echo "  debug build.............: $debug"
+echo
+echo "  trace...................: $trace"
 echo
 echo "  prefix..................: $prefix"
 echo

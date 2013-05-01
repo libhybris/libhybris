@@ -9,8 +9,11 @@ eglplatform_fbdev_la_CXXFLAGS = \
 	-I$(top_srcdir)/egl \
 	-I$(top_srcdir)/egl/platforms/common
 
+if WANT_TRACE
+eglplatform_fbdev_la_CXXFLAGS += -DDEBUG
+endif
 if WANT_DEBUG
-eglplatform_fbdev_la_CXXFLAGS += -ggdb -O0 -DDEBUG
+eglplatform_fbdev_la_CXXFLAGS += -ggdb -O0
 endif
 
 eglplatform_fbdev_la_LDFLAGS = \
