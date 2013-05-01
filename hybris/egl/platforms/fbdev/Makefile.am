@@ -9,6 +9,10 @@ eglplatform_fbdev_la_CXXFLAGS = \
 	-I$(top_srcdir)/egl \
 	-I$(top_srcdir)/egl/platforms/common
 
+if WANT_DEBUG
+eglplatform_fbdev_la_CXXFLAGS += -ggdb -O0 -DDEBUG
+endif
+
 eglplatform_fbdev_la_LDFLAGS = \
 	-avoid-version -module -shared -export-dynamic \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \

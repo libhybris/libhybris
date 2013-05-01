@@ -72,11 +72,11 @@ GLint offset_loc;
 GLint position_loc;
 
 const float vertexArray[] = {
-	0.0,  0.5,  0.0,
-	-0.5,  0.0,  0.0,
-	0.0, -0.5,  0.0,
-	0.5,  0.0,  0.0,
-	0.0,  0.5,  0.0
+	0.0,  1.0,  0.0,
+	-1.,  0.0,  0.0,
+	0.0, -1.0,  0.0,
+	1.,  0.0,  0.0,
+	0.0,  1.,  0.0
 };
 
 
@@ -145,10 +145,12 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	glViewport ( 0 , 0 , 800, 600);
-	glClearColor ( 0.08 , 0.06 , 0.07 , 1.);    // background color
+	//glViewport ( 0 , 0 , 800, 600); // commented out so it uses the initial window dimensions
+	glClearColor ( 1. , 1. , 1. , 1.);    // background color
 	float phase = 0;
-	while (1) {
+	int i;
+	for (i=0; i<3*60; ++i) {
+		glClear(GL_COLOR_BUFFER_BIT);
 		glUniform1f ( phase_loc , phase );  // write the value of phase to the shaders phase
 		phase  =  fmodf ( phase + 0.5f , 2.f * 3.141f );    // and update the local variable
 
