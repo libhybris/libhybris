@@ -201,7 +201,7 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
     int rv = m_fbDev->post(m_fbDev, fbnb->handle);
     if (rv!=0)
     {
-        fprintf(stderr,"ERROR: fb->post(%s)\n",strerror(rv));
+        fprintf(stderr,"ERROR: fb->post(%s)\n",strerror(-rv));
     }
 
     fbnb->busy=0;
