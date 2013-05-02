@@ -15,6 +15,7 @@
  */
 
 #include "fbdev_window.h"
+#include "config.h"
 
 #include <errno.h>
 #include <assert.h>
@@ -57,7 +58,13 @@ FbDevNativeWindow::FbDevNativeWindow(gralloc_module_t* gralloc,
     m_alloc = alloc;
     m_fbDev = fbDev;
     m_bufFormat = m_fbDev->format;
+
+#if ANDROID_VERSION>=0x410
+    setBufferCount(m_fbDev->numFramebuffers);
+#else
     setBufferCount(FRAMEBUFFER_PARTITIONS);
+#endif
+
 }
 
 
