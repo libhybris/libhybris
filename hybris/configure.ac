@@ -95,10 +95,13 @@ AC_ARG_ENABLE(alinker,
                                     jb: Jelly Bean],
   [ if   test "x$enableval" = "xgb" ; then
       alinker="gb"
+      AC_DEFINE(ANDROID_VERSION, [0x230], [Android version])
    elif test "x$enableval" = "xics" ; then
       alinker="ics"
+      AC_DEFINE(ANDROID_VERSION, [0x400], [Android version])
    elif test "x$enableval" = "xjb" ; then
       alinker="jb"
+      AC_DEFINE(ANDROID_VERSION, [0x410], [Android version])
    else
       echo
       echo "Error!"
