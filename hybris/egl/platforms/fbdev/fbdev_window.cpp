@@ -15,6 +15,7 @@
  */
 
 #include "fbdev_window.h"
+#include "config.h"
 
 #include <errno.h>
 #include <assert.h>
@@ -57,7 +58,13 @@ FbDevNativeWindow::FbDevNativeWindow(gralloc_module_t* gralloc,
     m_alloc = alloc;
     m_fbDev = fbDev;
     m_bufFormat = m_fbDev->format;
+
+#if ANDROID_VERSION>=0x410
+    setBufferCount(m_fbDev->numFramebuffers);
+#else
     setBufferCount(FRAMEBUFFER_PARTITIONS);
+#endif
+
 }
 
 
@@ -201,7 +208,7 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
     int rv = m_fbDev->post(m_fbDev, fbnb->handle);
     if (rv!=0)
     {
-        fprintf(stderr,"ERROR: fb->post(%s)\n",strerror(rv));
+        fprintf(stderr,"ERROR: fb->post(%s)\n",strerror(-rv));
     }
 
     fbnb->busy=0;
