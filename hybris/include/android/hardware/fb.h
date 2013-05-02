@@ -18,6 +18,7 @@
 #ifndef ANDROID_FB_INTERFACE_H
 #define ANDROID_FB_INTERFACE_H
 
+#include "config.h"
 #include <stdint.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
@@ -63,7 +64,14 @@ typedef struct framebuffer_device_t {
     /* max swap interval supported by this framebuffer */
     const int       maxSwapInterval;
 
+#if defined(ANDROID_VERSION) && ANDROID_VERSION>=0x410
+    /* Number of framebuffers supported*/
+    const int       numFramebuffers;
+
+    int reserved[7];
+#else
     int reserved[8];
+#endif
 
     /*
      * requests a specific swap-interval (same definition than EGL)
