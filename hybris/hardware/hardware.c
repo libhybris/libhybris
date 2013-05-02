@@ -17,6 +17,8 @@
 
 #include <dlfcn.h>
 #include <stddef.h>
+#include <android/hardware/hardware.h>
+#include <hybris/internal/binding.h>
 
 static void *_libhardware = NULL;
 

@@ -5,6 +5,8 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
+
 static struct ws_module *ws = NULL;
 
 static void _init_ws()
