@@ -50,6 +50,12 @@ static const GpsInterface* get_gps_interface()
        interface = device->get_gps_interface(device);
      }
   }
+  else
+  {
+	fprintf(stdout, "*** GPS interface not found :\(\n Bye! \n");
+	exit(1);
+  }
+
   return interface;
 }
 
@@ -268,7 +274,7 @@ int main(int argc, char *argv[])
   initok = Gps->init(&callbacks);
   fprintf(stdout, "*** setting positioning mode\n");
   /* need to be done before starting gps or no info will come out */
-  if(agps||agpsril)
+  if((agps||agpsril) && !initok)
 	Gps->set_position_mode(GPS_POSITION_MODE_MS_BASED, GPS_POSITION_RECURRENCE_PERIODIC, 100, 0, 0);
   else
 	Gps->set_position_mode(GPS_POSITION_MODE_STANDALONE, GPS_POSITION_RECURRENCE_PERIODIC, 100, 0, 0);
