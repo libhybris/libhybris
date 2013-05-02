@@ -20,6 +20,9 @@
 #include <GLES2/gl2ext.h>
 #include <dlfcn.h>
 #include <stddef.h>
+#include <stdlib.h>
+
+#include <hybris/internal/binding.h>
 
 #ifdef __ARM_PCS_VFP
 #define FP_ATTRIB __attribute__((pcs("aapcs")))

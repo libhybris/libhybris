@@ -2,6 +2,8 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 
+#include <hybris/internal/binding.h>
+
 static void * (*_androidCreateDisplaySurface)();
 
 static void *_libui = NULL;
