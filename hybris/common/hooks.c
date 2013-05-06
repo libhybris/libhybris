@@ -1241,21 +1241,37 @@ static struct _hook hooks[] = {
     {"timer_getoverrun", timer_getoverrun},
     {"abort", abort},
     {"writev", writev},
-    {NULL, NULL},
 };
+
+static int hooks_count = sizeof(hooks) / sizeof(hooks[0]);
+
+static int
+hook_cmp(const void *p1, const void *p2)
+{
+    const struct _hook *h1 = (const struct _hook *)p1;
+    const struct _hook *h2 = (const struct _hook *)p2;
+    return strcmp(h1->name, h2->name);
+}
 
 void *get_hooked_symbol(char *sym)
 {
-    struct _hook *ptr = &hooks[0];
     static int counter = -1;
+    struct _hook target = { sym, NULL };
 
-    while (ptr->name != NULL)
-    {
-        if (strcmp(sym, ptr->name) == 0){
-            return ptr->func;
-        }
-        ptr++;
+    static int hooks_sorted = 0;
+    if (!_hooks_sorted) {
+        /* Sort hooks at first lookup - required for binary search */
+        qsort(hooks, hooks_count, sizeof(struct _hook), hook_cmp);
+        _hooks_sorted = 1;
     }
+
+    struct _hook *result = bsearch(&target, hooks, hooks_count,
+            sizeof(struct _hook), hook_cmp);
+
+    if (result != NULL) {
+        return result->func;
+    }
+
     if (strstr(sym, "pthread") != NULL)
     {
         counter--;
