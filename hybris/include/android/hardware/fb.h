@@ -18,11 +18,11 @@
 #ifndef ANDROID_FB_INTERFACE_H
 #define ANDROID_FB_INTERFACE_H
 
-#include "config.h"
 #include <stdint.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
+#include <android/version.h>
 #include <android/cutils/native_handle.h>
 #include <android/hardware/hardware.h>
 

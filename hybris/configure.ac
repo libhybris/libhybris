@@ -119,6 +119,7 @@ AM_CONDITIONAL([WANT_ICS], [test x$alinker = xics])
 AM_CONDITIONAL([WANT_JB], [test x$alinker = xjb])
 
 AC_DEFINE_UNQUOTED(ANDROID_VERSION, [$android_version], [Android version])
+AC_SUBST(ANDROID_VERSION, [$android_version])
 
 AC_CONFIG_FILES([
 	Makefile
