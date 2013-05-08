@@ -1,4 +1,4 @@
-SUBDIRS = common hardware egl glesv2 ui include tests
+SUBDIRS = include common hardware egl glesv2 ui tests
 
 MAINTAINERCLEANFILES = \
 	aclocal.m4 compile config.guess config.sub \

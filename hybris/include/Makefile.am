@@ -62,3 +62,10 @@ syncinclude_HEADERS = android/sync/sync.h
 hybrisincludedir = $(includedir)/hybris
 hybrisinclude_HEADERS = \
 	hybris/ui_compatibility_layer.h
+
+android/version.h: android/version.h.in
+	@sed -e "s|\@android_version\@|$(ANDROID_VERSION)|" $<> $@
+
+androidincludedir = $(includedir)/android
+androidinclude_HEADERS = \
+	android/version.h
