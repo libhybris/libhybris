@@ -95,13 +95,13 @@ AC_ARG_ENABLE(alinker,
                                     jb: Jelly Bean],
   [ if   test "x$enableval" = "xgb" ; then
       alinker="gb"
-      AC_DEFINE(ANDROID_VERSION, [0x230], [Android version])
+      android_version=0x230
    elif test "x$enableval" = "xics" ; then
       alinker="ics"
-      AC_DEFINE(ANDROID_VERSION, [0x400], [Android version])
+      android_version=0x400
    elif test "x$enableval" = "xjb" ; then
       alinker="jb"
-      AC_DEFINE(ANDROID_VERSION, [0x410], [Android version])
+      android_version=0x410
    else
       echo
       echo "Error!"
@@ -109,12 +109,17 @@ AC_ARG_ENABLE(alinker,
       exit -1
    fi
   ],
-  [alinker="gb"]
+  [
+   alinker="gb"
+   android_version=0x230
+  ]
   )
 AM_CONDITIONAL([WANT_GB], [test x$alinker = xgb])
 AM_CONDITIONAL([WANT_ICS], [test x$alinker = xics])
 AM_CONDITIONAL([WANT_JB], [test x$alinker = xjb])
 
+AC_DEFINE_UNQUOTED(ANDROID_VERSION, [$android_version], [Android version])
+AC_SUBST(ANDROID_VERSION, [$android_version])
 
 AC_CONFIG_FILES([
 	Makefile

@@ -15,12 +15,13 @@
  */
 
 #include "fbdev_window.h"
-#include "config.h"
 
 #include <errno.h>
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
+
+#include <android/version.h>
 
 #define FRAMEBUFFER_PARTITIONS 2
 
