@@ -36,7 +36,11 @@ static void _init_ws()
 		snprintf(ws_name, 2048, PKGLIBDIR "eglplatform_%s.so", egl_platform);
 
 		void *wsmod = (void *) dlopen(ws_name, RTLD_LAZY);
-		assert(wsmod != NULL);
+		if (wsmod==NULL)
+		{
+			fprintf(stderr, "ERROR: %s\n\t%s\n", ws_name, dlerror());
+			assert(0);
+		}
 		ws = dlsym(wsmod, "ws_module_info");
 		assert(ws != NULL);
 	}
