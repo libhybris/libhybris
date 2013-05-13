@@ -188,6 +188,7 @@ autoreconf -v -f -i
 %endif
 %ifarch %{ix86}
 --enable-arch=x86 \
+--enable-alinker=jb \
 %endif
 %{nil}
 
