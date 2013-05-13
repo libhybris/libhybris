@@ -59,3 +59,4 @@ const char *ws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eg
 	return ws->eglQueryString(dpy, name, real_eglQueryString);
 }
 
+// vim:ts=4:sw=4:noexpandtab
