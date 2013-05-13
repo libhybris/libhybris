@@ -22,9 +22,18 @@ extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 	{
 		hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
 		int err = framebuffer_open((hw_module_t *) gralloc, &framebuffer);
-		printf("** open framebuffer HAL (%s) format x%x\n", strerror(-err), framebuffer->format);
+		if (err) {
+			fprintf(stderr, "ERROR: failed to open framebuffer: (%s)\n",strerror(-err));
+			assert(0);
+		}
+		printf("** framebuffer_open: status=(%s) format=x%x", strerror(-err), framebuffer->format);
+
 		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-		printf("** got gralloc %p err:%s\n", gralloc, strerror(-err));
+		if (err) {
+			fprintf(stderr, "ERROR: failed to open gralloc: (%s)\n",strerror(-err));
+			assert(0);
+		}
+		printf("** gralloc_open %p status=%s\n", gralloc, strerror(-err));
 		eglplatformcommon_init(gralloc);
 	}
 
