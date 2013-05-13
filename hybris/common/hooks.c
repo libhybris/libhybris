@@ -61,12 +61,8 @@
 #define ANDROID_PTHREAD_RWLOCK_INITIALIZER           0
 
 /* Debug */
-#ifdef HYBRIS_DEBUG
-#define LOGD(message, args...) \
-	fprintf(stderr, "HYBRIS %s:%d - " message "\n", __FUNCTION__, __LINE__, ##args)
-#else
-#define LOGD(message, args...)
-#endif
+#include "logging.h"
+#define LOGD(message, ...) HYBRIS_DEBUG_LOG(HOOKS, message, ##__VA_ARGS__)
 
 
 struct _hook {

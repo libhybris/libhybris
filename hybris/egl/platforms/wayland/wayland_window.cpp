@@ -124,7 +124,7 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
 	m_usage=GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
 	pthread_mutex_init(&mutex, NULL);
 
-        TRACE("WaylandNativeWindow created in %p\n", pthread_self());
+        TRACE("WaylandNativeWindow created in %p", pthread_self());
 }
 
 WaylandNativeWindow::~WaylandNativeWindow()
@@ -150,7 +150,7 @@ void WaylandNativeWindow::frame() {
 
 // overloads from BaseNativeWindow
 int WaylandNativeWindow::setSwapInterval(int interval) {
-    TRACE("%s\n",__PRETTY_FUNCTION__);
+    TRACE("");
     return 0;
 }
 
@@ -185,7 +185,7 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 			break;
 	}
 	assert(it != buffers.end());
-	TRACE("Release buffer %p\n", buffer);
+	TRACE("Release buffer %p", buffer);
 	buf->busy = 0;
 	unlock();
 }
@@ -215,7 +215,7 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
 }
 
 int WaylandNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer){
-    TRACE("%s ===================\n",__PRETTY_FUNCTION__);
+    TRACE("===================");
     return NO_ERROR;
 }
 
@@ -261,7 +261,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
 	    android_wlegl_handle_destroy(wlegl_handle);
 	    backbuf->common.incRef(&backbuf->common);
 
-	    TRACE("Add listener for %p with %p inside\n", backbuf, backbuf->wlbuffer);
+	    TRACE("Add listener for %p with %p inside", backbuf, backbuf->wlbuffer);
 	    wl_buffer_add_listener(backbuf->wlbuffer, &wl_buffer_listener, this);
 	    wl_proxy_set_queue((struct wl_proxy *) backbuf->wlbuffer,
 				this->wl_queue);
@@ -276,52 +276,52 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
 }
 
 int WaylandNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fenceFd){
-    TRACE("%s\n",__PRETTY_FUNCTION__);
+    TRACE("");
     return 0;
 }
 
 unsigned int WaylandNativeWindow::width() const {
-    TRACE("%s value: %i\n",__PRETTY_FUNCTION__, m_width);
+    TRACE("value: %i", m_width);
     return m_width;
 }
 
 unsigned int WaylandNativeWindow::height() const {
-    TRACE("%s value: %i\n",__PRETTY_FUNCTION__, m_height);
+    TRACE("value: %i", m_height);
     return m_height;
 }
 
 unsigned int WaylandNativeWindow::format() const {
-    TRACE("%s value: %i\n",__PRETTY_FUNCTION__, m_format);
+    TRACE("value: %i", m_format);
     return m_format;
 }
 
 unsigned int WaylandNativeWindow::defaultWidth() const {
-    TRACE("%s value: %i\n",__PRETTY_FUNCTION__, m_defaultWidth);
+    TRACE("value: %i", m_defaultWidth);
     return m_defaultWidth;
 }
 
 unsigned int WaylandNativeWindow::defaultHeight() const {
-    TRACE("%s value: %i\n",__PRETTY_FUNCTION__, m_defaultHeight);
+    TRACE("value: %i", m_defaultHeight);
     return m_defaultHeight;
 }
 
 unsigned int WaylandNativeWindow::queueLength() const {
-    TRACE("%s\n",__PRETTY_FUNCTION__);
+    TRACE("");
     return 1;
 }
 
 unsigned int WaylandNativeWindow::type() const {
-    TRACE("%s\n",__PRETTY_FUNCTION__);
+    TRACE("");
     return NATIVE_WINDOW_SURFACE_TEXTURE_CLIENT;
 }
 
 unsigned int WaylandNativeWindow::transformHint() const {
-    TRACE("%s\n",__PRETTY_FUNCTION__);
+    TRACE("");
     return 0;
 }
 
 int WaylandNativeWindow::setBuffersFormat(int format) {
-    TRACE("%s format %i\n",__PRETTY_FUNCTION__, format);
+    TRACE("format %i", format);
     m_format = format;
     return NO_ERROR;
 }
@@ -347,12 +347,12 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
 
 
 int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
-    TRACE("%s size %ix%i\n",__PRETTY_FUNCTION__, width, height);
+    TRACE("size %ix%i", width, height);
     return NO_ERROR;
 }
 
 int WaylandNativeWindow::setUsage(int usage) {
-    TRACE("%s\n",__PRETTY_FUNCTION__);
+    TRACE("");
     m_usage = usage | GRALLOC_USAGE_HW_TEXTURE;
     return NO_ERROR;
 }

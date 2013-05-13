@@ -57,7 +57,7 @@ void BaseNativeWindowBuffer::_incRef(struct android_native_base_t* base)
 
 BaseNativeWindow::BaseNativeWindow()
 {
-	TRACE("%s this=%p or A %p\n",__PRETTY_FUNCTION__, this, (ANativeWindow*)this);
+	TRACE("this=%p or A %p", this, (ANativeWindow*)this);
 	// done in ANativeWindow
 	// common.magic = ANDROID_NATIVE_WINDOW_MAGIC;
 	// common.version = sizeof(ANativeWindow);
@@ -87,7 +87,7 @@ BaseNativeWindow::BaseNativeWindow()
 
 BaseNativeWindow::~BaseNativeWindow()
 {
-	TRACE("%s\n",__PRETTY_FUNCTION__);
+	TRACE("");
 	ANativeWindow::common.decRef = NULL;
 	ANativeWindow::common.incRef = NULL;
 	refcount = 0;
@@ -213,7 +213,7 @@ const char *BaseNativeWindow::_native_query_operation(int what)
 
 int BaseNativeWindow::_query(const struct ANativeWindow* window, int what, int* value)
 {
-	TRACE("_query window %p %i %s %p\n", window, what, _native_query_operation(what), value);
+	TRACE("_query window %p %i %s %p", window, what, _native_query_operation(what), value);
 	const BaseNativeWindow* self=static_cast<const BaseNativeWindow*>(window);
 	switch (what) {
 		case NATIVE_WINDOW_WIDTH:
@@ -244,7 +244,7 @@ int BaseNativeWindow::_query(const struct ANativeWindow* window, int what, int* 
 			*value = 1;
 			return NO_ERROR;
 	}
-	TRACE("EGL error: unkown window attribute! %i\n", what);
+	TRACE("EGL error: unkown window attribute! %i", what);
 	*value = 0;
 	return BAD_VALUE;
 }
@@ -256,7 +256,7 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 	va_start(args, operation);
 
 	// FIXME
-	TRACE("%s operation = %s\n", __PRETTY_FUNCTION__, _native_window_operation(operation));
+	TRACE("operation = %s", _native_window_operation(operation));
 	switch(operation) {
 	case NATIVE_WINDOW_SET_USAGE                 : //  0,
 	{
@@ -264,29 +264,29 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 		return self->setUsage(usage);
 	}
 	case NATIVE_WINDOW_CONNECT                   : //  1,   /* deprecated */
-		TRACE("connect\n");
+		TRACE("connect");
 		break;
 	case NATIVE_WINDOW_DISCONNECT                : //  2,   /* deprecated */
-		TRACE("disconnect\n");
+		TRACE("disconnect");
 		break;
 	case NATIVE_WINDOW_SET_CROP                  : //  3,   /* private */
-		TRACE("set crop\n");
+		TRACE("set crop");
 		break;
 	case NATIVE_WINDOW_SET_BUFFER_COUNT          : //  4,
 	{
 		int cnt = va_arg(args, int);
-		TRACE("set buffer count %i\n", cnt);
+		TRACE("set buffer count %i", cnt);
 		return self->setBufferCount(cnt);
 		break;
 	}
 	case NATIVE_WINDOW_SET_BUFFERS_GEOMETRY      : //  5,   /* deprecated */
-		TRACE("set buffers geometry\n");
+		TRACE("set buffers geometry");
 		break;
 	case NATIVE_WINDOW_SET_BUFFERS_TRANSFORM     : //  6,
-		TRACE("set buffers transform\n");
+		TRACE("set buffers transform");
 		break;
 	case NATIVE_WINDOW_SET_BUFFERS_TIMESTAMP     : //  7,
-		TRACE("set buffers timestamp\n");
+		TRACE("set buffers timestamp");
 		break;
 	case NATIVE_WINDOW_SET_BUFFERS_DIMENSIONS    : //  8,
 	{
@@ -300,25 +300,25 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 		return self->setBuffersFormat(format);
 	}
 	case NATIVE_WINDOW_SET_SCALING_MODE          : // 10,   /* private */
-		TRACE("set scaling mode\n");
+		TRACE("set scaling mode");
 		break;
 	case NATIVE_WINDOW_LOCK                      : // 11,   /* private */
-		TRACE("window lock\n");
+		TRACE("window lock");
 		break;
 	case NATIVE_WINDOW_UNLOCK_AND_POST           : // 12,   /* private */
-		TRACE("unlock and post\n");
+		TRACE("unlock and post");
 		break;
 	case NATIVE_WINDOW_API_CONNECT               : // 13,   /* private */
-		TRACE("api connect\n");
+		TRACE("api connect");
 		break;
 	case NATIVE_WINDOW_API_DISCONNECT            : // 14,   /* private */
-		TRACE("api disconnect\n");
+		TRACE("api disconnect");
 		break;
 	case NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS : // 15, /* private */
-		TRACE("set buffers user dimensions\n");
+		TRACE("set buffers user dimensions");
 		break;
 	case NATIVE_WINDOW_SET_POST_TRANSFORM_CROP   : // 16,
-		TRACE("set post transform crop\n");
+		TRACE("set post transform crop");
 		break;
 	}
 	return NO_ERROR;

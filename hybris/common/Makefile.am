@@ -20,7 +20,8 @@ endif
 libhybris_common_la_SOURCES = \
 	hooks.c \
 	properties.c \
-	strlcpy.c
+	strlcpy.c \
+	logging.c
 libhybris_common_la_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/common
