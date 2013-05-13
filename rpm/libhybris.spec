@@ -188,6 +188,7 @@ autoreconf -v -f -i
 %endif
 %ifarch %{ix86}
 --enable-arch=x86 \
+--enable-alinker=jb \
 %endif
 %{nil}
 
@@ -225,6 +226,7 @@ rm %{buildroot}/%{_libdir}/*.la %{buildroot}/%{_libdir}/libhybris/*.la
 %defattr(-,root,root,-)
 %{_includedir}/android/cutils/*.h
 %{_includedir}/android/system/*.h
+%{_includedir}/android/version.h
 %{_libdir}/libhybris-common.so
 
 %files libEGL
@@ -238,6 +240,10 @@ rm %{buildroot}/%{_libdir}/*.la %{buildroot}/%{_libdir}/libhybris/*.la
 %defattr(-,root,root,-)
 %{_includedir}/KHR/*.h
 %{_includedir}/EGL/*.h
+%{_includedir}/android/sync/sync.h
+%{_includedir}/hybris/eglplatformcommon/nativewindowbase.h
+%{_includedir}/hybris/eglplatformcommon/support.h
+
 %{_libdir}/libEGL.so
 %{_libdir}/libhybris-eglplatformcommon.so
 
