@@ -55,7 +55,4 @@ struct ws_module ws_module_info = {
 	eglplatformcommon_eglQueryString
 };
 
-
-
-
-
+// vim:ts=4:sw=4:noexpandtab
