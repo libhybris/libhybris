@@ -1,4 +1,18 @@
-
+/*
+ * Copyright (C) 2013 libhybris
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include <ws.h>
 #include <stdlib.h>
@@ -15,14 +29,18 @@ static void _init_ws()
 	{
 		char *egl_platform = getenv("EGL_PLATFORM");
 		char ws_name[2048];
-		
+
 		if (egl_platform == NULL)
 			egl_platform = "null";
-	
-		snprintf(ws_name, 2048, PKGLIBDIR "eglplatform_%s.so", egl_platform);	
-			
+
+		snprintf(ws_name, 2048, PKGLIBDIR "eglplatform_%s.so", egl_platform);
+
 		void *wsmod = (void *) dlopen(ws_name, RTLD_LAZY);
-		assert(wsmod != NULL);
+		if (wsmod==NULL)
+		{
+			fprintf(stderr, "ERROR: %s\n\t%s\n", ws_name, dlerror());
+			assert(0);
+		}
 		ws = dlsym(wsmod, "ws_module_info");
 		assert(ws != NULL);
 	}
@@ -41,7 +59,7 @@ EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayTyp
 	return ws->CreateWindow(win, display);
 }
 
-__eglMustCastToProperFunctionPointerType ws_eglGetProcAddress(const char *procname) 
+__eglMustCastToProperFunctionPointerType ws_eglGetProcAddress(const char *procname)
 {
 	_init_ws();
 	return ws->eglGetProcAddress(procname);
@@ -59,3 +77,4 @@ const char *ws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eg
 	return ws->eglQueryString(dpy, name, real_eglQueryString);
 }
 
+// vim:ts=4:sw=4:noexpandtab
