@@ -15,12 +15,12 @@ static void _init_ws()
 	{
 		char *egl_platform = getenv("EGL_PLATFORM");
 		char ws_name[2048];
-		
+
 		if (egl_platform == NULL)
 			egl_platform = "null";
-	
-		snprintf(ws_name, 2048, PKGLIBDIR "eglplatform_%s.so", egl_platform);	
-			
+
+		snprintf(ws_name, 2048, PKGLIBDIR "eglplatform_%s.so", egl_platform);
+
 		void *wsmod = (void *) dlopen(ws_name, RTLD_LAZY);
 		assert(wsmod != NULL);
 		ws = dlsym(wsmod, "ws_module_info");
@@ -41,7 +41,7 @@ EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayTyp
 	return ws->CreateWindow(win, display);
 }
 
-__eglMustCastToProperFunctionPointerType ws_eglGetProcAddress(const char *procname) 
+__eglMustCastToProperFunctionPointerType ws_eglGetProcAddress(const char *procname)
 {
 	_init_ws();
 	return ws->eglGetProcAddress(procname);
