@@ -39,7 +39,7 @@ FbDevNativeWindowBuffer::FbDevNativeWindowBuffer(unsigned int width,
     ANativeWindowBuffer::format = format;
     ANativeWindowBuffer::usage  = usage;
     busy = 0;
-    TRACE("%s: width=%d height=%d format=x%x usage=x%x this=%p\n", __FUNCTION__,
+    TRACE("width=%d height=%d format=x%x usage=x%x this=%p",
         width, height, format, usage, this);
 }
 
@@ -47,7 +47,7 @@ FbDevNativeWindowBuffer::FbDevNativeWindowBuffer(unsigned int width,
 
 FbDevNativeWindowBuffer::~FbDevNativeWindowBuffer()
 {
-    TRACE("%s: %p\n", __PRETTY_FUNCTION__, this);
+    TRACE("%p", this);
 }
 
 
@@ -80,7 +80,7 @@ FbDevNativeWindow::~FbDevNativeWindow()
 
 void FbDevNativeWindow::destroyBuffers()
 {
-    TRACE("%s\n",__PRETTY_FUNCTION__);
+    TRACE("");
 
     std::list<FbDevNativeWindowBuffer*>::iterator it = m_bufList.begin();
     for (; it!=m_bufList.end(); ++it)
@@ -108,7 +108,7 @@ void FbDevNativeWindow::destroyBuffers()
  */
 int FbDevNativeWindow::setSwapInterval(int interval)
 {
-    TRACE("%s: interval=%i\n", __PRETTY_FUNCTION__, interval);
+    TRACE("interval=%i", interval);
     return m_fbDev->setSwapInterval(m_fbDev, interval);
 }
 
@@ -134,7 +134,7 @@ int FbDevNativeWindow::setSwapInterval(int interval)
  */
 int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fenceFd)
 {
-    TRACE("%u %s\n", pthread_self(), __PRETTY_FUNCTION__);
+    TRACE("%u", pthread_self());
     FbDevNativeWindowBuffer* fbnb=NULL;
 
     pthread_mutex_lock(&_mutex);
@@ -171,7 +171,7 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
     *buffer = fbnb;
     *fenceFd = -1;
 
-    TRACE("%u %s DONE --> %p\n", pthread_self(), __PRETTY_FUNCTION__, fbnb);
+    TRACE("%u DONE --> %p", pthread_self(), fbnb);
     pthread_mutex_unlock(&_mutex);
 
     return 0;
@@ -198,7 +198,7 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
  */
 int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 {
-    TRACE("%u %s %d\n", pthread_self(), __PRETTY_FUNCTION__, fenceFd);
+    TRACE("%u %d", pthread_self(), fenceFd);
     FbDevNativeWindowBuffer* fbnb = (FbDevNativeWindowBuffer*) buffer;
 
     pthread_mutex_lock(&_mutex);
@@ -218,7 +218,7 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
     m_freeBufs++;
     pthread_cond_signal(&_cond);
 
-    TRACE("%u %s %p %p\n",pthread_self(), __PRETTY_FUNCTION__, m_frontBuf, fbnb);
+    TRACE("%u %p %p",pthread_self(), m_frontBuf, fbnb);
     pthread_mutex_unlock(&_mutex);
 
     return rv;
@@ -252,7 +252,7 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
  */
 int FbDevNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 {
-    TRACE("%s\n", __PRETTY_FUNCTION__);
+    TRACE("");
     FbDevNativeWindowBuffer* fbnb = (FbDevNativeWindowBuffer*)buffer;
     fbnb->common.decRef(&fbnb->common);
     return 0;
@@ -262,7 +262,7 @@ int FbDevNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 
 int FbDevNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
 {
-    TRACE("%u %s\n", pthread_self(), __PRETTY_FUNCTION__);
+    TRACE("%u", pthread_self());
     FbDevNativeWindowBuffer* fbnb = (FbDevNativeWindowBuffer*)buffer;
 
     pthread_mutex_lock(&_mutex);
@@ -270,7 +270,7 @@ int FbDevNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
     // wait that the buffer we're locking is not front anymore
     while (m_frontBuf==fbnb)
     {
-        TRACE("%s waiting %p %p\n", __PRETTY_FUNCTION__, m_frontBuf, fbnb);
+        TRACE("waiting %p %p", m_frontBuf, fbnb);
         pthread_cond_wait(&_cond, &_mutex);
     }
     pthread_mutex_unlock(&_mutex);
@@ -284,7 +284,7 @@ int FbDevNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
 unsigned int FbDevNativeWindow::width() const
 {
     unsigned int rv = m_fbDev->width;
-    TRACE("%s: width=%i\n", __PRETTY_FUNCTION__, rv);
+    TRACE("width=%i", rv);
     return rv;
 }
 
@@ -295,7 +295,7 @@ unsigned int FbDevNativeWindow::width() const
 unsigned int FbDevNativeWindow::height() const
 {
     unsigned int rv = m_fbDev->height;
-    TRACE("%s: height=%i\n", __PRETTY_FUNCTION__, rv);
+    TRACE("height=%i", rv);
     return rv;
 }
 
@@ -306,7 +306,7 @@ unsigned int FbDevNativeWindow::height() const
 unsigned int FbDevNativeWindow::format() const
 {
     unsigned int rv = m_fbDev->format;
-    TRACE("%s: format=x%x\n", __PRETTY_FUNCTION__, rv);
+    TRACE("format=x%x", rv);
     return rv;
 }
 
@@ -323,7 +323,7 @@ unsigned int FbDevNativeWindow::format() const
 unsigned int FbDevNativeWindow::defaultHeight() const
 {
     unsigned int rv = m_fbDev->height;
-    TRACE("%s: height=%i\n", __PRETTY_FUNCTION__, rv);
+    TRACE("height=%i", rv);
     return rv;
 }
 
@@ -334,7 +334,7 @@ unsigned int FbDevNativeWindow::defaultHeight() const
 unsigned int FbDevNativeWindow::defaultWidth() const
 {
     unsigned int rv = m_fbDev->width;
-    TRACE("%s: width=%i\n", __PRETTY_FUNCTION__, rv);
+    TRACE("width=%i", rv);
     return rv;
 }
 
@@ -344,7 +344,7 @@ unsigned int FbDevNativeWindow::defaultWidth() const
  */
 unsigned int FbDevNativeWindow::queueLength() const
 {
-    TRACE("%s\n", __PRETTY_FUNCTION__);
+    TRACE("");
     return 0;
 }
 
@@ -354,7 +354,7 @@ unsigned int FbDevNativeWindow::queueLength() const
  */
 unsigned int FbDevNativeWindow::type() const
 {
-    TRACE("%s\n",__PRETTY_FUNCTION__);
+    TRACE("");
     return NATIVE_WINDOW_FRAMEBUFFER;
 }
 
@@ -364,7 +364,7 @@ unsigned int FbDevNativeWindow::type() const
  */
 unsigned int FbDevNativeWindow::transformHint() const
 {
-    TRACE("%s\n", __PRETTY_FUNCTION__);
+    TRACE("");
     return 0;
 }
 
@@ -383,7 +383,7 @@ unsigned int FbDevNativeWindow::transformHint() const
 int FbDevNativeWindow::setUsage(int usage)
 {
     int need_realloc = (m_usage != usage);
-    TRACE("%s: usage=x%x realloc=%d\n", __PRETTY_FUNCTION__, usage, need_realloc);
+    TRACE("usage=x%x realloc=%d", usage, need_realloc);
     m_usage = usage;
     if (need_realloc)
         this->setBufferCount(m_bufList.size());
@@ -401,7 +401,7 @@ int FbDevNativeWindow::setUsage(int usage)
 int FbDevNativeWindow::setBuffersFormat(int format)
 {
     int need_realloc = (format != m_bufFormat);
-    TRACE("%s: format=x%x realloc=%d\n", __PRETTY_FUNCTION__, format, need_realloc);
+    TRACE("format=x%x realloc=%d", format, need_realloc);
     m_bufFormat = format;
     if (need_realloc)
         this->setBufferCount(m_bufList.size());
@@ -415,7 +415,7 @@ int FbDevNativeWindow::setBuffersFormat(int format)
  */
 int FbDevNativeWindow::setBufferCount(int cnt)
 {
-    TRACE("%s: cnt=%d\n", __PRETTY_FUNCTION__, cnt);
+    TRACE("cnt=%d", cnt);
     int err=NO_ERROR;
     pthread_mutex_lock(&_mutex);
 
@@ -434,7 +434,7 @@ int FbDevNativeWindow::setBufferCount(int cnt)
                             m_usage|GRALLOC_USAGE_HW_FB,
                             &fbnb->handle, &fbnb->stride);
 
-        TRACE("buffer %i is at %p (native %p) err=%s handle=%i stride=%i\n",
+        TRACE("buffer %i is at %p (native %p) err=%s handle=%i stride=%i",
                 i, fbnb, (ANativeWindowBuffer*)fbnb,
                 strerror(-err), fbnb->handle, fbnb->stride);
 
@@ -468,7 +468,7 @@ int FbDevNativeWindow::setBufferCount(int cnt)
  */
 int FbDevNativeWindow::setBuffersDimensions(int width, int height)
 {
-    TRACE("%s: WARN: stub. size=%ix%i\n", __PRETTY_FUNCTION__, width, height);
+    TRACE("WARN: stub. size=%ix%i", width, height);
     return NO_ERROR;
 }
 // vim: noai:ts=4:sw=4:ss=4:expandtab
