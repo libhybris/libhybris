@@ -998,6 +998,8 @@ long my_sysconf(int name) {
   switch (name) {
   case 0x27:
     return sysconf(_SC_PAGESIZE); 
+  case 0x28:
+    return sysconf(_SC_PAGE_SIZE); 
   case 0x60:
     return sysconf(_SC_NPROCESSORS_CONF);
   default:
