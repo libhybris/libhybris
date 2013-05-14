@@ -24,7 +24,7 @@ static void *_libhardware = NULL;
 
 static int (*_hw_get_module)(const char *id, const struct hw_module_t **module) = NULL;
 
-static void (*_hw_get_module_by_class)(const char *class_id, const char *inst, const struct hw_module_t **module) = NULL;
+static int (*_hw_get_module_by_class)(const char *class_id, const char *inst, const struct hw_module_t **module) = NULL;
 
 #define HARDWARE_DLSYM(fptr, sym) do { if (_libhardware == NULL) { _init_lib_hardware(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libhardware, sym); } } while (0) 
 
@@ -42,8 +42,8 @@ int hw_get_module(const char *id, const struct hw_module_t **module)
 int hw_get_module_by_class(const char *class_id, const char *inst,
                            const struct hw_module_t **module)
 {
-  HARDWARE_DLSYM(&_hw_get_module_by_class, "hw_get_module_by_class");
-  (*_hw_get_module_by_class)(class_id, inst, module);
+	HARDWARE_DLSYM(&_hw_get_module_by_class, "hw_get_module_by_class");
+	return (*_hw_get_module_by_class)(class_id, inst, module);
 }
 
 // vim:ts=4:sw=4:noexpandtab

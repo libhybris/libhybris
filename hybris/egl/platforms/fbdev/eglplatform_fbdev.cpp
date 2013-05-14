@@ -20,8 +20,14 @@ extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 {
 	if (__sync_fetch_and_add(&inited,1)==0)
 	{
-		hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
-		int err = framebuffer_open((hw_module_t *) gralloc, &framebuffer);
+		int err;
+		err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
+		if (gralloc==NULL) {
+			fprintf(stderr, "failed to get gralloc module: (%s)\n",strerror(-err));
+			assert(0);
+		}
+
+		err = framebuffer_open((hw_module_t *) gralloc, &framebuffer);
 		if (err) {
 			fprintf(stderr, "ERROR: failed to open framebuffer: (%s)\n",strerror(-err));
 			assert(0);
