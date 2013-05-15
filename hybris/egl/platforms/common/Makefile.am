@@ -8,7 +8,7 @@ libhybris_eglplatformcommon_la_SOURCES = \
 
 if WANT_WAYLAND
 lib_LTLIBRARIES += libwayland-egl.la
-	
+
 libhybris_eglplatformcommon_la_SOURCES += \
 	server_wlegl.cpp \
 	server_wlegl_handle.cpp \
@@ -47,10 +47,10 @@ libwayland_egl_la_CXXFLAGS += -ggdb -O0
 endif
 libwayland_egl_la_LDFLAGS = \
 	-version-info "1":"0"
-	
+
 endif
 
-libhybris_eglplatformcommon_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/egl
+libhybris_eglplatformcommon_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/egl -I$(top_srcdir)/common/
 if WANT_WAYLAND
 libhybris_eglplatformcommon_la_CFLAGS += $(WAYLAND_CLIENT_CFLAGS) $(WAYLAND_SERVER_CFLAGS) -I$(top_srcdir)/include/android
 endif
@@ -64,7 +64,9 @@ endif
 if WANT_DEBUG
 libhybris_eglplatformcommon_la_CFLAGS += -ggdb -O0
 endif
-libhybris_eglplatformcommon_la_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/egl
+
+
+libhybris_eglplatformcommon_la_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/egl -I$(top_srcdir)/common/
 if WANT_MESA
 libhybris_eglplatformcommon_la_CXXFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
