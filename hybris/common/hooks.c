@@ -476,6 +476,10 @@ static int my_pthread_cond_destroy(pthread_cond_t *cond)
     int ret;
     pthread_cond_t *realcond = (pthread_cond_t *) *(int *) cond;
 
+    if (!realcond) {
+      return EINVAL;
+    }
+
     ret = pthread_cond_destroy(realcond);
     free(realcond);
 
