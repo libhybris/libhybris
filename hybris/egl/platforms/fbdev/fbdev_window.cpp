@@ -59,6 +59,7 @@ FbDevNativeWindow::FbDevNativeWindow(gralloc_module_t* gralloc,
     m_alloc = alloc;
     m_fbDev = fbDev;
     m_bufFormat = m_fbDev->format;
+    m_usage = GRALLOC_USAGE_HW_FB;
 
 #if ANDROID_VERSION>=0x410
     setBufferCount(m_fbDev->numFramebuffers);
