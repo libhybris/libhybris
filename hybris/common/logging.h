@@ -21,6 +21,10 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum hybris_log_level {
     /* Most verbose logging level */
     HYBRIS_LOG_DEBUG = 0,
@@ -53,6 +57,10 @@ hybris_should_log(enum hybris_log_level level);
  **/
 void
 hybris_set_log_level(enum hybris_log_level level);
+
+#ifdef __cplusplus
+}
+#endif
 
 #if defined(DEBUG)
 #    define HYBRIS_LOG_(level, module, message, ...) do { \
