@@ -127,12 +127,14 @@ AC_CONFIG_FILES([
 	common/gingerbread/Makefile
 	common/ics/Makefile
 	common/jb/Makefile
+	egl/egl.pc
 	egl/Makefile
 	egl/platforms/Makefile
 	egl/platforms/common/Makefile
 	egl/platforms/null/Makefile
 	egl/platforms/fbdev/Makefile
 	egl/platforms/wayland/Makefile
+	glesv2/glesv2.pc
 	glesv2/Makefile
 	hardware/Makefile
 	ui/Makefile
