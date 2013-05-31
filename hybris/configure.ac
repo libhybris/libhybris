@@ -139,6 +139,7 @@ AC_CONFIG_FILES([
 	hardware/Makefile
 	ui/Makefile
 	sf/Makefile
+	input/Makefile
 	include/Makefile
 	tests/Makefile
 ])

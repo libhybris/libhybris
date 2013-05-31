@@ -67,6 +67,14 @@ surface_flingerincludedir = $(includedir)/hybris/surface_flinger
 surface_flingerinclude_HEADERS = \
 	hybris/surface_flinger/surface_flinger_compatibility_layer.h
 
+inputincludedir = $(includedir)/hybris/input
+inputinclude_HEADERS = \
+	hybris/input/input_stack_compatibility_layer_codes_key.h \
+	hybris/input/input_stack_compatibility_layer_flags.h \
+	hybris/input/input_stack_compatibility_layer_flags_key.h \
+	hybris/input/input_stack_compatibility_layer_flags_motion.h \
+	hybris/input/input_stack_compatibility_layer.h
+
 android/version.h: android/version.h.in
 	@sed -e "s|\@android_version\@|$(ANDROID_VERSION)|" $<> $@
 
