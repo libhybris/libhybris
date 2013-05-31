@@ -25,7 +25,7 @@
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
 
-#include <hybris/surface_flinger_compatibility_layer.h>
+#include <hybris/surface_flinger/surface_flinger_compatibility_layer.h>
 
 struct SfSurface* sf_surface_create(struct SfClient* client, SfSurfaceCreationParameters* params);
 EGLSurface sf_surface_get_egl_surface(struct SfSurface*);

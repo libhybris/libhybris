@@ -297,7 +297,7 @@ rm %{buildroot}/%{_libdir}/*.la %{buildroot}/%{_libdir}/libhybris/*.la
 %files libui-devel
 %defattr(-,root,root,-)
 %{_libdir}/libui.so
-%{_includedir}/hybris/ui_compatibility_layer.h
+%{_includedir}/hybris/ui/ui_compatibility_layer.h
 
 %files tests
 %defattr(-,root,root,-)
