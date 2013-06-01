@@ -3,6 +3,10 @@ lib_LTLIBRARIES = \
 
 libGLESv2_la_SOURCES = glesv2.c
 libGLESv2_la_CFLAGS = -I$(top_srcdir)/include
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = glesv2.pc
+
 if WANT_MESA
 libGLESv2_la_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
