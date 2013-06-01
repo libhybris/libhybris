@@ -7,9 +7,12 @@ eglplatform_wayland_la_CXXFLAGS = \
 	-I$(top_srcdir)/egl/platforms/common \
 	$(WAYLAND_CLIENT_CFLAGS)
 
+if WANT_DEBUG
+eglplatform_wayland_la_CXXFLAGS += -I$(top_srcdir)/common
+endif
+
 eglplatform_wayland_la_LDFLAGS = \
 	-avoid-version -module -shared -export-dynamic \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/hardware/libhardware.la \
 	$(WAYLAND_CLIENT_LIBS)
-
