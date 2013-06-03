@@ -17,7 +17,7 @@
  *              Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>
  */
 
-#include <hybris/surface_flinger_compatibility_layer.h>
+#include <hybris/surface_flinger/surface_flinger_compatibility_layer.h>
 
 #include <cstdio>
 #include <unistd.h>

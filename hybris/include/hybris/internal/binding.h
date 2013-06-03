@@ -100,6 +100,14 @@ void *android_dlsym(void *name, const char *symbol);
         return f(_1, _2, _3, _4, _5, _6, _7); \
     }
 
+#define HYBRIS_IMPLEMENT_VOID_FUNCTION0(name, symbol)        \
+    void symbol()                                            \
+    {                                                        \
+        static void (*f)() = NULL;                           \
+        HYBRIS_DLSYSM(name, &f, #symbol);                    \
+        f();                                                 \
+    }
+
 #define HYBRIS_IMPLEMENT_VOID_FUNCTION1(name, symbol, arg1)               \
     void symbol(arg1 _1)                                     \
     {                                                        \

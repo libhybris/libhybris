@@ -21,7 +21,7 @@
 #include <ui/GraphicBufferMapper.h>
 #include <ui/GraphicBufferAllocator.h>
 
-#include <hybris/ui_compatibility_layer.h>
+#include <hybris/ui/ui_compatibility_layer.h>
 
 struct graphic_buffer
 {
