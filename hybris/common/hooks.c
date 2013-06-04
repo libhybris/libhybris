@@ -33,6 +33,7 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <sys/xattr.h>
+#include <grp.h>
 
 #include <netdb.h>
 #include <unistd.h>
@@ -1203,6 +1204,7 @@ static struct _hook hooks[] = {
     {"setbuf", my_setbuf},
     {"setvbuf", my_setvbuf},
     {"ungetc", my_ungetc},
+    {"vasprintf", vasprintf},
     {"vfprintf", my_vfprintf},
     {"vfscanf", my_vfscanf},
     {"fileno", my_fileno},
@@ -1243,6 +1245,8 @@ static struct _hook hooks[] = {
     {"timer_getoverrun", timer_getoverrun},
     {"abort", abort},
     {"writev", writev},
+    /* grp.h */
+    {"getgrgid", getgrgid},
     {NULL, NULL},
 };
 
