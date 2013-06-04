@@ -61,6 +61,10 @@ void BaseNativeWindowBuffer::_incRef(struct android_native_base_t* base)
 	__sync_fetch_and_add(&bnwb->refcount,1);
 }
 
+ANativeWindowBuffer* BaseNativeWindowBuffer::getNativeBuffer() const
+{
+	return static_cast<ANativeWindowBuffer*>(const_cast<BaseNativeWindowBuffer*>(this));
+}
 
 BaseNativeWindow::BaseNativeWindow()
 {
