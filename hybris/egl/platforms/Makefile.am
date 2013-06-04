@@ -1,5 +1,5 @@
 
-SUBDIRS = common null fbdev
+SUBDIRS = common null fbdev hwcomposer
 
 if WANT_WAYLAND
 SUBDIRS += wayland

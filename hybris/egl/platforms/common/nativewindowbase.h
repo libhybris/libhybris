@@ -44,7 +44,7 @@ class BaseNativeWindow : public ANativeWindow
 public:
 	operator EGLNativeWindowType()
 	{
-		EGLNativeWindowType ret = reinterpret_cast<EGLNativeWindowType>((ANativeWindow*)this);
+		EGLNativeWindowType ret = reinterpret_cast<EGLNativeWindowType>(static_cast<ANativeWindow *>(this));
 		return ret;
 	}
 

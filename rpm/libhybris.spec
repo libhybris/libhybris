@@ -1,3 +1,4 @@
+%define _unpackaged_files_terminate_build 0
 Name:      libhybris	
 Version:   0.0.0
 Release:   1%{?dist}
@@ -8,6 +9,8 @@ License:   Apache 2.0
 URL:	   https://github.com/libhybris/libhybris
 Source0:   %{name}-%{version}.tar.bz2
 BuildRequires: libtool
+# Needed for --enable-wayland
+BuildRequires: pkgconfig(wayland-client)
 
 %description
 %{summary}.
@@ -133,6 +136,25 @@ Provides: libOpenVG-devel
 %description libOpenVG-devel
 %{summary}.
 
+%package libwayland-egl
+Summary: Wayland EGL for hybris
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
+Provides: libwayland-egl
+
+%description libwayland-egl
+%{summary}.
+
+%package libwayland-egl-devel
+Summary: Wayland EGL development headers for hybris
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
+Requires: %{name}-libwayland-egl = %{version}-%{release}
+Provides: libwayland-egl-devel
+
+%description libwayland-egl-devel
+%{summary}.
+
 %package libhardware
 Summary: The libhardware wrapping of libhybris
 Requires(post): /sbin/ldconfig
@@ -183,16 +205,17 @@ Group:   System/Libraries
 cd hybris
 autoreconf -v -f -i
 %configure \
+--disable-dependency-tracking --enable-wayland \
 %ifarch %{arm}
 --enable-arch=arm \
 %endif
 %ifarch %{ix86}
 --enable-arch=x86 \
---enable-alinker=jb \
 %endif
+--enable-alinker=jb \
 %{nil}
 
-make %{?_smp_mflags}
+make -j1
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -211,6 +234,9 @@ rm %{buildroot}/%{_libdir}/*.la %{buildroot}/%{_libdir}/libhybris/*.la
 %post libGLESv2 -p /sbin/ldconfig
 %postun libGLESv2 -p /sbin/ldconfig
 
+%post libwayland-egl -p /sbin/ldconfig
+%postun libwayland-egl -p /sbin/ldconfig
+
 %post libhardware -p /sbin/ldconfig
 %postun libhardware -p /sbin/ldconfig
 
@@ -221,13 +247,19 @@ rm %{buildroot}/%{_libdir}/*.la %{buildroot}/%{_libdir}/libhybris/*.la
 %defattr(-,root,root,-)
 %doc hybris/AUTHORS hybris/COPYING
 %{_libdir}/libhybris-common.so.*
+%{_libdir}/libhybris-hwcomposerwindow.so.*
+%{_libdir}/libsync.so.*
 
 %files devel
 %defattr(-,root,root,-)
 %{_includedir}/android/cutils/*.h
 %{_includedir}/android/system/*.h
+%{_includedir}/android/sync/*.h
+%{_includedir}/android/linux/*.h
 %{_includedir}/android/version.h
 %{_libdir}/libhybris-common.so
+%{_libdir}/libsync.so
+%{_libdir}/libhybris-hwcomposerwindow.so
 
 %files libEGL
 %defattr(-,root,root,-)
@@ -235,16 +267,16 @@ rm %{buildroot}/%{_libdir}/*.la %{buildroot}/%{_libdir}/libhybris/*.la
 %{_libdir}/libhybris-eglplatformcommon.so.*
 %{_libdir}/libhybris/eglplatform_fbdev.so
 %{_libdir}/libhybris/eglplatform_null.so
+%{_libdir}/libhybris/eglplatform_hwcomposer.so
 
 %files libEGL-devel
 %defattr(-,root,root,-)
 %{_includedir}/KHR/*.h
 %{_includedir}/EGL/*.h
-%{_includedir}/android/sync/sync.h
-%{_includedir}/hybris/eglplatformcommon/nativewindowbase.h
-%{_includedir}/hybris/eglplatformcommon/support.h
-
+%{_includedir}/hybris/eglplatformcommon/*.h
+%{_includedir}/hybris/hwcomposerwindow/*.h
 %{_libdir}/libEGL.so
+%{_libdir}/pkgconfig/egl.pc
 %{_libdir}/libhybris-eglplatformcommon.so
 
 %files libGLESv1
@@ -263,6 +295,7 @@ rm %{buildroot}/%{_libdir}/*.la %{buildroot}/%{_libdir}/libhybris/*.la
 %defattr(-,root,root,-)
 %{_includedir}/GLES2/*.h
 %{_libdir}/libGLESv2.so
+%{_libdir}/pkgconfig/glesv2.pc
 
 %files libOpenCL
 %defattr(-,root,root,-)
@@ -280,6 +313,16 @@ rm %{buildroot}/%{_libdir}/*.la %{buildroot}/%{_libdir}/libhybris/*.la
 %files libOpenVG-devel
 %defattr(-,root,root,-)
 %{_includedir}/VG/*.h
+
+%files libwayland-egl
+%defattr(-,root,root,-)
+%{_libdir}/libhybris/eglplatform_wayland.so
+%{_libdir}/libwayland-egl.so.*
+
+%files libwayland-egl-devel
+%defattr(-,root,root,-)
+%{_libdir}/libwayland-egl.so
+%{_libdir}/pkgconfig/wayland-egl.pc
 
 %files libhardware
 %defattr(-,root,root,-)
@@ -302,4 +345,3 @@ rm %{buildroot}/%{_libdir}/*.la %{buildroot}/%{_libdir}/libhybris/*.la
 %files tests
 %defattr(-,root,root,-)
 %{_bindir}/test_*
-

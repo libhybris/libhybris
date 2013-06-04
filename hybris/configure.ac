@@ -135,6 +135,7 @@ AC_CONFIG_FILES([
 	egl/platforms/null/Makefile
 	egl/platforms/fbdev/Makefile
 	egl/platforms/wayland/Makefile
+	egl/platforms/hwcomposer/Makefile
 	glesv2/glesv2.pc
 	glesv2/Makefile
 	hardware/Makefile

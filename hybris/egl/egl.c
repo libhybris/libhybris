@@ -26,9 +26,13 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include "ws.h"
+#include <assert.h>
+
 
 #include <hybris/internal/binding.h>
 #include <string.h>
+
+#include <android/system/window.h>
 
 static void *_libegl = NULL;
 static void *_libgles = NULL;
@@ -233,6 +237,9 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 	EGL_DLSYM(&_eglCreateWindowSurface, "eglCreateWindowSurface");
 
 	win = ws_CreateWindow(win,  _egldisplay2NDT(dpy));
+	
+	assert(((struct ANativeWindowBuffer *) win)->common.magic == ANDROID_NATIVE_WINDOW_MAGIC);
+
 	return (*_eglCreateWindowSurface)(dpy, config, win, attrib_list);
 }
 
@@ -400,6 +407,11 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 	EGLClientBuffer newbuffer = buffer;
 
 	ws_passthroughImageKHR(&newtarget, &newbuffer);
+	if (newtarget == EGL_NATIVE_BUFFER_ANDROID)
+	{
+		assert(((struct ANativeWindowBuffer *) newbuffer)->common.magic == ANDROID_NATIVE_BUFFER_MAGIC);
+	}
+
 	EGLImageKHR ret = (*_eglCreateImageKHR)(dpy, EGL_NO_CONTEXT, newtarget, newbuffer, attrib_list);
 	return ret;
 }

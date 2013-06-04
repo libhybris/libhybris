@@ -2,6 +2,7 @@ bin_PROGRAMS = \
 	test_audio \
 	test_egl \
 	test_glesv2 \
+	test_hwcomposer \
 	test_sensors \
 	test_lights \
 	test_ui \
@@ -38,6 +39,27 @@ test_glesv2_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/egl/libEGL.la \
 	$(top_builddir)/glesv2/libGLESv2.la
+
+test_hwcomposer_SOURCES = test_hwcomposer.cpp
+test_hwcomposer_CXXFLAGS = \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/include/android \
+	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/egl/platforms/common \
+	-I$(top_srcdir)/egl/platforms/hwcomposer \
+	-I$(top_srcdir)/libsync
+
+if WANT_MESA
+test_hwcomposer_CXXFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
+endif
+test_hwcomposer_LDADD = \
+	-lm \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/egl/platforms/hwcomposer/libhybris-hwcomposerwindow.la \
+	$(top_builddir)/egl/libEGL.la \
+	$(top_builddir)/glesv2/libGLESv2.la \
+	$(top_builddir)/libsync/libsync.la
+
 
 test_sensors_SOURCES = test_sensors.c
 test_sensors_CFLAGS = \

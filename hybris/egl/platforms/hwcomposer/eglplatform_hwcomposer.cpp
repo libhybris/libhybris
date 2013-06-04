@@ -1,5 +1,5 @@
 #include <ws.h>
-#include "fbdev_window.h"
+#include "hwcomposer_window.h"
 #include <malloc.h>
 #include <assert.h>
 #include <fcntl.h>
@@ -16,7 +16,7 @@ static gralloc_module_t *gralloc = 0;
 static framebuffer_device_t *framebuffer = 0;
 static alloc_device_t *alloc = 0;
 
-extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
+extern "C" int hwcomposerws_IsValidDisplay(EGLNativeDisplayType display)
 {
 	if (__sync_fetch_and_add(&inited,1)==0)
 	{
@@ -27,12 +27,13 @@ extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 			assert(0);
 		}
 
+		/* Not fatal on HW composer >= 1.1 */
 		err = framebuffer_open((hw_module_t *) gralloc, &framebuffer);
 		if (err) {
-			fprintf(stderr, "ERROR: failed to open framebuffer: (%s)\n",strerror(-err));
-			assert(0);
+			fprintf(stderr, "WARNING: failed to open framebuffer: (%s)\n",strerror(-err));
 		}
 		printf("** framebuffer_open: status=(%s) format=x%x", strerror(-err), framebuffer->format);
+	
 
 		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
 		if (err) {
@@ -40,33 +41,40 @@ extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 			assert(0);
 		}
 		printf("** gralloc_open %p status=%s\n", gralloc, strerror(-err));
+
+		framebuffer_close(framebuffer);
 		eglplatformcommon_init(gralloc);
 	}
 
 	return display == EGL_DEFAULT_DISPLAY;
 }
 
-extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
+extern "C" EGLNativeWindowType hwcomposerws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
 {
 	assert (inited == 1);
-	return (EGLNativeWindowType) static_cast<struct ANativeWindow *> (new FbDevNativeWindow(gralloc, alloc, framebuffer));
+	assert (win != 0);
+	
+	HWComposerNativeWindow *window = static_cast<HWComposerNativeWindow *>((ANativeWindow *) win);
+	window->setup(gralloc, alloc);
+
+	return win;
 }
 
-extern "C" __eglMustCastToProperFunctionPointerType fbdevws_eglGetProcAddress(const char *procname) 
+extern "C" __eglMustCastToProperFunctionPointerType hwcomposerws_eglGetProcAddress(const char *procname) 
 {
 	return eglplatformcommon_eglGetProcAddress(procname);
 }
 
-extern "C" void fbdevws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
+extern "C" void hwcomposerws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 {
 	eglplatformcommon_passthroughImageKHR(target, buffer);
 }
 
 struct ws_module ws_module_info = {
-	fbdevws_IsValidDisplay,
-	fbdevws_CreateWindow,
-	fbdevws_eglGetProcAddress,
-	fbdevws_passthroughImageKHR,
+	hwcomposerws_IsValidDisplay,
+	hwcomposerws_CreateWindow,
+	hwcomposerws_eglGetProcAddress,
+	hwcomposerws_passthroughImageKHR,
 	eglplatformcommon_eglQueryString
 };
 
