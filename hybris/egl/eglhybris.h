@@ -21,5 +21,6 @@
 #include <android/hardware/gralloc.h>
 
 int hybris_register_buffer_handle(buffer_handle_t handle);
+int hybris_unregister_buffer_handle(buffer_handle_t handle);
 
 #endif
