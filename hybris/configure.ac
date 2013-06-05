@@ -144,6 +144,7 @@ AC_CONFIG_FILES([
 	include/Makefile
 	tests/Makefile
 ])
+AM_COND_IF([WANT_WAYLAND], [AC_CONFIG_FILES([egl/platforms/common/wayland-egl.pc])])
 AC_OUTPUT
 
 echo
