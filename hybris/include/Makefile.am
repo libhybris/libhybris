@@ -56,6 +56,11 @@ hardwareinclude_HEADERS = \
 	android/hardware/sensors.h \
 	android/hardware/lights.h
 
+androidlinuxincludedir = $(includedir)/android/linux
+androidlinuxinclude_HEADERS = \
+	android/linux/sync.h \
+	android/linux/sw_sync.h
+
 syncincludedir = $(includedir)/android/sync
 syncinclude_HEADERS = android/sync/sync.h
 
