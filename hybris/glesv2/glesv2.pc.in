@@ -5,8 +5,6 @@ includedir=@includedir@
 
 Name: glesv2
 Description: libhybris OpenGL ES 2.0 library
-Requires.private:
 Version: @VERSION@
 Libs: -L${libdir} -lGLESv2
-Libs.private: @GLESv2_PC_LIB_PRIV@
 Cflags: -I${includedir}
