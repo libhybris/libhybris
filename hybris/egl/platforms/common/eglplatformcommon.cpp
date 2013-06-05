@@ -27,6 +27,14 @@ int hybris_register_buffer_handle(buffer_handle_t handle)
 	return my_gralloc->registerBuffer(my_gralloc, handle);
 }
 
+int hybris_unregister_buffer_handle(buffer_handle_t handle)
+{
+	if (!my_gralloc)
+		return -1;
+
+	return my_gralloc->unregisterBuffer(my_gralloc, handle);
+}
+
 #ifdef WANT_WAYLAND
 
 extern "C" EGLBoolean eglplatformcommon_eglBindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
