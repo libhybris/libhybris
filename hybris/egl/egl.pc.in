@@ -5,8 +5,6 @@ includedir=@includedir@
 
 Name: egl
 Description: libhybris EGL library
-Requires.private: @GL_PC_REQ_PRIV@
-Version: @PACKAGE_VERSION@
+Version: 7.10
 Libs: -L${libdir} -lEGL
-Libs.private: @GL_PC_LIB_PRIV@
-Cflags: -I${includedir} @GL_PC_CFLAGS@
+Cflags: -I${includedir}
