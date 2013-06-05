@@ -7,6 +7,8 @@
 
 BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 {
+	TRACE("%s %p\n", __PRETTY_FUNCTION__, this);
+
 	// done in ANativeWindowBuffer::ANativeWindowBuffer
 	// common.magic = ANDROID_NATIVE_WINDOW_MAGIC;
 	// common.version = sizeof(ANativeWindow);
@@ -27,6 +29,8 @@ BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 
 BaseNativeWindowBuffer::~BaseNativeWindowBuffer()
 {
+	TRACE("%s %p\n", __PRETTY_FUNCTION__, this);
+
 	ANativeWindowBuffer::common.decRef = NULL;
 	ANativeWindowBuffer::common.incRef = NULL;
 	refcount = 0;
@@ -37,6 +41,8 @@ void BaseNativeWindowBuffer::_decRef(struct android_native_base_t* base)
 {
 	ANativeWindowBuffer* self = container_of(base, ANativeWindowBuffer, common);
 	BaseNativeWindowBuffer* bnwb = static_cast<BaseNativeWindowBuffer*>(self) ;
+
+	TRACE("%s %p refcount = %i\n", __PRETTY_FUNCTION__, bnwb, bnwb->refcount - 1);
 
 	if (__sync_fetch_and_sub(&bnwb->refcount,1) == 1)
 	{
@@ -51,6 +57,7 @@ void BaseNativeWindowBuffer::_incRef(struct android_native_base_t* base)
 	ANativeWindowBuffer* self = container_of(base, ANativeWindowBuffer, common);
 	BaseNativeWindowBuffer* bnwb= static_cast<BaseNativeWindowBuffer*>(self) ;
 
+	TRACE("%s %p refcount = %i\n", __PRETTY_FUNCTION__, bnwb, bnwb->refcount + 1);
 	__sync_fetch_and_add(&bnwb->refcount,1);
 }
 
@@ -98,6 +105,8 @@ void BaseNativeWindow::_decRef(struct android_native_base_t* base)
 	ANativeWindow* self = container_of(base, ANativeWindow, common);
 	BaseNativeWindow* bnw = static_cast<BaseNativeWindow*>(self);
 
+	TRACE("%s %p refcount = %i\n", __PRETTY_FUNCTION__, bnw, bnw->refcount - 1);
+
 	if (__sync_fetch_and_sub(&bnw->refcount,1) == 1)
 	{
 		delete bnw;
@@ -108,6 +117,9 @@ void BaseNativeWindow::_incRef(struct android_native_base_t* base)
 {
 	ANativeWindow* self = container_of(base, ANativeWindow, common);
 	BaseNativeWindow* bnw = static_cast<BaseNativeWindow*>(self);
+
+	TRACE("%s %p refcount = %i\n", __PRETTY_FUNCTION__, bnw, bnw->refcount + 1);
+
 
 	__sync_fetch_and_add(&bnw->refcount,1);
 }
