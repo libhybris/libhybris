@@ -14,9 +14,6 @@
 #define NO_ERROR                0L
 #define BAD_VALUE               -1
 
-#include "logging.h"
-#define TRACE(message, ...) HYBRIS_DEBUG_LOG(EGL, message, ##__VA_ARGS__)
-
 /**
  * @brief A Class to do common ANativeBuffer initialization and thunk c-style
  *        callbacks into C++ method calls.
@@ -42,7 +39,6 @@ public:
 	operator EGLNativeWindowType()
 	{
 		EGLNativeWindowType ret = reinterpret_cast<EGLNativeWindowType>((ANativeWindow*)this);
-		TRACE("casting %p to %p", this, ret);
 		return ret;
 	}
 

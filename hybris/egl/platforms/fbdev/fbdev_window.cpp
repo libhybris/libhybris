@@ -15,6 +15,7 @@
  */
 
 #include "fbdev_window.h"
+#include "logging.h"
 
 #include <errno.h>
 #include <assert.h>
