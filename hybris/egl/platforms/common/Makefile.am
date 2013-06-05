@@ -9,6 +9,11 @@ libhybris_eglplatformcommon_la_SOURCES = \
 if WANT_WAYLAND
 lib_LTLIBRARIES += libwayland-egl.la
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = wayland-egl.pc
+
+
+
 libhybris_eglplatformcommon_la_SOURCES += \
 	server_wlegl.cpp \
 	server_wlegl_handle.cpp \
