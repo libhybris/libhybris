@@ -665,7 +665,50 @@ static int my_pthread_cond_timedwait(pthread_cond_t *cond,
         *((unsigned int *) mutex) = (unsigned int) realmutex;
     }
 
-    return pthread_cond_timedwait(realcond, realmutex, abstime);
+    return pthread_cond_timedwait(realcond, realmutex, &abstime);
+}
+
+static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
+                pthread_mutex_t *mutex, const struct timespec *reltime)
+{
+    /* Both cond and mutex can be statically initialized, check for both */
+    unsigned int cvalue = (*(unsigned int *) cond);
+    unsigned int mvalue = (*(unsigned int *) mutex);
+
+    if (hybris_check_android_shared_cond(cvalue) ||
+         hybris_check_android_shared_mutex(mvalue)) {
+        LOGD("Shared condition/mutex with Android, not waiting.");
+        return 0;
+    }
+
+    pthread_cond_t *realcond = (pthread_cond_t *) cvalue;
+    if( hybris_is_pointer_in_shm((void*)cvalue) )
+        realcond = (pthread_cond_t *)hybris_get_shmpointer((hybris_shm_pointer_t)cvalue);
+
+    if (cvalue <= ANDROID_TOP_ADDR_VALUE_COND) {
+        realcond = hybris_alloc_init_cond();
+        *((unsigned int *) cond) = (unsigned int) realcond;
+    }
+
+    pthread_mutex_t *realmutex = (pthread_mutex_t *) mvalue;
+    if (hybris_is_pointer_in_shm((void*)mvalue))
+        realmutex = (pthread_mutex_t *)hybris_get_shmpointer((hybris_shm_pointer_t)mvalue);
+
+    if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
+        realmutex = hybris_alloc_init_mutex(mvalue);
+        *((unsigned int *) mutex) = (unsigned int) realmutex;
+    }
+
+    /* TODO: Android uses CLOCK_MONOTONIC here but I am not sure which one to use */
+    struct timespec tv;
+    clock_gettime(CLOCK_REALTIME, &tv);
+    tv.tv_sec += reltime->tv_sec;
+    tv.tv_nsec += reltime->tv_nsec;
+    if (tv.tv_nsec >= 1000000000) {
+      tv.tv_sec++;
+      tv.tv_nsec -= 1000000000;
+    }
+    return pthread_cond_timedwait(realcond, realmutex, &tv);
 }
 
 /*
@@ -1249,7 +1292,7 @@ static struct _hook hooks[] = {
     {"pthread_cond_wait", my_pthread_cond_wait},
     {"pthread_cond_timedwait", my_pthread_cond_timedwait},
     {"pthread_cond_timedwait_monotonic", my_pthread_cond_timedwait},
-    {"pthread_cond_timedwait_relative_np", my_pthread_cond_timedwait},
+    {"pthread_cond_timedwait_relative_np", my_pthread_cond_timedwait_relative_np},
     {"pthread_key_delete", pthread_key_delete},
     {"pthread_setname_np", pthread_setname_np},
     {"pthread_once", pthread_once},
