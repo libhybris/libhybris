@@ -29,6 +29,8 @@
 #include "wayland-egl-priv.h"
 #include <assert.h>
 
+#include "logging.h"
+
 void WaylandNativeWindow::lock()
 {
 	pthread_mutex_lock(&this->mutex);	

@@ -89,4 +89,7 @@ hybris_set_log_level(enum hybris_log_level level);
 #define HYBRIS_INFO(message, ...) HYBRIS_INFO_LOG(HYBRIS, message, ##__VA_ARGS__)
 #define HYBRIS_ERROR(message, ...) HYBRIS_ERROR_LOG(HYBRIS, message, ##__VA_ARGS__)
 
+/* for camptiblity reasons */
+#define TRACE(message, ...) HYBRIS_DEBUG_LOG(EGL, message, ##__VA_ARGS__)
+
 #endif /* HYBRIS_LOGGING_H */
