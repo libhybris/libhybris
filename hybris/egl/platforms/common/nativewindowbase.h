@@ -26,6 +26,12 @@ class BaseNativeWindowBuffer : public ANativeWindowBuffer
 protected:
 	BaseNativeWindowBuffer();
 	virtual ~BaseNativeWindowBuffer() ;
+
+public:
+	/* When passing the buffer to EGL functions it's required to pass always the native
+	 * buffer. This method takes care about proper casting. */
+	ANativeWindowBuffer* getNativeBuffer() const;
+
 private:
 	unsigned int refcount;
 	static void _decRef(struct android_native_base_t* base);
