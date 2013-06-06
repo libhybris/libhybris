@@ -6,6 +6,7 @@ bin_PROGRAMS = \
 	test_ui \
 	test_sf \
 	test_input \
+	test_camera \
 	test_gps
 
 test_egl_SOURCES = test_egl.c
@@ -65,6 +66,16 @@ test_input_CFLAGS = \
 	-I$(top_srcdir)/include
 test_input_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/input/libis.la
+
+test_camera_SOURCES = test_camera.c
+test_camera_CFLAGS = \
+	-I$(top_srcdir)/include
+test_camera_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/egl/libEGL.la \
+	$(top_builddir)/glesv2/libGLESv2.la \
+	$(top_builddir)/camera/libcamera.la \
 	$(top_builddir)/input/libis.la
 
 test_gps_SOURCES = test_gps.c

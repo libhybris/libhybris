@@ -141,6 +141,7 @@ AC_CONFIG_FILES([
 	ui/Makefile
 	sf/Makefile
 	input/Makefile
+	camera/Makefile
 	include/Makefile
 	tests/Makefile
 ])
