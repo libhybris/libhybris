@@ -19,6 +19,7 @@ endif
 
 libhybris_common_la_SOURCES = \
 	hooks.c \
+	hooks_shm.c \
 	properties.c \
 	strlcpy.c \
 	logging.c
