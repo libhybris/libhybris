@@ -5,6 +5,9 @@
 
 #include "nativewindowbase.h"
 
+#include "logging.h"
+#define TRACE(message, ...) HYBRIS_DEBUG_LOG(EGL, message, ##__VA_ARGS__)
+
 BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 {
 	TRACE("%s %p\n", __PRETTY_FUNCTION__, this);
