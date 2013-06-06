@@ -80,6 +80,12 @@ inputinclude_HEADERS = \
 	hybris/input/input_stack_compatibility_layer_flags_motion.h \
 	hybris/input/input_stack_compatibility_layer.h
 
+cameraincludedir = $(includedir)/hybris/camera
+camerainclude_HEADERS = \
+	hybris/camera/camera_compatibility_layer_capabilities.h \
+	hybris/camera/camera_compatibility_layer_configuration_translator.h \
+	hybris/camera/camera_compatibility_layer.h
+
 android/version.h: android/version.h.in
 	@sed -e "s|\@android_version\@|$(ANDROID_VERSION)|" $<> $@
 
