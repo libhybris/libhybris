@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <getopt.h>
+#include <string.h>
 
 #include <android/hardware/gps.h>
 
@@ -127,10 +128,17 @@ static void sv_status_callback(GpsSvStatus* sv_info)
 
 static void nmea_callback(GpsUtcTime timestamp, const char* nmea, int length)
 {
+	char buf[83];
   fprintf(stdout, "*** nmea info\n");
   fprintf(stdout, "timestamp:\t%ld\n", (long)timestamp);
-  fprintf(stdout, "nmea: \t%s\n", nmea);
-  fprintf(stdout, "length: \t%d\n", length);
+  /* NMEA sentences can only be between 11 ($TTFFF*CC\r\n) and 82 characters long */
+  if (length > 10 && length < 83) {
+    strncpy(buf, nmea, length);
+    buf[length] = '\0';
+    fprintf(stdout, "nmea (%d): \t%s\n", length, buf);
+  } else {
+    fprintf(stdout, "Invalid nmea data\n");
+  }
 }
 
 static void set_capabilities_callback(uint32_t capabilities)
