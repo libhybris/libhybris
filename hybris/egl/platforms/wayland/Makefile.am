@@ -16,4 +16,5 @@ eglplatform_wayland_la_LDFLAGS = \
 	-avoid-version -module -shared -export-dynamic \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/hardware/libhardware.la \
+	$(top_builddir)/libsync/libsync.la \
 	$(WAYLAND_CLIENT_LIBS)

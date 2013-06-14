@@ -30,6 +30,11 @@
 #include <assert.h>
 
 #include "logging.h"
+#include <android/version.h>
+
+extern "C" {
+#include <android/sync/sync.h>
+}
 
 void WaylandNativeWindow::lock()
 {
@@ -251,7 +256,9 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     }
 
     lock();
-
+    sync_wait(fenceFd, -1);
+    close(fenceFd);    
+  
     this->frame_callback = wl_surface_frame(m_window->surface);
     wl_callback_add_listener(this->frame_callback, &frame_listener, this);
     wl_proxy_set_queue((struct wl_proxy *) this->frame_callback, this->wl_queue);
