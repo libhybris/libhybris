@@ -131,7 +131,7 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&cond, NULL);
     m_freeBufs = 0;
-    setBufferCount(5);
+    setBufferCount(3);
     TRACE("WaylandNativeWindow created in %p", pthread_self());
 }
 
@@ -350,14 +350,42 @@ unsigned int WaylandNativeWindow::transformHint() const {
 
 int WaylandNativeWindow::setBuffersFormat(int format) {
     TRACE("format %i", format);
-    m_format = format;
+    if (format != m_format)
+    {
+        m_format = format;
+        setBufferCount(m_bufList.size());
+    }
     return NO_ERROR;
 }
 
+void WaylandNativeWindow::destroyBuffers()
+{
+    TRACE("");
+
+    std::list<WaylandNativeWindowBuffer*>::iterator it = m_bufList.begin();
+    for (; it!=m_bufList.end(); ++it)
+    {
+        WaylandNativeWindowBuffer* wnb = *it;
+        assert(wnb->busy == 0);
+
+        m_alloc->free(m_alloc, wnb->handle);
+
+        wnb->common.decRef(&wnb->common);
+        assert(wnb->common.decRef==NULL);
+    }
+    m_bufList.clear();
+    m_freeBufs = 0;
+}
+
+
+
 int WaylandNativeWindow::setBufferCount(int cnt) {
+    lock();
 
     TRACE("cnt=%d", cnt);
     m_freeBufs =0;
+
+    destroyBuffers();
 
     for (int i = 0; i < cnt; i++)
     {
@@ -372,6 +400,7 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
         wnb->common.incRef(&wnb->common);
         ++m_freeBufs;
     }
+    unlock();
 
     return NO_ERROR;
 }
@@ -380,13 +409,23 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
 
 
 int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
-    TRACE("size %ix%i - WARN STUB", width, height);
+    TRACE("size %ix%i", width, height);
+    if (m_width != width || m_height != height)
+    {
+        m_width = width;
+        m_height = height;
+        setBufferCount(m_bufList.size());
+    }
     return NO_ERROR;
 }
 
 int WaylandNativeWindow::setUsage(int usage) {
     TRACE("usage=x%x", usage);
-    m_usage = usage | GRALLOC_USAGE_HW_TEXTURE;
+    if ((usage | GRALLOC_USAGE_HW_TEXTURE) != m_usage)
+    {  
+        m_usage = usage | GRALLOC_USAGE_HW_TEXTURE;
+        setBufferCount(m_bufList.size()); 
+    }
     return NO_ERROR;
 }
 // vim: noai:ts=4:sw=4:ss=4:expandtab

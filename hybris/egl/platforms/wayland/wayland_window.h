@@ -98,6 +98,7 @@ protected:
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
 private:
+    void destroyBuffers();
     std::list<WaylandNativeWindowBuffer *> m_bufList;
     std::list<WaylandNativeWindowBuffer *> fronted;
     struct wl_egl_window *m_window;
