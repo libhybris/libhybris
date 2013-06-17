@@ -32,9 +32,11 @@
 #include "logging.h"
 #include <android/version.h>
 
+#if ANDROID_VERSION>=0x410
 extern "C" {
 #include <android/sync/sync.h>
 }
+#endif
 
 void WaylandNativeWindow::lock()
 {
@@ -256,8 +258,10 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     }
 
     lock();
+#if ANDROID_VERSION>=0x410
     sync_wait(fenceFd, -1);
     close(fenceFd);    
+#endif
   
     this->frame_callback = wl_surface_frame(m_window->surface);
     wl_callback_add_listener(this->frame_callback, &frame_listener, this);
