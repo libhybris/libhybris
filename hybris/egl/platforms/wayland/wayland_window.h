@@ -16,12 +16,12 @@
  ** License version 2.1 as published by the Free Software Foundation
  ** and appearing in the file license.lgpl included in the packaging
  ** of this file.
- ** 
+ **
  ** This library is distributed in the hope that it will be useful,
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  ** Lesser General Public License for more details.
- ** 
+ **
  ****************************************************************************************/
 
 
@@ -62,12 +62,11 @@ class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
     int busy;
 };
 
-class WaylandNativeWindow : public BaseNativeWindow
-{
+class WaylandNativeWindow : public BaseNativeWindow {
 public:
     WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, const gralloc_module_t* gralloc, alloc_device_t* alloc_device);
     ~WaylandNativeWindow();
-    
+
     void lock();
     void unlock();
     void frame();
@@ -99,7 +98,8 @@ protected:
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
 private:
-    std::list<WaylandNativeWindowBuffer *> buffers; 
+    void destroyBuffers();
+    std::list<WaylandNativeWindowBuffer *> m_bufList;
     std::list<WaylandNativeWindowBuffer *> fronted;
     struct wl_egl_window *m_window;
     struct wl_display *m_display;
@@ -114,6 +114,8 @@ private:
     struct wl_registry *registry;
     const gralloc_module_t* m_gralloc;
     pthread_mutex_t mutex;
+    pthread_cond_t cond;
+    int m_freeBufs;
     struct wl_callback *frame_callback;
     static int wayland_roundtrip(WaylandNativeWindow *display);
 };
