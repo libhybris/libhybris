@@ -1214,7 +1214,6 @@ static struct _hook hooks[] = {
     {"memmove",memmove},
     {"memset",memset},
     {"memmem",memmem},
-    {"strtod", strtod},
     //  {"memswap",memswap},
     {"index",index},
     {"rindex",rindex},
