@@ -76,6 +76,12 @@
  *  - if p > VMALLOC_END, then the pointer is not a result of malloc ==> it is an shm offset
  */
 
+#ifdef __ARM_PCS_VFP
+#define FP_ATTRIB __attribute__((pcs("aapcs")))
+#else
+#define FP_ATTRIB
+#endif
+
 struct _hook {
     const char *name;
     void *func;
@@ -1190,6 +1196,11 @@ long my_sysconf(int name)
   return rv;
 }
 
+FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
+{
+	return strtod(nptr, endptr);
+}
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -1237,6 +1248,7 @@ static struct _hook hooks[] = {
     {"strndup",strndup},
     {"strncmp",strncmp},
     {"strncpy",strncpy},
+    {"strtod", my_strtod},
     //{"strlcat",strlcat},
     //{"strlcpy",strlcpy},
     {"strcspn",strcspn},
