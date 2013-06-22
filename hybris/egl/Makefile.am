@@ -40,3 +40,7 @@ libEGL_la_LDFLAGS = \
 eglincludedir = $(includedir)/EGL
 eglinclude_HEADERS = \
 	eglhybris.h
+
+wsincludedir = $(includedir)/hybris/eglplatformcommon
+wsinclude_HEADERS = \
+	ws.h
