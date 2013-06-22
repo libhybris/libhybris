@@ -131,6 +131,7 @@ AC_CONFIG_FILES([
 	egl/Makefile
 	egl/platforms/Makefile
 	egl/platforms/common/Makefile
+	egl/platforms/common/hybris-egl-platform.pc
 	egl/platforms/null/Makefile
 	egl/platforms/fbdev/Makefile
 	egl/platforms/wayland/Makefile

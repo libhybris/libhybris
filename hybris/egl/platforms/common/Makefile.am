@@ -6,12 +6,13 @@ libhybris_eglplatformcommon_la_SOURCES = \
 	nativewindowbase.cpp \
 	eglplatformcommon.cpp
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = hybris-egl-platform.pc
+
 if WANT_WAYLAND
 lib_LTLIBRARIES += libwayland-egl.la
 
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = wayland-egl.pc
-
+pkgconfig_DATA += wayland-egl.pc
 
 
 libhybris_eglplatformcommon_la_SOURCES += \
@@ -93,7 +94,8 @@ libhybris_eglplatformcommon_la_LDFLAGS = \
 eglplatformcommondir = $(includedir)/hybris/eglplatformcommon
 eglplatformcommon_HEADERS = \
 	support.h \
-	nativewindowbase.h
+	nativewindowbase.h \
+	eglplatformcommon.h
 
 if WANT_WAYLAND
 libhybris_eglplatformcommon_la_LDFLAGS += \
