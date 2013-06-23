@@ -19,8 +19,18 @@
 #define EGL_HYBRIS_H_
 
 #include <android/hardware/gralloc.h>
+#include <android/system/window.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int hybris_register_buffer_handle(buffer_handle_t handle);
 int hybris_unregister_buffer_handle(buffer_handle_t handle);
+void hybris_dump_buffer_to_file(struct ANativeWindowBuffer *buf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
