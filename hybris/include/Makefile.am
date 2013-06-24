@@ -41,15 +41,21 @@ vginclude_HEADERS = \
 
 cutilsincludedir = $(includedir)/android/cutils
 cutilsinclude_HEADERS = \
+	android/cutils/bitops.h \
 	android/cutils/native_handle.h
 
 systemincludedir = $(includedir)/android/system
 systeminclude_HEADERS = \
+	android/system/audio.h \
+	android/system/audio_policy.h \
 	android/system/window.h \
 	android/system/graphics.h
 
 hardwareincludedir = $(includedir)/android/hardware
 hardwareinclude_HEADERS = \
+	android/hardware/audio_effect.h \
+	android/hardware/audio.h \
+	android/hardware/audio_policy.h \
 	android/hardware/fb.h \
 	android/hardware/gralloc.h \
 	android/hardware/hardware.h \

@@ -1,4 +1,5 @@
 bin_PROGRAMS = \
+	test_audio \
 	test_egl \
 	test_glesv2 \
 	test_sensors \
@@ -8,6 +9,13 @@ bin_PROGRAMS = \
 	test_input \
 	test_camera \
 	test_gps
+
+test_audio_SOURCES = test_audio.c
+test_audio_CFLAGS = \
+	-I$(top_srcdir)/include
+test_audio_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/hardware/libhardware.la
 
 test_egl_SOURCES = test_egl.c
 test_egl_CFLAGS = \
