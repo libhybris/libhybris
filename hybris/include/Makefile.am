@@ -49,7 +49,8 @@ systeminclude_HEADERS = \
 	android/system/audio.h \
 	android/system/audio_policy.h \
 	android/system/window.h \
-	android/system/graphics.h
+	android/system/graphics.h \
+	android/system/camera.h
 
 hardwareincludedir = $(includedir)/android/hardware
 hardwareinclude_HEADERS = \
