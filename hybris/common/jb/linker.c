@@ -107,7 +107,8 @@ static const char *ldpreload_names[LDPRELOAD_MAX + 1];
 static soinfo *preloads[LDPRELOAD_MAX + 1];
 
 #if LINKER_DEBUG
-int debug_verbosity;
+int debug_verbosity = 0;
+int debug_stdout = 0;
 #endif
 
 static int pid;
@@ -665,12 +666,12 @@ is_prelinked(int fd, const char *name)
     }
 
     if (read(fd, &info, sizeof(info)) != sizeof(info)) {
-        WARN("Could not read prelink_info_t structure for `%s`\n", name);
+        INFO("Could not read prelink_info_t structure for `%s`\n", name);
         return 0;
     }
 
     if (strncmp(info.tag, "PRE ", 4)) {
-        WARN("`%s` is not a prelinked library\n", name);
+        INFO("`%s` is not a prelinked library\n", name);
         return 0;
     }
 
@@ -838,7 +839,7 @@ static int alloc_mem_region(soinfo *si)
         goto err;
     }
     si->base = (unsigned) base;
-    PRINT("%5d mapped library '%s' to %08x via kernel allocator.\n",
+    INFO("%5d mapped library '%s' to %08x via kernel allocator.\n",
           pid, si->name, si->base);
     return 0;
 
@@ -1164,6 +1165,19 @@ init_library(soinfo *si)
 {
     unsigned wr_offset = 0xffffffff;
 
+#if LINKER_DEBUG
+    /* Has to be set via init_library as we don't get called via the
+     * traditional android init library path  */
+    const char* env;
+    env = getenv("HYBRIS_LINKER_DEBUG");
+    if (env)
+        debug_verbosity = atoi(env);
+    if (getenv("HYBRIS_LINKER_STDOUT"))
+        debug_stdout = 1;
+
+    INFO("[ HYBRIS: initializing library '%s']\n", si->name);
+#endif
+
     /* At this point we know that whatever is loaded @ base is a valid ELF
      * shared library whose segments are properly mapped in. */
     TRACE("[ %5d init_library base=0x%08x sz=0x%08x name='%s') ]\n",
@@ -1268,7 +1282,7 @@ unsigned unload_library(soinfo *si)
     }
     else {
         si->refcount--;
-        PRINT("%5d not unloading '%s', decrementing refcount to %d\n",
+        INFO("%5d not unloading '%s', decrementing refcount to %d\n",
               pid, si->name, si->refcount);
     }
     return si->refcount;
@@ -1298,10 +1312,11 @@ static int reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
               si->name, idx);
         if(sym != 0) {
             sym_name = (char *)(strtab + symtab[sym].st_name);
-            //printf("symbol %s \n", sym_name);
+            INFO("HYBRIS: '%s' checking hooks for sym '%s'\n", si->name, sym_name);
             sym_addr = get_hooked_symbol(sym_name);
             if (sym_addr != NULL) {
-               //printf("hooked symbol %s to %x\n", sym_name, sym_addr);
+                INFO("HYBRIS: '%s' hooked symbol %s to %x\n", si->name,
+                                                  sym_name, sym_addr);
             } else {
                s = _do_lookup(si, sym_name, &base);
             }
@@ -1529,7 +1544,8 @@ void call_constructors_recursive(soinfo *si)
     if (si->constructors_called)
         return;
     if (strcmp(si->name,"libc.so") == 0) {
-	return;
+        INFO("HYBRIS: =============> Skipping libc.so\n");
+        return;
     }
 
     // Set this before actually calling the constructors, otherwise it doesn't
