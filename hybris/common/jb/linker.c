@@ -107,7 +107,8 @@ static const char *ldpreload_names[LDPRELOAD_MAX + 1];
 static soinfo *preloads[LDPRELOAD_MAX + 1];
 
 #if LINKER_DEBUG
-int debug_verbosity;
+int debug_verbosity = 0;
+int debug_stdout = 0;
 #endif
 
 static int pid;
@@ -1164,6 +1165,19 @@ init_library(soinfo *si)
 {
     unsigned wr_offset = 0xffffffff;
 
+#if LINKER_DEBUG
+    /* Has to be set via init_library as we don't get called via the
+     * traditional android init library path  */
+    const char* env;
+    env = getenv("HYBRIS_LINKER_DEBUG");
+    if (env)
+        debug_verbosity = atoi(env);
+    if (getenv("HYBRIS_LINKER_STDOUT"))
+        debug_stdout = 1;
+
+    INFO("[ HYBRIS: initializing library '%s']\n", si->name);
+#endif
+
     /* At this point we know that whatever is loaded @ base is a valid ELF
      * shared library whose segments are properly mapped in. */
     TRACE("[ %5d init_library base=0x%08x sz=0x%08x name='%s') ]\n",
@@ -1298,10 +1312,11 @@ static int reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
               si->name, idx);
         if(sym != 0) {
             sym_name = (char *)(strtab + symtab[sym].st_name);
-            //printf("symbol %s \n", sym_name);
+            INFO("HYBRIS: '%s' checking hooks for sym '%s'\n", si->name, sym_name);
             sym_addr = get_hooked_symbol(sym_name);
             if (sym_addr != NULL) {
-               //printf("hooked symbol %s to %x\n", sym_name, sym_addr);
+                INFO("HYBRIS: '%s' hooked symbol %s to %x\n", si->name,
+                                                  sym_name, sym_addr);
             } else {
                s = _do_lookup(si, sym_name, &base);
             }
