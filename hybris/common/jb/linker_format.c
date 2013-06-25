@@ -176,8 +176,6 @@ vsnprintf(char *buff, size_t bufsize, const char *format, va_list args)
 
 #if LINKER_DEBUG
 
-#if !LINKER_DEBUG_TO_LOG
-
 /*** File descriptor output
  ***/
 
@@ -243,8 +241,6 @@ format_fd(int fd, const char *format, ...)
 
     return fd_out_length(&fdo);
 }
-
-#else /* LINKER_DEBUG_TO_LOG */
 
 /*** Log output
  ***/
@@ -315,8 +311,6 @@ format_log(int prio, const char *tag, const char *format, ...)
     va_end(args);
     return ret;
 }
-
-#endif /* LINKER_DEBUG_TO_LOG */
 
 #endif /* LINKER_DEBUG */
 

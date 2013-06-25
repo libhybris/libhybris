@@ -35,10 +35,6 @@
 #error LINKER_DEBUG should be defined to either 1 or 0 in Android.mk
 #endif
 
-/* set LINKER_DEBUG_TO_LOG to 1 to send the logs to logcat,
- * or 0 to use stdout instead.
- */
-#define LINKER_DEBUG_TO_LOG  1
 #define TRACE_DEBUG          1
 #define DO_TRACE_LOOKUP      1
 #define DO_TRACE_RELO        1
@@ -66,19 +62,17 @@
 #if LINKER_DEBUG
 #include "linker_format.h"
 extern int debug_verbosity;
-#if LINKER_DEBUG_TO_LOG
+extern int debug_stdout;
 extern int format_log(int, const char *, const char *, ...);
+extern int format_fd(int, const char *, ...);
 #define _PRINTVF(v,f,x...)                                        \
     do {                                                          \
-        if (debug_verbosity > (v)) format_log(5-(v),"linker",x);  \
+        if (debug_verbosity > (v))                                \
+            if (debug_stdout)                                     \
+                format_fd(1, x);                                  \
+            else                                                  \
+                format_log(5-(v),"linker",x);                     \
     } while (0)
-#else /* !LINKER_DEBUG_TO_LOG */
-extern int format_fd(int, const char *, ...);
-#define _PRINTVF(v,f,x...)                           \
-    do {                                             \
-        if (debug_verbosity > (v)) format_fd(1, x);  \
-    } while (0)
-#endif /* !LINKER_DEBUG_TO_LOG */
 #else /* !LINKER_DEBUG */
 #define _PRINTVF(v,f,x...)   do {} while(0)
 #endif /* LINKER_DEBUG */
