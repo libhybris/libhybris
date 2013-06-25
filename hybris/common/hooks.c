@@ -382,7 +382,14 @@ static int my_pthread_mutex_init(pthread_mutex_t *__mutex,
 static int my_pthread_mutex_destroy(pthread_mutex_t *__mutex)
 {
     int ret;
+
+    if (!__mutex)
+        return EINVAL;
+
     pthread_mutex_t *realmutex = (pthread_mutex_t *) *(unsigned int *) __mutex;
+
+    if (!realmutex)
+        return EINVAL;
 
     if (!hybris_is_pointer_in_shm((void*)realmutex)) {
         ret = pthread_mutex_destroy(realmutex);
