@@ -666,12 +666,12 @@ is_prelinked(int fd, const char *name)
     }
 
     if (read(fd, &info, sizeof(info)) != sizeof(info)) {
-        WARN("Could not read prelink_info_t structure for `%s`\n", name);
+        INFO("Could not read prelink_info_t structure for `%s`\n", name);
         return 0;
     }
 
     if (strncmp(info.tag, "PRE ", 4)) {
-        WARN("`%s` is not a prelinked library\n", name);
+        INFO("`%s` is not a prelinked library\n", name);
         return 0;
     }
 
@@ -839,7 +839,7 @@ static int alloc_mem_region(soinfo *si)
         goto err;
     }
     si->base = (unsigned) base;
-    PRINT("%5d mapped library '%s' to %08x via kernel allocator.\n",
+    INFO("%5d mapped library '%s' to %08x via kernel allocator.\n",
           pid, si->name, si->base);
     return 0;
 
@@ -1282,7 +1282,7 @@ unsigned unload_library(soinfo *si)
     }
     else {
         si->refcount--;
-        PRINT("%5d not unloading '%s', decrementing refcount to %d\n",
+        INFO("%5d not unloading '%s', decrementing refcount to %d\n",
               pid, si->name, si->refcount);
     }
     return si->refcount;
@@ -1544,7 +1544,8 @@ void call_constructors_recursive(soinfo *si)
     if (si->constructors_called)
         return;
     if (strcmp(si->name,"libc.so") == 0) {
-	return;
+        INFO("HYBRIS: =============> Skipping libc.so\n");
+        return;
     }
 
     // Set this before actually calling the constructors, otherwise it doesn't
