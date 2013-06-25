@@ -1238,7 +1238,6 @@ static struct _hook hooks[] = {
     {"strncasecmp",strncasecmp},
     {"strdup",strdup},
     {"strstr",strstr},
-    {"strcasestr",strcasestr},
     {"strtok",strtok},
     {"strtok_r",strtok_r},
     {"strerror",strerror},
