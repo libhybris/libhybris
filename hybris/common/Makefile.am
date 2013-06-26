@@ -1,21 +1,22 @@
 lib_LTLIBRARIES = \
 	libhybris-common.la
 
-if  WANT_GB
-SUBDIRS = gingerbread
-libhybris_common_la_LIBADD= gingerbread/libandroid-linker.la
-endif
-
-if  WANT_ICS
-SUBDIRS = ics
-libhybris_common_la_LIBADD= ics/libandroid-linker.la
-endif
-
-if  WANT_JB
+if HAS_ANDROID_4_1_0
 SUBDIRS = jb
 libhybris_common_la_LIBADD= jb/libandroid-linker.la
+else
+if HAS_ANDROID_4_0_0
+SUBDIRS = ics
+libhybris_common_la_LIBADD= ics/libandroid-linker.la
+else
+if HAS_ANDROID_2_3_0
+SUBDIRS = gingerbread
+libhybris_common_la_LIBADD= gingerbread/libandroid-linker.la
+else
+ERROR
 endif
-
+endif
+endif
 
 libhybris_common_la_SOURCES = \
 	hooks.c \

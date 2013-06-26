@@ -6,6 +6,9 @@
 #include "nativewindowbase.h"
 
 #include "logging.h"
+
+#include <android/android-version.h>
+
 #define TRACE(message, ...) HYBRIS_DEBUG_LOG(EGL, message, ##__VA_ARGS__)
 
 BaseNativeWindowBuffer::BaseNativeWindowBuffer()
@@ -86,6 +89,8 @@ BaseNativeWindow::BaseNativeWindow()
 	const_cast<int&>(ANativeWindow::maxSwapInterval) = 0;
 
 	ANativeWindow::setSwapInterval = _setSwapInterval;
+
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
 	ANativeWindow::lockBuffer_DEPRECATED = &_lockBuffer_DEPRECATED;
 	ANativeWindow::dequeueBuffer_DEPRECATED = &_dequeueBuffer_DEPRECATED;
 	ANativeWindow::queueBuffer_DEPRECATED = &_queueBuffer_DEPRECATED;
@@ -93,6 +98,12 @@ BaseNativeWindow::BaseNativeWindow()
 	ANativeWindow::queueBuffer = &_queueBuffer;
 	ANativeWindow::dequeueBuffer = &_dequeueBuffer;
 	ANativeWindow::cancelBuffer = &_cancelBuffer;
+#else
+	ANativeWindow::lockBuffer = &_lockBuffer_DEPRECATED;
+	ANativeWindow::dequeueBuffer = &_dequeueBuffer_DEPRECATED;
+	ANativeWindow::queueBuffer = &_queueBuffer_DEPRECATED;
+	ANativeWindow::cancelBuffer = &_cancelBuffer_DEPRECATED;
+#endif
 	ANativeWindow::query = &_query;
 	ANativeWindow::perform = &_perform;
 

@@ -39,40 +39,6 @@ vginclude_HEADERS = \
 	VG/vgplatform.h \
 	VG/vgu.h
 
-cutilsincludedir = $(includedir)/android/cutils
-cutilsinclude_HEADERS = \
-	android/cutils/bitops.h \
-	android/cutils/native_handle.h
-
-systemincludedir = $(includedir)/android/system
-systeminclude_HEADERS = \
-	android/system/audio.h \
-	android/system/audio_policy.h \
-	android/system/window.h \
-	android/system/graphics.h
-
-hardwareincludedir = $(includedir)/android/hardware
-hardwareinclude_HEADERS = \
-	android/hardware/audio_effect.h \
-	android/hardware/audio.h \
-	android/hardware/audio_policy.h \
-	android/hardware/fb.h \
-	android/hardware/gralloc.h \
-	android/hardware/hardware.h \
-	android/hardware/sensors.h \
-	android/hardware/lights.h \
-	android/hardware/hwcomposer.h \
-	android/hardware/hwcomposer_defs.h \
-	android/hardware/hwcomposer_v0.h
-
-androidlinuxincludedir = $(includedir)/android/linux
-androidlinuxinclude_HEADERS = \
-	android/linux/sync.h \
-	android/linux/sw_sync.h
-
-syncincludedir = $(includedir)/android/sync
-syncinclude_HEADERS = android/sync/sync.h
-
 uiincludedir = $(includedir)/hybris/ui
 uiinclude_HEADERS = \
 	hybris/ui/ui_compatibility_layer.h
@@ -95,9 +61,4 @@ camerainclude_HEADERS = \
 	hybris/camera/camera_compatibility_layer_configuration_translator.h \
 	hybris/camera/camera_compatibility_layer.h
 
-android/version.h: android/version.h.in
-	@sed -e "s|\@android_version\@|$(ANDROID_VERSION)|" $<> $@
 
-androidincludedir = $(includedir)/android
-androidinclude_HEADERS = \
-	android/version.h

@@ -22,7 +22,7 @@
 #include <pthread.h>
 #include <stdio.h>
 
-#include <android/version.h>
+#include <android/android-version.h>
 
 #define FRAMEBUFFER_PARTITIONS 2
 
@@ -62,7 +62,7 @@ FbDevNativeWindow::FbDevNativeWindow(gralloc_module_t* gralloc,
     m_bufFormat = m_fbDev->format;
     m_usage = GRALLOC_USAGE_HW_FB;
 
-#if ANDROID_VERSION>=0x410
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
     if (m_fbDev->numFramebuffers>0)
         setBufferCount(m_fbDev->numFramebuffers);
     else

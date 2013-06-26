@@ -2,7 +2,7 @@ lib_LTLIBRARIES = \
 	libhardware.la
 
 libhardware_la_SOURCES = hardware.c
-libhardware_la_CFLAGS = -I$(top_srcdir)/include
+libhardware_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/android
 if WANT_TRACE
 libhardware_la_CFLAGS += -DDEBUG
 endif

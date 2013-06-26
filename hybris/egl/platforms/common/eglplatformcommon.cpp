@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include "logging.h"
 
 #ifdef WANT_WAYLAND
@@ -16,6 +17,7 @@
 #include "server_wlegl.h"
 #include "server_wlegl_buffer.h"
 #endif
+
 
 static gralloc_module_t *my_gralloc = 0;
 

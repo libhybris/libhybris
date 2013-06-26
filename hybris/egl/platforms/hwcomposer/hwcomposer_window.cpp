@@ -21,8 +21,9 @@
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
-#include <android/version.h>
+#include <android/android-version.h>
 extern "C" {
 #include <android/sync/sync.h>
 };
@@ -220,7 +221,7 @@ int HWComposerNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenc
     m_freeBufs++;
 
     sync_wait(fenceFd, -1);
-    close(fenceFd);    
+    ::close(fenceFd);    
 
     pthread_cond_signal(&_cond);
 

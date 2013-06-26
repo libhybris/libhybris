@@ -30,9 +30,9 @@
 #include <assert.h>
 
 #include "logging.h"
-#include <android/version.h>
+#include <android/android-version.h>
 
-#if ANDROID_VERSION>=0x410
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
 extern "C" {
 #include <android/sync/sync.h>
 }
@@ -365,7 +365,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     }
 
     lock();
-#if ANDROID_VERSION>=0x410
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
     sync_wait(fenceFd, -1);
     close(fenceFd);    
 #endif

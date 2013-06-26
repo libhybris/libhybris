@@ -88,38 +88,48 @@ AC_ARG_ENABLE(arch,
 AM_CONDITIONAL([WANT_ARCH_ARM], [test x$arch = xarm])
 AM_CONDITIONAL([WANT_ARCH_X86], [test x$arch = xx86])
 
-AC_ARG_ENABLE(alinker,
-  [  --enable-alinker[=linker]      Compile specific Android Linker (default=gingerbread)
-                                    gb: gingerbread
-                                    ics: Ice Cream sandwich
-                                    jb: Jelly Bean],
-  [ if   test "x$enableval" = "xgb" ; then
-      alinker="gb"
-      android_version=0x230
-   elif test "x$enableval" = "xics" ; then
-      alinker="ics"
-      android_version=0x400
-   elif test "x$enableval" = "xjb" ; then
-      alinker="jb"
-      android_version=0x410
-   else
-      echo
-      echo "Error!"
-      echo "Unknown android version"
-      exit -1
-   fi
+
+android_headers_path=""
+AC_ARG_WITH(android-headers,
+  [  --with-android-headers=path     Use android headers available in path ],
+  [
+      if [ ! test -e $withval/android-version.h ]; then
+	echo "Error! missing android-version.h in android header path"
+	exit -1
+      fi 
+      rm -f include/android
+      ln -sf $withval include/android   	
+      android_headers_path="$withval"      
+
+      # According to http://en.wikipedia.org/wiki/Android_version_history#Version_history_by_API_level
+      android_headers_major=`grep -E "define ANDROID_VERSION_MAJOR " $android_headers_path/android-version.h | sed "s|^\#define ANDROID_VERSION_MAJOR \(.*\)$|\1|g"`
+
+      android_headers_minor=`grep -E "define ANDROID_VERSION_MINOR " $android_headers_path/android-version.h | sed "s|^\#define ANDROID_VERSION_MINOR \(.*\)$|\1|g"`
+
+      android_headers_patch=`grep -E "define ANDROID_VERSION_PATCH " $android_headers_path/android-version.h | sed "s|^\#define ANDROID_VERSION_PATCH \(.*\)$|\1|g"`
+  
+      if [ test "x$android_headers_major" = x ]; then
+	  echo "Error! Was unable to locate define ANDROID_VERSION_MAJOR in $android_headers_path/android-version.h"
+      fi
+
+      AC_SUBST(ANDROID_VERSION_MAJOR, [$android_headers_major])
+      AC_SUBST(ANDROID_VERSION_MINOR, [$android_headers_minor])
+      AC_SUBST(ANDROID_VERSION_PATCH, [$android_headers_patch])
+
+      echo "Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch"
   ],
   [
-   alinker="gb"
-   android_version=0x230
+      echo "Error! need to provide path to Android headers --with-android-headers=path"
+      exit -1
   ]
   )
-AM_CONDITIONAL([WANT_GB], [test x$alinker = xgb])
-AM_CONDITIONAL([WANT_ICS], [test x$alinker = xics])
-AM_CONDITIONAL([WANT_JB], [test x$alinker = xjb])
 
-AC_DEFINE_UNQUOTED(ANDROID_VERSION, [$android_version], [Android version])
-AC_SUBST(ANDROID_VERSION, [$android_version])
+# Add automake tests for version/API needs here that you need in code, including test .am's
+
+AM_CONDITIONAL([HAS_ANDROID_4_2_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 2 ])
+AM_CONDITIONAL([HAS_ANDROID_4_1_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 1 ])
+AM_CONDITIONAL([HAS_ANDROID_4_0_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 0 ])
+AM_CONDITIONAL([HAS_ANDROID_2_3_0], [test $android_headers_major -ge 2 -a $android_headers_minor -ge 3 ])
 
 AC_CONFIG_FILES([
 	Makefile
@@ -147,6 +157,7 @@ AC_CONFIG_FILES([
 	include/Makefile
 	tests/Makefile
 ])
+
 AM_COND_IF([WANT_WAYLAND], [AC_CONFIG_FILES([egl/platforms/common/wayland-egl.pc])])
 AC_OUTPUT
 
@@ -164,8 +175,8 @@ echo
 echo "  prefix..................: $prefix"
 echo
 echo "  arch  ..................: $arch"
-echo
-echo "  linker..................: $alinker"
+echo 
+echo "  headers path ...........: $android_headers_path"
 echo
 echo "------------------------------------------------------------------------"
 echo
