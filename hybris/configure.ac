@@ -149,7 +149,9 @@ AC_CONFIG_FILES([
 	glesv2/glesv2.pc
 	glesv2/Makefile
 	hardware/Makefile
+	hardware/libhardware.pc
 	libsync/Makefile
+	libsync/libsync.pc
 	ui/Makefile
 	sf/Makefile
 	input/Makefile
