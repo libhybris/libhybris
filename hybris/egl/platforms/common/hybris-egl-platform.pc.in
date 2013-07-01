@@ -7,4 +7,5 @@ Name: hybris-egl-platform
 Description: libhybris EGL platform library
 Version: 0.1.0
 Libs: -L${libdir} -lhybris-common -lhybris-eglplatformcommon
-Cflags: -I${includedir}
+Cflags: -I${includedir} -I${includedir}/hybris/eglplatformcommon
+
