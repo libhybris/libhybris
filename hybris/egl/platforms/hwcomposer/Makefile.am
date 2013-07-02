@@ -1,5 +1,8 @@
 lib_LTLIBRARIES = libhybris-hwcomposerwindow.la
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = hwcomposer-egl.pc
+
 hwcomposerwindowincludedir = $(includedir)/hybris/hwcomposerwindow
 hwcomposerwindowinclude_HEADERS = \
         hwcomposer_window.h
