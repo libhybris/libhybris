@@ -31,6 +31,7 @@ const GpsInterface* Gps = NULL;
 const AGpsInterface* AGps = NULL;
 const AGpsRilInterface* AGpsRil = NULL;
 const GpsNiInterface *GpsNi = NULL;
+const GpsXtraInterface *GpsExtra = NULL;
 
 static const GpsInterface* get_gps_interface()
 {
@@ -104,6 +105,18 @@ static const GpsDebugInterface* get_gps_debug_interface(const GpsInterface *gps)
   }
   return interface;
 }
+
+static const GpsXtraInterface* get_gps_extra_interface(const GpsInterface *gps)
+{
+  const GpsXtraInterface* interface = NULL;
+
+  if(gps)
+  {
+    interface = (const GpsXtraInterface*)gps->get_extension(GPS_XTRA_INTERFACE);
+  }
+  return interface;
+}
+
 static void location_callback(GpsLocation* location)
 {
   fprintf(stdout, "*** location callback\n");
@@ -233,6 +246,11 @@ static void ni_notify_callback (GpsNiNotification *notification)
   fprintf(stdout, "*** ni notification callback\n");
 }
 
+static void download_xtra_request_callback (void)
+{
+  fprintf(stdout, "*** xtra download request to client\n");
+}
+
 GpsCallbacks callbacks = {
   sizeof(GpsCallbacks),
   location_callback,
@@ -261,6 +279,11 @@ GpsNiCallbacks callbacks4 = {
   create_thread_callback,
 };
 
+GpsXtraCallbacks callbacks5 = {
+  download_xtra_request_callback,
+  create_thread_callback,
+};
+
 void sigint_handler(int signum)
 {
   fprintf(stdout, "*** cleanup\n");
@@ -275,11 +298,11 @@ void sigint_handler(int signum)
 int main(int argc, char *argv[])
 {
   int sleeptime = 6000, opt, initok = 0;
-  int coldstart = 0;
+  int coldstart = 0, extra = 0;
   struct timeval tv;
   int agps = 0, agpsril = 0, injecttime = 0;
 
-  while ((opt = getopt(argc, argv, "acrt")) != -1)
+  while ((opt = getopt(argc, argv, "acrtx")) != -1)
   {
                switch (opt) {
                case 'a':
@@ -297,6 +320,10 @@ int main(int argc, char *argv[])
 	       case 't':
 		   injecttime = 1;
 		   fprintf(stdout, "*** Timing info will be injected\n");
+                   break;
+               case 'x':
+                   extra = 1;
+                   fprintf(stdout, "*** Allowing for Xtra downloads\n");
                    break;
                default:
                    fprintf(stderr, "\n Usage: %s \n \
@@ -355,6 +382,14 @@ int main(int argc, char *argv[])
       Gps->delete_aiding_data(GPS_DELETE_ALL);
     }
     
+    if(extra)
+    {
+      fprintf(stdout, "*** xtra aiding data init\n");
+      GpsExtra = get_gps_extra_interface(Gps);
+      if(GpsExtra)
+        GpsExtra->init(&callbacks5);
+    }
+
     fprintf(stdout, "*** setting up network notification handling\n");
     GpsNi = get_gps_ni_interface(Gps);
     if(GpsNi)
