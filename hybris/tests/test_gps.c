@@ -331,6 +331,7 @@ int main(int argc, char *argv[])
 			   \t-c for coldstarting the gps,\n \
 		           \t-r for agpsril,\n \
 			   \t-t to inject time,\n \
+                           \t-x deal with Xtra gps data.\n \
 			   \tnone for standalone gps\n",
                            argv[0]);
                    exit(1);
