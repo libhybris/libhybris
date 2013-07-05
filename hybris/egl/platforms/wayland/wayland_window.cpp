@@ -28,9 +28,11 @@
 #include "wayland_window.h"
 #include "wayland-egl-priv.h"
 #include <assert.h>
+#include <stdlib.h>
 
 #include "logging.h"
 #include <android/android-version.h>
+#include <eglhybris.h>
 
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
 extern "C" {
@@ -345,6 +347,8 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
     return NO_ERROR;
 }
 
+static int debugenvchecked = 0;
+
 int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 {
     TRACE("");
@@ -365,6 +369,18 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     }
 
     lock();
+
+    if (debugenvchecked == 0)
+    {
+        if (getenv("HYBRIS_WAYLAND_DUMP_BUFFERS") != NULL)
+            debugenvchecked = 2;
+        else
+            debugenvchecked = 1;
+    } else if (debugenvchecked == 2)
+    {
+        hybris_dump_buffer_to_file(wnb->getNativeBuffer());
+    }
+
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
     sync_wait(fenceFd, -1);
     close(fenceFd);    
