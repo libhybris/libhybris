@@ -94,6 +94,16 @@ static const GpsNiInterface* get_gps_ni_interface(const GpsInterface *gps)
   return interface;
 }
 
+static const GpsDebugInterface* get_gps_debug_interface(const GpsInterface *gps)
+{
+  const GpsDebugInterface* interface = NULL;
+
+  if(gps)
+  {
+    interface = (const GpsDebugInterface*)gps->get_extension(GPS_DEBUG_INTERFACE);
+  }
+  return interface;
+}
 static void location_callback(GpsLocation* location)
 {
   fprintf(stdout, "*** location callback\n");
@@ -156,6 +166,7 @@ static void nmea_callback(GpsUtcTime timestamp, const char* nmea, int length)
 static void set_capabilities_callback(uint32_t capabilities)
 {
   fprintf(stdout, "*** set capabilities\n");
+  fprintf(stdout, "capability is %.8x\n", capabilities);
   /* do nothing */
 }
 
@@ -311,9 +322,9 @@ int main(int argc, char *argv[])
   fprintf(stdout, "*** setting positioning mode\n");
   /* need to be done before starting gps or no info will come out */
   if((agps||agpsril) && !initok)
-	Gps->set_position_mode(GPS_POSITION_MODE_MS_BASED, GPS_POSITION_RECURRENCE_PERIODIC, 100, 0, 0);
+	Gps->set_position_mode(GPS_POSITION_MODE_MS_BASED, GPS_POSITION_RECURRENCE_PERIODIC, 100, 5, 1000);
   else
-	Gps->set_position_mode(GPS_POSITION_MODE_STANDALONE, GPS_POSITION_RECURRENCE_PERIODIC, 100, 0, 0);
+	Gps->set_position_mode(GPS_POSITION_MODE_STANDALONE, GPS_POSITION_RECURRENCE_PERIODIC, 100, 5, 1000);
 
   if (Gps && !initok && (agps||agpsril))
   {
