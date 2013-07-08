@@ -30,6 +30,7 @@
 const GpsInterface* Gps = NULL;
 const AGpsInterface* AGps = NULL;
 const AGpsRilInterface* AGpsRil = NULL;
+const GpsNiInterface *GpsNi = NULL;
 
 static const GpsInterface* get_gps_interface()
 {
@@ -78,6 +79,17 @@ static const AGpsRilInterface* get_agps_ril_interface(const GpsInterface *gps)
   if (gps)
   {
     interface = (const AGpsRilInterface*)gps->get_extension(AGPS_RIL_INTERFACE);
+  }
+  return interface;
+}
+
+static const GpsNiInterface* get_gps_ni_interface(const GpsInterface *gps)
+{
+  const GpsNiInterface* interface = NULL;
+
+  if(gps)
+  {
+    interface = (const GpsNiInterface*)gps->get_extension(GPS_NI_INTERFACE);
   }
   return interface;
 }
@@ -175,7 +187,7 @@ static pthread_t create_thread_callback(const char* name, void (*start)(void *),
 }
 
 
-static void agps_status_cb(AGpsStatus *status)
+static void agps_handle_status_callback(AGpsStatus *status)
 {
   switch (status->status)
   {
@@ -190,19 +202,24 @@ static void agps_status_cb(AGpsStatus *status)
   }
 }
 
-static void agps_ril_set_id_cb(uint32_t flags)
+static void agps_ril_set_id_callback(uint32_t flags)
 {
   fprintf(stdout, "*** set_id_cb\n");
   AGpsRil->set_set_id(AGPS_SETID_TYPE_IMSI, "000000000000000");
 }
 
-static void agps_ril_refloc_cb(uint32_t flags)
+static void agps_ril_refloc_callback(uint32_t flags)
 {
   fprintf(stdout, "*** refloc_cb\n");
   /* TODO : find out how to fill in location
   AGpsRefLocation location;
   AGpsRil->set_ref_location(&location, sizeof(location));
   */
+}
+
+static void ni_notify_callback (GpsNiNotification *notification)
+{
+  fprintf(stdout, "*** ni notification callback\n");
 }
 
 GpsCallbacks callbacks = {
@@ -218,13 +235,18 @@ GpsCallbacks callbacks = {
 };
 
 AGpsCallbacks callbacks2 = {
-  agps_status_cb,
+  agps_handle_status_callback,
   create_thread_callback,
 };
 
 AGpsRilCallbacks callbacks3 = {
-  agps_ril_set_id_cb,
-  agps_ril_refloc_cb,
+  agps_ril_set_id_callback,
+  agps_ril_refloc_callback,
+  create_thread_callback,
+};
+
+GpsNiCallbacks callbacks4 = {
+  ni_notify_callback,
   create_thread_callback,
 };
 
@@ -242,16 +264,21 @@ void sigint_handler(int signum)
 int main(int argc, char *argv[])
 {
   int sleeptime = 6000, opt, initok = 0;
+  int coldstart = 0;
   struct timeval tv;
   int agps = 0, agpsril = 0, injecttime = 0;
 
-  while ((opt = getopt(argc, argv, "art")) != -1)
+  while ((opt = getopt(argc, argv, "acrt")) != -1)
   {
                switch (opt) {
                case 'a':
 		   agps = 1;
 		   fprintf(stdout, "*** Using agps\n");
                    break;
+	       case 'c':
+		   coldstart = 1;
+		   fprintf(stdout, "*** Using cold start\n");
+		   break;
                case 'r':
 		   agpsril = 1;
 		   fprintf(stdout, "*** Using agpsril\n");
@@ -263,6 +290,7 @@ int main(int argc, char *argv[])
                default:
                    fprintf(stderr, "\n Usage: %s \n \
 			   \t-a for agps,\n \
+			   \t-c for coldstarting the gps,\n \
 		           \t-r for agpsril,\n \
 			   \t-t to inject time,\n \
 			   \tnone for standalone gps\n",
@@ -297,6 +325,8 @@ int main(int argc, char *argv[])
 	AGps->init(&callbacks2);
 	fprintf(stdout, "*** set up agps server\n");
 	AGps->set_server(AGPS_TYPE_SUPL, "supl.google.com", 7276);
+	fprintf(stdout, "*** Trying to open connection\n");
+	AGps->data_conn_open("internet");
     }
 
     fprintf(stdout, "*** get agps ril interface\n");
@@ -307,8 +337,19 @@ int main(int argc, char *argv[])
 	AGpsRil->init(&callbacks3);
     }
 
-    fprintf(stdout, "*** delete aiding data\n");
-    Gps->delete_aiding_data(GPS_DELETE_ALL);
+    /* if coldstart is requested, delete all location info */
+    if(coldstart)
+    {
+      fprintf(stdout, "*** delete aiding data\n");
+      Gps->delete_aiding_data(GPS_DELETE_ALL);
+    }
+    
+    fprintf(stdout, "*** setting up network notification handling\n");
+    GpsNi = get_gps_ni_interface(Gps);
+    if(GpsNi)
+    {
+      GpsNi->init(&callbacks4);
+    }
   }
 
   if(injecttime)
