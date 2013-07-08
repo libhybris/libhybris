@@ -1690,6 +1690,7 @@ static int nullify_closed_stdio (void)
         }
     }
 
+    close(dev_null);
     return return_value;
 }
 
