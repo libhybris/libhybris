@@ -425,6 +425,22 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     //--m_freeBufs;
     //pthread_cond_signal(&cond);
     fronted.push_back(wnb);
+    if (fronted.size() == m_bufList.size())
+    {
+        /* We have fronted all our buffers, let's wait for one of them to be free */
+        do {
+            unlock();
+            ret = wl_display_dispatch_queue(m_display, this->wl_queue);
+            lock();   
+            if (ret == -1)
+            {
+                break;
+            }
+            if (fronted.size() != m_bufList.size())
+                break;
+        } while (1);
+    }
+
     unlock();
 
     return NO_ERROR;
