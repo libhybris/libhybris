@@ -280,6 +280,7 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 	case NATIVE_WINDOW_SET_USAGE                 : //  0,
 	{
 		int usage = va_arg(args, int);
+		va_end(args);
 		return self->setUsage(usage);
 	}
 	case NATIVE_WINDOW_CONNECT                   : //  1,   /* deprecated */
@@ -295,6 +296,7 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 	{
 		int cnt = va_arg(args, int);
 		TRACE("set buffer count %i", cnt);
+		va_end(args);
 		return self->setBufferCount(cnt);
 		break;
 	}
@@ -311,11 +313,13 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 	{
 		int width  = va_arg(args, int);
 		int height = va_arg(args, int);
+		va_end(args);
 		return self->setBuffersDimensions(width, height);
 	}
 	case NATIVE_WINDOW_SET_BUFFERS_FORMAT        : //  9,
 	{
 		int format = va_arg(args, int);
+		va_end(args);
 		return self->setBuffersFormat(format);
 	}
 	case NATIVE_WINDOW_SET_SCALING_MODE          : // 10,   /* private */
@@ -340,5 +344,6 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 		TRACE("set post transform crop");
 		break;
 	}
+	va_end(args);
 	return NO_ERROR;
 }

@@ -250,10 +250,12 @@ void notify_gdb_of_unload(soinfo * info)
 
 void notify_gdb_of_libraries()
 {
+    pthread_mutex_lock(&_r_debug_lock);
     _r_debug.r_state = RT_ADD;
     rtld_db_dlactivity();
     _r_debug.r_state = RT_CONSISTENT;
     rtld_db_dlactivity();
+    pthread_mutex_unlock(&_r_debug_lock);
 }
 
 static soinfo *alloc_info(const char *name)
