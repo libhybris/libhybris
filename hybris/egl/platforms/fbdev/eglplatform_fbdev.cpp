@@ -15,6 +15,7 @@ static int inited = 0;
 static gralloc_module_t *gralloc = 0;
 static framebuffer_device_t *framebuffer = 0;
 static alloc_device_t *alloc = 0;
+static int windowcreated = 0;
 
 extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 {
@@ -49,6 +50,8 @@ extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
 {
 	assert (inited == 1);
+	assert (windowcreated == 0);
+	windowcreated = 1;
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *> (new FbDevNativeWindow(gralloc, alloc, framebuffer));
 }
 
