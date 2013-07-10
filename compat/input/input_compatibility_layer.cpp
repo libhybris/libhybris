@@ -310,7 +310,7 @@ struct State : public android::RefBase
 
 	~State()
 	{
-		input_reader_thread->requestExitAndWait();
+		input_reader_thread->requestExit();
 	}
 
 	android::sp<android::Looper> looper;
@@ -360,7 +360,7 @@ void android_input_stack_start_waiting_for_flag(bool* flag)
 
 void android_input_stack_stop()
 {
-	global_state->input_reader_thread->requestExitAndWait();
+	global_state->input_reader_thread->requestExit();
 }
 
 void android_input_stack_shutdown()
