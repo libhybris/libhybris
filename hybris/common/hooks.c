@@ -1449,7 +1449,7 @@ void *get_hooked_symbol(char *sym)
     if (strstr(sym, "pthread") != NULL)
     {
         counter--;
-        printf("%s %i\n", sym, counter);
+        LOGD("%s %i\n", sym, counter);
         return (void *) counter;
     }
     return NULL;

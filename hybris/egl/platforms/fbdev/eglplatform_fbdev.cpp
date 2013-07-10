@@ -11,6 +11,8 @@ extern "C" {
 #include <eglplatformcommon.h>
 };
 
+#include "logging.h"
+
 static int inited = 0;
 static gralloc_module_t *gralloc = 0;
 static framebuffer_device_t *framebuffer = 0;
@@ -33,14 +35,14 @@ extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 			fprintf(stderr, "ERROR: failed to open framebuffer: (%s)\n",strerror(-err));
 			assert(0);
 		}
-		printf("** framebuffer_open: status=(%s) format=x%x", strerror(-err), framebuffer->format);
+		TRACE("** framebuffer_open: status=(%s) format=x%x", strerror(-err), framebuffer->format);
 
 		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
 		if (err) {
 			fprintf(stderr, "ERROR: failed to open gralloc: (%s)\n",strerror(-err));
 			assert(0);
 		}
-		printf("** gralloc_open %p status=%s\n", gralloc, strerror(-err));
+		TRACE("** gralloc_open %p status=%s\n", gralloc, strerror(-err));
 		eglplatformcommon_init(gralloc);
 	}
 
