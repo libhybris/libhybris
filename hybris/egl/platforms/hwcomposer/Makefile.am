@@ -27,8 +27,11 @@ endif
 libhybris_hwcomposerwindow_la_LDFLAGS = \
 	-version-info "1":"0":"0" \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
-	$(top_builddir)/hardware/libhardware.la \
-	$(top_builddir)/libsync/libsync.la
+	$(top_builddir)/hardware/libhardware.la
+
+if HAS_ANDROID_4_2_0
+libhybris_hwcomposerwindow_la_LDFLAGS += $(top_builddir)/libsync/libsync.la
+endif
 
 pkglib_LTLIBRARIES = eglplatform_hwcomposer.la
 

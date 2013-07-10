@@ -1,4 +1,11 @@
-SUBDIRS = include common hardware libsync egl glesv2 ui sf input camera tests
+SUBDIRS = include common hardware
+
+if HAS_ANDROID_4_2_0
+SUBDIRS += libsync
+endif
+
+SUBDIRS += egl glesv2 ui sf input camera tests
+
 
 MAINTAINERCLEANFILES = \
 	aclocal.m4 compile config.guess config.sub \
