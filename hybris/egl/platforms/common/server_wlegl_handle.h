@@ -24,6 +24,7 @@
 #define SERVER_WLEGL_HANDLE_H
 
 #include <stdint.h>
+#include <string.h>
 #include <wayland-server.h>
 #include <cutils/native_handle.h>
 #include <system/window.h>

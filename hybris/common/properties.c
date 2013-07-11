@@ -22,6 +22,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "logging.h"
 
 #define PROP_NAME_MAX 32
 
@@ -156,7 +157,7 @@ int property_get(const char *key, char *value, const char *default_value)
 	}
 
 	if (ret) {
-		printf("found %s for %s\n", key, ret);
+		TRACE("found %s for %s\n", key, ret);
 		strcpy(value, ret);
 		free(ret);
 		return strlen(value);
@@ -171,6 +172,7 @@ int property_get(const char *key, char *value, const char *default_value)
 int property_set(const char *key, const char *value)
 {
 	printf("property_set: %s %s\n", key, value);
+	TRACE("property_set: %s %s\n", key, value);
 	return 0;
 }
 

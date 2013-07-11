@@ -1,5 +1,6 @@
 #ifndef __EGLPLATFORMCOMMON_H
 #define __EGLPLATFORMCOMMON_H
+#include <string.h>
 #include <android/hardware/gralloc.h>
 #include <EGL/egl.h>
 

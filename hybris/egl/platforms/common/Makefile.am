@@ -36,7 +36,7 @@ BUILT_SOURCES = wayland-android-protocol.c \
 
 libwayland_egl_la_SOURCES = wayland-egl.c
 
-libwayland_egl_la_CFLAGS = -I. -I$(top_srcdir)/include $(WAYLAND_CLIENT_CFLAGS) $(WAYLAND_SERVER_CFLAGS)
+libwayland_egl_la_CFLAGS = -I. -I$(top_srcdir)/include -I$(top_srcdir)/include/android $(WAYLAND_CLIENT_CFLAGS) $(WAYLAND_SERVER_CFLAGS)
 if WANT_TRACE
 libwayland_egl_la_CFLAGS += -DDEBUG
 endif
@@ -44,7 +44,7 @@ if WANT_DEBUG
 libwayland_egl_la_CFLAGS += -ggdb -O0
 endif
 
-libwayland_egl_la_CXXFLAGS = -I. -I$(top_srcdir)/include $(WAYLAND_CLIENT_CFLAGS) $(WAYLAND_SERVER_CFLAGS)
+libwayland_egl_la_CXXFLAGS = -I. -I$(top_srcdir)/include -I$(top_srcdir)/include/android $(WAYLAND_CLIENT_CFLAGS) $(WAYLAND_SERVER_CFLAGS)
 if WANT_TRACE
 libwayland_egl_la_CXXFLAGS += -DDEBUG
 endif
@@ -56,7 +56,7 @@ libwayland_egl_la_LDFLAGS = \
 
 endif
 
-libhybris_eglplatformcommon_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/egl -I$(top_srcdir)/common/
+libhybris_eglplatformcommon_la_CFLAGS = -I$(top_srcdir)/include -I/usr/include/android -I$(top_srcdir)/egl -I$(top_srcdir)/common/
 if WANT_WAYLAND
 libhybris_eglplatformcommon_la_CFLAGS += $(WAYLAND_CLIENT_CFLAGS) $(WAYLAND_SERVER_CFLAGS) -I$(top_srcdir)/include/android
 endif
@@ -72,7 +72,7 @@ libhybris_eglplatformcommon_la_CFLAGS += -ggdb -O0
 endif
 
 
-libhybris_eglplatformcommon_la_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/egl -I$(top_srcdir)/common/
+libhybris_eglplatformcommon_la_CXXFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/egl -I/usr/include/android -I$(top_srcdir)/common/
 if WANT_MESA
 libhybris_eglplatformcommon_la_CXXFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif

@@ -1,6 +1,8 @@
 #ifndef NATIVEWINDOWBASE_H
 #define NATIVEWINDOWBASE_H
 
+/* for ICS window.h */
+#include <string.h>
 #include <android/system/window.h>
 #include <EGL/egl.h>
 #include "support.h"
@@ -44,7 +46,7 @@ class BaseNativeWindow : public ANativeWindow
 public:
 	operator EGLNativeWindowType()
 	{
-		EGLNativeWindowType ret = reinterpret_cast<EGLNativeWindowType>((ANativeWindow*)this);
+		EGLNativeWindowType ret = reinterpret_cast<EGLNativeWindowType>(static_cast<ANativeWindow *>(this));
 		return ret;
 	}
 

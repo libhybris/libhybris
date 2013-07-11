@@ -17,8 +17,12 @@ libandroid_linker_la_SOURCES = \
 libandroid_linker_la_CFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/common \
-	-DLINKER_DEBUG=1 \
 	-DLINKER_TEXT_BASE=0xB0000100 \
 	-DLINKER_AREA_SIZE=0x01000000 \
 	$(ARCHFLAGS)
 
+if WANT_DEBUG
+libandroid_linker_la_CFLAGS += -DLINKER_DEBUG=1
+else
+libandroid_linker_la_CFLAGS += -DLINKER_DEBUG=0
+endif

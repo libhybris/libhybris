@@ -28,11 +28,13 @@
 #include "wayland_window.h"
 #include "wayland-egl-priv.h"
 #include <assert.h>
+#include <stdlib.h>
 
 #include "logging.h"
-#include <android/version.h>
+#include <android/android-version.h>
+#include <eglhybris.h>
 
-#if ANDROID_VERSION>=0x410
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
 extern "C" {
 #include <android/sync/sync.h>
 }
@@ -110,6 +112,7 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
 {
     int i;
     this->m_window = window;
+    this->m_window->nativewindow = (void *) this;
     this->m_display = display;
     this->m_width = window->width;
     this->m_height = window->height;
@@ -181,7 +184,26 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 {
     TRACE("Release buffer %p", buffer);
     lock();
-    std::list<WaylandNativeWindowBuffer *>::iterator it = fronted.begin();
+    std::list<WaylandNativeWindowBuffer *>::iterator it = posted.begin();
+
+    for (; it != posted.end(); it++)
+    {
+        if ((*it)->wlbuffer == buffer)
+            break;
+    }
+
+    if (it != posted.end())
+    {
+        WaylandNativeWindowBuffer* pwnb = *it;
+        posted.erase(it);
+        TRACE("Release posted buffer %p\n", buffer);
+        pwnb->busy = 0;
+        pthread_cond_signal(&cond);
+        unlock();
+        return;
+    }
+
+    it = fronted.begin();
 
     for (; it != fronted.end(); it++)
     {
@@ -189,6 +211,8 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
             break;
     }
     assert(it != fronted.end());
+
+
 
     WaylandNativeWindowBuffer* wnb = *it;
     fronted.erase(it);
@@ -238,16 +262,36 @@ int WaylandNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer){
     return NO_ERROR;
 }
 
-int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
+int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
 {
     TRACE("");
-    WaylandNativeWindowBuffer *wnb = (WaylandNativeWindowBuffer*) buffer;
+    WaylandNativeWindowBuffer *wnb = NULL;
+
+    lock();
+    std::list<WaylandNativeWindowBuffer *>::iterator it = post_registered.begin();
+    for (; it != post_registered.end(); it++)
+    {
+        if ((*it)->other == buffer)
+        {
+            wnb = (*it);
+            break;
+        }
+    }
+    unlock();
+    if (!wnb)
+    {
+        wnb = new WaylandNativeWindowBuffer(buffer);
+
+        wnb->common.incRef(&wnb->common);
+        buffer->common.incRef(&buffer->common);
+    }
+
     int ret = 0;
 
     lock();
     wnb->busy = 1;
     unlock();
-
+    /* XXX locking/something is a bit fishy here */
     while (this->frame_callback && ret != -1) {
         ret = wl_display_dispatch_queue(m_display, this->wl_queue);
     }
@@ -258,7 +302,86 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     }
 
     lock();
-#if ANDROID_VERSION>=0x410
+    this->frame_callback = wl_surface_frame(m_window->surface);
+    wl_callback_add_listener(this->frame_callback, &frame_listener, this);
+    wl_proxy_set_queue((struct wl_proxy *) this->frame_callback, this->wl_queue);
+
+    if (wnb->wlbuffer == NULL)
+    {
+        struct wl_array ints;
+        int *ints_data;
+        struct android_wlegl_handle *wlegl_handle;
+        buffer_handle_t handle;
+
+        handle = wnb->handle;
+
+        wl_array_init(&ints);
+        ints_data = (int*) wl_array_add(&ints, handle->numInts*sizeof(int));
+        memcpy(ints_data, handle->data + handle->numFds, handle->numInts*sizeof(int));
+        wlegl_handle = android_wlegl_create_handle(m_android_wlegl, handle->numFds, &ints);
+        wl_array_release(&ints);
+        for (int i = 0; i < handle->numFds; i++) {
+            android_wlegl_handle_add_fd(wlegl_handle, handle->data[i]);
+        }
+
+        wnb->wlbuffer = android_wlegl_create_buffer(m_android_wlegl,
+                wnb->width, wnb->height, wnb->stride,
+                wnb->format, wnb->usage, wlegl_handle);
+
+        android_wlegl_handle_destroy(wlegl_handle);
+
+        TRACE("Add listener for %p with %p inside", wnb, wnb->wlbuffer);
+        wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
+        wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
+        post_registered.push_back(wnb);
+    }
+    TRACE("DAMAGE AREA: %dx%d",wnb->width, wnb->height);
+    wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
+    wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
+    wl_surface_commit(m_window->surface);
+    //--m_freeBufs;
+    //pthread_cond_signal(&cond);
+    posted.push_back(wnb);
+    unlock();
+
+    return NO_ERROR;
+}
+
+static int debugenvchecked = 0;
+
+int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
+{
+    TRACE("");
+    WaylandNativeWindowBuffer *wnb = (WaylandNativeWindowBuffer*) buffer;
+    int ret = 0;
+
+    lock();
+    wnb->busy = 1;
+    unlock();
+    /* XXX locking/something is a bit fishy here */
+    while (this->frame_callback && ret != -1) {
+        ret = wl_display_dispatch_queue(m_display, this->wl_queue);
+    }
+
+    if (ret < 0) {
+        TRACE("wl_display_dispatch_queue returned an error");
+        return ret;
+    }
+
+    lock();
+
+    if (debugenvchecked == 0)
+    {
+        if (getenv("HYBRIS_WAYLAND_DUMP_BUFFERS") != NULL)
+            debugenvchecked = 2;
+        else
+            debugenvchecked = 1;
+    } else if (debugenvchecked == 2)
+    {
+        hybris_dump_buffer_to_file(wnb->getNativeBuffer());
+    }
+
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
     sync_wait(fenceFd, -1);
     close(fenceFd);    
 #endif
@@ -302,6 +425,22 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     //--m_freeBufs;
     //pthread_cond_signal(&cond);
     fronted.push_back(wnb);
+    if (fronted.size() == m_bufList.size())
+    {
+        /* We have fronted all our buffers, let's wait for one of them to be free */
+        do {
+            unlock();
+            ret = wl_display_dispatch_queue(m_display, this->wl_queue);
+            lock();   
+            if (ret == -1)
+            {
+                break;
+            }
+            if (fronted.size() != m_bufList.size())
+                break;
+        } while (1);
+    }
+
     unlock();
 
     return NO_ERROR;

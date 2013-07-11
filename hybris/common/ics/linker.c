@@ -496,8 +496,6 @@ Elf32_Sym *lookup(const char *name, soinfo **found, soinfo *start)
     Elf32_Sym *s = NULL;
     soinfo *si;
 
-    printf("Lookup %s\n", name);
-
     if(start == NULL) {
         start = solist;
     }

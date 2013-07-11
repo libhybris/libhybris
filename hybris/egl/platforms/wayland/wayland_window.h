@@ -54,12 +54,26 @@ class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
         ANativeWindowBuffer::usage = usage;
         this->wlbuffer = NULL;
 	this->busy = 0;
+	this->other = NULL;
     };
+    WaylandNativeWindowBuffer(ANativeWindowBuffer *other)
+    {
+	ANativeWindowBuffer::width = other->width;
+	ANativeWindowBuffer::height = other->height;
+	ANativeWindowBuffer::format = other->format;
+	ANativeWindowBuffer::usage = other->usage;
+	ANativeWindowBuffer::handle = other->handle;
+	ANativeWindowBuffer::stride = other->stride;
+	this->wlbuffer = NULL;
+	this->busy = 0;
+	this->other = other;
+    }
     void* vaddr;
     public:
     buffer_handle_t getHandle();
     struct wl_buffer *wlbuffer;
     int busy;
+    ANativeWindowBuffer *other;
 };
 
 class WaylandNativeWindow : public BaseNativeWindow {
@@ -71,6 +85,7 @@ public:
     void unlock();
     void frame();
     void releaseBuffer(struct wl_buffer *buffer);
+    int postBuffer(ANativeWindowBuffer *buffer);
 
     static void sync_callback(void *data, struct wl_callback *callback, uint32_t serial);
     static void registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
@@ -101,6 +116,8 @@ private:
     void destroyBuffers();
     std::list<WaylandNativeWindowBuffer *> m_bufList;
     std::list<WaylandNativeWindowBuffer *> fronted;
+    std::list<WaylandNativeWindowBuffer *> posted;
+    std::list<WaylandNativeWindowBuffer *> post_registered;
     struct wl_egl_window *m_window;
     struct wl_display *m_display;
     unsigned int m_width;

@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-#include "fbdev_window.h"
+#include "hwcomposer_window.h"
 #include "logging.h"
 
 #include <errno.h>
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include <android/android-version.h>
-
-#define FRAMEBUFFER_PARTITIONS 2
-
+extern "C" {
+#include <android/sync/sync.h>
+};
+ 
 static pthread_cond_t _cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
-FbDevNativeWindowBuffer::FbDevNativeWindowBuffer(unsigned int width,
+HWComposerNativeWindowBuffer::HWComposerNativeWindowBuffer(unsigned int width,
                             unsigned int height,
                             unsigned int format,
                             unsigned int usage)
@@ -39,6 +41,7 @@ FbDevNativeWindowBuffer::FbDevNativeWindowBuffer(unsigned int width,
     ANativeWindowBuffer::height = height;
     ANativeWindowBuffer::format = format;
     ANativeWindowBuffer::usage  = usage;
+    fenceFd = -1;
     busy = 0;
     TRACE("width=%d height=%d format=x%x usage=x%x this=%p",
         width, height, format, usage, this);
@@ -46,51 +49,44 @@ FbDevNativeWindowBuffer::FbDevNativeWindowBuffer(unsigned int width,
 
 
 
-FbDevNativeWindowBuffer::~FbDevNativeWindowBuffer()
+HWComposerNativeWindowBuffer::~HWComposerNativeWindowBuffer()
 {
     TRACE("%p", this);
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
-FbDevNativeWindow::FbDevNativeWindow(gralloc_module_t* gralloc,
-                            alloc_device_t* alloc,
-                            framebuffer_device_t* fbDev)
+HWComposerNativeWindow::HWComposerNativeWindow(unsigned int width, unsigned int height, unsigned int format)
 {
-    m_alloc = alloc;
-    m_fbDev = fbDev;
-    m_bufFormat = m_fbDev->format;
-    m_usage = GRALLOC_USAGE_HW_FB;
-
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
-    if (m_fbDev->numFramebuffers>0)
-        setBufferCount(m_fbDev->numFramebuffers);
-    else
-        setBufferCount(FRAMEBUFFER_PARTITIONS);
-#else
-    setBufferCount(FRAMEBUFFER_PARTITIONS);
-#endif
-
+    m_alloc = NULL;
+    m_width = width;
+    m_height = height;
+    m_bufFormat = format;
+    m_usage = GRALLOC_USAGE_HW_COMPOSER;
+    m_frontBuf = NULL;
 }
 
+void HWComposerNativeWindow::setup(gralloc_module_t* gralloc, alloc_device_t* alloc)
+{
+    m_alloc = alloc;
+    setBufferCount(2);
+}
 
-
-
-FbDevNativeWindow::~FbDevNativeWindow()
+HWComposerNativeWindow::~HWComposerNativeWindow()
 {
     destroyBuffers();
 }
 
 
 
-void FbDevNativeWindow::destroyBuffers()
+void HWComposerNativeWindow::destroyBuffers()
 {
     TRACE("");
 
-    std::list<FbDevNativeWindowBuffer*>::iterator it = m_bufList.begin();
+    std::list<HWComposerNativeWindowBuffer*>::iterator it = m_bufList.begin();
     for (; it!=m_bufList.end(); ++it)
     {
-        FbDevNativeWindowBuffer* fbnb = *it;
+        HWComposerNativeWindowBuffer* fbnb = *it;
         assert(fbnb->busy == 0);
 
         m_alloc->free(m_alloc, fbnb->handle);
@@ -111,10 +107,10 @@ void FbDevNativeWindow::destroyBuffers()
  *
  * Returns 0 on success or -errno on error.
  */
-int FbDevNativeWindow::setSwapInterval(int interval)
+int HWComposerNativeWindow::setSwapInterval(int interval)
 {
-    TRACE("interval=%i", interval);
-    return m_fbDev->setSwapInterval(m_fbDev, interval);
+    TRACE("interval=%i WARN STUB", interval);
+    return 0;
 }
 
 
@@ -137,10 +133,10 @@ int FbDevNativeWindow::setSwapInterval(int interval)
  *
  * Returns 0 on success or -errno on error.
  */
-int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fenceFd)
+int HWComposerNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fenceFd)
 {
     TRACE("%u", pthread_self());
-    FbDevNativeWindowBuffer* fbnb=NULL;
+    HWComposerNativeWindowBuffer* fbnb=NULL;
 
     pthread_mutex_lock(&_mutex);
 
@@ -151,7 +147,7 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
 
     while (1)
     {
-        std::list<FbDevNativeWindowBuffer*>::iterator it = m_bufList.begin();
+        std::list<HWComposerNativeWindowBuffer*>::iterator it = m_bufList.begin();
         for (; it != m_bufList.end(); ++it)
         {
             if (*it==m_frontBuf)
@@ -174,6 +170,7 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
     m_freeBufs--;
 
     *buffer = fbnb;
+    assert(*buffer == static_cast<ANativeWindowBuffer *>(fbnb));
     *fenceFd = -1;
 
     TRACE("%u DONE --> %p", pthread_self(), fbnb);
@@ -201,34 +198,74 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
  *
  * Returns 0 on success or -errno on error.
  */
-int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
+int HWComposerNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 {
     TRACE("%u %d", pthread_self(), fenceFd);
-    FbDevNativeWindowBuffer* fbnb = (FbDevNativeWindowBuffer*) buffer;
+    HWComposerNativeWindowBuffer* fbnb = (HWComposerNativeWindowBuffer*) buffer;
+
+    assert(static_cast<HWComposerNativeWindowBuffer *>(buffer) == fbnb);
+    fbnb->fenceFd = fenceFd;
 
     pthread_mutex_lock(&_mutex);
 
-    assert(fbnb->busy==1);
-
-    //fbnb->common.decRef(&fbnb->common);
-    int rv = m_fbDev->post(m_fbDev, fbnb->handle);
-    if (rv!=0)
+    /* Front buffer hasn't yet been picked up for posting */
+    while (m_frontBuf && m_frontBuf->busy >= 2)
     {
-        fprintf(stderr,"ERROR: fb->post(%s)\n",strerror(-rv));
+           pthread_cond_wait(&_cond, &_mutex);
     }
 
-    fbnb->busy=0;
+    assert(fbnb->busy==1);
+    fbnb->busy = 2;
     m_frontBuf = fbnb;
 
     m_freeBufs++;
+
+    sync_wait(fenceFd, -1);
+    ::close(fenceFd);    
+
     pthread_cond_signal(&_cond);
 
     TRACE("%u %p %p",pthread_self(), m_frontBuf, fbnb);
     pthread_mutex_unlock(&_mutex);
 
-    return rv;
+    return 0;
 }
 
+void HWComposerNativeWindow::lockFrontBuffer(HWComposerNativeWindowBuffer **buffer)
+{
+    TRACE("");
+    HWComposerNativeWindowBuffer *buf;
+    pthread_mutex_lock(&_mutex);
+    
+    while (!m_frontBuf)
+    {
+           pthread_cond_wait(&_cond, &_mutex);
+    }
+    
+    assert(m_frontBuf->busy == 2);
+    
+    m_frontBuf->busy = 3;
+    buf = m_frontBuf;
+    pthread_mutex_unlock(&_mutex);
+
+   *buffer = buf;
+    return;
+
+}
+
+void HWComposerNativeWindow::unlockFrontBuffer(HWComposerNativeWindowBuffer *buffer)
+{
+    TRACE("");
+    pthread_mutex_lock(&_mutex);
+    
+    assert(buffer == m_frontBuf);
+    m_frontBuf->busy = 0; 
+
+    pthread_cond_signal(&_cond);
+    pthread_mutex_unlock(&_mutex);
+    
+    return;
+}
 
 /*
  * Hook used to cancel a buffer that has been dequeued.
@@ -255,30 +292,19 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
  *
  * Returns 0 on success or -errno on error.
  */
-int FbDevNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
+int HWComposerNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 {
     TRACE("");
-    FbDevNativeWindowBuffer* fbnb = (FbDevNativeWindowBuffer*)buffer;
+    HWComposerNativeWindowBuffer* fbnb = (HWComposerNativeWindowBuffer*)buffer;
     fbnb->common.decRef(&fbnb->common);
     return 0;
 }
 
 
 
-int FbDevNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
+int HWComposerNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
 {
-    TRACE("%u", pthread_self());
-    FbDevNativeWindowBuffer* fbnb = (FbDevNativeWindowBuffer*)buffer;
-
-    pthread_mutex_lock(&_mutex);
-
-    // wait that the buffer we're locking is not front anymore
-    while (m_frontBuf==fbnb)
-    {
-        TRACE("waiting %p %p", m_frontBuf, fbnb);
-        pthread_cond_wait(&_cond, &_mutex);
-    }
-    pthread_mutex_unlock(&_mutex);
+    TRACE("%u STUB", pthread_self());
     return NO_ERROR;
 }
 
@@ -286,9 +312,9 @@ int FbDevNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
 /*
  * see NATIVE_WINDOW_FORMAT
  */
-unsigned int FbDevNativeWindow::width() const
+unsigned int HWComposerNativeWindow::width() const
 {
-    unsigned int rv = m_fbDev->width;
+    unsigned int rv = m_width;
     TRACE("width=%i", rv);
     return rv;
 }
@@ -297,9 +323,9 @@ unsigned int FbDevNativeWindow::width() const
 /*
  * see NATIVE_WINDOW_HEIGHT
  */
-unsigned int FbDevNativeWindow::height() const
+unsigned int HWComposerNativeWindow::height() const
 {
-    unsigned int rv = m_fbDev->height;
+    unsigned int rv = m_height;
     TRACE("height=%i", rv);
     return rv;
 }
@@ -308,9 +334,9 @@ unsigned int FbDevNativeWindow::height() const
 /*
  * see NATIVE_WINDOW_FORMAT
  */
-unsigned int FbDevNativeWindow::format() const
+unsigned int HWComposerNativeWindow::format() const
 {
-    unsigned int rv = m_fbDev->format;
+    unsigned int rv = m_bufFormat;
     TRACE("format=x%x", rv);
     return rv;
 }
@@ -325,9 +351,9 @@ unsigned int FbDevNativeWindow::format() const
 /*
  * see NATIVE_WINDOW_DEFAULT_HEIGHT
  */
-unsigned int FbDevNativeWindow::defaultHeight() const
+unsigned int HWComposerNativeWindow::defaultHeight() const
 {
-    unsigned int rv = m_fbDev->height;
+    unsigned int rv = m_height;
     TRACE("height=%i", rv);
     return rv;
 }
@@ -336,9 +362,9 @@ unsigned int FbDevNativeWindow::defaultHeight() const
 /*
  * see BaseNativeWindow::_query(NATIVE_WINDOW_DEFAULT_WIDTH)
  */
-unsigned int FbDevNativeWindow::defaultWidth() const
+unsigned int HWComposerNativeWindow::defaultWidth() const
 {
-    unsigned int rv = m_fbDev->width;
+    unsigned int rv = m_width;
     TRACE("width=%i", rv);
     return rv;
 }
@@ -347,7 +373,7 @@ unsigned int FbDevNativeWindow::defaultWidth() const
 /*
  * see NATIVE_WINDOW_QUEUES_TO_WINDOW_COMPOSER
  */
-unsigned int FbDevNativeWindow::queueLength() const
+unsigned int HWComposerNativeWindow::queueLength() const
 {
     TRACE("");
     return 0;
@@ -357,7 +383,7 @@ unsigned int FbDevNativeWindow::queueLength() const
 /*
  * see NATIVE_WINDOW_CONCRETE_TYPE
  */
-unsigned int FbDevNativeWindow::type() const
+unsigned int HWComposerNativeWindow::type() const
 {
     TRACE("");
     return NATIVE_WINDOW_FRAMEBUFFER;
@@ -367,7 +393,7 @@ unsigned int FbDevNativeWindow::type() const
 /*
  * see NATIVE_WINDOW_TRANSFORM_HINT
  */
-unsigned int FbDevNativeWindow::transformHint() const
+unsigned int HWComposerNativeWindow::transformHint() const
 {
     TRACE("");
     return 0;
@@ -385,7 +411,7 @@ unsigned int FbDevNativeWindow::transformHint() const
  *  Calling this function will usually cause following buffers to be
  *  reallocated.
  */
-int FbDevNativeWindow::setUsage(int usage)
+int HWComposerNativeWindow::setUsage(int usage)
 {
     int need_realloc = (m_usage != usage);
     TRACE("usage=x%x realloc=%d", usage, need_realloc);
@@ -403,7 +429,7 @@ int FbDevNativeWindow::setUsage(int usage)
  *
  * If the specified format is 0, the default buffer format will be used.
  */
-int FbDevNativeWindow::setBuffersFormat(int format)
+int HWComposerNativeWindow::setBuffersFormat(int format)
 {
     int need_realloc = (format != m_bufFormat);
     TRACE("format=x%x realloc=%d", format, need_realloc);
@@ -418,7 +444,7 @@ int FbDevNativeWindow::setBuffersFormat(int format)
  * native_window_set_buffer_count(..., count)
  * Sets the number of buffers associated with this native window.
  */
-int FbDevNativeWindow::setBufferCount(int cnt)
+int HWComposerNativeWindow::setBufferCount(int cnt)
 {
     TRACE("cnt=%d", cnt);
     int err=NO_ERROR;
@@ -428,15 +454,15 @@ int FbDevNativeWindow::setBufferCount(int cnt)
 
     for(unsigned int i = 0; i < cnt; i++)
     {
-        FbDevNativeWindowBuffer *fbnb = new FbDevNativeWindowBuffer(
-                            m_fbDev->width, m_fbDev->height, m_fbDev->format,
-                            m_usage|GRALLOC_USAGE_HW_FB );
+        HWComposerNativeWindowBuffer *fbnb = new HWComposerNativeWindowBuffer(
+                            m_width, m_height, m_bufFormat,
+                            m_usage|GRALLOC_USAGE_HW_COMPOSER|GRALLOC_USAGE_HW_FB);
 
         fbnb->common.incRef(&fbnb->common);
 
         err = m_alloc->alloc(m_alloc,
-                            m_fbDev->width, m_fbDev->height, m_fbDev->format,
-                            m_usage|GRALLOC_USAGE_HW_FB,
+                            m_width, m_height, m_bufFormat,
+                            m_usage|GRALLOC_USAGE_HW_COMPOSER|GRALLOC_USAGE_HW_FB,
                             &fbnb->handle, &fbnb->stride);
 
         TRACE("buffer %i is at %p (native %p) err=%s handle=%i stride=%i",
@@ -471,7 +497,7 @@ int FbDevNativeWindow::setBufferCount(int cnt)
  * Calling this function will reset the window crop to a NULL value, which
  * disables cropping of the buffers.
  */
-int FbDevNativeWindow::setBuffersDimensions(int width, int height)
+int HWComposerNativeWindow::setBuffersDimensions(int width, int height)
 {
     TRACE("WARN: stub. size=%ix%i", width, height);
     return NO_ERROR;
