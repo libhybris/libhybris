@@ -1,6 +1,8 @@
 #ifndef NATIVEWINDOWBASE_H
 #define NATIVEWINDOWBASE_H
 
+/* for ICS window.h */
+#include <string.h>
 #include <android/system/window.h>
 #include <EGL/egl.h>
 #include "support.h"

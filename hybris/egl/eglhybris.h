@@ -19,6 +19,8 @@
 #define EGL_HYBRIS_H_
 
 #include <android/hardware/gralloc.h>
+/* Needed for ICS window.h */
+#include <string.h>
 #include <android/system/window.h>
 
 #ifdef __cplusplus

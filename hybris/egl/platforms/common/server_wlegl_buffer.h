@@ -24,6 +24,7 @@
 #define SERVER_WLEGL_BUFFER_H
 
 #include <cutils/native_handle.h>
+#include <string.h>
 #include <system/window.h>
 #include <hardware/gralloc.h>
 #include <wayland-server.h>

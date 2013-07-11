@@ -1,3 +1,4 @@
+#include <string.h>
 #include <android/system/window.h>
 #include <android/hardware/gralloc.h>
 #include "support.h"
@@ -219,8 +220,10 @@ const char *BaseNativeWindow::_native_window_operation(int what)
 		case NATIVE_WINDOW_UNLOCK_AND_POST: return "NATIVE_WINDOW_UNLOCK_AND_POST";
 		case NATIVE_WINDOW_API_CONNECT: return "NATIVE_WINDOW_API_CONNECT";
 		case NATIVE_WINDOW_API_DISCONNECT: return "NATIVE_WINDOW_API_DISCONNECT";
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=1
 		case NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS: return "NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS";
 		case NATIVE_WINDOW_SET_POST_TRANSFORM_CROP: return "NATIVE_WINDOW_SET_POST_TRANSFORM_CROP";
+#endif
 		default: return "NATIVE_UNKNOWN_OPERATION";
 	}
 }
@@ -236,7 +239,9 @@ const char *BaseNativeWindow::_native_query_operation(int what)
 		case NATIVE_WINDOW_DEFAULT_WIDTH: return "NATIVE_WINDOW_DEFAULT_WIDTH";
 		case NATIVE_WINDOW_DEFAULT_HEIGHT: return "NATIVE_WINDOW_DEFAULT_HEIGHT";
 		case NATIVE_WINDOW_TRANSFORM_HINT: return "NATIVE_WINDOW_TRANSFORM_HINT";
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=1
 		case NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND: return "NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND";
+#endif
 		default: return "NATIVE_UNKNOWN_QUERY";
 	}
 }
@@ -348,12 +353,14 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 	case NATIVE_WINDOW_API_DISCONNECT            : // 14,   /* private */
 		TRACE("api disconnect");
 		break;
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=1
 	case NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS : // 15, /* private */
 		TRACE("set buffers user dimensions");
 		break;
 	case NATIVE_WINDOW_SET_POST_TRANSFORM_CROP   : // 16,
 		TRACE("set post transform crop");
 		break;
+#endif
 	}
 	va_end(args);
 	return NO_ERROR;
