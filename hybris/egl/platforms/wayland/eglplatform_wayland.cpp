@@ -42,6 +42,8 @@ extern "C" {
 }
 
 #include "wayland_window.h"
+#include "logging.h"
+#include "wayland-egl-priv.h"
 
 static int inited = 0;
 static gralloc_module_t *gralloc = 0;
@@ -54,7 +56,7 @@ extern "C" int waylandws_IsValidDisplay(EGLNativeDisplayType display)
 	{
 		hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
 		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-		printf("++ %u wayland: got gralloc %p err:%s\n", pthread_self(), gralloc, strerror(-err));
+		TRACE("++ %u wayland: got gralloc %p err:%s\n", pthread_self(), gralloc, strerror(-err));
 		eglplatformcommon_init(gralloc);
 	}
 
@@ -66,8 +68,20 @@ extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, E
 	return (EGLNativeWindowType) *(new WaylandNativeWindow((struct wl_egl_window *) win, (struct wl_display *) display, gralloc, alloc));
 }
 
+extern "C" int waylandws_post(EGLNativeWindowType win, void *buffer)
+{
+	struct wl_egl_window *eglwin = (struct wl_egl_window *) win;
+
+	return ((WaylandNativeWindow *) eglwin->nativewindow)->postBuffer((ANativeWindowBuffer *) buffer);
+}
+
 extern "C" __eglMustCastToProperFunctionPointerType waylandws_eglGetProcAddress(const char *procname) 
 {
+	if (strcmp(procname, "eglHybrisWaylandPostBuffer") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType) waylandws_post;
+	}
+	else
 	return eglplatformcommon_eglGetProcAddress(procname);
 }
 

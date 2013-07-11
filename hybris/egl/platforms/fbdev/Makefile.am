@@ -8,7 +8,8 @@ eglplatform_fbdev_la_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/egl \
-	-I$(top_srcdir)/egl/platforms/common
+	-I$(top_srcdir)/egl/platforms/common \
+	-I$(top_srcdir)/include/android
 
 if WANT_TRACE
 eglplatform_fbdev_la_CXXFLAGS += -DDEBUG

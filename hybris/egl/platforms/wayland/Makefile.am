@@ -6,6 +6,7 @@ eglplatform_wayland_la_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/egl \
 	-I$(top_srcdir)/egl/platforms/common \
+	-I$(top_srcdir)/include/android \
 	$(WAYLAND_CLIENT_CFLAGS)
 
 if WANT_DEBUG
@@ -16,5 +17,8 @@ eglplatform_wayland_la_LDFLAGS = \
 	-avoid-version -module -shared -export-dynamic \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/hardware/libhardware.la \
-	$(top_builddir)/libsync/libsync.la \
 	$(WAYLAND_CLIENT_LIBS)
+
+if HAS_ANDROID_4_2_0
+eglplatform_wayland_la_LDFLAGS += $(top_builddir)/libsync/libsync.la
+endif
