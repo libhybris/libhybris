@@ -132,5 +132,70 @@ void *android_dlsym(void *name, const char *symbol);
         f(_1, _2, _3); \
     }
 
+#define HYBRIS_IMPLEMENT_VOID_FUNCTION4(name, symbol, arg1, arg2, arg3, arg4)      \
+    void symbol(arg1 _1, arg2 _2, arg3 _3, arg4 _4)                      \
+    {                                                           \
+        static void (*f)(arg1, arg2, arg3, arg4) FP_ATTRIB = NULL;    \
+        HYBRIS_DLSYSM(name, &f, #symbol);                              \
+        f(_1, _2, _3, _4); \
+    }
+
+#define HYBRIS_IMPLEMENT_VOID_FUNCTION5(name, symbol, arg1, arg2, arg3, arg4, arg5)      \
+    void symbol(arg1 _1, arg2 _2, arg3 _3, arg4 _4, arg5 _5)                      \
+    {                                                           \
+        static void (*f)(arg1, arg2, arg3, arg4, arg5) FP_ATTRIB = NULL;    \
+        HYBRIS_DLSYSM(name, &f, #symbol);                              \
+        f(_1, _2, _3, _4, _5); \
+    }
+
+#define HYBRIS_IMPLEMENT_VOID_FUNCTION6(name, symbol, arg1, arg2, arg3, arg4, arg5, arg6)      \
+    void symbol(arg1 _1, arg2 _2, arg3 _3, arg4 _4, arg5 _5, arg6 _6)                      \
+    {                                                           \
+        static void (*f)(arg1, arg2, arg3, arg4, arg5, arg6) FP_ATTRIB = NULL;    \
+        HYBRIS_DLSYSM(name, &f, #symbol);                              \
+        f(_1, _2, _3, _4, _5, _6); \
+    }
+
+#define HYBRIS_IMPLEMENT_VOID_FUNCTION7(name, symbol, arg1, arg2, arg3, arg4, arg5, arg6, arg7)      \
+    void symbol(arg1 _1, arg2 _2, arg3 _3, arg4 _4, arg5 _5, arg6 _6, arg7 _7)                      \
+    {                                                           \
+        static void (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7) FP_ATTRIB = NULL;    \
+        HYBRIS_DLSYSM(name, &f, #symbol);                              \
+        f(_1, _2, _3, _4, _5, _6, _7); \
+    }
+
+#define HYBRIS_IMPLEMENT_VOID_FUNCTION8(name, symbol, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)      \
+    void symbol(arg1 _1, arg2 _2, arg3 _3, arg4 _4, arg5 _5, arg6 _6, arg7 _7, arg8 _8)                      \
+    {                                                           \
+        static void (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8) FP_ATTRIB = NULL;    \
+        HYBRIS_DLSYSM(name, &f, #symbol);                              \
+        f(_1, _2, _3, _4, _5, _6, _7, _8); \
+    }
+
+#define HYBRIS_IMPLEMENT_VOID_FUNCTION9(name, symbol, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)      \
+    void symbol(arg1 _1, arg2 _2, arg3 _3, arg4 _4, arg5 _5, arg6 _6, arg7 _7, arg8 _8, arg9 _9)                      \
+    {                                                           \
+        static void (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) FP_ATTRIB = NULL;    \
+        HYBRIS_DLSYSM(name, &f, #symbol);                              \
+        f(_1, _2, _3, _4, _5, _6, _7, _8, _9); \
+    }
+
+#define HYBRIS_IMPLEMENT_VOID_FUNCTION10(name, symbol, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10)      \
+    void symbol(arg1 _1, arg2 _2, arg3 _3, arg4 _4, arg5 _5, arg6 _6, arg7 _7, arg8 _8, arg9 _9, arg10 _10)                      \
+    {                                                           \
+        static void (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10) FP_ATTRIB = NULL;    \
+        HYBRIS_DLSYSM(name, &f, #symbol);                              \
+        f(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10); \
+    }
+
+#define HYBRIS_IMPLEMENT_VOID_FUNCTION11(name, symbol, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11)      \
+    void symbol(arg1 _1, arg2 _2, arg3 _3, arg4 _4, arg5 _5, arg6 _6, arg7 _7, arg8 _8, arg9 _9, arg10 _10, arg11 _11)                      \
+    {                                                           \
+        static void (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11) FP_ATTRIB = NULL;    \
+        HYBRIS_DLSYSM(name, &f, #symbol);                              \
+        f(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11); \
+    }
+
+
 
 #endif
