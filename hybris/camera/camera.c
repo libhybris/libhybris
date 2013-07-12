@@ -27,12 +27,6 @@
 
 #define COMPAT_LIBRARY_PATH "/system/lib/libcamera_compat_layer.so"
 
-#ifdef __ARM_PCS_VFP
-#define FP_ATTRIB __attribute__((pcs("aapcs")))
-#else
-#define FP_ATTRIB
-#endif
-
 HYBRIS_LIBRARY_INITIALIZE(camera, COMPAT_LIBRARY_PATH);
 
 HYBRIS_IMPLEMENT_FUNCTION0(camera, int, android_camera_get_number_of_devices);

@@ -17,6 +17,8 @@
  *
  */
 
+#include <hybris/internal/floating_point_abi.h>
+
 #include "properties.h"
 #include "hooks_shm.h"
 
@@ -75,12 +77,6 @@
  *  - if p <= ANDROID_TOP_ADDR_VALUE_MUTEX then it is an android mutex, not one we processed
  *  - if p > VMALLOC_END, then the pointer is not a result of malloc ==> it is an shm offset
  */
-
-#ifdef __ARM_PCS_VFP
-#define FP_ATTRIB __attribute__((pcs("aapcs")))
-#else
-#define FP_ATTRIB
-#endif
 
 struct _hook {
     const char *name;
