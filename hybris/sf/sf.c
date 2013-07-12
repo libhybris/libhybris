@@ -26,12 +26,6 @@
 
 #define COMPAT_LIBRARY_PATH "/system/lib/libsf_compat_layer.so"
 
-#ifdef __ARM_PCS_VFP
-#define FP_ATTRIB __attribute__((pcs("aapcs")))
-#else
-#define FP_ATTRIB
-#endif
-
 HYBRIS_LIBRARY_INITIALIZE(sf, COMPAT_LIBRARY_PATH);
 
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(sf, sf_blank, size_t);
