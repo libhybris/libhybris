@@ -23,12 +23,7 @@
 #include <stdlib.h>
 
 #include <hybris/internal/binding.h>
-
-#ifdef __ARM_PCS_VFP
-#define FP_ATTRIB __attribute__((pcs("aapcs")))
-#else
-#define FP_ATTRIB
-#endif
+#include <hybris/internal/floating_point_abi.h>
 
 static void *_libglesv2 = NULL;
 
