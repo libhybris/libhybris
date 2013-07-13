@@ -1,0 +1,16 @@
+
+Scripts used to generate bindings in hybris/glesv1/glesv1_cm.c
+
+DEPENDENCIES:
+  cproto
+
+HOWTO:
+  sh glesv1_cproto_prepare.sh
+  sh glesv1_build_wrapper.sh
+
+RESULT:
+  glesv1_wrapper.h
+
+Additional utility to check available symbols in library:
+  glesv1_cm_list_symbols.sh (needs libGLESv1_CM.so from device)
+
