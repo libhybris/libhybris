@@ -13,6 +13,12 @@ if [ x$ANDROID_ROOT = x -o "x$HEADERPATH" = x -o x$MAJOR = x -o x$MINOR = x ]; t
     exit -1
 fi
 
+# Make sure that the dir given contains at least some of the assumed structures.
+if [ ! -d "$ANDROID_ROOT/hardware/libhardware/include/hardware/" ]; then
+    echo "Given Android root dir '$ANDROID_ROOT/hardware/libhardware/include/hardware/' doesn't exist."
+    exit -1
+fi
+
 mkdir -p $HEADERPATH
 
 if [ x$PATCH2 = x ]; then
@@ -22,7 +28,6 @@ fi
 if [ x$PATCH3 = x ]; then
     PATCH3=0
 fi
-
 
 cat > $HEADERPATH/android-version.h << EOF
 #ifndef ANDROID_VERSION_H_
@@ -39,6 +44,9 @@ EOF
 
 mkdir -p $HEADERPATH/hardware/
 cp $ANDROID_ROOT/hardware/libhardware/include/hardware/* $HEADERPATH/hardware/
+
+mkdir -p $HEADERPATH/hardware_legacy/
+cp $ANDROID_ROOT/hardware/libhardware_legacy/include/hardware_legacy/audio_policy_conf.h $HEADERPATH/hardware_legacy/
 
 mkdir -p $HEADERPATH/cutils/
 cp $ANDROID_ROOT/system/core/include/cutils/* $HEADERPATH/cutils/
