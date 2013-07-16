@@ -18,11 +18,11 @@ python generate_wrappers.py \
     output/libnfc_prototypes.h \
     symbols/libnfc.so.txt \
     /system/lib/libnfc.so \
-    > output/libnfc.c
+    > output/libnfc-nxp.c
 
 python generate_wrappers.py \
     output/libnfc_prototypes.h \
     symbols/libnfc_ndef.so.txt \
     /system/lib/libnfc_ndef.so \
-    > output/libnfc_ndef.c
+    > output/libnfc_ndef-nxp.c
 
