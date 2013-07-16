@@ -21,13 +21,12 @@
  * https://github.com/thp/libhybris-nfc-wrapper-generator
  **/
 
-/* from android_platform_external_libnfc-nxp */
-#include <phNfcStatus.h>
-#include <phNfcTypes.h>
-#include <phNfcIoctlCode.h>
-#include <phLibNfc.h>
-#include <phDal4Nfc_messageQueueLib.h>
-#include <phFriNfc_NdefMap.h>
+#include <libnfc-nxp/phNfcStatus.h>
+#include <libnfc-nxp/phNfcTypes.h>
+#include <libnfc-nxp/phNfcIoctlCode.h>
+#include <libnfc-nxp/phLibNfc.h>
+#include <libnfc-nxp/phDal4Nfc_messageQueueLib.h>
+#include <libnfc-nxp/phFriNfc_NdefMap.h>
 
 #include <dlfcn.h>
 #include <stddef.h>

@@ -66,6 +66,12 @@ if [ -e $ANDROID_ROOT/system/core/include/sync/sync.h ]; then
 	cp $ANDROID_ROOT/system/core/include/sync/* $HEADERPATH/sync/
 fi
 
+if [ -e $ANDROID_ROOT/external/libnfc-nxp/inc/phNfcConfig.h ]; then
+	mkdir -p $HEADERPATH/libnfc-nxp/
+	cp $ANDROID_ROOT/external/libnfc-nxp/inc/*.h $HEADERPATH/libnfc-nxp/
+	cp $ANDROID_ROOT/external/libnfc-nxp/src/*.h $HEADERPATH/libnfc-nxp/
+fi
+
 mkdir -p $HEADERPATH/private
 cp $ANDROID_ROOT/system/core/include/private/android_filesystem_config.h $HEADERPATH/private
 
