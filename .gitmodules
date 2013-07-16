@@ -1,0 +1,12 @@
+[submodule "android_platform_frameworks_native"]
+	path = android_platform_frameworks_native
+	url = https://android.googlesource.com/platform/frameworks/native
+[submodule "android_platform_hardware_libhardware"]
+	path = android_platform_hardware_libhardware
+	url = https://android.googlesource.com/platform/hardware/libhardware/
+[submodule "android_platform_system_core"]
+	path = android_platform_system_core
+	url = https://android.googlesource.com/platform/system/core
+[submodule "android_platform_external_libnfc-nxp"]
+	path = android_platform_external_libnfc-nxp
+	url = https://android.googlesource.com/platform/external/libnfc-nxp

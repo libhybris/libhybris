@@ -1,0 +1,9 @@
+libnfc wrapper generator scripts for libhybris
+==============================================
+
+Usage:
+
+    git submodule init
+    git submodule update
+    sh -x generate.sh
+
