@@ -13,6 +13,16 @@ if WANT_DEBUG
 eglplatform_wayland_la_CXXFLAGS += -I$(top_srcdir)/common
 endif
 
+if WANT_TRACE
+eglplatform_wayland_la_CXXFLAGS += -DDEBUG
+endif
+
+if WANT_DEBUG
+eglplatform_wayland_la_CXXFLAGS += -ggdb -O0
+endif
+
+
+
 eglplatform_wayland_la_LDFLAGS = \
 	-avoid-version -module -shared -export-dynamic \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
