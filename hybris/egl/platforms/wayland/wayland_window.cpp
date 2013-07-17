@@ -244,14 +244,26 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
     for (; it != m_bufList.end() && (*it)->busy; it++)
     {}
 
-    if (it!=m_bufList.end())
-    {
-        wnb = *it;
-        assert(wnb!=NULL);
-        wnb->busy = 1;
-        *buffer = wnb;
-        --m_freeBufs;
+    if (it==m_bufList.end()) {
+        unlock();
+        return NO_ERROR;
     }
+
+    wnb = *it;
+    assert(wnb!=NULL);
+
+    /* If the buffer doesn't match the window anymore, re-allocate */
+    if (wnb->width != m_window->width || wnb->height != m_window->height
+        || wnb->format != m_format || wnb->usage != m_usage)
+    {
+        destroyBuffer(wnb);
+        m_bufList.erase(it);
+        wnb = addBuffer();
+    }
+
+    wnb->busy = 1;
+    *buffer = wnb;
+    --m_freeBufs;
 
     unlock();
     return NO_ERROR;
@@ -496,9 +508,23 @@ int WaylandNativeWindow::setBuffersFormat(int format) {
     if (format != m_format)
     {
         m_format = format;
-        setBufferCount(m_bufList.size());
+        /* Buffers will be re-allocated when dequeued */
     }
     return NO_ERROR;
+}
+
+void WaylandNativeWindow::destroyBuffer(WaylandNativeWindowBuffer* wnb)
+{
+    TRACE("");
+
+    assert(wnb != NULL);
+    assert(wnb->busy == 0);
+
+    m_alloc->free(m_alloc, wnb->handle);
+
+    wnb->common.decRef(&wnb->common);
+    assert(wnb->common.decRef==NULL);
+    m_freeBufs--;
 }
 
 void WaylandNativeWindow::destroyBuffers()
@@ -508,41 +534,57 @@ void WaylandNativeWindow::destroyBuffers()
     std::list<WaylandNativeWindowBuffer*>::iterator it = m_bufList.begin();
     for (; it!=m_bufList.end(); ++it)
     {
-        WaylandNativeWindowBuffer* wnb = *it;
-        assert(wnb->busy == 0);
-
-        m_alloc->free(m_alloc, wnb->handle);
-
-        wnb->common.decRef(&wnb->common);
-        assert(wnb->common.decRef==NULL);
+        destroyBuffer(*it);
     }
     m_bufList.clear();
     m_freeBufs = 0;
 }
 
+WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
+    TRACE("");
+
+    WaylandNativeWindowBuffer *wnb = new WaylandNativeWindowBuffer(m_width, m_height, m_format, m_usage);
+    int err = m_alloc->alloc(m_alloc,
+            wnb->width ? wnb->width : 1, wnb->height ? wnb->height : 1, wnb->format,
+            wnb->usage,
+            &wnb->handle,
+            &wnb->stride);
+    assert(err == 0);
+    m_bufList.push_back(wnb);
+    wnb->common.incRef(&wnb->common);
+    ++m_freeBufs;
+
+    return wnb;
+}
 
 
 int WaylandNativeWindow::setBufferCount(int cnt) {
-    lock();
+    int start = 0;
 
     TRACE("cnt=%d", cnt);
-    m_freeBufs =0;
 
-    destroyBuffers();
+    if (m_bufList.size() == cnt)
+        return NO_ERROR;
 
-    for (int i = 0; i < cnt; i++)
-    {
-        WaylandNativeWindowBuffer *wnb = new WaylandNativeWindowBuffer(m_width, m_height, m_format, m_usage);
-        int err = m_alloc->alloc(m_alloc,
-                wnb->width ? wnb->width : 1, wnb->height ? wnb->height : 1, wnb->format,
-                wnb->usage,
-                &wnb->handle,
-                &wnb->stride);
-        assert(err == 0);
-        m_bufList.push_back(wnb);
-        wnb->common.incRef(&wnb->common);
-        ++m_freeBufs;
+    lock();
+
+    if (m_bufList.size() > cnt) {
+        /* Decreasing buffer count, remove from beginning */
+        std::list<WaylandNativeWindowBuffer*>::iterator it = m_bufList.begin();
+        for (int i = 0; i <= m_bufList.size() - cnt; i++ )
+        {
+            destroyBuffer(*it);
+            ++it;
+            m_bufList.pop_front();
+        }
+
+    } else {
+        /* Increasing buffer count, start from current size */
+        for (int i = m_bufList.size(); i < cnt; i++)
+            WaylandNativeWindowBuffer *unused = addBuffer();
+
     }
+
     unlock();
 
     return NO_ERROR;
@@ -557,7 +599,7 @@ int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
     {
         m_width = width;
         m_height = height;
-        setBufferCount(m_bufList.size());
+        /* Buffers will be re-allocated when dequeued */
     }
     return NO_ERROR;
 }
@@ -567,7 +609,7 @@ int WaylandNativeWindow::setUsage(int usage) {
     if ((usage | GRALLOC_USAGE_HW_TEXTURE) != m_usage)
     {  
         m_usage = usage | GRALLOC_USAGE_HW_TEXTURE;
-        setBufferCount(m_bufList.size()); 
+        /* Buffers will be re-allocated when dequeued */
     }
     return NO_ERROR;
 }

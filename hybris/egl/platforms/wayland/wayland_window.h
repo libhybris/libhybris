@@ -113,6 +113,8 @@ protected:
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
 private:
+    WaylandNativeWindowBuffer *addBuffer();
+    void destroyBuffer(WaylandNativeWindowBuffer *);
     void destroyBuffers();
     std::list<WaylandNativeWindowBuffer *> m_bufList;
     std::list<WaylandNativeWindowBuffer *> fronted;
