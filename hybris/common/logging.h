@@ -62,13 +62,16 @@ hybris_set_log_level(enum hybris_log_level level);
 }
 #endif
 
+extern FILE *hybris_logging_target;
+
 #if defined(DEBUG)
 #    define HYBRIS_LOG_(level, module, message, ...) do { \
           if (hybris_should_log(level)) { \
-              fprintf(stderr, "%s %s:%d (%s) %s: " message "\n", \
+              fprintf(hybris_logging_target, "%s %s:%d (%s) %s: " message "\n", \
                       module, __FILE__, __LINE__, __PRETTY_FUNCTION__, \
                       #level + 11 /* + 11 = strip leading "HYBRIS_LOG_" */, \
                       ##__VA_ARGS__); \
+              fflush(hybris_logging_target); \
           } \
      } while(0)
 #else

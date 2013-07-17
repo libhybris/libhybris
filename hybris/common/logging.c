@@ -21,6 +21,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+
+FILE *hybris_logging_target = NULL;
 
 static enum hybris_log_level
 hybris_minimum_log_level = HYBRIS_LOG_WARN;
@@ -46,6 +49,14 @@ hybris_logging_initialize()
     } else if (strcmp(env, "disabled") == 0) {
         hybris_minimum_log_level = HYBRIS_LOG_DISABLED;
     }
+
+    env = getenv("HYBRIS_LOGGING_TARGET");
+    if (env != NULL)
+    {
+        hybris_logging_target = fopen(env, "a");
+    }
+    if (hybris_logging_target == NULL)
+        hybris_logging_target = stderr;
 }
 
 int
