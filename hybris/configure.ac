@@ -80,7 +80,7 @@ AC_ARG_ENABLE(arch,
       echo
       echo "Error!"
       echo "Unknown architecture' type"
-      exit -1
+      exit 1
    fi
   ],
   [arch="arm"]
@@ -95,7 +95,7 @@ AC_ARG_WITH(android-headers,
   [
       if [ ! test -e $withval/android-version.h ]; then
 	echo "Error! missing android-version.h in android header path"
-	exit -1
+	exit 1
       fi 
       rm -f include/android
       ln -sf $withval include/android   	
@@ -120,7 +120,7 @@ AC_ARG_WITH(android-headers,
   ],
   [
       echo "Error! need to provide path to Android headers --with-android-headers=path"
-      exit -1
+      exit 1
   ]
   )
 
