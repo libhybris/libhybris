@@ -65,7 +65,7 @@ endif
 test_hwcomposer_LDADD = \
 	-lm \
 	$(top_builddir)/common/libhybris-common.la \
-	$(top_builddir)/egl/platforms/hwcomposer/libhybris-hwcomposerwindow.la \
+	$(top_builddir)/egl/platforms/hwcomposer/eglplatform_hwcomposer.la \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/egl/libEGL.la \
 	$(top_builddir)/glesv2/libGLESv2.la \
