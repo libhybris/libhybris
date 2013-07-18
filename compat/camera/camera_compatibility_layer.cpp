@@ -97,8 +97,6 @@ void CameraControl::postData(
 	default:
 		break;
 	}
-
-	camera->releaseRecordingFrame(data);
 }
 
 void CameraControl::postDataTimestamp(
@@ -168,6 +166,10 @@ void android_camera_disconnect(CameraControl* control)
 	assert(control);
 
 	android::Mutex::Autolock al(control->guard);
+
+	if (control->preview_texture != NULL)
+		control->preview_texture->abandon();
+
 	control->camera->disconnect();
 	control->camera->unlock();
 }
@@ -520,10 +522,6 @@ void android_camera_stop_preview(CameraControl* control)
 	assert(control);
 
 	android::Mutex::Autolock al(control->guard);
-
-	if (control->preview_texture != NULL)
-		control->preview_texture->abandon();
-
 	control->camera->stopPreview();
 }
 
