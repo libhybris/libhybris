@@ -1,22 +1,23 @@
-#/bin/sh
+#! /bin/sh
 
 ANDROID_ROOT=$1
 HEADERPATH=$2
 MAJOR=$3
 MINOR=$4
+
 PATCH=$5
 PATCH2=$6
 PATCH3=$7
 
 if [ x$ANDROID_ROOT = x -o "x$HEADERPATH" = x -o x$MAJOR = x -o x$MINOR = x ]; then
-    echo "Syntax: extract-headers.sh ANDROID_ROOT HEADERPATH MAJOR MINOR PATCH [PATCH2 PATCH3]"
-    exit -1
+    echo "Syntax: extract-headers.sh ANDROID_ROOT HEADERPATH MAJOR MINOR [PATCH PATCH2 PATCH3]"
+    exit 1
 fi
 
 # Make sure that the dir given contains at least some of the assumed structures.
 if [ ! -d "$ANDROID_ROOT/hardware/libhardware/include/hardware/" ]; then
     echo "Given Android root dir '$ANDROID_ROOT/hardware/libhardware/include/hardware/' doesn't exist."
-    exit -1
+    exit 1
 fi
 
 mkdir -p $HEADERPATH
