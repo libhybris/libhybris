@@ -91,7 +91,7 @@ AM_CONDITIONAL([WANT_ARCH_X86], [test x$arch = xx86])
 
 android_headers_path=""
 AC_ARG_WITH(android-headers,
-  [  --with-android-headers=path     Use android headers available in path ],
+  [  --with-android-headers=DIR     Use android headers available in DIR. See utils/extract-headers.sh ],
   [
       if [ ! test -e $withval/android-version.h ]; then
 	echo "Error! missing android-version.h in android header path"
@@ -119,7 +119,7 @@ AC_ARG_WITH(android-headers,
       echo "Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch"
   ],
   [
-      echo "Error! need to provide path to Android headers --with-android-headers=path"
+      echo "Error! need to provide path to Android headers --with-android-headers=DIR. See utils/extract-headers.sh"
       exit 1
   ]
   )
