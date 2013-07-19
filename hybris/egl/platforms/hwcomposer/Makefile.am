@@ -51,10 +51,9 @@ endif
 if WANT_DEBUG
 eglplatform_hwcomposer_la_CXXFLAGS += -ggdb -O0
 endif
-
+eglplatform_hwcomposer_la_LIBADD = libhybris-hwcomposerwindow.la
 eglplatform_hwcomposer_la_LDFLAGS = \
 	-avoid-version -module -shared -export-dynamic \
-	$(top_builddir)/egl/platforms/hwcomposer/libhybris-hwcomposerwindow.la \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/hardware/libhardware.la
 
