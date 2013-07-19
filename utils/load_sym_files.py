@@ -40,18 +40,28 @@ class LoadSymFiles(gdb.Command):
         if len(arg_list) == 1:
             symdir = arg_list[0]
         if not os.path.isdir(symdir):
-            print "error: symbol directory is invalid"
+            print "error: invalid symbol directory(%s)"%symdir
             print "usage: load-sym-files [symbols-dir] [lib-dir]"
             return
 
         if len(arg_list) == 2:
             libdir = arg_list[1]
         if not os.path.isdir(libdir):
-            print "error: library directory is invalid"
+            print "error: invalid library directory(%s)"%libdir
             print "usage: load-sym-files [symbols-dir] [lib-dir]"
             return
+        try:
+            pid = gdb.selected_inferior().pid
+        except AttributeError:
+            # in case gdb-version < 7.4
+            # the array can have more than one element,
+            # but it's good enough when debugging test_egl
+            if len(gdb.inferiors()) == 1:
+                pid = gdb.inferiors()[0].pid
+            else:
+                print "error: no gdb support for more than 1 inferior"
+                return
 
-        pid = gdb.selected_inferior().pid
         if pid == 0:
             print "error: debugee not started yet"
             return
