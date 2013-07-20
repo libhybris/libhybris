@@ -674,7 +674,7 @@ static int my_pthread_cond_timedwait(pthread_cond_t *cond,
         *((unsigned int *) mutex) = (unsigned int) realmutex;
     }
 
-    return pthread_cond_timedwait(realcond, realmutex, &abstime);
+    return pthread_cond_timedwait(realcond, realmutex, abstime);
 }
 
 static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
