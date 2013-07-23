@@ -144,6 +144,20 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
 
     pthread_mutex_lock(&_mutex);
 
+    TRACE("May wait for buffer");
+
+#if defined(DEBUG)
+
+    if (m_frontBuf)
+        TRACE("Status: Has front buf %p", m_frontBuf);
+
+    std::list<FbDevNativeWindowBuffer*>::iterator cit = m_bufList.begin();
+    for (; cit != m_bufList.end(); ++cit)
+    {
+        TRACE("Status: Buffer %p with busy %i\n", (*cit), (*cit)->busy);
+    }
+#endif
+
     while (m_freeBufs==0)
     {
         pthread_cond_wait(&_cond, &_mutex);
@@ -156,11 +170,31 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
         {
             if (*it==m_frontBuf)
                 continue;
-            if ((*it)->busy==0) break;
+            if ((*it)->busy==0)
+            {
+                TRACE("Found a free non-front buffer");
+                break;
+            }
         }
+
         if (it == m_bufList.end())
         {
-            // have to wait once again 
+#if ANDROID_VERSION_MAJOR<=4 && ANDROID_VERSION_MINOR<2
+            /*
+             * This is acceptable in case you are on a stack that calls lock() before starting to render into buffer
+             * When you are using fences (>= 2) you'll be waiting on the fence to signal instead. 
+             * 
+             * This optimization allows eglSwapBuffers to return and you can begin to utilize the GPU for rendering. 
+             * The actual lock() probably first comes at glFlush/eglSwapBuffers
+            */
+            if (m_frontBuf && m_frontBuf->busy == 0)
+            {
+                TRACE("Used front buffer as buffer");
+                fbnb = m_frontBuf;
+                break;
+            }
+#endif
+            // have to wait once again
             pthread_cond_wait(&_cond, &_mutex);
             continue;
         }
@@ -168,6 +202,7 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
         fbnb = *it;
         break;
     }
+    TRACE("Got buffer for rendering");
     assert(fbnb!=NULL);
     fbnb->busy = 1;
     //fbnb->common.incRef(&fbnb->common);
@@ -210,21 +245,32 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 
     assert(fbnb->busy==1);
 
+    fbnb->busy = 2;
+
+    pthread_mutex_unlock(&_mutex);
+
     //fbnb->common.decRef(&fbnb->common);
+    TRACE("posting");
+
     int rv = m_fbDev->post(m_fbDev, fbnb->handle);
     if (rv!=0)
     {
         fprintf(stderr,"ERROR: fb->post(%s)\n",strerror(-rv));
     }
+    TRACE("posted");
+
+    pthread_mutex_lock(&_mutex);
 
     fbnb->busy=0;
     m_frontBuf = fbnb;
 
     m_freeBufs++;
-    pthread_cond_signal(&_cond);
 
     TRACE("%u %p %p",pthread_self(), m_frontBuf, fbnb);
+
+    pthread_cond_signal(&_cond);
     pthread_mutex_unlock(&_mutex);
+
 
     return rv;
 }
@@ -278,6 +324,7 @@ int FbDevNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
         TRACE("waiting %p %p", m_frontBuf, fbnb);
         pthread_cond_wait(&_cond, &_mutex);
     }
+
     pthread_mutex_unlock(&_mutex);
     return NO_ERROR;
 }
