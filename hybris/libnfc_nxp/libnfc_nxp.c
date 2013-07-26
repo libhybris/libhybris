@@ -21,12 +21,29 @@
  * https://github.com/thp/libhybris-nfc-wrapper-generator
  **/
 
-#include <libnfc-nxp/phNfcStatus.h>
 #include <libnfc-nxp/phNfcTypes.h>
 #include <libnfc-nxp/phNfcIoctlCode.h>
 #include <libnfc-nxp/phLibNfc.h>
 #include <libnfc-nxp/phDal4Nfc_messageQueueLib.h>
 #include <libnfc-nxp/phFriNfc_NdefMap.h>
+#include <libnfc-nxp/phLibNfc_Internal.h>
+
+/**
+ * Fix a compiler warning, as this macro is defined multiple times
+ * to different values - we don't need the value for the wrappers.
+ **/
+#undef NFCSTATUS_COMMAND_NOT_SUPPORTED
+
+#include <libnfc-nxp/phHciNfc_Generic.h>
+#include <libnfc-nxp/phHal4Nfc.h>
+#include <libnfc-nxp/phHal4Nfc_Internal.h>
+#include <libnfc-nxp/phFriNfc_SmtCrdFmt.h>
+#include <libnfc-nxp/phFriNfc_LlcpUtils.h>
+#include <libnfc-nxp/phFriNfc_LlcpTransport.h>
+#include <libnfc-nxp/phLlcNfc_DataTypes.h>
+#include <libnfc-nxp/phHciNfc_NfcIPMgmt.h>
+#include <libnfc-nxp/phHciNfc_WI.h>
+#include <libnfc-nxp/phHciNfc_Pipe.h>
 
 #include <dlfcn.h>
 #include <stddef.h>
