@@ -153,6 +153,10 @@ AC_CONFIG_FILES([
 	glesv2/Makefile
 	hardware/Makefile
 	hardware/libhardware.pc
+	libnfc_nxp/Makefile
+	libnfc_nxp/libnfc_nxp.pc
+	libnfc_ndef_nxp/Makefile
+	libnfc_ndef_nxp/libnfc_ndef_nxp.pc
 	libsync/Makefile
 	libsync/libsync.pc
 	ui/Makefile
