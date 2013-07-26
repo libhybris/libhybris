@@ -30,11 +30,12 @@ static void _init_ws()
 		char ws_name[2048];
 		char *egl_platform;
 
-		egl_platform=getenv("EGL_PLATFORM");
 		// Mesa uses EGL_PLATFORM for its own purposes.
 		// Add HYBRIS_EGLPLATFORM to avoid the conflicts
+		egl_platform=getenv("HYBRIS_EGLPLATFORM");
+
 		if (egl_platform == NULL)
-			egl_platform=getenv("HYBRIS_EGLPLATFORM");
+			egl_platform=getenv("EGL_PLATFORM");
 
 		if (egl_platform == NULL)
 			egl_platform = "null";
