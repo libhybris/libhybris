@@ -55,6 +55,9 @@ cp $ANDROID_ROOT/system/core/include/cutils/* $HEADERPATH/cutils/
 mkdir -p $HEADERPATH/system/
 cp $ANDROID_ROOT/system/core/include/system/* $HEADERPATH/system/
 
+mkdir -p $HEADERPATH/android/
+cp $ANDROID_ROOT/system/core/include/android/* $HEADERPATH/android/
+
 if [ -e $ANDROID_ROOT/external/kernel-headers/original/linux/sync.h ]; then
 	mkdir -p $HEADERPATH/linux
 	cp $ANDROID_ROOT/external/kernel-headers/original/linux/sync.h $HEADERPATH/linux
