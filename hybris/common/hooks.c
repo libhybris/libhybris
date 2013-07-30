@@ -46,7 +46,10 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <locale.h>
 
+static locale_t hybris_locale;
+static int locale_inited = 0;
 /* TODO:
 *  - Check if the int arguments at attr_set/get match the ones at Android
 *  - Check how to deal with memory leaks (specially with static initializers)
@@ -1201,7 +1204,12 @@ long my_sysconf(int name)
 
 FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
 {
-	return strtod(nptr, endptr);
+	if (locale_inited == 0)
+	{
+		hybris_locale = newlocale(LC_ALL_MASK, "C", 0);
+		locale_inited = 1;
+	}
+	return strtod_l(nptr, endptr, hybris_locale);
 }
 
 static struct _hook hooks[] = {
