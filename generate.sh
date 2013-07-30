@@ -6,12 +6,14 @@
 mkdir -p output
 
 cproto -x \
-    android_platform_external_libnfc-nxp/src/*.c \
+    android_platform_external_libnfc-nxp/*/*.c \
     -I android_platform_external_libnfc-nxp/inc \
     -I android_platform_external_libnfc-nxp/src \
+    -I android_platform_external_libnfc-nxp/Linux_x86 \
     -I android_platform_hardware_libhardware/include \
     -I android_platform_system_core/include \
     -I android_platform_frameworks_native/include \
+    -I . -DNXP_MESSAGING \
     > output/libnfc_prototypes.h
 
 python generate_wrappers.py \
