@@ -1266,6 +1266,7 @@ static struct _hook hooks[] = {
     {"strsep",strsep},
     {"strspn",strspn},
     {"strsignal",strsignal},
+    {"getgrnam", getgrnam},
     {"strcoll",strcoll},
     {"strxfrm",strxfrm},
     /* strings.h */
@@ -1452,6 +1453,10 @@ void *get_hooked_symbol(char *sym)
     }
     if (strstr(sym, "pthread") != NULL)
     {
+        /* safe */
+        if (strcmp(sym, "pthread_sigmask") == 0)
+           return NULL;
+        /* not safe */
         counter--;
         LOGD("%s %i\n", sym, counter);
         return (void *) counter;
