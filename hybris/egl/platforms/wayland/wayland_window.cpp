@@ -165,7 +165,7 @@ void WaylandNativeWindow::frame() {
 
 // overloads from BaseNativeWindow
 int WaylandNativeWindow::setSwapInterval(int interval) {
-    TRACE("interval=%i", interval);
+    TRACE("interval:%i", interval);
     return 0;
 }
 
@@ -182,7 +182,6 @@ static struct wl_buffer_listener wl_buffer_listener = {
 
 void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 {
-    TRACE("Release buffer %p", buffer);
     lock();
     std::list<WaylandNativeWindowBuffer *>::iterator it = posted.begin();
 
@@ -196,7 +195,7 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
     {
         WaylandNativeWindowBuffer* pwnb = *it;
         posted.erase(it);
-        TRACE("Release posted buffer %p\n", buffer);
+        TRACE("released posted buffer: %p", buffer);
         pwnb->busy = 0;
         pthread_cond_signal(&cond);
         unlock();
@@ -223,7 +222,7 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
             break;
     }
     assert(it != m_bufList.end());
-    TRACE("Release buffer %p", buffer);
+    TRACE("wnb:%p wlbuffer:%p", wnb, buffer);
     wnb->busy = 0;
 
     ++m_freeBufs;
@@ -233,8 +232,8 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 
 
 int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd){
-    TRACE("");
     WaylandNativeWindowBuffer *wnb=NULL;
+    TRACE("%p", buffer);
 
     lock();
     while (m_freeBufs==0) {
@@ -246,6 +245,7 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
 
     if (it==m_bufList.end()) {
         unlock();
+        TRACE("%p: no free buffers", buffer);
         return NO_ERROR;
     }
 
@@ -256,6 +256,10 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
     if (wnb->width != m_window->width || wnb->height != m_window->height
         || wnb->format != m_format || wnb->usage != m_usage)
     {
+        TRACE("wnb:%p,win:%p %i,%i %i,%i x%x,x%x x%x,x%x",
+            wnb,m_window,
+            wnb->width,m_window->width, wnb->height,m_window->height,
+            wnb->format,m_format, wnb->usage,m_usage);
         destroyBuffer(wnb);
         m_bufList.erase(it);
         wnb = addBuffer();
@@ -265,12 +269,14 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
     *buffer = wnb;
     --m_freeBufs;
 
+    TRACE("%p wnb:%p", buffer, wnb);
+
     unlock();
     return NO_ERROR;
 }
 
 int WaylandNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer){
-    TRACE("");
+    TRACE("bnwb:%p", buffer);
     return NO_ERROR;
 }
 
@@ -309,7 +315,7 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
     }
 
     if (ret < 0) {
-        TRACE("wl_display_dispatch_queue returned an error");
+        TRACE("wl_display_dispatch_queue returned an error:%i", ret);
         return ret;
     }
 
@@ -342,12 +348,12 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
 
         android_wlegl_handle_destroy(wlegl_handle);
 
-        TRACE("Add listener for %p with %p inside", wnb, wnb->wlbuffer);
+        TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
         wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
         wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
         post_registered.push_back(wnb);
     }
-    TRACE("DAMAGE AREA: %dx%d",wnb->width, wnb->height);
+    TRACE("%p DAMAGE AREA: %dx%d", wnb, wnb->width, wnb->height);
     wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
     wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
     wl_surface_commit(m_window->surface);
@@ -363,7 +369,7 @@ static int debugenvchecked = 0;
 
 int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 {
-    TRACE("");
+    TRACE("bnwb:%p", buffer);
     WaylandNativeWindowBuffer *wnb = (WaylandNativeWindowBuffer*) buffer;
     int ret = 0;
 
@@ -395,9 +401,9 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
 
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
     sync_wait(fenceFd, -1);
-    close(fenceFd);    
+    close(fenceFd);
 #endif
-  
+
     this->frame_callback = wl_surface_frame(m_window->surface);
     wl_callback_add_listener(this->frame_callback, &frame_listener, this);
     wl_proxy_set_queue((struct wl_proxy *) this->frame_callback, this->wl_queue);
@@ -426,11 +432,11 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
 
         android_wlegl_handle_destroy(wlegl_handle);
 
-        TRACE("Add listener for %p with %p inside", wnb, wnb->wlbuffer);
+        TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
         wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
         wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
     }
-    TRACE("DAMAGE AREA: %dx%d",wnb->width, wnb->height);
+    TRACE("%p DAMAGE AREA: %dx%d", wnb, wnb->width, wnb->height);
     wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
     wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
     wl_surface_commit(m_window->surface);
@@ -443,7 +449,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
         do {
             unlock();
             ret = wl_display_dispatch_queue(m_display, this->wl_queue);
-            lock();   
+            lock();
             if (ret == -1)
             {
                 break;
@@ -459,32 +465,32 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
 }
 
 int WaylandNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fenceFd){
-    TRACE("- WARN: STUB");
+    TRACE("%p WARN: STUB", buffer);
     return 0;
 }
 
 unsigned int WaylandNativeWindow::width() const {
-    TRACE("value: %i", m_width);
+    TRACE("value:%i", m_width);
     return m_width;
 }
 
 unsigned int WaylandNativeWindow::height() const {
-    TRACE("value: %i", m_height);
+    TRACE("value:%i", m_height);
     return m_height;
 }
 
 unsigned int WaylandNativeWindow::format() const {
-    TRACE("value: %i", m_format);
+    TRACE("value:%i", m_format);
     return m_format;
 }
 
 unsigned int WaylandNativeWindow::defaultWidth() const {
-    TRACE("value: %i", m_defaultWidth);
+    TRACE("value:%i", m_defaultWidth);
     return m_defaultWidth;
 }
 
 unsigned int WaylandNativeWindow::defaultHeight() const {
-    TRACE("value: %i", m_defaultHeight);
+    TRACE("value:%i", m_defaultHeight);
     return m_defaultHeight;
 }
 
@@ -504,18 +510,20 @@ unsigned int WaylandNativeWindow::transformHint() const {
 }
 
 int WaylandNativeWindow::setBuffersFormat(int format) {
-    TRACE("format %i", format);
     if (format != m_format)
     {
+        TRACE("old-format:x%x new-format:x%x", m_format, format);
         m_format = format;
         /* Buffers will be re-allocated when dequeued */
+    } else {
+        TRACE("format:x%x", format);
     }
     return NO_ERROR;
 }
 
 void WaylandNativeWindow::destroyBuffer(WaylandNativeWindowBuffer* wnb)
 {
-    TRACE("");
+    TRACE("wnb:%p", wnb);
 
     assert(wnb != NULL);
     assert(wnb->busy == 0);
@@ -541,7 +549,6 @@ void WaylandNativeWindow::destroyBuffers()
 }
 
 WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
-    TRACE("");
 
     WaylandNativeWindowBuffer *wnb = new WaylandNativeWindowBuffer(m_width, m_height, m_format, m_usage);
     int err = m_alloc->alloc(m_alloc,
@@ -554,6 +561,9 @@ WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
     wnb->common.incRef(&wnb->common);
     ++m_freeBufs;
 
+    TRACE("wnb:%p width:%i height:%i format:x%x usage:x%x",
+         wnb, wnb->width, wnb->height, wnb->format, wnb->usage);
+
     return wnb;
 }
 
@@ -561,7 +571,7 @@ WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
 int WaylandNativeWindow::setBufferCount(int cnt) {
     int start = 0;
 
-    TRACE("cnt=%d", cnt);
+    TRACE("cnt:%d", cnt);
 
     if (m_bufList.size() == cnt)
         return NO_ERROR;
@@ -594,22 +604,26 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
 
 
 int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
-    TRACE("size %ix%i", width, height);
     if (m_width != width || m_height != height)
     {
+        TRACE("old-size:%ix%i new-size:%ix%i", m_width, m_height, width, height);
         m_width = width;
         m_height = height;
         /* Buffers will be re-allocated when dequeued */
+    } else {
+        TRACE("size:%ix%i", width, height);
     }
     return NO_ERROR;
 }
 
 int WaylandNativeWindow::setUsage(int usage) {
-    TRACE("usage=x%x", usage);
     if ((usage | GRALLOC_USAGE_HW_TEXTURE) != m_usage)
-    {  
+    {
+        TRACE("old-usage:x%x new-usage:x%x", m_usage, usage);
         m_usage = usage | GRALLOC_USAGE_HW_TEXTURE;
         /* Buffers will be re-allocated when dequeued */
+    } else {
+        TRACE("usage:x%x", usage);
     }
     return NO_ERROR;
 }

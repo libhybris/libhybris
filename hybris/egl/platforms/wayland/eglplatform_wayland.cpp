@@ -56,7 +56,7 @@ extern "C" int waylandws_IsValidDisplay(EGLNativeDisplayType display)
 	{
 		hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
 		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-		TRACE("++ %u wayland: got gralloc %p err:%s\n", pthread_self(), gralloc, strerror(-err));
+		TRACE("++ %u wayland: got gralloc %p err:%s", pthread_self(), gralloc, strerror(-err));
 		eglplatformcommon_init(gralloc);
 	}
 
