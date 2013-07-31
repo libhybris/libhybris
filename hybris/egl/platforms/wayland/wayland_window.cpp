@@ -40,6 +40,14 @@ extern "C" {
 }
 #endif
 
+void WaylandNativeWindow::resize_callback(struct wl_egl_window *egl_window, void *)
+{
+    TRACE("%dx%d",egl_window->width,egl_window->height);
+    native_window_set_buffers_dimensions(
+        (WaylandNativeWindow*)egl_window->nativewindow,
+        egl_window->width,egl_window->height);
+}
+
 void WaylandNativeWindow::lock()
 {
     pthread_mutex_lock(&this->mutex);
@@ -107,7 +115,6 @@ static const struct wl_callback_listener frame_listener = {
     wayland_frame_callback
 };
 
-
 WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, const gralloc_module_t* gralloc, alloc_device_t* alloc_device)
 {
     int i;
@@ -118,6 +125,7 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
     this->m_height = window->height;
     this->m_defaultWidth = window->width;
     this->m_defaultHeight = window->height;
+    this->m_window->resize_callback = resize_callback;
     this->m_format = 1;
     this->wl_queue = wl_display_create_queue(display);
     this->frame_callback = NULL;
@@ -607,8 +615,8 @@ int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
     if (m_width != width || m_height != height)
     {
         TRACE("old-size:%ix%i new-size:%ix%i", m_width, m_height, width, height);
-        m_width = width;
-        m_height = height;
+        m_width = m_defaultWidth = width;
+        m_height = m_defaultHeight = height;
         /* Buffers will be re-allocated when dequeued */
     } else {
         TRACE("size:%ix%i", width, height);
