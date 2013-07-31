@@ -14,7 +14,7 @@
 
 BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 {
-	TRACE("%s %p\n", __PRETTY_FUNCTION__, this);
+	TRACE("%p", this);
 
 	// done in ANativeWindowBuffer::ANativeWindowBuffer
 	// common.magic = ANDROID_NATIVE_WINDOW_MAGIC;
@@ -36,7 +36,7 @@ BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 
 BaseNativeWindowBuffer::~BaseNativeWindowBuffer()
 {
-	TRACE("%s %p\n", __PRETTY_FUNCTION__, this);
+	TRACE("%p", this);
 
 	ANativeWindowBuffer::common.decRef = NULL;
 	ANativeWindowBuffer::common.incRef = NULL;
@@ -49,7 +49,7 @@ void BaseNativeWindowBuffer::_decRef(struct android_native_base_t* base)
 	ANativeWindowBuffer* self = container_of(base, ANativeWindowBuffer, common);
 	BaseNativeWindowBuffer* bnwb = static_cast<BaseNativeWindowBuffer*>(self) ;
 
-	TRACE("%s %p refcount = %i\n", __PRETTY_FUNCTION__, bnwb, bnwb->refcount - 1);
+	TRACE("%p refcount = %i",bnwb, bnwb->refcount - 1);
 
 	if (__sync_fetch_and_sub(&bnwb->refcount,1) == 1)
 	{
@@ -64,7 +64,7 @@ void BaseNativeWindowBuffer::_incRef(struct android_native_base_t* base)
 	ANativeWindowBuffer* self = container_of(base, ANativeWindowBuffer, common);
 	BaseNativeWindowBuffer* bnwb= static_cast<BaseNativeWindowBuffer*>(self) ;
 
-	TRACE("%s %p refcount = %i\n", __PRETTY_FUNCTION__, bnwb, bnwb->refcount + 1);
+	TRACE("%p refcount = %i", bnwb, bnwb->refcount + 1);
 	__sync_fetch_and_add(&bnwb->refcount,1);
 }
 
@@ -124,7 +124,7 @@ void BaseNativeWindow::_decRef(struct android_native_base_t* base)
 	ANativeWindow* self = container_of(base, ANativeWindow, common);
 	BaseNativeWindow* bnw = static_cast<BaseNativeWindow*>(self);
 
-	TRACE("%s %p refcount = %i\n", __PRETTY_FUNCTION__, bnw, bnw->refcount - 1);
+	TRACE("%p refcount = %i", bnw, bnw->refcount - 1);
 
 	if (__sync_fetch_and_sub(&bnw->refcount,1) == 1)
 	{
@@ -137,7 +137,7 @@ void BaseNativeWindow::_incRef(struct android_native_base_t* base)
 	ANativeWindow* self = container_of(base, ANativeWindow, common);
 	BaseNativeWindow* bnw = static_cast<BaseNativeWindow*>(self);
 
-	TRACE("%s %p refcount = %i\n", __PRETTY_FUNCTION__, bnw, bnw->refcount + 1);
+	TRACE("%p refcount = %i", bnw, bnw->refcount + 1);
 
 
 	__sync_fetch_and_add(&bnw->refcount,1);
@@ -248,7 +248,7 @@ const char *BaseNativeWindow::_native_query_operation(int what)
 
 int BaseNativeWindow::_query(const struct ANativeWindow* window, int what, int* value)
 {
-	TRACE("_query window %p %i %s %p", window, what, _native_query_operation(what), value);
+	TRACE("window:%p %i %s %p", window, what, _native_query_operation(what), value);
 	const BaseNativeWindow* self=static_cast<const BaseNativeWindow*>(window);
 	switch (what) {
 		case NATIVE_WINDOW_WIDTH:

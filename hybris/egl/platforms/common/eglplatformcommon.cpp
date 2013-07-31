@@ -48,16 +48,16 @@ extern "C" void hybris_dump_buffer_to_file(ANativeWindowBuffer *buf)
 	static int cnt = 0;
 	void *vaddr;
 	int ret = my_gralloc->lock(my_gralloc, buf->handle, buf->usage, 0, 0, buf->width, buf->height, &vaddr);
-	TRACE("buf: %p, gralloc lock returns %i\n", buf, ret);
-	TRACE("buf: %p, lock to vaddr %p\n", buf, vaddr);
+	TRACE("buf:%p gralloc lock returns %i", buf, ret);
+	TRACE("buf:%p lock to vaddr %p", buf, vaddr);
 	char b[1024];
 	int bytes_pp = 0;
-	
+
 	if (buf->format == HAL_PIXEL_FORMAT_RGBA_8888)
 		bytes_pp = 4;
 	else if (buf->format == HAL_PIXEL_FORMAT_RGB_565)
 		bytes_pp = 2;
-	
+
 	snprintf(b, 1020, "vaddr.%p.%p.%i.%is%ix%ix%i", buf, vaddr, cnt, buf->width, buf->stride, buf->height, bytes_pp);
 	cnt++;
 	int fd = ::open(b, O_WRONLY|O_CREAT, S_IRWXU);

@@ -42,7 +42,7 @@ extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 			fprintf(stderr, "ERROR: failed to open gralloc: (%s)\n",strerror(-err));
 			assert(0);
 		}
-		TRACE("** gralloc_open %p status=%s\n", gralloc, strerror(-err));
+		TRACE("** gralloc_open %p status=%s", gralloc, strerror(-err));
 		eglplatformcommon_init(gralloc);
 	}
 
