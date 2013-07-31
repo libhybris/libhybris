@@ -218,6 +218,7 @@ AC_CONFIG_FILES([
 	vibrator/Makefile
 	vibrator/libvibrator.pc
 	media/Makefile
+	media/libmedia.pc
 	include/Makefile
 	utils/Makefile
 	tests/Makefile

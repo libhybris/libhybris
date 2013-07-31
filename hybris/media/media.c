@@ -25,6 +25,10 @@
 #include <hybris/internal/binding.h>
 #include <hybris/media/media_compatibility_layer.h>
 #include <hybris/media/recorder_compatibility_layer.h>
+#include <hybris/media/media_codec_layer.h>
+#include <hybris/media/media_codec_list.h>
+#include <hybris/media/media_format_layer.h>
+#include <hybris/media/surface_texture_client_hybris.h>
 
 #define COMPAT_LIBRARY_PATH "/system/lib/libmedia_compat_layer.so"
 
@@ -35,6 +39,13 @@
 #endif
 
 HYBRIS_LIBRARY_INITIALIZE(media, COMPAT_LIBRARY_PATH);
+
+int media_compat_check_availability()
+{
+	/* Both are defined via HYBRIS_LIBRARY_INITIALIZE */
+	hybris_media_initialize();
+	return media_handle ? 1 : 0;
+}
 
 HYBRIS_IMPLEMENT_FUNCTION0(media, struct MediaPlayerWrapper*,
 	android_media_new_player);
@@ -80,6 +91,146 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_media_set_playback_complete_cb,
 	struct MediaPlayerWrapper*, on_playback_complete, void*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_media_set_media_prepared_cb,
 	struct MediaPlayerWrapper*, on_media_prepared, void*);
+
+// Media Codecs
+HYBRIS_IMPLEMENT_FUNCTION1(media, MediaCodecDelegate,
+	media_codec_create_by_codec_name, const char*);
+#ifdef SIMPLE_PLAYER
+HYBRIS_IMPLEMENT_FUNCTION0(media, MediaCodecDelegate,
+	media_codec_get_delegate);
+#endif
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_codec_delegate_destroy,
+	MediaCodecDelegate);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_codec_delegate_ref,
+	MediaCodecDelegate);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_codec_delegate_unref,
+	MediaCodecDelegate);
+
+#ifdef SIMPLE_PLAYER
+HYBRIS_IMPLEMENT_FUNCTION4(media, int, media_codec_configure,
+	MediaCodecDelegate, MediaFormat, void*, uint32_t);
+#else
+HYBRIS_IMPLEMENT_FUNCTION4(media, int, media_codec_configure,
+	MediaCodecDelegate, MediaFormat, SurfaceTextureClientHybris, uint32_t);
+#endif
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, media_codec_set_surface_texture_client,
+	MediaCodecDelegate, SurfaceTextureClientHybris);
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, media_codec_queue_csd,
+	MediaCodecDelegate, MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, media_codec_start,
+	MediaCodecDelegate);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, media_codec_stop,
+	MediaCodecDelegate);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, media_codec_release,
+	MediaCodecDelegate);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, media_codec_flush,
+	MediaCodecDelegate);
+HYBRIS_IMPLEMENT_FUNCTION1(media, size_t, media_codec_get_input_buffers_size,
+	MediaCodecDelegate);
+HYBRIS_IMPLEMENT_FUNCTION2(media, uint8_t*, media_codec_get_nth_input_buffer,
+	MediaCodecDelegate, size_t);
+HYBRIS_IMPLEMENT_FUNCTION2(media, size_t, media_codec_get_nth_input_buffer_capacity,
+	MediaCodecDelegate, size_t);
+HYBRIS_IMPLEMENT_FUNCTION1(media, size_t, media_codec_get_output_buffers_size,
+	MediaCodecDelegate);
+HYBRIS_IMPLEMENT_FUNCTION2(media, uint8_t*, media_codec_get_nth_output_buffer,
+	MediaCodecDelegate, size_t);
+HYBRIS_IMPLEMENT_FUNCTION2(media, size_t, media_codec_get_nth_output_buffer_capacity,
+	MediaCodecDelegate, size_t);
+HYBRIS_IMPLEMENT_FUNCTION3(media, int, media_codec_dequeue_output_buffer,
+	MediaCodecDelegate, MediaCodecBufferInfo*, int64_t);
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, media_codec_queue_input_buffer,
+	MediaCodecDelegate, const MediaCodecBufferInfo*);
+HYBRIS_IMPLEMENT_FUNCTION3(media, int, media_codec_dequeue_input_buffer,
+	MediaCodecDelegate, size_t*, int64_t);
+HYBRIS_IMPLEMENT_FUNCTION3(media, int, media_codec_release_output_buffer,
+	MediaCodecDelegate, size_t, uint8_t);
+HYBRIS_IMPLEMENT_FUNCTION1(media, MediaFormat, media_codec_get_output_format,
+	MediaCodecDelegate);
+
+HYBRIS_IMPLEMENT_FUNCTION3(media, ssize_t, media_codec_list_find_codec_by_type,
+	const char*, bool, size_t);
+HYBRIS_IMPLEMENT_FUNCTION1(media, ssize_t, media_codec_list_find_codec_by_name,
+	const char *);
+HYBRIS_IMPLEMENT_FUNCTION0(media, size_t, media_codec_list_count_codecs);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_codec_list_get_codec_info_at_id,
+	size_t);
+HYBRIS_IMPLEMENT_FUNCTION1(media, const char*, media_codec_list_get_codec_name,
+	size_t);
+HYBRIS_IMPLEMENT_FUNCTION1(media, bool, media_codec_list_is_encoder,
+	size_t);
+HYBRIS_IMPLEMENT_FUNCTION1(media, size_t, media_codec_list_get_num_supported_types,
+	size_t);
+HYBRIS_IMPLEMENT_FUNCTION2(media, size_t, media_codec_list_get_nth_supported_type_len,
+	size_t, size_t);
+HYBRIS_IMPLEMENT_FUNCTION3(media, int, media_codec_list_get_nth_supported_type,
+	size_t, char *, size_t);
+HYBRIS_IMPLEMENT_FUNCTION2(media, size_t, media_codec_list_get_num_profile_levels,
+	size_t, const char*);
+HYBRIS_IMPLEMENT_FUNCTION2(media, size_t, media_codec_list_get_num_color_formats,
+	size_t, const char*);
+HYBRIS_IMPLEMENT_FUNCTION4(media, int, media_codec_list_get_nth_codec_profile_level,
+	size_t, const char*, profile_level*, size_t);
+HYBRIS_IMPLEMENT_FUNCTION3(media, int, media_codec_list_get_codec_color_formats,
+	size_t, const char*, uint32_t*);
+
+HYBRIS_IMPLEMENT_FUNCTION5(media, MediaFormat, media_format_create_video_format,
+	const char*, int32_t, int32_t, int64_t, int32_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_format_destroy,
+	MediaFormat);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_format_ref,
+	MediaFormat);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_format_unref,
+	MediaFormat);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(media, media_format_set_byte_buffer,
+	MediaFormat, const char*, uint8_t*, size_t);
+HYBRIS_IMPLEMENT_FUNCTION1(media, const char*, media_format_get_mime,
+	MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int64_t, media_format_get_duration_us,
+	MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int32_t, media_format_get_width,
+	MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int32_t, media_format_get_height,
+	MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int32_t, media_format_get_max_input_size,
+	MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int32_t, media_format_get_stride,
+	MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int32_t, media_format_get_slice_height,
+	MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int32_t, media_format_get_color_format,
+	MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int32_t, media_format_get_crop_left,
+	MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int32_t, media_format_get_crop_right,
+	MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int32_t, media_format_get_crop_top,
+	MediaFormat);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int32_t, media_format_get_crop_bottom,
+	MediaFormat);
+
+// SurfaceTextureClientHybris
+HYBRIS_IMPLEMENT_FUNCTION1(media, SurfaceTextureClientHybris,
+	surface_texture_client_create, EGLNativeWindowType);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_create_by_id,
+	unsigned int);
+HYBRIS_IMPLEMENT_FUNCTION0(media, uint8_t,
+	surface_texture_client_is_ready_for_rendering);
+HYBRIS_IMPLEMENT_FUNCTION0(media, uint8_t,
+	surface_texture_client_hardware_rendering);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_set_hardware_rendering,
+	uint8_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_get_transformation_matrix,
+	GLfloat*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION0(media, surface_texture_client_update_texture);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_destroy,
+	SurfaceTextureClientHybris);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_ref,
+	SurfaceTextureClientHybris);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_unref,
+	SurfaceTextureClientHybris);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(media, surface_texture_client_set_surface_texture,
+	SurfaceTextureClientHybris, EGLNativeWindowType);
 
 // Recorder
 HYBRIS_IMPLEMENT_FUNCTION0(media, struct MediaRecorderWrapper*,
