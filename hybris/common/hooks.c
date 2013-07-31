@@ -1212,6 +1212,8 @@ FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
 	return strtod_l(nptr, endptr, hybris_locale);
 }
 
+extern int __cxa_atexit(void (*)(void*), void*, void*);
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -1436,6 +1438,7 @@ static struct _hook hooks[] = {
     {"writev", writev},
     /* grp.h */
     {"getgrgid", getgrgid},
+    {"__cxa_atexit", __cxa_atexit},
     {NULL, NULL},
 };
 
