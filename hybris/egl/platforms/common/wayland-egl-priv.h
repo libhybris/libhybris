@@ -26,6 +26,7 @@ struct wl_egl_window {
 	int attached_height;
 
 	void *nativewindow;
+	void (*resize_callback)(struct wl_egl_window *, void *);
 };
 
 #ifdef  __cplusplus
