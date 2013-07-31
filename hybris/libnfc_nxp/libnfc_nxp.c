@@ -24,7 +24,7 @@
 #include <libnfc-nxp/phNfcTypes.h>
 #include <libnfc-nxp/phNfcIoctlCode.h>
 #include <libnfc-nxp/phLibNfc.h>
-#include <libnfc-nxp/phDal4Nfc_messageQueueLib.h>
+#include <libnfc-nxp/phDal4Nfc.h>
 #include <libnfc-nxp/phFriNfc_NdefMap.h>
 #include <libnfc-nxp/phLibNfc_Internal.h>
 
@@ -33,6 +33,9 @@
  * to different values - we don't need the value for the wrappers.
  **/
 #undef NFCSTATUS_COMMAND_NOT_SUPPORTED
+
+/* taken from Linux_x86/phDal4Nfc.c */
+typedef void   (*pphDal4Nfc_DeferFuncPointer_t) (void * );
 
 #include <libnfc-nxp/phHciNfc_Generic.h>
 #include <libnfc-nxp/phHal4Nfc.h>
@@ -54,13 +57,13 @@
 HYBRIS_LIBRARY_INITIALIZE(libnfc_so, "/system/lib/libnfc.so");
 
 HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phLibNfc_Mgt_ConfigureDriver, pphLibNfc_sConfig_t, void **);
-/* XXX No prototype for exported symbol: phDal4Nfc_Config */
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phDal4Nfc_Config, pphDal4Nfc_sConfig_t, void **);
 HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, NFCSTATUS, phLibNfc_Mgt_UnConfigureDriver, void *);
-/* XXX No prototype for exported symbol: phDal4Nfc_ConfigRelease */
+HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, NFCSTATUS, phDal4Nfc_ConfigRelease, void *);
 HYBRIS_IMPLEMENT_FUNCTION0(libnfc_so, NFCSTATUS, phLibNfc_HW_Reset);
-/* XXX No prototype for exported symbol: phDal4Nfc_Reset */
+HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, NFCSTATUS, phDal4Nfc_Reset, long);
 HYBRIS_IMPLEMENT_FUNCTION0(libnfc_so, NFCSTATUS, phLibNfc_Download_Mode);
-/* XXX No prototype for exported symbol: phDal4Nfc_Download */
+HYBRIS_IMPLEMENT_FUNCTION0(libnfc_so, NFCSTATUS, phDal4Nfc_Download);
 HYBRIS_IMPLEMENT_FUNCTION0(libnfc_so, int, phLibNfc_Load_Firmware_Image);
 /* XXX No prototype for exported symbol: dlopen_firmware */
 HYBRIS_IMPLEMENT_VOID_FUNCTION0(libnfc_so, phLibNfc_Mgt_Recovery);
@@ -75,18 +78,18 @@ HYBRIS_IMPLEMENT_FUNCTION0(libnfc_so, int, phLibNfc_GetMifareRawTimeout);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phLibNfc_Mgt_DeInitialize, void *, pphLibNfc_RspCb_t, void *);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phHal4Nfc_Close, phHal_sHwReference_t *, pphHal4Nfc_GenCallback_t, void *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(libnfc_so, phHal4Nfc_Hal4Reset, phHal_sHwReference_t *, void *);
-/* XXX No prototype for exported symbol: phOsalNfc_FreeMemory */
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(libnfc_so, phOsalNfc_FreeMemory, void *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION0(libnfc_so, phLibNfc_Ndef_DeInit);
 HYBRIS_IMPLEMENT_VOID_FUNCTION0(libnfc_so, phLibNfc_Pending_Shutdown);
 HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, NFCSTATUS, phLibNfc_Mgt_Reset, void *);
 HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phLibNfc_UpdateNextState, pphLibNfc_LibContext_t, phLibNfc_State_t);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phLibNfc_Mgt_Initialize, void *, pphLibNfc_RspCb_t, void *);
-/* XXX No prototype for exported symbol: phOsalNfc_GetMemory */
+HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, void *, phOsalNfc_GetMemory, uint32_t);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phHal4Nfc_Open, phHal_sHwReference_t *, phHal4Nfc_InitType_t, pphHal4Nfc_GenCallback_t, void *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION0(libnfc_so, phLibNfc_Ndef_Init);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(libnfc_so, phLibNfc_UpdateCurState, NFCSTATUS, pphLibNfc_LibContext_t);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phHal4Nfc_RegisterNotification, phHal_sHwReference_t *, phHal4Nfc_RegisterType_t, pphHal4Nfc_Notification_t, void *);
-/* XXX No prototype for exported symbol: phOsalNfc_RaiseException */
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(libnfc_so, phOsalNfc_RaiseException, phOsalNfc_ExceptionType_t, uint16_t);
 HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phLibNfc_Mgt_GetstackCapabilities, phLibNfc_StackCapabilities_t *, void *);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phHal4Nfc_GetDeviceCapabilities, phHal_sHwReference_t *, phHal_sDeviceCapabilities_t *, void *);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phLibNfc_Mgt_ConfigureTestMode, void *, pphLibNfc_RspCb_t, phLibNfc_Cfg_Testmode_t, void *);
@@ -162,8 +165,8 @@ HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phFriNfc_NdefReg_DispatchPacket
 HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, uint8_t, phFriNfc_NdefReg_Process, phFriNfc_NdefReg_t *, NFCSTATUS *);
 HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phFriNfc_NdefReg_RmCb, phFriNfc_NdefReg_t *, phFriNfc_NdefReg_Cb_t *);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phFriNfc_NdefMap_GetContainerSize, const phFriNfc_NdefMap_t *, uint32_t *, uint32_t *);
-/* XXX No prototype for exported symbol: phOsalNfc_Timer_Stop */
-/* XXX No prototype for exported symbol: phOsalNfc_Timer_Delete */
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(libnfc_so, phOsalNfc_Timer_Stop, uint32_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(libnfc_so, phOsalNfc_Timer_Delete, uint32_t);
 HYBRIS_IMPLEMENT_FUNCTION5(libnfc_so, NFCSTATUS, phLibNfc_Ndef_Read, phLibNfc_Handle, phNfc_sData_t *, phLibNfc_Ndef_EOffset_t, pphLibNfc_RspCb_t, void *);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phFriNfc_NdefMap_SetCompletionRoutine, phFriNfc_NdefMap_t *, uint8_t, pphFriNfc_Cr_t, void *);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phFriNfc_NdefMap_RdNdef, phFriNfc_NdefMap_t *, uint8_t *, uint32_t *, uint8_t);
@@ -173,8 +176,8 @@ HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phFriNfc_NdefMap_WrNdef, phFriN
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phLibNfc_Ndef_CheckNdef, phLibNfc_Handle, pphLibNfc_ChkNdefRspCb_t, void *);
 HYBRIS_IMPLEMENT_FUNCTION9(libnfc_so, NFCSTATUS, phFriNfc_NdefMap_Reset, phFriNfc_NdefMap_t *, void *, phHal_sRemoteDevInformation_t *, phHal_sDevInputParam_t *, uint8_t *, uint16_t, uint8_t *, uint16_t *, uint16_t *);
 HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, NFCSTATUS, phFriNfc_NdefMap_ChkNdef, phFriNfc_NdefMap_t *);
-/* XXX No prototype for exported symbol: phOsalNfc_Timer_Start */
-/* XXX No prototype for exported symbol: phOsalNfc_Timer_Create */
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(libnfc_so, phOsalNfc_Timer_Start, uint32_t, uint32_t, ppCallBck_t, void *);
+HYBRIS_IMPLEMENT_FUNCTION0(libnfc_so, uint32_t, phOsalNfc_Timer_Create);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phLibNfc_RemoteDev_FormatNdef, phLibNfc_Handle, phNfc_sData_t *, pphLibNfc_RspCb_t, void *);
 HYBRIS_IMPLEMENT_FUNCTION6(libnfc_so, NFCSTATUS, phFriNfc_NdefSmtCrd_Reset, phFriNfc_sNdefSmtCrdFmt_t *, void *, phHal_sRemoteDevInformation_t *, phHal_sDevInputParam_t *, uint8_t *, uint16_t *);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phFriNfc_NdefSmtCrd_SetCR, phFriNfc_sNdefSmtCrdFmt_t *, uint8_t, pphFriNfc_Cr_t, void *);
@@ -213,7 +216,7 @@ HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phHciNfc_Release, void *, void 
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(libnfc_so, phHal4Nfc_HandleP2PDeActivate, phHal4Nfc_Hal4Ctxt_t *, void *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(libnfc_so, phHal4Nfc_P2PActivateComplete, phHal4Nfc_Hal4Ctxt_t *, void *);
 HYBRIS_IMPLEMENT_FUNCTION7(libnfc_so, NFCSTATUS, phHciNfc_Initialise, void *, void *, phHciNfc_Init_t, phHal_sHwConfig_t *, pphNfcIF_Notification_CB_t, void *, phNfcLayer_sCfg_t *);
-/* XXX No prototype for exported symbol: phDal4Nfc_Register */
+HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phDal4Nfc_Register, phNfcIF_sReference_t *, phNfcIF_sCallBack_t, void *);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phLlcNfc_Register, phNfcIF_sReference_t *, phNfcIF_sCallBack_t, void *);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phHciNfc_System_Get_Info, void *, void *, uint32_t, uint8_t *);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phHciNfc_System_Test, void *, void *, uint32_t, phNfc_sData_t *);
@@ -227,12 +230,12 @@ HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phHciNfc_Send_Data, void *, voi
 HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, NFCSTATUS, phHal4Nfc_Disconnect_Execute, phHal_sHwReference_t *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(libnfc_so, phHal4Nfc_Felica_RePoll, void *, NFCSTATUS);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phHciNfc_Reactivate, void *, void *, phHal_sRemoteDevInformation_t *);
-/* XXX No prototype for exported symbol: phOsalNfc_MemCompare */
+HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, int, phOsalNfc_MemCompare, void *, void *, unsigned int);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phHciNfc_Connect, void *, void *, phHal_sRemoteDevInformation_t *);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phHciNfc_Exchange_Data, void *, void *, phHal_sRemoteDevInformation_t *, phHciNfc_XchgInfo_t *);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phHciNfc_Disconnect, void *, void *, uint8_t);
 HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phHciNfc_Presence_Check, void *, void *);
-/* XXX No prototype for exported symbol: phDal4Nfc_Unregister */
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phDal4Nfc_Unregister, void *, void *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION5(libnfc_so, phHciNfc_Build_HCPFrame, phHciNfc_HCP_Packet_t *, uint8_t, uint8_t, uint8_t, uint8_t);
 HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phHciNfc_Send_HCP, phHciNfc_sContext_t *, void *);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phHciNfc_Update_PipeInfo, phHciNfc_sContext_t *, phHciNfc_PipeMgmt_Seq_t *, uint8_t, phHciNfc_Pipe_Info_t *);
@@ -538,38 +541,38 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION2(libnfc_so, phFriNfc_MfStd_Process, void *, NFCST
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(libnfc_so, phFriNfc_ISO15693_FmtReset, phFriNfc_sNdefSmtCrdFmt_t *);
 HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, NFCSTATUS, phFriNfc_ISO15693_Format, phFriNfc_sNdefSmtCrdFmt_t *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(libnfc_so, phFriNfc_ISO15693_FmtProcess, void *, NFCSTATUS);
-/* XXX No prototype for exported symbol: phOsalNfc_Timer_DeferredCall */
-/* XXX No prototype for exported symbol: phDal4Nfc_msgsnd */
-/* XXX No prototype for exported symbol: phOsalNfc_DbgString */
-/* XXX No prototype for exported symbol: phOsalNfc_DbgTrace */
-/* XXX No prototype for exported symbol: phOsalNfc_PrintData */
-/* XXX No prototype for exported symbol: phDal4Nfc_uart_initialize */
-/* XXX No prototype for exported symbol: phDal4Nfc_uart_set_open_from_handle */
-/* XXX No prototype for exported symbol: phDal4Nfc_uart_is_opened */
-/* XXX No prototype for exported symbol: phDal4Nfc_uart_flush */
-/* XXX No prototype for exported symbol: phDal4Nfc_uart_close */
-/* XXX No prototype for exported symbol: phDal4Nfc_uart_open_and_configure */
-/* XXX No prototype for exported symbol: phDal4Nfc_uart_read */
-/* XXX No prototype for exported symbol: phDal4Nfc_uart_write */
-/* XXX No prototype for exported symbol: phDal4Nfc_uart_reset */
-/* XXX No prototype for exported symbol: phDal4Nfc_Shutdown */
-/* XXX No prototype for exported symbol: phDal4Nfc_ReadWait */
-/* XXX No prototype for exported symbol: phDal4Nfc_ReadWaitCancel */
-/* XXX No prototype for exported symbol: phDal4Nfc_Read */
-/* XXX No prototype for exported symbol: phDal4Nfc_Init */
-/* XXX No prototype for exported symbol: phDal4Nfc_Write */
-/* XXX No prototype for exported symbol: phDal4Nfc_ReaderThread */
-/* XXX No prototype for exported symbol: phDal4Nfc_i2c_initialize */
-/* XXX No prototype for exported symbol: phDal4Nfc_i2c_set_open_from_handle */
-/* XXX No prototype for exported symbol: phDal4Nfc_i2c_is_opened */
-/* XXX No prototype for exported symbol: phDal4Nfc_i2c_flush */
-/* XXX No prototype for exported symbol: phDal4Nfc_i2c_close */
-/* XXX No prototype for exported symbol: phDal4Nfc_i2c_open_and_configure */
-/* XXX No prototype for exported symbol: phDal4Nfc_i2c_read */
-/* XXX No prototype for exported symbol: phDal4Nfc_i2c_write */
-/* XXX No prototype for exported symbol: phDal4Nfc_i2c_reset */
-/* XXX No prototype for exported symbol: phDal4Nfc_DeferredCall */
-/* XXX No prototype for exported symbol: phDal4Nfc_msgget */
-/* XXX No prototype for exported symbol: phDal4Nfc_msgctl */
-/* XXX No prototype for exported symbol: phDal4Nfc_msgrcv */
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(libnfc_so, phOsalNfc_Timer_DeferredCall, void *);
+HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, int, phDal4Nfc_msgsnd, int, void *, size_t, int);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(libnfc_so, phOsalNfc_DbgString, const char *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(libnfc_so, phOsalNfc_DbgTrace, uint8_t *, uint32_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(libnfc_so, phOsalNfc_PrintData, const char *, uint32_t, uint8_t *, int);
+HYBRIS_IMPLEMENT_VOID_FUNCTION0(libnfc_so, phDal4Nfc_uart_initialize);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(libnfc_so, phDal4Nfc_uart_set_open_from_handle, phHal_sHwReference_t *);
+HYBRIS_IMPLEMENT_FUNCTION0(libnfc_so, int, phDal4Nfc_uart_is_opened);
+HYBRIS_IMPLEMENT_VOID_FUNCTION0(libnfc_so, phDal4Nfc_uart_flush);
+HYBRIS_IMPLEMENT_VOID_FUNCTION0(libnfc_so, phDal4Nfc_uart_close);
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phDal4Nfc_uart_open_and_configure, pphDal4Nfc_sConfig_t, void **);
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, int, phDal4Nfc_uart_read, uint8_t *, int);
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, int, phDal4Nfc_uart_write, uint8_t *, int);
+HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, int, phDal4Nfc_uart_reset, long);
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phDal4Nfc_Shutdown, void *, void *);
+HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phDal4Nfc_ReadWait, void *, void *, uint8_t *, uint16_t);
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phDal4Nfc_ReadWaitCancel, void *, void *);
+HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phDal4Nfc_Read, void *, void *, uint8_t *, uint16_t);
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phDal4Nfc_Init, void *, void *);
+HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phDal4Nfc_Write, void *, void *, uint8_t *, uint16_t);
+HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, int, phDal4Nfc_ReaderThread, void *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION0(libnfc_so, phDal4Nfc_i2c_initialize);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(libnfc_so, phDal4Nfc_i2c_set_open_from_handle, phHal_sHwReference_t *);
+HYBRIS_IMPLEMENT_FUNCTION0(libnfc_so, int, phDal4Nfc_i2c_is_opened);
+HYBRIS_IMPLEMENT_VOID_FUNCTION0(libnfc_so, phDal4Nfc_i2c_flush);
+HYBRIS_IMPLEMENT_VOID_FUNCTION0(libnfc_so, phDal4Nfc_i2c_close);
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phDal4Nfc_i2c_open_and_configure, pphDal4Nfc_sConfig_t, void **);
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, int, phDal4Nfc_i2c_read, uint8_t *, int);
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, int, phDal4Nfc_i2c_write, uint8_t *, int);
+HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, int, phDal4Nfc_i2c_reset, long);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(libnfc_so, phDal4Nfc_DeferredCall, pphDal4Nfc_DeferFuncPointer_t, void *);
+HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, int, phDal4Nfc_msgget, key_t, int);
+HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, int, phDal4Nfc_msgctl, int, int, void *);
+HYBRIS_IMPLEMENT_FUNCTION5(libnfc_so, int, phDal4Nfc_msgrcv, int, void *, size_t, long, int);
 /* XXX No prototype for exported symbol: __on_dlclose */
