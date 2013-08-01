@@ -5,7 +5,8 @@ bin_PROGRAMS = \
 	test_sf \
 	test_sensors \
 	test_input \
-	test_camera
+	test_camera \
+	test_nfc
 
 if HAS_ANDROID_4_2_0
 bin_PROGRAMS += test_hwcomposer
@@ -135,4 +136,15 @@ test_gps_CFLAGS = -pthread \
 test_gps_LDFLAGS = -pthread
 test_gps_LDADD =  \
 	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/hardware/libhardware.la
+
+test_nfc_SOURCES = test_nfc.c
+test_nfc_CFLAGS = \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/include/android \
+	-I$(top_srcdir)/include/android/libnfc-nxp
+
+test_nfc_LDFLAGS =
+test_nfc_LDADD = \
+	$(top_builddir)/libnfc_nxp/libnfc_nxp.la \
 	$(top_builddir)/hardware/libhardware.la
