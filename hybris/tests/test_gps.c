@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Jolla Mobile oy
+ * Copyright (C) 2012 Jolla Ltd.
  * Author: Philippe De Swert <philippe.deswert@jollamobile.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
