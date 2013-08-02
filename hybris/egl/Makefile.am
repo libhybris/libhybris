@@ -10,7 +10,7 @@ libEGL_la_SOURCES = \
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = egl.pc
 
-libEGL_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/android -DPKGLIBDIR="\"$(pkglibdir)/\""
+libEGL_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/android -DPKGLIBDIR="\"$(pkglibdir)/\"" -DDEFAULT_EGL_PLATFORM="\"@DEFAULT_EGL_PLATFORM@\""
 if WANT_MESA
 libEGL_la_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif

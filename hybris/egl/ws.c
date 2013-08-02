@@ -38,7 +38,7 @@ static void _init_ws()
 			egl_platform=getenv("EGL_PLATFORM");
 
 		if (egl_platform == NULL)
-			egl_platform = "null";
+			egl_platform = DEFAULT_EGL_PLATFORM;
 
 		snprintf(ws_name, 2048, PKGLIBDIR "eglplatform_%s.so", egl_platform);
 
