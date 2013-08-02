@@ -5,6 +5,7 @@ lib_LTLIBRARIES = \
 
 libEGL_la_SOURCES = \
 	egl.c \
+	helper.cpp \
 	ws.c
 
 pkgconfigdir = $(libdir)/pkgconfig

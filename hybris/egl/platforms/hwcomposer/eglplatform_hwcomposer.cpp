@@ -60,6 +60,12 @@ extern "C" EGLNativeWindowType hwcomposerws_CreateWindow(EGLNativeWindowType win
 	return win;
 }
 
+extern "C" void hwcomposerws_DestroyWindow(EGLNativeWindowType win)
+{
+	HWComposerNativeWindow *window = static_cast<HWComposerNativeWindow *>((ANativeWindow *) win);
+	// TODO: Do any necessary cleanup on window
+}
+
 extern "C" __eglMustCastToProperFunctionPointerType hwcomposerws_eglGetProcAddress(const char *procname) 
 {
 	return eglplatformcommon_eglGetProcAddress(procname);
@@ -73,6 +79,7 @@ extern "C" void hwcomposerws_passthroughImageKHR(EGLenum *target, EGLClientBuffe
 struct ws_module ws_module_info = {
 	hwcomposerws_IsValidDisplay,
 	hwcomposerws_CreateWindow,
+	hwcomposerws_DestroyWindow,
 	hwcomposerws_eglGetProcAddress,
 	hwcomposerws_passthroughImageKHR,
 	eglplatformcommon_eglQueryString

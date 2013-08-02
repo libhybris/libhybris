@@ -68,6 +68,13 @@ extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, E
 	return (EGLNativeWindowType) *(new WaylandNativeWindow((struct wl_egl_window *) win, (struct wl_display *) display, gralloc, alloc));
 }
 
+extern "C" void waylandws_DestroyWindow(EGLNativeWindowType win)
+{
+	struct wl_egl_window *eglwin = (struct wl_egl_window *) win;
+	WaylandNativeWindow *window = (WaylandNativeWindow *)(eglwin->nativewindow);
+	// TODO: Do any necessary cleanup on window, then delete it
+}
+
 extern "C" int waylandws_post(EGLNativeWindowType win, void *buffer)
 {
 	struct wl_egl_window *eglwin = (struct wl_egl_window *) win;
@@ -93,6 +100,7 @@ extern "C" void waylandws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *
 struct ws_module ws_module_info = {
 	waylandws_IsValidDisplay,
 	waylandws_CreateWindow,
+	waylandws_DestroyWindow,
 	waylandws_eglGetProcAddress,
 	waylandws_passthroughImageKHR,
 	eglplatformcommon_eglQueryString

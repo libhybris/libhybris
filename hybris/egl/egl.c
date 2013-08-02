@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include "ws.h"
+#include "helper.h"
 #include <assert.h>
 
 
@@ -240,7 +241,9 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 	
 	assert(((struct ANativeWindowBuffer *) win)->common.magic == ANDROID_NATIVE_WINDOW_MAGIC);
 
-	return (*_eglCreateWindowSurface)(dpy, config, win, attrib_list);
+	EGLSurface result = (*_eglCreateWindowSurface)(dpy, config, win, attrib_list);
+	egl_helper_push_mapping(result, win);
+	return result;
 }
 
 EGLSurface eglCreatePbufferSurface(EGLDisplay dpy, EGLConfig config,
@@ -261,7 +264,17 @@ EGLSurface eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
 EGLBoolean eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 {
 	EGL_DLSYM(&_eglDestroySurface, "eglDestroySurface");
-	return (*_eglDestroySurface)(dpy, surface);
+	EGLBoolean result = (*_eglDestroySurface)(dpy, surface);
+
+	/**
+         * If the surface was created via eglCreateWindowSurface, we must
+         * notify the ws about surface destruction for clean-up.
+	 **/
+	if (egl_helper_has_mapping(surface)) {
+	    ws_DestroyWindow(egl_helper_pop_mapping(surface));
+	}
+
+	return result;
 }
 
 EGLBoolean eglQuerySurface(EGLDisplay dpy, EGLSurface surface,
