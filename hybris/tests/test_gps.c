@@ -32,6 +32,8 @@ const AGpsInterface* AGps = NULL;
 const AGpsRilInterface* AGpsRil = NULL;
 const GpsNiInterface *GpsNi = NULL;
 const GpsXtraInterface *GpsExtra = NULL;
+const UlpNetworkInterface *UlpNetwork = NULL;
+const UlpPhoneContextInterface *UlpPhoneContext = NULL;
 
 static const GpsInterface* get_gps_interface()
 {
@@ -113,6 +115,28 @@ static const GpsXtraInterface* get_gps_extra_interface(const GpsInterface *gps)
   if(gps)
   {
     interface = (const GpsXtraInterface*)gps->get_extension(GPS_XTRA_INTERFACE);
+  }
+  return interface;
+}
+
+static const UlpNetworkInterface* get_ulp_network_interface(const GpsInterface *gps)
+{
+  const UlpNetworkInterface* interface = NULL;
+
+  if (gps)
+  {
+    interface = (const UlpNetworkInterface*)gps->get_extension(ULP_NETWORK_INTERFACE);
+  }
+  return interface;
+}
+
+static const UlpPhoneContextInterface* get_ulp_phone_context_interface(const GpsInterface *gps)
+{
+  const UlpPhoneContextInterface* interface = NULL;
+
+  if (gps)
+  {
+    interface = (const UlpPhoneContextInterface*)gps->get_extension(ULP_PHONE_CONTEXT_INTERFACE);
   }
   return interface;
 }
@@ -251,6 +275,18 @@ static void download_xtra_request_callback (void)
   fprintf(stdout, "*** xtra download request to client\n");
 }
 
+static void ulp_network_location_request_callback(UlpNetworkRequestPos *req)
+{
+  fprintf(stdout, "*** ulp network location request (request_type=%#x, interval_ms=%d, desired_position_source=%#x)\n",
+          req->request_type, req->interval_ms, req->desired_position_source);
+}
+
+static void ulp_request_phone_context_callback(UlpPhoneContextRequest *req)
+{
+  fprintf(stdout, "*** ulp phone context request (context_type=%#x, request_type=%#x, interval_ms=%d)\n",
+          req->context_type, req->request_type, req->interval_ms);
+}
+
 GpsCallbacks callbacks = {
   sizeof(GpsCallbacks),
   location_callback,
@@ -283,6 +319,16 @@ GpsXtraCallbacks callbacks5 = {
   download_xtra_request_callback,
   create_thread_callback,
 };
+
+UlpNetworkLocationCallbacks callbacks6 = {
+  ulp_network_location_request_callback,
+};
+
+UlpPhoneContextCallbacks callbacks7 = {
+  ulp_request_phone_context_callback,
+};
+
+
 
 void sigint_handler(int signum)
 {
@@ -397,6 +443,21 @@ int main(int argc, char *argv[])
     {
       GpsNi->init(&callbacks4);
     }
+  }
+
+  UlpNetwork = get_ulp_network_interface(Gps);
+  if (UlpNetwork) {
+    fprintf(stdout, "*** got ulp network interface\n");
+    if (UlpNetwork->init(&callbacks6) != 0) {
+      fprintf(stdout, "*** FAILED to init ulp network interface\n");
+      UlpNetwork = NULL;
+    }
+  }
+
+  UlpPhoneContext = get_ulp_phone_context_interface(Gps);
+  if (UlpPhoneContext) {
+    fprintf(stdout, "*** got ulp phone context interface\n");
+    UlpPhoneContext->init(&callbacks7);
   }
 
   if(injecttime)
