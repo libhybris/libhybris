@@ -219,14 +219,40 @@ static void release_wakelock_callback()
   /* do nothing */
 }
 
+struct ThreadWrapperContext {
+    void (*func)(void *);
+    void *user_data;
+};
+
+static void *thread_wrapper_context_main_func(void *user_data)
+{
+  struct ThreadWrapperContext *ctx = (struct ThreadWrapperContext *)user_data;
+
+  fprintf(stderr, " **** Thread wrapper start (start=%p, arg=%p) ****\n",
+          ctx->func, ctx->user_data);
+  ctx->func(ctx->user_data);
+  fprintf(stderr, " **** Thread wrapper end (start=%p, arg=%p) ****\n",
+          ctx->func, ctx->user_data);
+
+  free(ctx);
+
+  return NULL;
+}
+
 static pthread_t create_thread_callback(const char* name, void (*start)(void *), void* arg)
 {
   pthread_t thread_id;
-  pthread_attr_t attr;
   int error = 0;
 
-  error = pthread_attr_init(&attr);
-  error = pthread_create(&thread_id, &attr, (void*(*)(void*))start, arg);
+  /* Wrap thread function, so we can return void * to pthread and log start/end of thread */
+  struct ThreadWrapperContext *ctx = calloc(1, sizeof(struct ThreadWrapperContext));
+  ctx->func = start;
+  ctx->user_data = arg;
+
+  fprintf(stderr, " ** Creating thread: '%s' (start=%p, arg=%p)\n", name, start, arg);
+  /* Do not use a pthread_attr_t (we'd have to take care of bionic/glibc differences) */
+  error = pthread_create(&thread_id, NULL, thread_wrapper_context_main_func, ctx);
+  fprintf(stderr, " ** After thread_create: '%s', error=%d (start=%p, arg=%p)\n", name, error, start, arg);
 
   if(error != 0)
 	return 0;
