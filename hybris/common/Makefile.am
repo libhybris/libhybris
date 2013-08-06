@@ -17,7 +17,6 @@ endif
 libhybris_common_la_SOURCES = \
 	hooks.c \
 	hooks_shm.c \
-	properties.c \
 	strlcpy.c \
 	logging.c
 libhybris_common_la_CFLAGS = \
@@ -33,4 +32,5 @@ libhybris_common_la_LDFLAGS = \
 	-ldl \
 	-lrt \
 	-pthread \
+	$(top_builddir)/properties/libandroid-properties.la \
 	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"

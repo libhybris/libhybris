@@ -1,4 +1,4 @@
-SUBDIRS = include common hardware
+SUBDIRS = include properties common hardware
 
 if HAS_ANDROID_4_2_0
 SUBDIRS += libsync
