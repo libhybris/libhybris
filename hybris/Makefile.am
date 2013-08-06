@@ -5,7 +5,9 @@ SUBDIRS += libsync
 endif
 
 SUBDIRS += egl glesv1 glesv2 ui sf input camera
+if HAS_ANDROID_4_1_0
 SUBDIRS += libnfc_nxp libnfc_ndef_nxp
+endif
 SUBDIRS += tests
 
 
