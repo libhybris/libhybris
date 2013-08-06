@@ -5,14 +5,16 @@ bin_PROGRAMS = \
 	test_sf \
 	test_sensors \
 	test_input \
-	test_camera \
-	test_nfc
+	test_camera
 
 if HAS_ANDROID_4_2_0
 bin_PROGRAMS += test_hwcomposer
 bin_PROGRAMS += test_gps
 endif
 
+if HAS_LIBNFC_NXP_HEADERS
+bin_PROGRAMS += test_nfc
+endif
 
 # Please re-enable your test programs according to android
 # if HAS_ANDROID_X_Y_Z
