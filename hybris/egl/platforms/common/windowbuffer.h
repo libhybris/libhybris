@@ -20,31 +20,37 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef SERVER_WLEGL_BUFFER_H
-#define SERVER_WLEGL_BUFFER_H
+#ifndef WINDOWBUFFER_H
+#define WINDOWBUFFER_H
 
 #include <cutils/native_handle.h>
 #include <string.h>
 #include <system/window.h>
 #include <hardware/gralloc.h>
-#include <wayland-server.h>
-#include "windowbuffer.h"
+#include "nativewindowbase.h"
 
-struct server_wlegl;
-
-struct server_wlegl_buffer {
-	struct wl_buffer base;
-	server_wlegl *wlegl;
-
-	RemoteWindowBuffer *buf;
+class RemoteWindowBuffer : public BaseNativeWindowBuffer
+{
+	public:
+		RemoteWindowBuffer(unsigned int width,
+				unsigned int height,
+				unsigned int stride,
+				unsigned int format,
+				unsigned int usage,
+				buffer_handle_t handle,
+				const gralloc_module_t *gralloc	
+				) {
+			// Base members
+			ANativeWindowBuffer::width = width;
+			ANativeWindowBuffer::height = height;
+			ANativeWindowBuffer::format = format;
+			ANativeWindowBuffer::usage = usage;
+			ANativeWindowBuffer::stride = stride;
+			ANativeWindowBuffer::handle = handle;
+			this->m_gralloc = gralloc;
+		};
+		~RemoteWindowBuffer();
+	private:
+		const gralloc_module_t *m_gralloc;
 };
-
-server_wlegl_buffer *
-server_wlegl_buffer_create(uint32_t id, int32_t width, int32_t height,
-			   int32_t stride, int32_t format, int32_t usage,
-			   buffer_handle_t handle, server_wlegl *wlegl);
-
-server_wlegl_buffer *
-server_wlegl_buffer_from(struct wl_buffer *);
-
-#endif /* SERVER_WLEGL_BUFFER_H */
+#endif /* WINDOWBUFFER_H */

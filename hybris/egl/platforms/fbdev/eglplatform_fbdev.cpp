@@ -43,7 +43,7 @@ extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 			assert(0);
 		}
 		TRACE("** gralloc_open %p status=%s", gralloc, strerror(-err));
-		eglplatformcommon_init(gralloc);
+		eglplatformcommon_init(gralloc, alloc);
 	}
 
 	return display == EGL_DEFAULT_DISPLAY;

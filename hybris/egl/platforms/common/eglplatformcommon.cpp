@@ -19,12 +19,15 @@
 #include "server_wlegl_buffer.h"
 #endif
 
+#include "windowbuffer.h"
 
 static gralloc_module_t *my_gralloc = 0;
+static alloc_device_t *my_alloc = 0;
 
-extern "C" void eglplatformcommon_init(gralloc_module_t *gralloc)
+extern "C" void eglplatformcommon_init(gralloc_module_t *gralloc, alloc_device_t *allocdevice)
 {
 	my_gralloc = gralloc;
+	my_alloc = allocdevice;
 }
 
 extern "C" int hybris_register_buffer_handle(buffer_handle_t handle)
@@ -73,10 +76,12 @@ extern "C" EGLBoolean eglplatformcommon_eglBindWaylandDisplayWL(EGLDisplay dpy, 
 {
 	assert(my_gralloc != NULL);
 	server_wlegl_create(display, my_gralloc);
+	return EGL_TRUE;
 }
 
 extern "C" EGLBoolean eglplatformcommon_eglUnbindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
 {
+	return EGL_TRUE;
 }
 
 extern "C" EGLBoolean eglplatformcommon_eglQueryWaylandBufferWL(EGLDisplay dpy,
@@ -102,6 +107,67 @@ extern "C" EGLBoolean eglplatformcommon_eglQueryWaylandBufferWL(EGLDisplay dpy,
 
 #endif
 
+extern "C" EGLBoolean eglplatformcommon_eglHybrisCreateNativeBuffer(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint *stride, EGLClientBuffer *buffer)
+{
+	int ret;
+	buffer_handle_t _handle;
+	int _stride;
+
+	assert(my_gralloc != NULL);
+	assert(my_alloc != NULL);
+
+	ret = my_alloc->alloc(my_alloc, width, height, format, usage, &_handle, &_stride);
+
+	if (ret == 0)
+	{
+		RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, _stride, format, usage, _handle, my_gralloc);
+		buf->common.incRef(&buf->common);
+		*buffer = (EGLClientBuffer) static_cast<ANativeWindowBuffer *>(buf);
+		*stride = _stride;
+		return EGL_TRUE;
+	}
+	else
+		return EGL_FALSE;
+}
+
+extern "C" EGLBoolean eglplatformcommon_eglHybrisLockNativeBuffer(EGLClientBuffer buffer, EGLint usage, EGLint l, EGLint t, EGLint w, EGLint h, void **vaddr)
+{
+	int ret;
+	RemoteWindowBuffer *buf = static_cast<RemoteWindowBuffer *>((ANativeWindowBuffer *) buffer);
+
+	assert(my_gralloc != NULL);
+
+	ret = my_gralloc->lock(my_gralloc, buf->handle, usage, l, t, w, h, vaddr);
+	if (ret == 0)
+		return EGL_TRUE;
+	else
+		return EGL_FALSE;
+}
+
+extern "C" EGLBoolean eglplatformcommon_eglHybrisUnlockNativeBuffer(EGLClientBuffer buffer)
+{
+	int ret;
+	RemoteWindowBuffer *buf = static_cast<RemoteWindowBuffer *>((ANativeWindowBuffer *) buffer);
+
+	assert(my_gralloc != NULL);
+
+	ret = my_gralloc->unlock(my_gralloc, buf->handle);
+	if (ret == 0)
+		return EGL_TRUE;
+	else
+		return EGL_FALSE;
+}
+
+
+extern "C" EGLBoolean eglplatformcommon_eglHybrisReleaseNativeBuffer(EGLClientBuffer buffer)
+{
+	RemoteWindowBuffer *buf = static_cast<RemoteWindowBuffer *>((ANativeWindowBuffer *) buffer);
+
+	buf->common.decRef(&buf->common);
+	return EGL_TRUE;
+}
+
+
 
 extern "C" void
 eglplatformcommon_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
@@ -122,17 +188,17 @@ eglplatformcommon_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 			hybris_dump_buffer_to_file((ANativeWindowBuffer *) buf->buf);
 		}
 		*buffer = (EGLClientBuffer) (ANativeWindowBuffer *) buf->buf;
-		*target = EGL_NATIVE_BUFFER_ANDROID;		
-	}	
+		*target = EGL_NATIVE_BUFFER_ANDROID;
+	}
 #endif
 }
 
-extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProcAddress(const char *procname) 
+extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProcAddress(const char *procname)
 {
 #ifdef WANT_WAYLAND
 	if (strcmp(procname, "eglBindWaylandDisplayWL") == 0)
 	{
-		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglBindWaylandDisplayWL;	
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglBindWaylandDisplayWL;
 	}
 	else
 	if (strcmp(procname, "eglUnbindWaylandDisplayWL") == 0)
@@ -143,7 +209,27 @@ extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProc
 	{
 		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglQueryWaylandBufferWL;
 	}
+	else
 #endif
+	if (strcmp(procname, "eglHybrisCreateNativeBuffer") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisCreateNativeBuffer;
+	}
+	else
+	if (strcmp(procname, "eglHybrisLockNativeBuffer") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisLockNativeBuffer;
+	}
+	else
+	if (strcmp(procname, "eglHybrisUnlockNativeBuffer") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisUnlockNativeBuffer;
+	}
+	else
+	if (strcmp(procname, "eglHybrisReleaseNativeBuffer") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisReleaseNativeBuffer;
+	}
 	return NULL;
 }
 
@@ -155,7 +241,13 @@ extern "C" const char *eglplatformcommon_eglQueryString(EGLDisplay dpy, EGLint n
 		const char *ret = (*real_eglQueryString)(dpy, name);
 		static char eglextensionsbuf[512];
 		assert(ret != NULL);
-		snprintf(eglextensionsbuf, 510, "%sEGL_WL_bind_wayland_display ", ret);
+		snprintf(eglextensionsbuf, 510, "%sEGL_HYBRIS_native_buffer %s", ret,
+#ifdef WANT_WAYLAND
+			"EGL_WL_bind_wayland_display "
+#else
+			""
+#endif
+		);
 		ret = eglextensionsbuf;
 		return ret;
 	}
