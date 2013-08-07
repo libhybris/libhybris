@@ -88,6 +88,12 @@ AC_ARG_ENABLE(arch,
 AM_CONDITIONAL([WANT_ARCH_ARM], [test x$arch = xarm])
 AM_CONDITIONAL([WANT_ARCH_X86], [test x$arch = xx86])
 
+DEFAULT_EGL_PLATFORM="null"
+AC_ARG_WITH(default-egl-platform,
+  [  --with-default-egl-platform=NAME     Use NAME as default EGL platform if not specified by environment ],
+  [ DEFAULT_EGL_PLATFORM="$withval" ],
+  [ ])
+AC_SUBST(DEFAULT_EGL_PLATFORM)
 
 android_headers_path=""
 AC_ARG_WITH(android-headers,
@@ -186,8 +192,10 @@ echo
 echo "  prefix..................: $prefix"
 echo
 echo "  arch  ..................: $arch"
-echo 
+echo
 echo "  headers path ...........: $android_headers_path"
+echo
+echo "  default egl platform ...: $DEFAULT_EGL_PLATFORM"
 echo
 echo "------------------------------------------------------------------------"
 echo
