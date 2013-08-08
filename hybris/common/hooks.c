@@ -19,7 +19,6 @@
 
 #include <hybris/internal/floating_point_abi.h>
 
-#include "properties.h"
 #include "hooks_shm.h"
 
 #define _GNU_SOURCE
@@ -47,6 +46,8 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <locale.h>
+
+#include <hybris/properties/properties.h>
 
 static locale_t hybris_locale;
 static int locale_inited = 0;

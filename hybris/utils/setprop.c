@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012 Carsten Munk <carsten.munk@gmail.com>
+ * Copyright (c) 2008 The Android Open Source Project
+ *               2013 Canonical Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +16,20 @@
  *
  */
 
-#ifndef PROPERTIES_H_
-#define PROPERTIES_H_
+#include <stdio.h>
+#include <hybris/properties/properties.h>
 
-int property_set(const char *key, const char *value);
-int property_get(const char *key, char *value, const char *default_value);
+int main(int argc, char *argv[])
+{
+	if (argc != 3) {
+		fprintf(stderr, "usage: setprop <key> <value>\n");
+		return 1;
+	}
 
-#endif
+	if (property_set(argv[1], argv[2])){
+		fprintf(stderr, "could not set property\n");
+		return 1;
+	}
 
-// vim:ts=4:sw=4:noexpandtab
+	return 0;
+}
