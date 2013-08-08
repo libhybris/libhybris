@@ -410,6 +410,7 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 	if (newtarget == EGL_NATIVE_BUFFER_ANDROID)
 	{
 		assert(((struct ANativeWindowBuffer *) newbuffer)->common.magic == ANDROID_NATIVE_BUFFER_MAGIC);
+		attrib_list=NULL;
 	}
 
 	EGLImageKHR ret = (*_eglCreateImageKHR)(dpy, EGL_NO_CONTEXT, newtarget, newbuffer, attrib_list);
