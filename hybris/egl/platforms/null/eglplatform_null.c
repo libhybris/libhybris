@@ -38,6 +38,11 @@ static EGLNativeWindowType nullws_CreateWindow(EGLNativeWindowType win, EGLNativ
 		return win;
 }
 
+static void nullws_DestroyWindow(EGLNativeWindowType win)
+{
+	// TODO: Cleanup?
+}
+
 static __eglMustCastToProperFunctionPointerType nullws_eglGetProcAddress(const char *procname) 
 {
 	return NULL;
@@ -54,10 +59,11 @@ const char *nullws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*rea
 
 
 struct ws_module ws_module_info = {
-	.IsValidDisplay = nullws_IsValidDisplay,
-	.CreateWindow = nullws_CreateWindow,
-	.eglGetProcAddress = nullws_eglGetProcAddress,
-	.passthroughImageKHR = nullws_passthroughImageKHR,
-	.eglQueryString = nullws_eglQueryString
+	nullws_IsValidDisplay,
+	nullws_CreateWindow,
+	nullws_DestroyWindow,
+	nullws_eglGetProcAddress,
+	nullws_passthroughImageKHR,
+	nullws_eglQueryString
 };
 
