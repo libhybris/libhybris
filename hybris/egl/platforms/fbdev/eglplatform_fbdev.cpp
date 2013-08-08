@@ -17,7 +17,7 @@ static int inited = 0;
 static gralloc_module_t *gralloc = 0;
 static framebuffer_device_t *framebuffer = 0;
 static alloc_device_t *alloc = 0;
-static int windowcreated = 0;
+static FbDevNativeWindow *_nativewindow = NULL;
 
 extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 {
@@ -52,9 +52,19 @@ extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
 {
 	assert (inited == 1);
-	assert (windowcreated == 0);
-	windowcreated = 1;
-	return (EGLNativeWindowType) static_cast<struct ANativeWindow *> (new FbDevNativeWindow(gralloc, alloc, framebuffer));
+	assert (_nativewindow == NULL);
+
+	_nativewindow = new FbDevNativeWindow(gralloc, alloc, framebuffer);
+	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(_nativewindow);
+}
+
+extern "C" void fbdevws_DestroyWindow(EGLNativeWindowType win)
+{
+	assert (_nativewindow != NULL);
+	assert (static_cast<FbDevNativeWindow *>((struct ANativeWindow *)win) == _nativewindow);
+
+	delete _nativewindow;
+	_nativewindow = NULL;
 }
 
 extern "C" __eglMustCastToProperFunctionPointerType fbdevws_eglGetProcAddress(const char *procname) 
@@ -70,6 +80,7 @@ extern "C" void fbdevws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *bu
 struct ws_module ws_module_info = {
 	fbdevws_IsValidDisplay,
 	fbdevws_CreateWindow,
+	fbdevws_DestroyWindow,
 	fbdevws_eglGetProcAddress,
 	fbdevws_passthroughImageKHR,
 	eglplatformcommon_eglQueryString

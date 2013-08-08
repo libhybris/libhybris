@@ -66,6 +66,12 @@ EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayTyp
 	return ws->CreateWindow(win, display);
 }
 
+void ws_DestroyWindow(EGLNativeWindowType win)
+{
+	_init_ws();
+	return ws->DestroyWindow(win);
+}
+
 __eglMustCastToProperFunctionPointerType ws_eglGetProcAddress(const char *procname)
 {
 	_init_ws();
