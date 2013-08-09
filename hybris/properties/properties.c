@@ -64,6 +64,10 @@ static char *find_key(const char *key)
 		if (!value)
 			continue;
 
+		/* Skip values that can be bigger than value max */
+		if (strlen(value) >= PROP_VALUE_MAX -1)
+			continue;
+
 		if (strcmp(key, mkey) == 0) {
 			fclose(f);
 			return strdup(value);
@@ -112,10 +116,14 @@ static char *find_key_kernel_cmdline(const char *key)
 		*value++ = 0;
 		if (name_len == 0) continue;
 
+		/* Skip values that can be bigger than value max */
+		if (strlen(value) >= PROP_VALUE_MAX -1)
+			continue;
+
 		if (!strncmp(name, "androidboot.", 12) && name_len > 12) {
 			const char *boot_prop_name = name + 12;
 			char prop[PROP_NAME_MAX];
-			snprintf(prop, sizeof(prop), "ro.%s", boot_prop_name);
+			snprintf(prop, sizeof(prop) -1, "ro.%s", boot_prop_name);
 			if (strcmp(prop, key) == 0)
 				return strdup(value);
 		}
@@ -211,7 +219,6 @@ int property_list(void (*propfn)(const char *key, const char *value, void *cooki
 static int property_get_socket(const char *key, char *value, const char *default_value)
 {
 	int err;
-	int len;
 	prop_msg_t msg;
 
 	memset(&msg, 0, sizeof(msg));
@@ -226,12 +233,11 @@ static int property_get_socket(const char *key, char *value, const char *default
 
 	/* In case it's null, just use the default */
 	if ((strlen(msg.value) == 0) && (default_value)) {
-		if (strlen(default_value) >= PROP_VALUE_MAX) return -1;
-		len = strlen(default_value);
-		memcpy(msg.value, default_value, len + 1);
+		if (strlen(default_value) >= PROP_VALUE_MAX -1)	return -1;
+		strcpy(msg.value, default_value);
 	}
 
-	strncpy(value, msg.value, sizeof(msg.value));
+	strcpy(value, msg.value);
 
 	return 0;
 }
@@ -240,14 +246,11 @@ int property_get(const char *key, char *value, const char *default_value)
 {
 	char *ret = NULL;
 
-	if ((key) && (strlen(key) >= PROP_NAME_MAX)) return -1;
+	if ((key) && (strlen(key) >= PROP_NAME_MAX -1)) return -1;
+	if (value == NULL) return -1;
 
-	if (property_get_socket(key, value, default_value) == 0) {
-		if (value)
-			return strlen(value);
-		else
-			return 0;
-	}
+	if (property_get_socket(key, value, default_value) == 0)
+		return strlen(value);
 
 	/* In case the socket is not available, parse the file by hand */
 	if ((ret = find_key(key)) == NULL) {
@@ -276,8 +279,8 @@ int property_set(const char *key, const char *value)
 
 	if (key == 0) return -1;
 	if (value == 0) value = "";
-	if (strlen(key) >= PROP_NAME_MAX) return -1;
-	if (strlen(value) >= PROP_VALUE_MAX) return -1;
+	if (strlen(key) >= PROP_NAME_MAX -1) return -1;
+	if (strlen(value) >= PROP_VALUE_MAX -1) return -1;
 
 	memset(&msg, 0, sizeof(msg));
 	msg.cmd = PROP_MSG_SETPROP;
