@@ -43,7 +43,7 @@ extern "C" int hwcomposerws_IsValidDisplay(EGLNativeDisplayType display)
 		printf("** gralloc_open %p status=%s\n", gralloc, strerror(-err));
 
 		framebuffer_close(framebuffer);
-		eglplatformcommon_init(gralloc);
+		eglplatformcommon_init(gralloc, alloc);
 	}
 
 	return display == EGL_DEFAULT_DISPLAY;

@@ -18,7 +18,9 @@
 #include <EGL/egl.h>
 #include <assert.h>
 #include <stdio.h>
-
+#include "hybris_nativebufferext.h"
+#include <string.h>
+#include <EGL/eglext.h>
 int main(int argc, char **argv)
 {
 	EGLDisplay display;
@@ -38,6 +40,11 @@ int main(int argc, char **argv)
 	EGLContext context;
 
 	EGLBoolean rv;
+	PFNEGLHYBRISCREATENATIVEBUFFERPROC eglHybrisCreateNativeBuffer;
+	PFNEGLHYBRISLOCKNATIVEBUFFERPROC eglHybrisLockNativeBuffer;
+	PFNEGLHYBRISUNLOCKNATIVEBUFFERPROC eglHybrisUnlockNativeBuffer;
+	PFNEGLHYBRISRELEASENATIVEBUFFERPROC eglHybrisReleaseNativeBuffer;
+	PFNEGLCREATEIMAGEKHRPROC eglCreateImageKHR;
 
 	display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 	assert(eglGetError() == EGL_SUCCESS);
@@ -60,18 +67,44 @@ int main(int argc, char **argv)
 	assert(context != EGL_NO_CONTEXT);
 
 	assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
+
+	if (strstr(eglQueryString(display, EGL_EXTENSIONS), "EGL_HYBRIS_native_buffer") != NULL)
+	{
+		printf("Found EGL_HYBRIS_native_buffer\n");
+		assert((eglHybrisCreateNativeBuffer = (PFNEGLHYBRISCREATENATIVEBUFFERPROC) eglGetProcAddress("eglHybrisCreateNativeBuffer")) != NULL);
+		printf("Found eglHybrisCreateNativeBuffer\n");
+		EGLClientBuffer buf;
+		EGLint stride;
+		void *loc;
+		assert(eglHybrisCreateNativeBuffer(320, 480, HYBRIS_USAGE_SW_READ_RARELY|HYBRIS_USAGE_SW_WRITE_RARELY|HYBRIS_USAGE_HW_TEXTURE, HYBRIS_PIXEL_FORMAT_RGBA_8888, &stride, &buf) == EGL_TRUE);
+		printf("Stride is %i\n", stride);
+		assert((eglHybrisLockNativeBuffer = (PFNEGLHYBRISLOCKNATIVEBUFFERPROC) eglGetProcAddress("eglHybrisLockNativeBuffer")) != NULL);
+		printf("Found eglHybrisLockBuffer\n");
+		assert(eglHybrisLockNativeBuffer(buf, HYBRIS_USAGE_SW_WRITE_RARELY, 0, 0, 320, 480, &loc) == EGL_TRUE);
+		printf("locked at %p\n", loc);
+		printf("Memsetting..\n");
+		memset(loc, 0xEF, (stride*480));
+		assert((eglHybrisUnlockNativeBuffer = (PFNEGLHYBRISUNLOCKNATIVEBUFFERPROC) eglGetProcAddress("eglHybrisUnlockNativeBuffer")) != NULL);
+		printf("Found eglHybrisUnlockBuffer\n");
+		eglHybrisUnlockNativeBuffer(buf);
+		assert((eglCreateImageKHR = (PFNEGLCREATEIMAGEKHRPROC) eglGetProcAddress("eglCreateImageKHR")) != NULL);
+		printf("Found eglCreateImageKHR\n");
+		assert(eglCreateImageKHR(
+					display, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_HYBRIS,
+					(EGLClientBuffer)buf, NULL) != EGL_NO_IMAGE_KHR);
+		assert((eglHybrisReleaseNativeBuffer = (PFNEGLHYBRISRELEASENATIVEBUFFERPROC) eglGetProcAddress("eglHybrisReleaseNativeBuffer")) != NULL);
+		printf("Found eglHybrisReleaseNativeBuffer\n");
+		eglHybrisReleaseNativeBuffer(buf);
+	}
+
 	printf("stop\n");
 
-#if 0
-(*egldestroycontext)((EGLDisplay) display, context);
-    printf("destroyed context\n");
+	eglDestroyContext((EGLDisplay) display, context);
+	printf("destroyed context\n");
 
-    (*egldestroysurface)((EGLDisplay) display, surface);
-    printf("destroyed surface\n");
-    (*eglterminate)((EGLDisplay) display);
-    printf("terminated\n");
-    android_dlclose(baz);
-#endif
+	eglDestroySurface((EGLDisplay) display, surface);
+	printf("destroyed surface\n");
+	eglTerminate((EGLDisplay) display);
 	return 0;
 }
 

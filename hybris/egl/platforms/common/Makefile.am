@@ -4,7 +4,8 @@ lib_LTLIBRARIES = \
 libhybris_eglplatformcommon_la_SOURCES = \
 	native_handle.c \
 	nativewindowbase.cpp \
-	eglplatformcommon.cpp
+	eglplatformcommon.cpp \
+	windowbuffer.cpp
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = hybris-egl-platform.pc
