@@ -607,6 +607,8 @@ static int _open_lib(const char *name)
     return -1;
 }
 
+static void parse_library_path(const char *path, char *delim);
+
 static int open_library(const char *name)
 {
     int fd;
@@ -621,6 +623,11 @@ static int open_library(const char *name)
 
     if ((name[0] == '/') && ((fd = _open_lib(name)) >= 0))
         return fd;
+
+    if (getenv("HYBRIS_LD_LIBRARY_PATH") != NULL && *ldpaths == 0)
+    {
+        parse_library_path(getenv("HYBRIS_LD_LIBRARY_PATH"), ":");
+    }
 
     for (path = ldpaths; *path; path++) {
         n = format_buffer(buf, sizeof(buf), "%s/%s", *path, name);
