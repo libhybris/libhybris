@@ -448,6 +448,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
     wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
     wl_surface_commit(m_window->surface);
+    wl_display_flush(m_display);
     //--m_freeBufs;
     //pthread_cond_signal(&cond);
     fronted.push_back(wnb);
