@@ -435,9 +435,9 @@ int main(int argc, char *argv[])
   fprintf(stdout, "*** setting positioning mode\n");
   /* need to be done before starting gps or no info will come out */
   if((agps||agpsril) && !initok)
-	Gps->set_position_mode(GPS_POSITION_MODE_MS_BASED, GPS_POSITION_RECURRENCE_PERIODIC, 100, 5, 1000);
+	Gps->set_position_mode(GPS_POSITION_MODE_MS_BASED, GPS_POSITION_RECURRENCE_PERIODIC, 1000, 0, 0);
   else
-	Gps->set_position_mode(GPS_POSITION_MODE_STANDALONE, GPS_POSITION_RECURRENCE_PERIODIC, 100, 5, 1000);
+	Gps->set_position_mode(GPS_POSITION_MODE_STANDALONE, GPS_POSITION_RECURRENCE_PERIODIC, 1000, 0, 0);
 
   if (Gps && !initok && (agps||agpsril))
   {
