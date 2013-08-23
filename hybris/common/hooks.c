@@ -1318,6 +1318,7 @@ static struct _hook hooks[] = {
     {"pthread_cond_wait", my_pthread_cond_wait},
     {"pthread_cond_timedwait", my_pthread_cond_timedwait},
     {"pthread_cond_timedwait_monotonic", my_pthread_cond_timedwait},
+    {"pthread_cond_timedwait_monotonic_np", my_pthread_cond_timedwait},
     {"pthread_cond_timedwait_relative_np", my_pthread_cond_timedwait_relative_np},
     {"pthread_key_delete", pthread_key_delete},
     {"pthread_setname_np", pthread_setname_np},

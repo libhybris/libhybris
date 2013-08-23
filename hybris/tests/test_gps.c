@@ -32,6 +32,8 @@ const AGpsInterface* AGps = NULL;
 const AGpsRilInterface* AGpsRil = NULL;
 const GpsNiInterface *GpsNi = NULL;
 const GpsXtraInterface *GpsExtra = NULL;
+const UlpNetworkInterface *UlpNetwork = NULL;
+const UlpPhoneContextInterface *UlpPhoneContext = NULL;
 
 static const GpsInterface* get_gps_interface()
 {
@@ -117,6 +119,28 @@ static const GpsXtraInterface* get_gps_extra_interface(const GpsInterface *gps)
   return interface;
 }
 
+static const UlpNetworkInterface* get_ulp_network_interface(const GpsInterface *gps)
+{
+  const UlpNetworkInterface* interface = NULL;
+
+  if (gps)
+  {
+    interface = (const UlpNetworkInterface*)gps->get_extension(ULP_NETWORK_INTERFACE);
+  }
+  return interface;
+}
+
+static const UlpPhoneContextInterface* get_ulp_phone_context_interface(const GpsInterface *gps)
+{
+  const UlpPhoneContextInterface* interface = NULL;
+
+  if (gps)
+  {
+    interface = (const UlpPhoneContextInterface*)gps->get_extension(ULP_PHONE_CONTEXT_INTERFACE);
+  }
+  return interface;
+}
+
 static void location_callback(GpsLocation* location)
 {
   fprintf(stdout, "*** location callback\n");
@@ -195,14 +219,40 @@ static void release_wakelock_callback()
   /* do nothing */
 }
 
+struct ThreadWrapperContext {
+    void (*func)(void *);
+    void *user_data;
+};
+
+static void *thread_wrapper_context_main_func(void *user_data)
+{
+  struct ThreadWrapperContext *ctx = (struct ThreadWrapperContext *)user_data;
+
+  fprintf(stderr, " **** Thread wrapper start (start=%p, arg=%p) ****\n",
+          ctx->func, ctx->user_data);
+  ctx->func(ctx->user_data);
+  fprintf(stderr, " **** Thread wrapper end (start=%p, arg=%p) ****\n",
+          ctx->func, ctx->user_data);
+
+  free(ctx);
+
+  return NULL;
+}
+
 static pthread_t create_thread_callback(const char* name, void (*start)(void *), void* arg)
 {
   pthread_t thread_id;
-  pthread_attr_t attr;
   int error = 0;
 
-  error = pthread_attr_init(&attr);
-  error = pthread_create(&thread_id, &attr, (void*(*)(void*))start, arg);
+  /* Wrap thread function, so we can return void * to pthread and log start/end of thread */
+  struct ThreadWrapperContext *ctx = calloc(1, sizeof(struct ThreadWrapperContext));
+  ctx->func = start;
+  ctx->user_data = arg;
+
+  fprintf(stderr, " ** Creating thread: '%s' (start=%p, arg=%p)\n", name, start, arg);
+  /* Do not use a pthread_attr_t (we'd have to take care of bionic/glibc differences) */
+  error = pthread_create(&thread_id, NULL, thread_wrapper_context_main_func, ctx);
+  fprintf(stderr, " ** After thread_create: '%s', error=%d (start=%p, arg=%p)\n", name, error, start, arg);
 
   if(error != 0)
 	return 0;
@@ -217,11 +267,11 @@ static void agps_handle_status_callback(AGpsStatus *status)
   {
     case GPS_REQUEST_AGPS_DATA_CONN:
 	fprintf(stdout, "*** data_conn_open\n");
-	AGps->data_conn_open("internet");
+	AGps->data_conn_open(AGPS_TYPE_ANY, "internet", AGPS_APN_BEARER_IPV4V6);
 	break;
     case GPS_RELEASE_AGPS_DATA_CONN:
 	fprintf(stdout, "*** data_conn_closed\n");
-	AGps->data_conn_closed();
+	AGps->data_conn_closed(AGPS_TYPE_ANY);
 	break;
   }
 }
@@ -249,6 +299,31 @@ static void ni_notify_callback (GpsNiNotification *notification)
 static void download_xtra_request_callback (void)
 {
   fprintf(stdout, "*** xtra download request to client\n");
+}
+
+static void ulp_network_location_request_callback(UlpNetworkRequestPos *req)
+{
+  fprintf(stdout, "*** ulp network location request (request_type=%#x, interval_ms=%d, desired_position_source=%#x)\n",
+          req->request_type, req->interval_ms, req->desired_position_source);
+}
+
+static void ulp_request_phone_context_callback(UlpPhoneContextRequest *req)
+{
+  fprintf(stdout, "*** ulp phone context request (context_type=%#x, request_type=%#x, interval_ms=%d)\n",
+          req->context_type, req->request_type, req->interval_ms);
+
+  if (UlpPhoneContext) {
+      fprintf(stdout, "*** sending ulp phone context reply\n");
+      UlpPhoneContextSettings settings;
+      settings.context_type = req->context_type;
+      settings.is_gps_enabled = 1;
+      settings.is_agps_enabled = 1;
+      settings.is_network_position_available = 1;
+      settings.is_wifi_setting_enabled = 1;
+      settings.is_battery_charging = 0;
+      settings.is_enh_location_services_enabled = 1;
+      UlpPhoneContext->ulp_phone_context_settings_update(&settings);
+  }
 }
 
 GpsCallbacks callbacks = {
@@ -283,6 +358,16 @@ GpsXtraCallbacks callbacks5 = {
   download_xtra_request_callback,
   create_thread_callback,
 };
+
+UlpNetworkLocationCallbacks callbacks6 = {
+  ulp_network_location_request_callback,
+};
+
+UlpPhoneContextCallbacks callbacks7 = {
+  ulp_request_phone_context_callback,
+};
+
+
 
 void sigint_handler(int signum)
 {
@@ -350,9 +435,9 @@ int main(int argc, char *argv[])
   fprintf(stdout, "*** setting positioning mode\n");
   /* need to be done before starting gps or no info will come out */
   if((agps||agpsril) && !initok)
-	Gps->set_position_mode(GPS_POSITION_MODE_MS_BASED, GPS_POSITION_RECURRENCE_PERIODIC, 100, 5, 1000);
+	Gps->set_position_mode(GPS_POSITION_MODE_MS_BASED, GPS_POSITION_RECURRENCE_PERIODIC, 1000, 0, 0);
   else
-	Gps->set_position_mode(GPS_POSITION_MODE_STANDALONE, GPS_POSITION_RECURRENCE_PERIODIC, 100, 5, 1000);
+	Gps->set_position_mode(GPS_POSITION_MODE_STANDALONE, GPS_POSITION_RECURRENCE_PERIODIC, 1000, 0, 0);
 
   if (Gps && !initok && (agps||agpsril))
   {
@@ -365,7 +450,7 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "*** set up agps server\n");
 	AGps->set_server(AGPS_TYPE_SUPL, "supl.google.com", 7276);
 	fprintf(stdout, "*** Trying to open connection\n");
-	AGps->data_conn_open("internet");
+	AGps->data_conn_open(AGPS_TYPE_ANY, "internet", AGPS_APN_BEARER_IPV4V6);
     }
 
     fprintf(stdout, "*** get agps ril interface\n");
@@ -397,6 +482,21 @@ int main(int argc, char *argv[])
     {
       GpsNi->init(&callbacks4);
     }
+  }
+
+  UlpNetwork = get_ulp_network_interface(Gps);
+  if (UlpNetwork) {
+    fprintf(stdout, "*** got ulp network interface\n");
+    if (UlpNetwork->init(&callbacks6) != 0) {
+      fprintf(stdout, "*** FAILED to init ulp network interface\n");
+      UlpNetwork = NULL;
+    }
+  }
+
+  UlpPhoneContext = get_ulp_phone_context_interface(Gps);
+  if (UlpPhoneContext) {
+    fprintf(stdout, "*** got ulp phone context interface\n");
+    UlpPhoneContext->init(&callbacks7);
   }
 
   if(injecttime)
