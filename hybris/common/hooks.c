@@ -1186,6 +1186,8 @@ long my_sysconf(int name)
     return sysconf(_SC_PAGE_SIZE);
   case 0x60:
     return sysconf(_SC_NPROCESSORS_CONF);
+  case 0x61:
+    return sysconf(_SC_NPROCESSORS_ONLN);
   default:
     break;
   }
