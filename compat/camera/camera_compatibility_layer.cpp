@@ -28,6 +28,7 @@
 #include <camera/Camera.h>
 #include <camera/CameraParameters.h>
 #include <gui/SurfaceTexture.h>
+#include <ui/GraphicBuffer.h>
 
 #undef LOG_TAG
 #define LOG_TAG "CameraCompatibilityLayer"
@@ -108,6 +109,32 @@ void CameraControl::postDataTimestamp(
 	(void) timestamp;
 	(void) msg_type;
 	(void) data;
+}
+
+namespace android
+{
+NativeBufferAlloc::NativeBufferAlloc() {
+}
+
+NativeBufferAlloc::~NativeBufferAlloc() {
+}
+
+sp<GraphicBuffer> NativeBufferAlloc::createGraphicBuffer(uint32_t w, uint32_t h,
+		PixelFormat format, uint32_t usage, status_t* error) {
+	sp<GraphicBuffer> graphicBuffer(new GraphicBuffer(w, h, format, usage));
+	status_t err = graphicBuffer->initCheck();
+	*error = err;
+	if (err != 0 || graphicBuffer->handle == 0) {
+		if (err == NO_MEMORY) {
+			GraphicBuffer::dumpAllocationsToSystemLog();
+		}
+		ALOGI("GraphicBufferAlloc::createGraphicBuffer(w=%d, h=%d) "
+				"failed (%s), handle=%p",
+				w, h, strerror(-err), graphicBuffer->handle);
+		return 0;
+	}
+	return graphicBuffer;
+}
 }
 
 namespace
@@ -485,11 +512,22 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 
 	static const bool allow_synchronous_mode = false;
 
+	android::sp<android::NativeBufferAlloc> native_alloc(
+			new android::NativeBufferAlloc()
+			);
+
+	android::sp<android::BufferQueue> buffer_queue(
+			new android::BufferQueue(false, NULL, native_alloc)
+			);
+
 	if (control->preview_texture == NULL) {
 		control->preview_texture = android::sp<android::SurfaceTexture>(
 				new android::SurfaceTexture(
 					texture_id,
-					allow_synchronous_mode));
+					allow_synchronous_mode,
+					GL_TEXTURE_EXTERNAL_OES,
+					true,
+					buffer_queue));
 	}
 
 	control->preview_texture->setFrameAvailableListener(
