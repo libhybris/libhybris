@@ -482,23 +482,23 @@ int main(int argc, char *argv[])
     {
       GpsNi->init(&callbacks4);
     }
-  }
 
-  UlpNetwork = get_ulp_network_interface(Gps);
-  if (UlpNetwork) {
-    fprintf(stdout, "*** got ulp network interface\n");
-    if (UlpNetwork->init(&callbacks6) != 0) {
-      fprintf(stdout, "*** FAILED to init ulp network interface\n");
-      UlpNetwork = NULL;
+    UlpNetwork = get_ulp_network_interface(Gps);
+    if (UlpNetwork) {
+      fprintf(stdout, "*** got ulp network interface\n");
+      if (UlpNetwork->init(&callbacks6) != 0) {
+        fprintf(stdout, "*** FAILED to init ulp network interface\n");
+        UlpNetwork = NULL;
+      }
     }
-  }
 
-  UlpPhoneContext = get_ulp_phone_context_interface(Gps);
-  if (UlpPhoneContext) {
-    fprintf(stdout, "*** got ulp phone context interface\n");
-    UlpPhoneContext->init(&callbacks7);
-  }
+    UlpPhoneContext = get_ulp_phone_context_interface(Gps);
+    if (UlpPhoneContext) {
+      fprintf(stdout, "*** got ulp phone context interface\n");
+      UlpPhoneContext->init(&callbacks7);
+    }
 
+  }
   if(injecttime)
   {
     fprintf(stdout, "*** aiding gps by injecting time information\n");
