@@ -385,32 +385,39 @@ int main(int argc, char *argv[])
   int sleeptime = 6000, opt, initok = 0;
   int coldstart = 0, extra = 0;
   struct timeval tv;
-  int agps = 0, agpsril = 0, injecttime = 0;
+  int agps = 0, agpsril = 0, injecttime = 0, injectlocation = 0;
+  char *location = 0, *longitude, *latitude;
+  float accuracy = 100; /* Use 100m as location accuracy by default */
 
-  while ((opt = getopt(argc, argv, "acrtx")) != -1)
+  while ((opt = getopt(argc, argv, "acl:rtx")) != -1)
   {
-               switch (opt) {
-               case 'a':
+	switch (opt) {
+		case 'a':
 		   agps = 1;
 		   fprintf(stdout, "*** Using agps\n");
                    break;
-	       case 'c':
+		case 'c':
 		   coldstart = 1;
 		   fprintf(stdout, "*** Using cold start\n");
 		   break;
-               case 'r':
+		case 'l':
+		   injectlocation = 1;
+		   location = optarg;
+		   fprintf(stdout, "*** Location info %s will be injected\n", location);
+                   break;
+		case 'r':
 		   agpsril = 1;
 		   fprintf(stdout, "*** Using agpsril\n");
                    break;
-	       case 't':
+		case 't':
 		   injecttime = 1;
 		   fprintf(stdout, "*** Timing info will be injected\n");
                    break;
-               case 'x':
+		case 'x':
                    extra = 1;
                    fprintf(stdout, "*** Allowing for Xtra downloads\n");
                    break;
-               default:
+		default:
                    fprintf(stderr, "\n Usage: %s \n \
 			   \t-a for agps,\n \
 			   \t-c for coldstarting the gps,\n \
@@ -504,6 +511,15 @@ int main(int argc, char *argv[])
     fprintf(stdout, "*** aiding gps by injecting time information\n");
     gettimeofday(&tv, NULL);
     Gps->inject_time(tv.tv_sec, tv.tv_sec, 0);
+  }
+
+  if(injectlocation)
+  {
+    fprintf(stdout, "*** aiding gps by injecting location information\n");
+    //Gps->inject_location(double latitude, double longitude, float accuracy);
+    latitude = strtok(location, ",");
+    longitude = strtok(NULL, ",");
+    Gps->inject_location(strtod(latitude, NULL), strtod(longitude, NULL), accuracy);
   }
 
   fprintf(stdout, "*** start gps track\n");
