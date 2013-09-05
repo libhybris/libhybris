@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
 
 FILE *hybris_logging_target = NULL;
 
@@ -77,3 +78,8 @@ hybris_set_log_level(enum hybris_log_level level)
     hybris_minimum_log_level = level;
 }
 
+void *
+hybris_get_thread_id()
+{
+    return (void *)pthread_self();
+}
