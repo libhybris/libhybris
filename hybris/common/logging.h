@@ -58,6 +58,9 @@ hybris_should_log(enum hybris_log_level level);
 void
 hybris_set_log_level(enum hybris_log_level level);
 
+void *
+hybris_get_thread_id();
+
 #ifdef __cplusplus
 }
 #endif
@@ -67,7 +70,8 @@ extern FILE *hybris_logging_target;
 #if defined(DEBUG)
 #    define HYBRIS_LOG_(level, module, message, ...) do { \
           if (hybris_should_log(level)) { \
-              fprintf(hybris_logging_target, "%s %s:%d (%s) %s: " message "\n", \
+              fprintf(hybris_logging_target, "<%p> [%s] %s:%d (%s) %s: " message "\n", \
+                      hybris_get_thread_id(), \
                       module, __FILE__, __LINE__, __PRETTY_FUNCTION__, \
                       #level + 11 /* + 11 = strip leading "HYBRIS_LOG_" */, \
                       ##__VA_ARGS__); \
