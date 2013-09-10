@@ -267,11 +267,11 @@ static void agps_handle_status_callback(AGpsStatus *status)
   {
     case GPS_REQUEST_AGPS_DATA_CONN:
 	fprintf(stdout, "*** data_conn_open\n");
-	AGps->data_conn_open(AGPS_TYPE_ANY, "internet", AGPS_APN_BEARER_IPV4V6);
+	AGps->data_conn_open("internet");
 	break;
     case GPS_RELEASE_AGPS_DATA_CONN:
 	fprintf(stdout, "*** data_conn_closed\n");
-	AGps->data_conn_closed(AGPS_TYPE_ANY);
+	AGps->data_conn_closed();
 	break;
   }
 }
@@ -450,7 +450,7 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "*** set up agps server\n");
 	AGps->set_server(AGPS_TYPE_SUPL, "supl.google.com", 7276);
 	fprintf(stdout, "*** Trying to open connection\n");
-	AGps->data_conn_open(AGPS_TYPE_ANY, "internet", AGPS_APN_BEARER_IPV4V6);
+	AGps->data_conn_open("internet");
     }
 
     fprintf(stdout, "*** get agps ril interface\n");
