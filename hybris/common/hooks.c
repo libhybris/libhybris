@@ -1440,6 +1440,8 @@ static struct _hook hooks[] = {
     {"timer_getoverrun", timer_getoverrun},
     {"abort", abort},
     {"writev", writev},
+    /* unistd.h */
+    {"access", access},
     /* grp.h */
     {"getgrgid", getgrgid},
     {"__cxa_atexit", __cxa_atexit},
