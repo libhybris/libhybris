@@ -18,11 +18,84 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <pthread.h>
+#include <stdlib.h>
 
 #include <hardware/hardware.h>
 #include <hardware/nfc.h>
 #include <libnfc-nxp/phLibNfc.h>
 #include <libnfc-nxp/phDal4Nfc_messageQueueLib.h>
+
+static int messageThreadRunning = 0;
+static int numberOfDiscoveredTargets = 0;
+static phLibNfc_RemoteDevList_t *discoveredTargets = 0;
+static NFCSTATUS targetStatus = 0xFFFF;
+static phLibNfc_sRemoteDevInformation_t *connectedRemoteDevInfo = 0;
+static phLibNfc_ChkNdef_Info_t ndefInfo;
+static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
+static void *messageThreadFunc(void *arg)
+{
+    int *clientId = (int *)arg;
+    messageThreadRunning = 1;
+    while (messageThreadRunning) {
+        phDal4Nfc_Message_Wrapper_t message;
+        int ret = phDal4Nfc_msgrcv(*clientId, &message,
+                                   sizeof(phLibNfc_Message_t), 0, 0);
+        if (ret == -1) {
+            fprintf(stderr, "Failed to receive message from NFC stack.\n");
+            continue;
+        }
+
+        switch (message.msg.eMsgType) {
+        case PH_LIBNFC_DEFERREDCALL_MSG: {
+            phLibNfc_DeferredCall_t *msg = (phLibNfc_DeferredCall_t *)message.msg.pMsgData;
+            if (msg->pCallback)
+                msg->pCallback(msg->pParameter);
+            break;
+        }
+        default:
+            fprintf(stderr, "Unknown message type %d.", message.msg.eMsgType);
+        }
+
+        pthread_cond_signal(&cond);
+    }
+
+    return 0;
+}
+
+static pthread_t createMessageThread(void *arg)
+{
+    pthread_t thread_id;
+    int error = 0;
+
+    fprintf(stderr, "Creating message thread\n");
+    error = pthread_create(&thread_id, NULL, messageThreadFunc, arg);
+    fprintf(stderr, "Message thread created, error=%d\n", error);
+
+    if (error != 0)
+        return 0;
+
+    return thread_id;
+}
+
+static void terminateMessageThread(int clientId)
+{
+    messageThreadRunning = 0;
+
+    phDal4Nfc_Message_Wrapper_t message;
+    phLibNfc_DeferredCall_t *msg;
+
+    msg = (phLibNfc_DeferredCall_t *)malloc(sizeof(phLibNfc_DeferredCall_t));
+    msg->pCallback = 0;
+    msg->pParameter = 0;
+    message.msg.eMsgType = PH_LIBNFC_DEFERREDCALL_MSG;
+    message.msg.pMsgData = msg;
+    message.msg.Size = sizeof(phLibNfc_DeferredCall_t);
+
+    phDal4Nfc_msgsnd(clientId, &message, sizeof(phLibNfc_Message_t), 0);
+}
 
 void initializeCallback(void *pContext, NFCSTATUS status)
 {
@@ -30,26 +103,50 @@ void initializeCallback(void *pContext, NFCSTATUS status)
     *callbackStatus = status;
 }
 
-void processMessage(unsigned int clientId)
+void discoveryNotificationCallback(void *pContext, phLibNfc_RemoteDevList_t *psRemoteDevList,
+                                   uint8_t uNofRemoteDev, NFCSTATUS status)
 {
-    phDal4Nfc_Message_Wrapper_t message;
-    int ret = phDal4Nfc_msgrcv(clientId, &message, sizeof(phLibNfc_Message_t), 0, 0);
-    if (ret == -1) {
-        printf("Failed to receive message from NFC stack.\n");
-        assert(1);
-        return;
-    }
+    fprintf(stderr, "discoveryNotificationCallback\n");
 
-    switch (message.msg.eMsgType) {
-    case PH_LIBNFC_DEFERREDCALL_MSG: {
-        phLibNfc_DeferredCall_t *msg = (phLibNfc_DeferredCall_t *)message.msg.pMsgData;
-        if (msg->pCallback)
-            msg->pCallback(msg->pParameter);
-        break;
+    if (status == NFCSTATUS_DESELECTED) {
+        fprintf(stderr, "Target deselected\n");
+    } else {
+        fprintf(stderr, "Discovered %d targets\n", uNofRemoteDev);
+
+        uint8_t i;
+        for (i = 0; i < uNofRemoteDev; ++i) {
+            fprintf(stderr, "Target[%d]\n\tType: %d\n\tSession: %d\n", i,
+                    psRemoteDevList[i].psRemoteDevInfo->RemDevType,
+                    psRemoteDevList[i].psRemoteDevInfo->SessionOpened);
+        }
+        numberOfDiscoveredTargets = uNofRemoteDev;
+        discoveredTargets = psRemoteDevList;
+        targetStatus = status;
     }
-    default:
-        printf("Unknown message type %d.\n", message.msg.eMsgType);
-    }
+}
+
+void discoveryCallback(void *pContext, NFCSTATUS status)
+{
+    fprintf(stderr, "discoveryCallback %d\n", status);
+}
+
+void remoteDevConnectCallback(void *pContext, phLibNfc_Handle hRemoteDev,
+                              phLibNfc_sRemoteDevInformation_t *psRemoteDevInfo, NFCSTATUS status)
+{
+    targetStatus = status;
+    connectedRemoteDevInfo = psRemoteDevInfo;
+}
+
+void remoteDevNdefReadCheckCallback(void *pContext, phLibNfc_ChkNdef_Info_t Ndef_Info,
+                                    NFCSTATUS status)
+{
+    ndefInfo = Ndef_Info;
+    targetStatus = status;
+}
+
+void remoteDevNdefReadCallback(void *pContext, NFCSTATUS status)
+{
+    targetStatus = status;
 }
 
 int main(int argc, char **argv)
@@ -80,13 +177,17 @@ int main(int argc, char **argv)
     assert(hwRef);
     assert(status == NFCSTATUS_SUCCESS);
 
+    pthread_t messageThread = createMessageThread(&driverConfig.nClientId);
+
     printf("Initializing NFC stack.\n");
     NFCSTATUS callbackStatus = 0xFFFF;
     status = phLibNfc_Mgt_Initialize(hwRef, initializeCallback, &callbackStatus);
     assert(status == NFCSTATUS_PENDING);
 
+    pthread_mutex_lock(&mut);
     while (callbackStatus == 0xFFFF)
-        processMessage(driverConfig.nClientId);
+        pthread_cond_wait(&cond, &mut);
+    pthread_mutex_unlock(&mut);
 
     assert(callbackStatus == NFCSTATUS_SUCCESS);
 
@@ -112,15 +213,113 @@ int main(int argc, char **argv)
            capabilities.psDevCapabilities.full_version[NXP_FULL_VERSION_LEN-2],
            capabilities.psDevCapabilities.firmware_update_info);
 
+    /* Start tag discovery */
+    phLibNfc_Registry_Info_t registryInfo;
+
+    registryInfo.MifareUL = 1;
+    registryInfo.MifareStd = 1;
+    registryInfo.ISO14443_4A = 1;
+    registryInfo.ISO14443_4B = 1;
+    registryInfo.Jewel = 1;
+    registryInfo.Felica = 1;
+    registryInfo.NFC = 1;
+    registryInfo.ISO15693 = 1;
+
+    int context;
+    status = phLibNfc_RemoteDev_NtfRegister(&registryInfo, discoveryNotificationCallback, &context);
+    assert(status == NFCSTATUS_SUCCESS);
+
+    phLibNfc_sADD_Cfg_t discoveryConfig;
+    discoveryConfig.NfcIP_Mode = phNfc_eP2P_ALL;
+    discoveryConfig.NfcIP_Target_Mode = 0x0E;
+    discoveryConfig.Duration = 300000;
+    discoveryConfig.NfcIP_Tgt_Disable = 0;
+    discoveryConfig.PollDevInfo.PollCfgInfo.EnableIso14443A = 1;
+    discoveryConfig.PollDevInfo.PollCfgInfo.EnableIso14443B = 1;
+    discoveryConfig.PollDevInfo.PollCfgInfo.EnableFelica212 = 1;
+    discoveryConfig.PollDevInfo.PollCfgInfo.EnableFelica424 = 1;
+    discoveryConfig.PollDevInfo.PollCfgInfo.EnableIso15693 = 1;
+    discoveryConfig.PollDevInfo.PollCfgInfo.EnableNfcActive = 1;
+    discoveryConfig.PollDevInfo.PollCfgInfo.DisableCardEmulation = 1;
+
+    status = phLibNfc_Mgt_ConfigureDiscovery(NFC_DISCOVERY_CONFIG, discoveryConfig,
+                                             discoveryCallback, &context);
+
+    for (;;) {
+        pthread_mutex_lock(&mut);
+        while (targetStatus == 0xFFFF)
+            pthread_cond_wait(&cond, &mut);
+        pthread_mutex_unlock(&mut);
+
+        fprintf(stderr, "Discovered %d targets\n", numberOfDiscoveredTargets);
+        if (numberOfDiscoveredTargets > 0) {
+            targetStatus = 0xFFFF;
+            status = phLibNfc_RemoteDev_Connect(discoveredTargets[0].hTargetDev,
+                    remoteDevConnectCallback, &context);
+            if (status == NFCSTATUS_PENDING) {
+                pthread_mutex_lock(&mut);
+                while (targetStatus == 0xFFFF)
+                    pthread_cond_wait(&cond, &mut);
+                pthread_mutex_unlock(&mut);
+
+                if (targetStatus == NFCSTATUS_SUCCESS) {
+                    targetStatus = 0xFFFF;
+                    status = phLibNfc_Ndef_CheckNdef(discoveredTargets[0].hTargetDev,
+                            remoteDevNdefReadCheckCallback, &context);
+
+                    pthread_mutex_lock(&mut);
+                    while (targetStatus == 0xFFFF)
+                        pthread_cond_wait(&cond, &mut);
+                    pthread_mutex_unlock(&mut);
+
+                    if (targetStatus == NFCSTATUS_SUCCESS) {
+                        phLibNfc_Data_t ndefBuffer;
+                        ndefBuffer.length = ndefInfo.MaxNdefMsgLength;
+                        ndefBuffer.buffer = malloc(ndefBuffer.length);
+
+                        targetStatus = 0xFFFF;
+                        status = phLibNfc_Ndef_Read(discoveredTargets[0].hTargetDev, &ndefBuffer,
+                                phLibNfc_Ndef_EBegin, remoteDevNdefReadCallback, &context);
+
+                        pthread_mutex_lock(&mut);
+                        while (targetStatus == 0xFFFF)
+                            pthread_cond_wait(&cond, &mut);
+                        pthread_mutex_unlock(&mut);
+
+                        if (targetStatus == NFCSTATUS_SUCCESS) {
+                            int i;
+                            fprintf(stderr, "NDEF: ");
+                            for (i = 0; i < ndefBuffer.length; ++i)
+                                fprintf(stderr, "%02x", ndefBuffer.buffer[i]);
+                            fprintf(stderr, "\n");
+                        }
+
+                        free(ndefBuffer.buffer);
+                    }
+                }
+            }
+        }
+
+        targetStatus = 0xFFFF;
+        status = phLibNfc_Mgt_ConfigureDiscovery(NFC_DISCOVERY_RESUME, discoveryConfig,
+                                                 discoveryCallback, &context);
+        assert(status == NFCSTATUS_SUCCESS || status == NFCSTATUS_PENDING);
+    }
+
     printf("Deinitializing NFC stack.\n");
     callbackStatus = 0xFFFF;
     status = phLibNfc_Mgt_DeInitialize(hwRef, initializeCallback, &callbackStatus);
     assert(status == NFCSTATUS_PENDING);
 
+    pthread_mutex_lock(&mut);
     while (callbackStatus == 0xFFFF)
-        processMessage(driverConfig.nClientId);
+        pthread_cond_wait(&cond, &mut);
+    pthread_mutex_unlock(&mut);
 
     assert(callbackStatus == NFCSTATUS_SUCCESS);
+
+    terminateMessageThread(driverConfig.nClientId);
+    pthread_join(messageThread, NULL);
 
     printf("Unconfiguring NFC driver.\n");
     status = phLibNfc_Mgt_UnConfigureDriver(hwRef);
