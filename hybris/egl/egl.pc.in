@@ -5,6 +5,6 @@ includedir=@includedir@
 
 Name: egl
 Description: libhybris EGL library
-Version: 7.10
+Version: @VERSION@
 Libs: -L${libdir} -lEGL
 Cflags: -I${includedir}
