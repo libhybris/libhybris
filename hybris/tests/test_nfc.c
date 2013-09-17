@@ -268,7 +268,9 @@ void testNfc(int readNdefMessages)
                             pthread_cond_wait(&cond, &mut);
                         pthread_mutex_unlock(&mut);
 
-                        if (targetStatus == NFCSTATUS_SUCCESS) {
+                        if (targetStatus == NFCSTATUS_SUCCESS &&
+                            (ndefInfo.NdefCardState == PHLIBNFC_NDEF_CARD_READ_WRITE ||
+                             ndefInfo.NdefCardState == PHLIBNFC_NDEF_CARD_READ_ONLY)) {
                             phLibNfc_Data_t ndefBuffer;
                             ndefBuffer.length = ndefInfo.MaxNdefMsgLength;
                             ndefBuffer.buffer = malloc(ndefBuffer.length);
