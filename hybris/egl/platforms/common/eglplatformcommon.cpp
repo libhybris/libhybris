@@ -91,7 +91,19 @@ extern "C" EGLBoolean eglplatformcommon_eglQueryWaylandBufferWL(EGLDisplay dpy,
 	ANativeWindowBuffer* anwb = (ANativeWindowBuffer *) buf->buf;
 
 	if (attribute == EGL_TEXTURE_FORMAT) {
-		*value = anwb->format;
+		switch(anwb->format) {
+		case HAL_PIXEL_FORMAT_RGB_565:
+			*value = EGL_TEXTURE_RGB;
+			break;
+		case HAL_PIXEL_FORMAT_RGBA_8888:
+			*value = EGL_TEXTURE_RGBA;
+			break;
+		case 0x3231564E: // HAL_PIXEL_FORMAT_NV12
+			*value = EGL_TEXTURE_Y_UV_WL;
+			break;
+		default:
+			*value = anwb->format;
+		}
 		return EGL_TRUE;
 	}
 	if (attribute == EGL_WIDTH) {
