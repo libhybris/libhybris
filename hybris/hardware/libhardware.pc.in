@@ -5,6 +5,7 @@ includedir=@includedir@
 
 Name: hybris-hardware
 Description: libhybris hardware library
-Version: 0.1.0
+Version: @VERSION@
+Requires: android-headers
 Libs: -L${libdir} -lhardware
 Cflags: -I${includedir}
