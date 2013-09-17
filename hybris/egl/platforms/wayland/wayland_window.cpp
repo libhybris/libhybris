@@ -117,7 +117,7 @@ static const struct wl_callback_listener frame_listener = {
 
 WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, const gralloc_module_t* gralloc, alloc_device_t* alloc_device)
 {
-    int i;
+    int wayland_ok;
     this->m_window = window;
     this->m_window->nativewindow = (void *) this;
     this->m_display = display;
@@ -134,7 +134,8 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
             this->wl_queue);
     wl_registry_add_listener(this->registry, &registry_listener, this);
 
-    assert(wayland_roundtrip(this) >= 0);
+    wayland_ok = wayland_roundtrip(this);
+    assert(wayland_ok >= 0);
     assert(this->m_android_wlegl != NULL);
 
     this->m_gralloc = gralloc;
@@ -156,7 +157,8 @@ WaylandNativeWindow::~WaylandNativeWindow()
         WaylandNativeWindowBuffer* buf=*it;
         wl_buffer_destroy(buf->wlbuffer);
         buf->wlbuffer = NULL;
-        assert(this->m_alloc->free(this->m_alloc, buf->getHandle()) == 0);
+        int successful_free = this->m_alloc->free(this->m_alloc, buf->getHandle());
+        assert(successful_free == 0);
         delete buf;
     }
 }
