@@ -5,11 +5,11 @@ bin_PROGRAMS = \
 	test_sf \
 	test_sensors \
 	test_input \
-	test_camera
+	test_camera \
+	test_gps
 
 if HAS_ANDROID_4_2_0
 bin_PROGRAMS += test_hwcomposer
-bin_PROGRAMS += test_gps
 endif
 
 if HAS_LIBNFC_NXP_HEADERS
