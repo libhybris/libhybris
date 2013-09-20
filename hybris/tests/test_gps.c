@@ -271,11 +271,19 @@ static void agps_handle_status_callback(AGpsStatus *status)
   {
     case GPS_REQUEST_AGPS_DATA_CONN:
 	fprintf(stdout, "*** data_conn_open\n");
+#ifndef HAS_ANDROID_4_2_0
 	AGps->data_conn_open(AGPS_TYPE_ANY, "internet", AGPS_APN_BEARER_IPV4V6);
+#else
+	AGps->data_conn_open("internet");
+#endif
 	break;
     case GPS_RELEASE_AGPS_DATA_CONN:
 	fprintf(stdout, "*** data_conn_closed\n");
+#ifndef HAS_ANDROID_4_2_0
 	AGps->data_conn_closed(AGPS_TYPE_ANY);
+#else
+	AGps->data_conn_closed();
+#endif
 	break;
   }
 }
@@ -463,7 +471,11 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "*** set up agps server\n");
 	AGps->set_server(AGPS_TYPE_SUPL, "supl.google.com", 7276);
 	fprintf(stdout, "*** Trying to open connection\n");
-	AGps->data_conn_open(AGPS_TYPE_ANY, "internet", AGPS_APN_BEARER_IPV4V6);
+#ifndef HAS_ANDROID_4_2_0
+        AGps->data_conn_open(AGPS_TYPE_ANY, "internet", AGPS_APN_BEARER_IPV4V6);
+#else
+        AGps->data_conn_open("internet");
+#endif
     }
 
     fprintf(stdout, "*** get agps ril interface\n");
