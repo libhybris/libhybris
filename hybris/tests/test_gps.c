@@ -32,8 +32,10 @@ const AGpsInterface* AGps = NULL;
 const AGpsRilInterface* AGpsRil = NULL;
 const GpsNiInterface *GpsNi = NULL;
 const GpsXtraInterface *GpsExtra = NULL;
+#ifdef HAVE_ULP
 const UlpNetworkInterface *UlpNetwork = NULL;
 const UlpPhoneContextInterface *UlpPhoneContext = NULL;
+#endif /* HAVE_ULP */
 
 static const GpsInterface* get_gps_interface()
 {
@@ -119,6 +121,7 @@ static const GpsXtraInterface* get_gps_extra_interface(const GpsInterface *gps)
   return interface;
 }
 
+#ifdef HAVE_ULP
 static const UlpNetworkInterface* get_ulp_network_interface(const GpsInterface *gps)
 {
   const UlpNetworkInterface* interface = NULL;
@@ -140,6 +143,7 @@ static const UlpPhoneContextInterface* get_ulp_phone_context_interface(const Gps
   }
   return interface;
 }
+#endif /* HAVE_ULP */
 
 static void location_callback(GpsLocation* location)
 {
@@ -301,6 +305,7 @@ static void download_xtra_request_callback (void)
   fprintf(stdout, "*** xtra download request to client\n");
 }
 
+#ifdef HAVE_ULP
 static void ulp_network_location_request_callback(UlpNetworkRequestPos *req)
 {
   fprintf(stdout, "*** ulp network location request (request_type=%#x, interval_ms=%d, desired_position_source=%#x)\n",
@@ -325,6 +330,7 @@ static void ulp_request_phone_context_callback(UlpPhoneContextRequest *req)
       UlpPhoneContext->ulp_phone_context_settings_update(&settings);
   }
 }
+#endif /* HAVE_ULP */
 
 GpsCallbacks callbacks = {
   sizeof(GpsCallbacks),
@@ -359,6 +365,7 @@ GpsXtraCallbacks callbacks5 = {
   create_thread_callback,
 };
 
+#ifdef HAVE_ULP
 UlpNetworkLocationCallbacks callbacks6 = {
   ulp_network_location_request_callback,
 };
@@ -366,8 +373,7 @@ UlpNetworkLocationCallbacks callbacks6 = {
 UlpPhoneContextCallbacks callbacks7 = {
   ulp_request_phone_context_callback,
 };
-
-
+#endif /* HAVE_ULP */
 
 void sigint_handler(int signum)
 {
@@ -490,6 +496,7 @@ int main(int argc, char *argv[])
       GpsNi->init(&callbacks4);
     }
 
+#ifdef HAVE_ULP
     UlpNetwork = get_ulp_network_interface(Gps);
     if (UlpNetwork) {
       fprintf(stdout, "*** got ulp network interface\n");
@@ -504,6 +511,7 @@ int main(int argc, char *argv[])
       fprintf(stdout, "*** got ulp phone context interface\n");
       UlpPhoneContext->init(&callbacks7);
     }
+#endif /* HAVE_ULP */
 
   }
   if(injecttime)
