@@ -65,14 +65,15 @@ extern "C" int waylandws_IsValidDisplay(EGLNativeDisplayType display)
 
 extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
 {
-	return (EGLNativeWindowType) *(new WaylandNativeWindow((struct wl_egl_window *) win, (struct wl_display *) display, gralloc, alloc));
+	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, (struct wl_display *) display, gralloc, alloc);
+	window->common.incRef(&window->common);
+	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }
 
 extern "C" void waylandws_DestroyWindow(EGLNativeWindowType win)
 {
-	struct wl_egl_window *eglwin = (struct wl_egl_window *) win;
-	WaylandNativeWindow *window = (WaylandNativeWindow *)(eglwin->nativewindow);
-	// TODO: Do any necessary cleanup on window, then delete it
+	WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
+	window->common.decRef(&window->common);
 }
 
 extern "C" int waylandws_post(EGLNativeWindowType win, void *buffer)
