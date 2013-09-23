@@ -57,6 +57,12 @@ class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
 	this->busy = 0;
 	this->other = NULL;
 	this->m_alloc = alloc_device;
+	int alloc_ok = this->m_alloc->alloc(this->m_alloc,
+		this->width ? this->width : 1, this->height ? this->height : 1,
+		this->format, this->usage,
+		&this->handle, &this->stride);
+	assert(alloc_ok == 0);
+
     };
     WaylandNativeWindowBuffer(ANativeWindowBuffer *other)
     {

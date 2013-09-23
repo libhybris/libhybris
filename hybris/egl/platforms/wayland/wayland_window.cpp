@@ -556,12 +556,6 @@ void WaylandNativeWindow::destroyBuffers()
 WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
 
     WaylandNativeWindowBuffer *wnb = new WaylandNativeWindowBuffer(m_alloc, m_width, m_height, m_format, m_usage);
-    int err = m_alloc->alloc(m_alloc,
-            wnb->width ? wnb->width : 1, wnb->height ? wnb->height : 1, wnb->format,
-            wnb->usage,
-            &wnb->handle,
-            &wnb->stride);
-    assert(err == 0);
     m_bufList.push_back(wnb);
     wnb->common.incRef(&wnb->common);
     ++m_freeBufs;
