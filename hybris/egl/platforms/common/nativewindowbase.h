@@ -52,7 +52,7 @@ public:
 
 protected:
 	BaseNativeWindow();
-	~BaseNativeWindow();
+	virtual ~BaseNativeWindow();
 
 	// does this require more magic?
 	unsigned int refcount;
