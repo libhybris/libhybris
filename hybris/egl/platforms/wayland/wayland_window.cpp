@@ -155,11 +155,10 @@ WaylandNativeWindow::~WaylandNativeWindow()
     for (; it != m_bufList.end(); it++)
     {
         WaylandNativeWindowBuffer* buf=*it;
-        wl_buffer_destroy(buf->wlbuffer);
+        if (buf->wlbuffer)
+            wl_buffer_destroy(buf->wlbuffer);
         buf->wlbuffer = NULL;
-        int successful_free = this->m_alloc->free(this->m_alloc, buf->getHandle());
-        assert(successful_free == 0);
-        delete buf;
+        buf->common.decRef(&buf->common);
     }
 }
 
@@ -537,12 +536,7 @@ void WaylandNativeWindow::destroyBuffer(WaylandNativeWindowBuffer* wnb)
     TRACE("wnb:%p", wnb);
 
     assert(wnb != NULL);
-    assert(wnb->busy == 0);
-
-    m_alloc->free(m_alloc, wnb->handle);
-
     wnb->common.decRef(&wnb->common);
-    assert(wnb->common.decRef==NULL);
     m_freeBufs--;
 }
 
@@ -561,13 +555,7 @@ void WaylandNativeWindow::destroyBuffers()
 
 WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
 
-    WaylandNativeWindowBuffer *wnb = new WaylandNativeWindowBuffer(m_width, m_height, m_format, m_usage);
-    int err = m_alloc->alloc(m_alloc,
-            wnb->width ? wnb->width : 1, wnb->height ? wnb->height : 1, wnb->format,
-            wnb->usage,
-            &wnb->handle,
-            &wnb->stride);
-    assert(err == 0);
+    WaylandNativeWindowBuffer *wnb = new WaylandNativeWindowBuffer(m_alloc, m_width, m_height, m_format, m_usage);
     m_bufList.push_back(wnb);
     wnb->common.incRef(&wnb->common);
     ++m_freeBufs;
