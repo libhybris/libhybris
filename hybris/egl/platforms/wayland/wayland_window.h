@@ -43,7 +43,8 @@ class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
 {
     friend class WaylandNativeWindow;
     protected:
-    WaylandNativeWindowBuffer(unsigned int width,
+    WaylandNativeWindowBuffer(alloc_device_t* alloc_device,
+                            unsigned int width,
                             unsigned int height,
                             unsigned int format,
                             unsigned int usage) {
@@ -55,6 +56,7 @@ class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
         this->wlbuffer = NULL;
 	this->busy = 0;
 	this->other = NULL;
+	this->m_alloc = alloc_device;
     };
     WaylandNativeWindowBuffer(ANativeWindowBuffer *other)
     {
@@ -67,8 +69,16 @@ class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
 	this->wlbuffer = NULL;
 	this->busy = 0;
 	this->other = other;
+	this->m_alloc = NULL;
+    }
+    ~WaylandNativeWindowBuffer()
+    {
+		if (this->m_alloc)
+			m_alloc->free(m_alloc, this->handle);
     }
     void* vaddr;
+    alloc_device_t* m_alloc;
+
     public:
     buffer_handle_t getHandle();
     struct wl_buffer *wlbuffer;
