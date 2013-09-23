@@ -32,8 +32,10 @@ const AGpsInterface* AGps = NULL;
 const AGpsRilInterface* AGpsRil = NULL;
 const GpsNiInterface *GpsNi = NULL;
 const GpsXtraInterface *GpsExtra = NULL;
+#ifdef HAVE_ULP
 const UlpNetworkInterface *UlpNetwork = NULL;
 const UlpPhoneContextInterface *UlpPhoneContext = NULL;
+#endif /* HAVE_ULP */
 
 static const GpsInterface* get_gps_interface()
 {
@@ -119,6 +121,7 @@ static const GpsXtraInterface* get_gps_extra_interface(const GpsInterface *gps)
   return interface;
 }
 
+#ifdef HAVE_ULP
 static const UlpNetworkInterface* get_ulp_network_interface(const GpsInterface *gps)
 {
   const UlpNetworkInterface* interface = NULL;
@@ -140,6 +143,7 @@ static const UlpPhoneContextInterface* get_ulp_phone_context_interface(const Gps
   }
   return interface;
 }
+#endif /* HAVE_ULP */
 
 static void location_callback(GpsLocation* location)
 {
@@ -267,11 +271,19 @@ static void agps_handle_status_callback(AGpsStatus *status)
   {
     case GPS_REQUEST_AGPS_DATA_CONN:
 	fprintf(stdout, "*** data_conn_open\n");
+#ifndef HAS_ANDROID_4_2_0
 	AGps->data_conn_open(AGPS_TYPE_ANY, "internet", AGPS_APN_BEARER_IPV4V6);
+#else
+	AGps->data_conn_open("internet");
+#endif
 	break;
     case GPS_RELEASE_AGPS_DATA_CONN:
 	fprintf(stdout, "*** data_conn_closed\n");
+#ifndef HAS_ANDROID_4_2_0
 	AGps->data_conn_closed(AGPS_TYPE_ANY);
+#else
+	AGps->data_conn_closed();
+#endif
 	break;
   }
 }
@@ -301,6 +313,7 @@ static void download_xtra_request_callback (void)
   fprintf(stdout, "*** xtra download request to client\n");
 }
 
+#ifdef HAVE_ULP
 static void ulp_network_location_request_callback(UlpNetworkRequestPos *req)
 {
   fprintf(stdout, "*** ulp network location request (request_type=%#x, interval_ms=%d, desired_position_source=%#x)\n",
@@ -325,6 +338,7 @@ static void ulp_request_phone_context_callback(UlpPhoneContextRequest *req)
       UlpPhoneContext->ulp_phone_context_settings_update(&settings);
   }
 }
+#endif /* HAVE_ULP */
 
 GpsCallbacks callbacks = {
   sizeof(GpsCallbacks),
@@ -359,6 +373,7 @@ GpsXtraCallbacks callbacks5 = {
   create_thread_callback,
 };
 
+#ifdef HAVE_ULP
 UlpNetworkLocationCallbacks callbacks6 = {
   ulp_network_location_request_callback,
 };
@@ -366,8 +381,7 @@ UlpNetworkLocationCallbacks callbacks6 = {
 UlpPhoneContextCallbacks callbacks7 = {
   ulp_request_phone_context_callback,
 };
-
-
+#endif /* HAVE_ULP */
 
 void sigint_handler(int signum)
 {
@@ -385,32 +399,39 @@ int main(int argc, char *argv[])
   int sleeptime = 6000, opt, initok = 0;
   int coldstart = 0, extra = 0;
   struct timeval tv;
-  int agps = 0, agpsril = 0, injecttime = 0;
+  int agps = 0, agpsril = 0, injecttime = 0, injectlocation = 0;
+  char *location = 0, *longitude, *latitude;
+  float accuracy = 100; /* Use 100m as location accuracy by default */
 
-  while ((opt = getopt(argc, argv, "acrtx")) != -1)
+  while ((opt = getopt(argc, argv, "acl:rtx")) != -1)
   {
-               switch (opt) {
-               case 'a':
+	switch (opt) {
+		case 'a':
 		   agps = 1;
 		   fprintf(stdout, "*** Using agps\n");
                    break;
-	       case 'c':
+		case 'c':
 		   coldstart = 1;
 		   fprintf(stdout, "*** Using cold start\n");
 		   break;
-               case 'r':
+		case 'l':
+		   injectlocation = 1;
+		   location = optarg;
+		   fprintf(stdout, "*** Location info %s will be injected\n", location);
+                   break;
+		case 'r':
 		   agpsril = 1;
 		   fprintf(stdout, "*** Using agpsril\n");
                    break;
-	       case 't':
+		case 't':
 		   injecttime = 1;
 		   fprintf(stdout, "*** Timing info will be injected\n");
                    break;
-               case 'x':
+		case 'x':
                    extra = 1;
                    fprintf(stdout, "*** Allowing for Xtra downloads\n");
                    break;
-               default:
+		default:
                    fprintf(stderr, "\n Usage: %s \n \
 			   \t-a for agps,\n \
 			   \t-c for coldstarting the gps,\n \
@@ -450,7 +471,11 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "*** set up agps server\n");
 	AGps->set_server(AGPS_TYPE_SUPL, "supl.google.com", 7276);
 	fprintf(stdout, "*** Trying to open connection\n");
-	AGps->data_conn_open(AGPS_TYPE_ANY, "internet", AGPS_APN_BEARER_IPV4V6);
+#ifndef HAS_ANDROID_4_2_0
+        AGps->data_conn_open(AGPS_TYPE_ANY, "internet", AGPS_APN_BEARER_IPV4V6);
+#else
+        AGps->data_conn_open("internet");
+#endif
     }
 
     fprintf(stdout, "*** get agps ril interface\n");
@@ -482,28 +507,39 @@ int main(int argc, char *argv[])
     {
       GpsNi->init(&callbacks4);
     }
-  }
 
-  UlpNetwork = get_ulp_network_interface(Gps);
-  if (UlpNetwork) {
-    fprintf(stdout, "*** got ulp network interface\n");
-    if (UlpNetwork->init(&callbacks6) != 0) {
-      fprintf(stdout, "*** FAILED to init ulp network interface\n");
-      UlpNetwork = NULL;
+#ifdef HAVE_ULP
+    UlpNetwork = get_ulp_network_interface(Gps);
+    if (UlpNetwork) {
+      fprintf(stdout, "*** got ulp network interface\n");
+      if (UlpNetwork->init(&callbacks6) != 0) {
+        fprintf(stdout, "*** FAILED to init ulp network interface\n");
+        UlpNetwork = NULL;
+      }
     }
-  }
 
-  UlpPhoneContext = get_ulp_phone_context_interface(Gps);
-  if (UlpPhoneContext) {
-    fprintf(stdout, "*** got ulp phone context interface\n");
-    UlpPhoneContext->init(&callbacks7);
-  }
+    UlpPhoneContext = get_ulp_phone_context_interface(Gps);
+    if (UlpPhoneContext) {
+      fprintf(stdout, "*** got ulp phone context interface\n");
+      UlpPhoneContext->init(&callbacks7);
+    }
+#endif /* HAVE_ULP */
 
+  }
   if(injecttime)
   {
     fprintf(stdout, "*** aiding gps by injecting time information\n");
     gettimeofday(&tv, NULL);
     Gps->inject_time(tv.tv_sec, tv.tv_sec, 0);
+  }
+
+  if(injectlocation)
+  {
+    fprintf(stdout, "*** aiding gps by injecting location information\n");
+    //Gps->inject_location(double latitude, double longitude, float accuracy);
+    latitude = strtok(location, ",");
+    longitude = strtok(NULL, ",");
+    Gps->inject_location(strtod(latitude, NULL), strtod(longitude, NULL), accuracy);
   }
 
   fprintf(stdout, "*** start gps track\n");
