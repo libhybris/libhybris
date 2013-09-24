@@ -102,7 +102,7 @@ extern "C" EGLBoolean eglplatformcommon_eglQueryWaylandBufferWL(EGLDisplay dpy,
 			*value = EGL_TEXTURE_Y_UV_WL;
 			break;
 		default:
-			*value = anwb->format;
+			*value =  EGL_TEXTURE_EXTERNAL_WL;
 		}
 		return EGL_TRUE;
 	}
