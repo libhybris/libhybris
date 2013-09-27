@@ -3,7 +3,9 @@ include $(CLEAR_VARS)
 
 HYBRIS_PATH := $(LOCAL_PATH)/../../hybris
 
-LOCAL_SRC_FILES:= media_compatibility_layer.cpp
+LOCAL_SRC_FILES:= \
+	media_compatibility_layer.cpp \
+	recorder_compatibility_layer.cpp
 
 LOCAL_MODULE:= libmedia_compat_layer
 LOCAL_MODULE_TAGS := optional
