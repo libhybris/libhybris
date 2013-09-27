@@ -78,7 +78,7 @@ const char *android_dlerror(void)
 void *android_dlsym(void *handle, const char *symbol)
 {
     soinfo *found;
-    Elf32_Sym *sym;
+    Elf_Sym *sym;
     unsigned bind;
 
     pthread_mutex_lock(&dl_lock);
@@ -142,7 +142,7 @@ int android_dladdr(const void *addr, Dl_info *info)
         info->dli_fbase = (void*)si->base;
 
         /* Determine if any symbol in the library contains the specified address */
-        Elf32_Sym *sym = find_containing_symbol(addr, si);
+        Elf_Sym *sym = find_containing_symbol(addr, si);
 
         if(sym != NULL) {
             info->dli_sname = si->strtab + sym->st_name;
@@ -192,7 +192,7 @@ int android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, vo
 #endif
 
 
-static Elf32_Sym libdl_symtab[] = {
+static Elf_Sym libdl_symtab[] = {
       // total length of libdl_info.strtab, including trailing 0
       // This is actually the the STH_UNDEF entry. Technically, it's
       // supposed to have st_name == 0, but instead, it points to an index
@@ -200,45 +200,45 @@ static Elf32_Sym libdl_symtab[] = {
     { st_name: sizeof(ANDROID_LIBDL_STRTAB) - 1,
     },
     { st_name: 0,   // starting index of the name in libdl_info.strtab
-      st_value: (Elf32_Addr) &android_dlopen,
+      st_value: (Elf_Addr) &android_dlopen,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 7,
-      st_value: (Elf32_Addr) &android_dlclose,
+      st_value: (Elf_Addr) &android_dlclose,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 15,
-      st_value: (Elf32_Addr) &android_dlsym,
+      st_value: (Elf_Addr) &android_dlsym,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 21,
-      st_value: (Elf32_Addr) &android_dlerror,
+      st_value: (Elf_Addr) &android_dlerror,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 29,
-      st_value: (Elf32_Addr) &android_dladdr,
+      st_value: (Elf_Addr) &android_dladdr,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
 #ifdef ANDROID_ARM_LINKER
     { st_name: 36,
-      st_value: (Elf32_Addr) &android_dl_unwind_find_exidx,
+      st_value: (Elf_Addr) &android_dl_unwind_find_exidx,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
 #elif defined(ANDROID_X86_LINKER)
     { st_name: 36,
-      st_value: (Elf32_Addr) &android_dl_iterate_phdr,
+      st_value: (Elf_Addr) &android_dl_iterate_phdr,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
 #elif defined(ANDROID_SH_LINKER)
     { st_name: 36,
-      st_value: (Elf32_Addr) &android_dl_iterate_phdr,
+      st_value: (Elf_Addr) &android_dl_iterate_phdr,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
