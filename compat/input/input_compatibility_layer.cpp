@@ -274,7 +274,7 @@ private:
 class LooperThread : public android::Thread
 {
 public:
-	static const int default_poll_timeout_ms = 500;
+	static const int default_poll_timeout_ms = -1;
 
 	LooperThread(const android::sp<android::Looper>& looper) : looper(looper)
 	{
