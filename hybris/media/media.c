@@ -24,6 +24,7 @@
 
 #include <hybris/internal/binding.h>
 #include <hybris/media/media_compatibility_layer.h>
+#include <hybris/media/recorder_compatibility_layer.h>
 
 #define COMPAT_LIBRARY_PATH "/system/lib/libmedia_compat_layer.so"
 
@@ -79,3 +80,45 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_media_set_playback_complete_cb,
 	struct MediaPlayerWrapper*, on_playback_complete, void*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_media_set_media_prepared_cb,
 	struct MediaPlayerWrapper*, on_media_prepared, void*);
+
+// Recorder
+HYBRIS_IMPLEMENT_FUNCTION0(media, struct MediaRecorderWrapper*,
+	android_media_new_recorder);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, android_recorder_initCheck,
+	struct MediaRecorderWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, android_recorder_setCamera,
+	struct MediaRecorderWrapper*, struct CameraControl*);
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, android_recorder_setVideoSource,
+	struct MediaRecorderWrapper*, VideoSource);
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, android_recorder_setAudioSource,
+	struct MediaRecorderWrapper*, AudioSource);
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, android_recorder_setOutputFormat,
+	struct MediaRecorderWrapper*, OutputFormat);
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, android_recorder_setVideoEncoder,
+	struct MediaRecorderWrapper*, VideoEncoder);
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, android_recorder_setAudioEncoder,
+	struct MediaRecorderWrapper*, AudioEncoder);
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, android_recorder_setOutputFile,
+	struct MediaRecorderWrapper*, int);
+HYBRIS_IMPLEMENT_FUNCTION3(media, int, android_recorder_setVideoSize,
+	struct MediaRecorderWrapper*, int, int);
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, android_recorder_setVideoFrameRate,
+	struct MediaRecorderWrapper*, int);
+HYBRIS_IMPLEMENT_FUNCTION2(media, int, android_recorder_setParameters,
+	struct MediaRecorderWrapper*, const char*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, android_recorder_start,
+	struct MediaRecorderWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, android_recorder_stop,
+	struct MediaRecorderWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, android_recorder_prepare,
+	struct MediaRecorderWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, android_recorder_reset,
+	struct MediaRecorderWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, android_recorder_close,
+	struct MediaRecorderWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, android_recorder_release,
+	struct MediaRecorderWrapper*);
+
+// Recorder Callbacks
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_recorder_set_error_cb,
+	struct MediaRecorderWrapper *, on_recorder_msg_error, void*);
