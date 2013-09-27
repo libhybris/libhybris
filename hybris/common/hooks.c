@@ -1276,10 +1276,10 @@ struct open_redirect {
 };
 
 struct open_redirect open_redirects[] = {
-	{ "/dev/log/main", "/dev/log_main" },
-	{ "/dev/log/radio", "/dev/log_radio" },
-	{ "/dev/log/system", "/dev/log_system" },
-	{ "/dev/log/events", "/dev/log_events" },
+	{ "/dev/log/main", "/dev/alog/main" },
+	{ "/dev/log/radio", "/dev/alog/radio" },
+	{ "/dev/log/system", "/dev/alog/system" },
+	{ "/dev/log/events", "/dev/alog/events" },
 	{ NULL, NULL }
 };
 
