@@ -99,24 +99,18 @@ public:
 			InputStackConfiguration* configuration,
 			const android::sp<android::Looper>& looper)
 			: looper(looper),
-		default_layer_for_touch_point_visualization(configuration->default_layer_for_touch_point_visualization)
+		default_layer_for_touch_point_visualization(configuration->default_layer_for_touch_point_visualization),
+		input_area_width(configuration->input_area_width),
+		input_area_height(configuration->input_area_height)
 	{
 		default_configuration.showTouches = configuration->enable_touch_point_visualization;
 
-		auto display = android::SurfaceComposerClient::getBuiltInDisplay(
-				android::ISurfaceComposer::eDisplayIdMain);
-		android::DisplayInfo info;
-		android::SurfaceComposerClient::getDisplayInfo(
-				display,
-				&info);
-
 		android::DisplayViewport viewport;
-		viewport.setNonDisplayViewport(info.w, info.h);
+		viewport.setNonDisplayViewport(input_area_width, input_area_height);
 		viewport.displayId = android::ISurfaceComposer::eDisplayIdMain;
 		default_configuration.setDisplayInfo(
 				false, /* external */
 				viewport);
-
 	}
 
 	void getReaderConfiguration(android::InputReaderConfiguration* outConfig)
@@ -139,15 +133,8 @@ public:
 					sprite_controller));
 		pointer_controller->setPresentation(
 				android::PointerControllerInterface::PRESENTATION_SPOT);
-		int32_t w, h, o;
-		auto display = android::SurfaceComposerClient::getBuiltInDisplay(
-				android::ISurfaceComposer::eDisplayIdMain);
-		android::DisplayInfo info;
-		android::SurfaceComposerClient::getDisplayInfo(
-				display,
-				&info);
 
-		pointer_controller->setDisplayViewport(info.w, info.h, info.orientation);
+		pointer_controller->setDisplayViewport(input_area_width, input_area_height, 0);
 		return pointer_controller;
 	}
 
@@ -168,6 +155,8 @@ private:
 	int default_layer_for_touch_point_visualization;
 	android::InputReaderConfiguration default_configuration;
 	android::Vector<android::InputDeviceInfo> mInputDevices;
+	int input_area_width;
+	int input_area_height;
 };
 
 class ExportedInputListener : public android::InputListenerInterface
