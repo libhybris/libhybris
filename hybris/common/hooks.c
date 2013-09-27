@@ -27,6 +27,7 @@
 #include <stdio_ext.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <malloc.h>
 #include <string.h>
 #include <strings.h>
@@ -41,6 +42,10 @@
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
+
+#include <linux/futex.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
 
 #include <netdb.h>
 #include <unistd.h>
@@ -64,7 +69,11 @@ static int locale_inited = 0;
 
 #define ANDROID_MUTEX_SHARED_MASK      0x2000
 #define ANDROID_COND_SHARED_MASK       0x0001
+#define ANDROID_COND_COUNTER_INCREMENT 0x0002
+#define ANDROID_COND_COUNTER_MASK      (~ANDROID_COND_SHARED_MASK)
 #define ANDROID_RWLOCKATTR_SHARED_MASK 0x0010
+
+#define ANDROID_COND_IS_SHARED(c)  (((c)->value & ANDROID_COND_SHARED_MASK) != 0)
 
 /* For the static initializer types */
 #define ANDROID_PTHREAD_MUTEX_INITIALIZER            0
@@ -86,6 +95,11 @@ struct _hook {
     const char *name;
     void *func;
 };
+
+/* pthread cond struct as done in Android */
+typedef struct {
+    int volatile value;
+} android_cond_t;
 
 /* Helpers */
 static int hybris_check_android_shared_mutex(unsigned int mutex_addr)
@@ -109,7 +123,57 @@ static int hybris_check_android_shared_cond(unsigned int cond_addr)
                     (cond_addr & ANDROID_COND_SHARED_MASK))
         return 1;
 
+    /* In case android is setting up cond_addr with a negative value,
+     * used for error control */
+    if (cond_addr > HYBRIS_SHM_MASK_TOP)
+        return 1;
+
     return 0;
+}
+
+/* Based on Android's Bionic pthread implementation.
+ * This is just needed when we have a shared cond with Android */
+static int __android_pthread_cond_pulse(android_cond_t *cond, int counter)
+{
+    long flags;
+    int fret;
+
+    if (cond == NULL)
+        return EINVAL;
+
+    flags = (cond->value & ~ANDROID_COND_COUNTER_MASK);
+    for (;;) {
+        long oldval = cond->value;
+        long newval = 0;
+        /* In our case all we need to do is make sure the negative value
+         * is under our range, which is the last 0xF from SHM_MASK */
+        if (oldval < -12)
+            newval = ((oldval + ANDROID_COND_COUNTER_INCREMENT) &
+                            ANDROID_COND_COUNTER_MASK) | flags;
+        else
+            newval = ((oldval - ANDROID_COND_COUNTER_INCREMENT) &
+                            ANDROID_COND_COUNTER_MASK) | flags;
+        if (__sync_bool_compare_and_swap(&cond->value, oldval, newval))
+            break;
+    }
+
+    int pshared = cond->value & ANDROID_COND_SHARED_MASK;
+    fret = syscall(SYS_futex , &cond->value,
+                   pshared ? FUTEX_WAKE : FUTEX_WAKE_PRIVATE, counter,
+                   NULL, NULL, NULL);
+    LOGD("futex based pthread_cond_*, value %d, counter %d, ret %d",
+                                            cond->value, counter, fret);
+    return 0;
+}
+
+int android_pthread_cond_broadcast(android_cond_t *cond)
+{
+    return __android_pthread_cond_pulse(cond, INT_MAX);
+}
+
+int android_pthread_cond_signal(android_cond_t *cond)
+{
+    return __android_pthread_cond_pulse(cond, 1);
 }
 
 static void hybris_set_mutex_attr(unsigned int android_value, pthread_mutexattr_t *attr)
@@ -577,8 +641,8 @@ static int my_pthread_cond_broadcast(pthread_cond_t *cond)
 {
     unsigned int value = (*(unsigned int *) cond);
     if (hybris_check_android_shared_cond(value)) {
-        LOGD("shared condition with Android, not broadcasting.");
-        return 0;
+        LOGD("Shared condition with Android, broadcasting with futex.");
+        return android_pthread_cond_broadcast((android_cond_t *) cond);
     }
 
     pthread_cond_t *realcond = (pthread_cond_t *) value;
@@ -598,8 +662,8 @@ static int my_pthread_cond_signal(pthread_cond_t *cond)
     unsigned int value = (*(unsigned int *) cond);
 
     if (hybris_check_android_shared_cond(value)) {
-        LOGD("Shared condition with Android, not signaling.");
-        return 0;
+        LOGD("Shared condition with Android, broadcasting with futex.");
+        return android_pthread_cond_signal((android_cond_t *) cond);
     }
 
     pthread_cond_t *realcond = (pthread_cond_t *) value;

@@ -20,6 +20,9 @@
 
 #include <stddef.h>
 
+/* Leave space to workaround the issue that Android might pass negative int values */
+#define HYBRIS_SHM_MASK_TOP 0xFFFFFFF0UL
+
 typedef unsigned int hybris_shm_pointer_t;
 
 /* 

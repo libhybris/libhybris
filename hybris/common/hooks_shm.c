@@ -171,11 +171,12 @@ static void _hybris_shm_extend_region()
 
  /*
   * Determine if the pointer that has been extracted by hybris is
-  * pointing to an address in the shared memory
+  * pointing to an address in the shared memory.
   */
 int hybris_is_pointer_in_shm(void *ptr)
 {
-    if ((unsigned int)ptr >= HYBRIS_SHM_MASK)
+    if (((unsigned int) ptr >= HYBRIS_SHM_MASK) &&
+                    ((unsigned int) ptr <= HYBRIS_SHM_MASK_TOP))
         return 1;
 
     return 0;
