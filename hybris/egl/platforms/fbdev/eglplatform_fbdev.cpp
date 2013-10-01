@@ -55,6 +55,7 @@ extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, EGL
 	assert (_nativewindow == NULL);
 
 	_nativewindow = new FbDevNativeWindow(gralloc, alloc, framebuffer);
+	_nativewindow->common.incRef(&_nativewindow->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(_nativewindow);
 }
 
@@ -63,7 +64,8 @@ extern "C" void fbdevws_DestroyWindow(EGLNativeWindowType win)
 	assert (_nativewindow != NULL);
 	assert (static_cast<FbDevNativeWindow *>((struct ANativeWindow *)win) == _nativewindow);
 
-	delete _nativewindow;
+	_nativewindow->common.decRef(&_nativewindow->common);
+	/* We are done with it, refcounting will delete the window when appropriate */
 	_nativewindow = NULL;
 }
 
