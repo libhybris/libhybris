@@ -26,8 +26,14 @@
 
 FILE *hybris_logging_target = NULL;
 
+pthread_mutex_t hybris_logging_mutex;
+
 static enum hybris_log_level
 hybris_minimum_log_level = HYBRIS_LOG_WARN;
+
+static enum hybris_log_format _hybris_logging_format = HYBRIS_LOG_FORMAT_NORMAL;
+
+static int _hybris_should_trace = 0;
 
 static int
 hybris_logging_initialized = 0;
@@ -58,6 +64,25 @@ hybris_logging_initialize()
     }
     if (hybris_logging_target == NULL)
         hybris_logging_target = stderr;
+
+    env = getenv("HYBRIS_LOGGING_FORMAT");
+    if (env != NULL)
+    {
+	if (strcmp(env, "systrace") == 0) {
+		_hybris_logging_format = HYBRIS_LOG_FORMAT_SYSTRACE;
+	}
+	else
+		_hybris_logging_format = HYBRIS_LOG_FORMAT_NORMAL;
+    }
+
+    env = getenv("HYBRIS_TRACE");
+    if (env != NULL)
+    {
+        if (strcmp(env, "1") == 0) {
+               _hybris_should_trace = 1;
+        }
+    }
+    pthread_mutex_init(&hybris_logging_mutex, NULL);
 }
 
 int
@@ -82,4 +107,15 @@ void *
 hybris_get_thread_id()
 {
     return (void *)pthread_self();
+}
+
+int
+hybris_should_trace(char *module, char *tracepoint)
+{
+    return _hybris_should_trace;
+}
+
+enum hybris_log_format hybris_logging_format()
+{
+    return _hybris_logging_format;
 }

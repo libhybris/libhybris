@@ -139,13 +139,12 @@ int FbDevNativeWindow::setSwapInterval(int interval)
  */
 int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fenceFd)
 {
-    TRACE("%u", pthread_self());
+    HYBRIS_TRACE_BEGIN("fbdev-platform", "dequeueBuffer", "");
     FbDevNativeWindowBuffer* fbnb=NULL;
 
     pthread_mutex_lock(&_mutex);
 
-    TRACE("May wait for buffer");
-
+    HYBRIS_TRACE_BEGIN("fbdev-platform", "dequeueBuffer-wait", "");
 #if defined(DEBUG)
 
     if (m_frontBuf)
@@ -202,7 +201,8 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
         fbnb = *it;
         break;
     }
-    TRACE("Got buffer for rendering");
+
+    HYBRIS_TRACE_END("fbdev-platform", "dequeueBuffer-wait", "");
     assert(fbnb!=NULL);
     fbnb->busy = 1;
     //fbnb->common.incRef(&fbnb->common);
@@ -213,7 +213,7 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
 
     TRACE("%u DONE --> %p", pthread_self(), fbnb);
     pthread_mutex_unlock(&_mutex);
-
+    HYBRIS_TRACE_END("fbdev-platform", "dequeueBuffer", "");
     return 0;
 }
 
@@ -238,8 +238,10 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
  */
 int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 {
-    TRACE("%u %d", pthread_self(), fenceFd);
+ 
     FbDevNativeWindowBuffer* fbnb = (FbDevNativeWindowBuffer*) buffer;
+
+    HYBRIS_TRACE_BEGIN("fbdev-platform", "queueBuffer", "-%p", fbnb);
 
     pthread_mutex_lock(&_mutex);
 
@@ -250,14 +252,14 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
     pthread_mutex_unlock(&_mutex);
 
     //fbnb->common.decRef(&fbnb->common);
-    TRACE("posting");
+    HYBRIS_TRACE_BEGIN("fbdev-platform", "queueBuffer-post", "-%p", fbnb);
 
     int rv = m_fbDev->post(m_fbDev, fbnb->handle);
     if (rv!=0)
     {
         fprintf(stderr,"ERROR: fb->post(%s)\n",strerror(-rv));
     }
-    TRACE("posted");
+    HYBRIS_TRACE_END("fbdev-platform", "queueBuffer-post", "-%p", fbnb);
 
     pthread_mutex_lock(&_mutex);
 
@@ -271,7 +273,7 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
     pthread_cond_signal(&_cond);
     pthread_mutex_unlock(&_mutex);
 
-
+    HYBRIS_TRACE_END("fbdev-platform", "queueBuffer", "-%p", fbnb);
     return rv;
 }
 
@@ -313,8 +315,10 @@ int FbDevNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 
 int FbDevNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
 {
-    TRACE("%u", pthread_self());
+
     FbDevNativeWindowBuffer* fbnb = (FbDevNativeWindowBuffer*)buffer;
+
+    HYBRIS_TRACE_BEGIN("fbdev-platform", "lockBuffer", "-%p", fbnb);
 
     pthread_mutex_lock(&_mutex);
 
@@ -326,6 +330,7 @@ int FbDevNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
     }
 
     pthread_mutex_unlock(&_mutex);
+    HYBRIS_TRACE_END("fbdev-platform", "lockBuffer", "-%p", fbnb);
     return NO_ERROR;
 }
 

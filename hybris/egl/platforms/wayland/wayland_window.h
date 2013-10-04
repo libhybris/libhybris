@@ -62,7 +62,7 @@ class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
 		this->format, this->usage,
 		&this->handle, &this->stride);
 	assert(alloc_ok == 0);
-
+	this->youngest = 0;
     };
     WaylandNativeWindowBuffer(ANativeWindowBuffer *other)
     {
@@ -76,11 +76,12 @@ class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
 	this->busy = 0;
 	this->other = other;
 	this->m_alloc = NULL;
+	this->youngest = 0;
     }
     ~WaylandNativeWindowBuffer()
     {
-		if (this->m_alloc)
-			m_alloc->free(m_alloc, this->handle);
+	if (this->m_alloc)
+		m_alloc->free(m_alloc, this->handle);
     }
     void* vaddr;
     alloc_device_t* m_alloc;
@@ -89,6 +90,7 @@ class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
     buffer_handle_t getHandle();
     struct wl_buffer *wlbuffer;
     int busy;
+    int youngest;
     ANativeWindowBuffer *other;
 };
 
