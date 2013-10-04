@@ -186,6 +186,8 @@ eglplatformcommon_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 	if (*target == EGL_WAYLAND_BUFFER_WL)
 	{
 		server_wlegl_buffer *buf = server_wlegl_buffer_from((struct wl_buffer *)*buffer);
+		HYBRIS_TRACE_BEGIN("eglplatformcommon", "Wayland_eglImageKHR", "-resource@%i", ((struct wl_buffer *)*buffer)->resource.object.id);
+		HYBRIS_TRACE_END("eglplatformcommon", "Wayland_eglImageKHR", "-resource@%i", ((struct wl_buffer *)*buffer)->resource.object.id);
 		if (debugenvchecked == 0)
 		{
 			if (getenv("HYBRIS_WAYLAND_KHR_DUMP_BUFFERS") != NULL)

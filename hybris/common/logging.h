@@ -20,6 +20,9 @@
 #define HYBRIS_LOGGING_H
 
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,6 +42,11 @@ enum hybris_log_level {
      * Can be used with hybris_set_log_level().
      **/
     HYBRIS_LOG_DISABLED,
+};
+
+enum hybris_log_format {
+    HYBRIS_LOG_FORMAT_NORMAL,
+    HYBRIS_LOG_FORMAT_SYSTRACE
 };
 
 /**
@@ -61,6 +69,12 @@ hybris_set_log_level(enum hybris_log_level level);
 void *
 hybris_get_thread_id();
 
+enum hybris_log_format hybris_logging_format();
+
+int hybris_should_trace(char *module, char *tracepoint);
+
+extern pthread_mutex_t hybris_logging_mutex;
+
 #ifdef __cplusplus
 }
 #endif
@@ -70,16 +84,61 @@ extern FILE *hybris_logging_target;
 #if defined(DEBUG)
 #    define HYBRIS_LOG_(level, module, message, ...) do { \
           if (hybris_should_log(level)) { \
-              fprintf(hybris_logging_target, "<%p> [%s] %s:%d (%s) %s: " message "\n", \
-                      hybris_get_thread_id(), \
-                      module, __FILE__, __LINE__, __PRETTY_FUNCTION__, \
+              pthread_mutex_lock(&hybris_logging_mutex); \
+              if (hybris_logging_format() == HYBRIS_LOG_FORMAT_NORMAL) \
+              { \
+              	fprintf(hybris_logging_target, "%s %s:%d (%s) %s: " message "\n", \
+                       module, __FILE__, __LINE__, __PRETTY_FUNCTION__, \
+                       #level + 11 /* + 11 = strip leading "HYBRIS_LOG_" */, \
+                       ##__VA_ARGS__); \
+              	fflush(hybris_logging_target); \
+              } else if (hybris_logging_format() == HYBRIS_LOG_FORMAT_SYSTRACE) { \
+	        fprintf(hybris_logging_target, "B|%i|%s(%s) %s:%d (%s) " message "\n", \
+                      getpid(), module, __PRETTY_FUNCTION__, __FILE__, __LINE__, \
                       #level + 11 /* + 11 = strip leading "HYBRIS_LOG_" */, \
                       ##__VA_ARGS__); \
-              fflush(hybris_logging_target); \
+		fflush(hybris_logging_target); \
+	        fprintf(hybris_logging_target, "E|%i|%s(%s) %s:%d (%s) " message "\n", \
+                      getpid(), module, __PRETTY_FUNCTION__, __FILE__, __LINE__, \
+                      #level + 11 /* + 11 = strip leading "HYBRIS_LOG_" */, \
+                      ##__VA_ARGS__); \
+                fflush(hybris_logging_target); \
+             } \
+             pthread_mutex_unlock(&hybris_logging_mutex); \
           } \
      } while(0)
+
+#define HYBRIS_TRACE_RECORD(module, what, tracepoint, message, ...) do { \
+          if (hybris_should_trace(module, tracepoint)) { \
+              pthread_mutex_lock(&hybris_logging_mutex); \
+              if (hybris_logging_format() == HYBRIS_LOG_FORMAT_NORMAL) \
+              { \
+              	fprintf(hybris_logging_target, "PID: %i Tracepoint-%c/%s::%s" message "\n", \
+                      getpid(), what, module, tracepoint, module, \
+                      ##__VA_ARGS__); \
+              	fflush(hybris_logging_target); \
+              } else if (hybris_logging_format() == HYBRIS_LOG_FORMAT_SYSTRACE) { \
+	        if (what == 'B') \
+		   fprintf(hybris_logging_target, "B|%i|%s::%s" message "", \
+                      getpid(), tracepoint, module, ##__VA_ARGS__); \
+		else if (what == 'E') \
+		   fprintf(hybris_logging_target, "E"); \
+		else \
+		   fprintf(hybris_logging_target, "C|%i|%s::%s-%i|" message "", \
+                      getpid(), tracepoint, module, getpid(), ##__VA_ARGS__); \
+		fflush(hybris_logging_target); \
+              } \
+             pthread_mutex_unlock(&hybris_logging_mutex); \
+          } \
+      } while(0)
+#    define HYBRIS_TRACE_BEGIN(module, tracepoint, message, ...) HYBRIS_TRACE_RECORD(module, 'B', tracepoint, message, ##__VA_ARGS__)
+#    define HYBRIS_TRACE_END(module, tracepoint, message, ...) HYBRIS_TRACE_RECORD(module, 'E', tracepoint, message, ##__VA_ARGS__)
+#    define HYBRIS_TRACE_COUNTER(module, tracepoint, message, ...) HYBRIS_TRACE_RECORD(module, 'C', tracepoint, message, ##__VA_ARGS__)
 #else
 #    define HYBRIS_LOG_(level, module, message, ...) while (0) {}
+#    define HYBRIS_TRACE_BEGIN(module, tracepoint, message, ...) while (0) {}
+#    define HYBRIS_TRACE_END(module, tracepoint, message, ...) while (0) {}
+#    define HYBRIS_TRACE_COUNTER(module, tracepoint, message, ...) while (0) {}
 #endif
 
 
@@ -96,7 +155,7 @@ extern FILE *hybris_logging_target;
 #define HYBRIS_INFO(message, ...) HYBRIS_INFO_LOG(HYBRIS, message, ##__VA_ARGS__)
 #define HYBRIS_ERROR(message, ...) HYBRIS_ERROR_LOG(HYBRIS, message, ##__VA_ARGS__)
 
-/* for camptiblity reasons */
+/* for compatibility reasons */
 #define TRACE(message, ...) HYBRIS_DEBUG_LOG(EGL, message, ##__VA_ARGS__)
 
 #endif /* HYBRIS_LOGGING_H */
