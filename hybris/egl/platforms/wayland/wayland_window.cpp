@@ -151,8 +151,6 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
 
 WaylandNativeWindow::~WaylandNativeWindow()
 {
-    // Dispatch here to avoid a racy(?) crash
-    wl_display_dispatch_queue(m_display, wl_queue);
     std::list<WaylandNativeWindowBuffer *>::iterator it = m_bufList.begin();
     for (; it != m_bufList.end(); it++)
     {
