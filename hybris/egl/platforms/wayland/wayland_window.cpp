@@ -118,6 +118,8 @@ static const struct wl_callback_listener frame_listener = {
 WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, const gralloc_module_t* gralloc, alloc_device_t* alloc_device)
 {
     int wayland_ok;
+
+    HYBRIS_TRACE_BEGIN("wayland-platform", "create_window", "");
     this->m_window = window;
     this->m_window->nativewindow = (void *) this;
     this->m_display = display;
@@ -146,7 +148,7 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
     pthread_cond_init(&cond, NULL);
     m_freeBufs = 0;
     setBufferCount(3);
-    TRACE("WaylandNativeWindow created in %p", pthread_self());
+    HYBRIS_TRACE_END("wayland-platform", "create_window", "");
 }
 
 WaylandNativeWindow::~WaylandNativeWindow()
@@ -168,7 +170,11 @@ buffer_handle_t WaylandNativeWindowBuffer::getHandle()
 }
 
 void WaylandNativeWindow::frame() {
+    HYBRIS_TRACE_BEGIN("wayland-platform", "frame_event", "");
+
     this->frame_callback = NULL;
+
+    HYBRIS_TRACE_END("wayland-platform", "frame_event", "");
 }
 
 
@@ -224,6 +230,7 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 
     WaylandNativeWindowBuffer* wnb = *it;
     fronted.erase(it);
+    HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "%i", fronted.size());
 
     for (it = m_bufList.begin(); it != m_bufList.end(); it++)
     {
@@ -231,26 +238,38 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
             break;
     }
     assert(it != m_bufList.end());
-    TRACE("wnb:%p wlbuffer:%p", wnb, buffer);
+    HYBRIS_TRACE_BEGIN("wayland-platform", "releaseBuffer", "-%p", wnb);
     wnb->busy = 0;
 
     ++m_freeBufs;
+    HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "%i", m_freeBufs);
+
     pthread_cond_signal(&cond);
+    HYBRIS_TRACE_END("wayland-platform", "releaseBuffer", "-%p", wnb);
     unlock();
 }
 
 
 int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd){
+    HYBRIS_TRACE_BEGIN("wayland-platform", "dequeueBuffer", "");
+
     WaylandNativeWindowBuffer *wnb=NULL;
     TRACE("%p", buffer);
 
     lock();
+    HYBRIS_TRACE_BEGIN("wayland-platform", "dequeueBuffer_wait_for_buffer", "");
+
+    HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "%i", m_freeBufs);
+
     while (m_freeBufs==0) {
+        HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "%i", m_freeBufs);
+
         pthread_cond_wait(&cond,&mutex);
     }
     std::list<WaylandNativeWindowBuffer *>::iterator it = m_bufList.begin();
     for (; it != m_bufList.end() && (*it)->busy; it++)
     {}
+
 
     if (it==m_bufList.end()) {
         unlock();
@@ -260,6 +279,7 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
 
     wnb = *it;
     assert(wnb!=NULL);
+    HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_wait_for_buffer", "");
 
     /* If the buffer doesn't match the window anymore, re-allocate */
     if (wnb->width != m_window->width || wnb->height != m_window->height
@@ -278,14 +298,19 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
     *buffer = wnb;
     --m_freeBufs;
 
-    TRACE("%p wnb:%p", buffer, wnb);
+    HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "%i", m_freeBufs);
+    HYBRIS_TRACE_BEGIN("wayland-platform", "dequeueBuffer_gotBuffer", "%p", wnb);
+    HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_gotBuffer", "%p", wnb);
+    HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_wait_for_buffer", "");
 
     unlock();
     return NO_ERROR;
 }
 
 int WaylandNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer){
-    TRACE("bnwb:%p", buffer);
+    WaylandNativeWindowBuffer *wnb = (WaylandNativeWindowBuffer*) buffer;
+    HYBRIS_TRACE_BEGIN("wayland-platform", "lockBuffer", "-%p", wnb);
+    HYBRIS_TRACE_END("wayland-platform", "lockBuffer", "-%p", wnb);
     return NO_ERROR;
 }
 
@@ -378,22 +403,29 @@ static int debugenvchecked = 0;
 
 int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 {
-    TRACE("bnwb:%p", buffer);
     WaylandNativeWindowBuffer *wnb = (WaylandNativeWindowBuffer*) buffer;
     int ret = 0;
 
+    HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer", "-%p", wnb);
     lock();
     wnb->busy = 1;
     unlock();
     /* XXX locking/something is a bit fishy here */
+    HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
+
     while (this->frame_callback && ret != -1) {
         ret = wl_display_dispatch_queue(m_display, this->wl_queue);
     }
 
+
     if (ret < 0) {
         TRACE("wl_display_dispatch_queue returned an error");
+        HYBRIS_TRACE_END("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
         return ret;
     }
+
+    HYBRIS_TRACE_END("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
+
 
     lock();
 
@@ -405,12 +437,17 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
             debugenvchecked = 1;
     } else if (debugenvchecked == 2)
     {
+        HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_dumping_buffer", "-%p", wnb);
         hybris_dump_buffer_to_file(wnb->getNativeBuffer());
+        HYBRIS_TRACE_END("wayland-platform", "queueBuffer_dumping_buffer", "-%p", wnb);
+
     }
 
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
+    HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_waiting_for_fence", "-%p", wnb);
     sync_wait(fenceFd, -1);
     close(fenceFd);
+    HYBRIS_TRACE_END("wayland-platform", "queueBuffer_waiting_for_fence", "-%p", wnb);
 #endif
 
     this->frame_callback = wl_surface_frame(m_window->surface);
@@ -446,15 +483,23 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
         wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
     }
     TRACE("%p DAMAGE AREA: %dx%d", wnb, wnb->width, wnb->height);
+    HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_attachdamagecommit", "-resource@%i", wl_proxy_get_id((struct wl_proxy *) wnb->wlbuffer));
+
     wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
     wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
     wl_surface_commit(m_window->surface);
     wl_display_flush(m_display);
+    HYBRIS_TRACE_END("wayland-platform", "queueBuffer_attachdamagecommit", "-resource@%i", wl_proxy_get_id((struct wl_proxy *) wnb->wlbuffer));
+
     //--m_freeBufs;
     //pthread_cond_signal(&cond);
     fronted.push_back(wnb);
+    HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "%i", fronted.size());
+
     if (fronted.size() == m_bufList.size())
     {
+        HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_wait_for_nonfronted_buffer", "-%p", wnb);
+
         /* We have fronted all our buffers, let's wait for one of them to be free */
         do {
             unlock();
@@ -464,11 +509,14 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
             {
                 break;
             }
+            HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "%i", fronted.size());
+
             if (fronted.size() != m_bufList.size())
                 break;
         } while (1);
+        HYBRIS_TRACE_END("wayland-platform", "queueBuffer_wait_for_nonfronted_buffer", "-%p", wnb);
     }
-
+    HYBRIS_TRACE_END("wayland-platform", "queueBuffer", "-%p", wnb);
     unlock();
 
     return NO_ERROR;

@@ -34,6 +34,7 @@
 #include <string.h>
 
 #include <android/system/window.h>
+#include "logging.h"
 
 static void *_libegl = NULL;
 static void *_libgles = NULL;
@@ -402,8 +403,12 @@ EGLBoolean eglWaitNative(EGLint engine)
 
 EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 {
+	EGLBoolean ret; 
+	HYBRIS_TRACE_BEGIN("hybris-egl", "eglSwapBuffers", "");
 	EGL_DLSYM(&_eglSwapBuffers, "eglSwapBuffers");
-	return (*_eglSwapBuffers)(dpy, surface);
+	ret = (*_eglSwapBuffers)(dpy, surface);
+	HYBRIS_TRACE_END("hybris-egl", "eglSwapBuffers", "");
+	return ret;
 }
 
 EGLBoolean eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
