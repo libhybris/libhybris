@@ -243,6 +243,12 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 
     ++m_freeBufs;
     HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "%i", m_freeBufs);
+    for (it = m_bufList.begin(); it != m_bufList.end(); it++)
+    {  
+        (*it)->youngest = 0;
+    }
+    wnb->youngest = 1; 
+
 
     pthread_cond_signal(&cond);
     HYBRIS_TRACE_END("wayland-platform", "releaseBuffer", "-%p", wnb);
@@ -267,12 +273,28 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
         pthread_cond_wait(&cond,&mutex);
     }
     std::list<WaylandNativeWindowBuffer *>::iterator it = m_bufList.begin();
-    for (; it != m_bufList.end() && (*it)->busy; it++)
-    {}
-
+    for (; it != m_bufList.end(); it++)
+    {
+         if ((*it)->busy)
+             continue;
+         if ((*it)->youngest == 1)
+             continue;
+         break;
+    }
 
     if (it==m_bufList.end()) {
+        HYBRIS_TRACE_BEGIN("wayland-platform", "dequeueBuffer_worst_case_scenario", "");
+        HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_worst_case_scenario", "");
+
+        it = m_bufList.begin();
+        for (; it != m_bufList.end() && (*it)->busy; it++)
+        {}
+        
+    }
+    if (it==m_bufList.end()) {
         unlock();
+        HYBRIS_TRACE_BEGIN("wayland-platform", "dequeueBuffer_no_free_buffers", "");
+        HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_no_free_buffers", "");
         TRACE("%p: no free buffers", buffer);
         return NO_ERROR;
     }
