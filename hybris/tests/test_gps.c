@@ -451,9 +451,6 @@ int main(int argc, char *argv[])
 		   location = optarg;
 		   fprintf(stdout, "*** Location info %s will be injected\n", location);
                    break;
-                case 'p':
-                   apn = optarg;
-                   break;
 		case 'r':
 		   agpsril = 1;
 		   fprintf(stdout, "*** Using agpsril\n");
@@ -554,24 +551,24 @@ int main(int argc, char *argv[])
 #ifdef HAVE_ULP
     if(ulp)
     {
-    UlpNetwork = get_ulp_network_interface(Gps);
-    if (UlpNetwork) {
-      fprintf(stdout, "*** got ulp network interface\n");
-      if (UlpNetwork->init(&callbacks6) != 0) {
-        fprintf(stdout, "*** FAILED to init ulp network interface\n");
-        UlpNetwork = NULL;
-      }
-    }
-    else
-	fprintf(stdout, "*** ULP failed!\n");
+        UlpNetwork = get_ulp_network_interface(Gps);
+        if (UlpNetwork) {
+        fprintf(stdout, "*** got ulp network interface\n");
+            if (UlpNetwork->init(&callbacks6) != 0) {
+                fprintf(stdout, "*** FAILED to init ulp network interface\n");
+                UlpNetwork = NULL;
+            }
+        }
+        else
+            fprintf(stdout, "*** ULP failed!\n");
 
-    UlpPhoneContext = get_ulp_phone_context_interface(Gps);
-    if (UlpPhoneContext) {
-      fprintf(stdout, "*** got ulp phone context interface\n");
-      UlpPhoneContext->init(&callbacks7);
+        UlpPhoneContext = get_ulp_phone_context_interface(Gps);
+        if (UlpPhoneContext) {
+            fprintf(stdout, "*** got ulp phone context interface\n");
+            UlpPhoneContext->init(&callbacks7);
+        }
     }
 #endif /* HAVE_ULP */
-    }
   }
   if(injecttime)
   {
