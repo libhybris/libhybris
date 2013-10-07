@@ -114,7 +114,7 @@ extern FILE *hybris_logging_target;
               if (hybris_logging_format() == HYBRIS_LOG_FORMAT_NORMAL) \
               { \
               	fprintf(hybris_logging_target, "PID: %i Tracepoint-%c/%s::%s" message "\n", \
-                      getpid(), what, module, tracepoint, module, \
+                      getpid(), what, tracepoint, module, \
                       ##__VA_ARGS__); \
               	fflush(hybris_logging_target); \
               } else if (hybris_logging_format() == HYBRIS_LOG_FORMAT_SYSTRACE) { \
