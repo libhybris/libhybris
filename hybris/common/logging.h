@@ -71,7 +71,7 @@ hybris_get_thread_id();
 
 enum hybris_log_format hybris_logging_format();
 
-int hybris_should_trace(char *module, char *tracepoint);
+int hybris_should_trace(const char *module, const char *tracepoint);
 
 extern pthread_mutex_t hybris_logging_mutex;
 
