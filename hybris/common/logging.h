@@ -87,18 +87,18 @@ extern FILE *hybris_logging_target;
               pthread_mutex_lock(&hybris_logging_mutex); \
               if (hybris_logging_format() == HYBRIS_LOG_FORMAT_NORMAL) \
               { \
-              	fprintf(hybris_logging_target, "%s %s:%d (%s) %s: " message "\n", \
+                fprintf(hybris_logging_target, "%s %s:%d (%s) %s: " message "\n", \
                        module, __FILE__, __LINE__, __PRETTY_FUNCTION__, \
                        #level + 11 /* + 11 = strip leading "HYBRIS_LOG_" */, \
                        ##__VA_ARGS__); \
-              	fflush(hybris_logging_target); \
+                fflush(hybris_logging_target); \
               } else if (hybris_logging_format() == HYBRIS_LOG_FORMAT_SYSTRACE) { \
-	        fprintf(hybris_logging_target, "B|%i|%s(%s) %s:%d (%s) " message "\n", \
+                fprintf(hybris_logging_target, "B|%i|%s(%s) %s:%d (%s) " message "\n", \
                       getpid(), module, __PRETTY_FUNCTION__, __FILE__, __LINE__, \
                       #level + 11 /* + 11 = strip leading "HYBRIS_LOG_" */, \
                       ##__VA_ARGS__); \
-		fflush(hybris_logging_target); \
-	        fprintf(hybris_logging_target, "E|%i|%s(%s) %s:%d (%s) " message "\n", \
+                fflush(hybris_logging_target); \
+                fprintf(hybris_logging_target, "E|%i|%s(%s) %s:%d (%s) " message "\n", \
                       getpid(), module, __PRETTY_FUNCTION__, __FILE__, __LINE__, \
                       #level + 11 /* + 11 = strip leading "HYBRIS_LOG_" */, \
                       ##__VA_ARGS__); \
@@ -113,20 +113,20 @@ extern FILE *hybris_logging_target;
               pthread_mutex_lock(&hybris_logging_mutex); \
               if (hybris_logging_format() == HYBRIS_LOG_FORMAT_NORMAL) \
               { \
-              	fprintf(hybris_logging_target, "PID: %i Tracepoint-%c/%s::%s" message "\n", \
+                fprintf(hybris_logging_target, "PID: %i Tracepoint-%c/%s::%s" message "\n", \
                       getpid(), what, tracepoint, module, \
                       ##__VA_ARGS__); \
-              	fflush(hybris_logging_target); \
+                fflush(hybris_logging_target); \
               } else if (hybris_logging_format() == HYBRIS_LOG_FORMAT_SYSTRACE) { \
-	        if (what == 'B') \
-		   fprintf(hybris_logging_target, "B|%i|%s::%s" message "", \
+                if (what == 'B') \
+                   fprintf(hybris_logging_target, "B|%i|%s::%s" message "", \
                       getpid(), tracepoint, module, ##__VA_ARGS__); \
-		else if (what == 'E') \
-		   fprintf(hybris_logging_target, "E"); \
-		else \
-		   fprintf(hybris_logging_target, "C|%i|%s::%s-%i|" message "", \
+                else if (what == 'E') \
+                   fprintf(hybris_logging_target, "E"); \
+                else \
+                   fprintf(hybris_logging_target, "C|%i|%s::%s-%i|" message "", \
                       getpid(), tracepoint, module, getpid(), ##__VA_ARGS__); \
-		fflush(hybris_logging_target); \
+                fflush(hybris_logging_target); \
               } \
              pthread_mutex_unlock(&hybris_logging_mutex); \
           } \
@@ -159,3 +159,4 @@ extern FILE *hybris_logging_target;
 #define TRACE(message, ...) HYBRIS_DEBUG_LOG(EGL, message, ##__VA_ARGS__)
 
 #endif /* HYBRIS_LOGGING_H */
+// vim: noai:ts=4:sw=4:ss=4:expandtab
