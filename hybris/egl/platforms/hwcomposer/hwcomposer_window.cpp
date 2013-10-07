@@ -135,7 +135,7 @@ int HWComposerNativeWindow::setSwapInterval(int interval)
  */
 int HWComposerNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fenceFd)
 {
-    TRACE("%u", pthread_self());
+    TRACE("%lu", pthread_self());
     HWComposerNativeWindowBuffer* fbnb=NULL;
 
     pthread_mutex_lock(&_mutex);
@@ -173,7 +173,7 @@ int HWComposerNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *
     assert(*buffer == static_cast<ANativeWindowBuffer *>(fbnb));
     *fenceFd = -1;
 
-    TRACE("%u DONE --> %p", pthread_self(), fbnb);
+    TRACE("%lu DONE --> %p", pthread_self(), fbnb);
     pthread_mutex_unlock(&_mutex);
 
     return 0;
@@ -200,7 +200,7 @@ int HWComposerNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *
  */
 int HWComposerNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 {
-    TRACE("%u %d", pthread_self(), fenceFd);
+    TRACE("%lu %d", pthread_self(), fenceFd);
     HWComposerNativeWindowBuffer* fbnb = (HWComposerNativeWindowBuffer*) buffer;
 
     assert(static_cast<HWComposerNativeWindowBuffer *>(buffer) == fbnb);
@@ -225,7 +225,7 @@ int HWComposerNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenc
 
     pthread_cond_signal(&_cond);
 
-    TRACE("%u %p %p",pthread_self(), m_frontBuf, fbnb);
+    TRACE("%lu %p %p",pthread_self(), m_frontBuf, fbnb);
     pthread_mutex_unlock(&_mutex);
 
     return 0;
@@ -304,7 +304,7 @@ int HWComposerNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fen
 
 int HWComposerNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer)
 {
-    TRACE("%u STUB", pthread_self());
+    TRACE("%lu STUB", pthread_self());
     return NO_ERROR;
 }
 
@@ -465,7 +465,7 @@ int HWComposerNativeWindow::setBufferCount(int cnt)
                             m_usage|GRALLOC_USAGE_HW_COMPOSER|GRALLOC_USAGE_HW_FB,
                             &fbnb->handle, &fbnb->stride);
 
-        TRACE("buffer %i is at %p (native %p) err=%s handle=%i stride=%i",
+        TRACE("buffer %i is at %p (native %p) err=%s handle=%p stride=%i",
                 i, fbnb, (ANativeWindowBuffer*)fbnb,
                 strerror(-err), fbnb->handle, fbnb->stride);
 
