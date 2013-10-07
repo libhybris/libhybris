@@ -84,6 +84,7 @@ protected:
         if (this->m_alloc)
              m_alloc->free(m_alloc, this->handle);
     }
+    void wlbuffer_from_native_handle(struct android_wlegl *android_wlegl);
 
 protected:
     void* vaddr;

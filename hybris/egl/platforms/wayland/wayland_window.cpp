@@ -40,6 +40,38 @@ extern "C" {
 }
 #endif
 
+
+buffer_handle_t WaylandNativeWindowBuffer::getHandle()
+{
+    return handle;
+}
+
+
+void WaylandNativeWindowBuffer::wlbuffer_from_native_handle(struct android_wlegl *android_wlegl)
+{
+    struct wl_array ints;
+    int *ints_data;
+    struct android_wlegl_handle *wlegl_handle;
+
+    wl_array_init(&ints);
+    ints_data = (int*) wl_array_add(&ints, handle->numInts*sizeof(int));
+    memcpy(ints_data, handle->data + handle->numFds, handle->numInts*sizeof(int));
+
+    wlegl_handle = android_wlegl_create_handle(android_wlegl, handle->numFds, &ints);
+
+    wl_array_release(&ints);
+
+    for (int i = 0; i < handle->numFds; i++) {
+        android_wlegl_handle_add_fd(wlegl_handle, handle->data[i]);
+    }
+
+    wlbuffer = android_wlegl_create_buffer(android_wlegl,
+            width, height, stride,
+            format, usage, wlegl_handle);
+
+    android_wlegl_handle_destroy(wlegl_handle);
+}
+
 void WaylandNativeWindow::resize_callback(struct wl_egl_window *egl_window, void *)
 {
     TRACE("%dx%d",egl_window->width,egl_window->height);
@@ -162,11 +194,6 @@ WaylandNativeWindow::~WaylandNativeWindow()
         buf->wlbuffer = NULL;
         buf->common.decRef(&buf->common);
     }
-}
-
-buffer_handle_t WaylandNativeWindowBuffer::getHandle()
-{
-    return handle;
 }
 
 void WaylandNativeWindow::frame() {
@@ -382,28 +409,7 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
 
     if (wnb->wlbuffer == NULL)
     {
-        struct wl_array ints;
-        int *ints_data;
-        struct android_wlegl_handle *wlegl_handle;
-        buffer_handle_t handle;
-
-        handle = wnb->handle;
-
-        wl_array_init(&ints);
-        ints_data = (int*) wl_array_add(&ints, handle->numInts*sizeof(int));
-        memcpy(ints_data, handle->data + handle->numFds, handle->numInts*sizeof(int));
-        wlegl_handle = android_wlegl_create_handle(m_android_wlegl, handle->numFds, &ints);
-        wl_array_release(&ints);
-        for (int i = 0; i < handle->numFds; i++) {
-            android_wlegl_handle_add_fd(wlegl_handle, handle->data[i]);
-        }
-
-        wnb->wlbuffer = android_wlegl_create_buffer(m_android_wlegl,
-                wnb->width, wnb->height, wnb->stride,
-                wnb->format, wnb->usage, wlegl_handle);
-
-        android_wlegl_handle_destroy(wlegl_handle);
-
+        wnb->wlbuffer_from_native_handle(m_android_wlegl);
         TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
         wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
         wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
@@ -478,28 +484,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
 
     if (wnb->wlbuffer == NULL)
     {
-        struct wl_array ints;
-        int *ints_data;
-        struct android_wlegl_handle *wlegl_handle;
-        buffer_handle_t handle;
-
-        handle = wnb->handle;
-
-        wl_array_init(&ints);
-        ints_data = (int*) wl_array_add(&ints, handle->numInts*sizeof(int));
-        memcpy(ints_data, handle->data + handle->numFds, handle->numInts*sizeof(int));
-        wlegl_handle = android_wlegl_create_handle(m_android_wlegl, handle->numFds, &ints);
-        wl_array_release(&ints);
-        for (int i = 0; i < handle->numFds; i++) {
-            android_wlegl_handle_add_fd(wlegl_handle, handle->data[i]);
-        }
-
-        wnb->wlbuffer = android_wlegl_create_buffer(m_android_wlegl,
-                wnb->width, wnb->height, wnb->stride,
-                wnb->format, wnb->usage, wlegl_handle);
-
-        android_wlegl_handle_destroy(wlegl_handle);
-
+        wnb->wlbuffer_from_native_handle(m_android_wlegl);
         TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
         wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
         wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
