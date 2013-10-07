@@ -41,11 +41,6 @@ extern "C" {
 #endif
 
 
-buffer_handle_t WaylandNativeWindowBuffer::getHandle()
-{
-    return handle;
-}
-
 
 void WaylandNativeWindowBuffer::wlbuffer_from_native_handle(struct android_wlegl *android_wlegl)
 {

@@ -91,7 +91,6 @@ protected:
     alloc_device_t* m_alloc;
 
 public:
-    buffer_handle_t getHandle();
     struct wl_buffer *wlbuffer;
     int busy;
     int youngest;
