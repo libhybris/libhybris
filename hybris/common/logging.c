@@ -110,7 +110,7 @@ hybris_get_thread_id()
 }
 
 int
-hybris_should_trace(char *module, char *tracepoint)
+hybris_should_trace(const char *module, const char *tracepoint)
 {
     return _hybris_should_trace;
 }

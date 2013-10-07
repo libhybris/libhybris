@@ -41,58 +41,62 @@ extern "C" {
 
 class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
 {
-    friend class WaylandNativeWindow;
-    protected:
+friend class WaylandNativeWindow;
+protected:
     WaylandNativeWindowBuffer(alloc_device_t* alloc_device,
                             unsigned int width,
                             unsigned int height,
                             unsigned int format,
-                            unsigned int usage) {
+                            unsigned int usage)
+    {
         // Base members
         ANativeWindowBuffer::width = width;
         ANativeWindowBuffer::height = height;
         ANativeWindowBuffer::format = format;
         ANativeWindowBuffer::usage = usage;
         this->wlbuffer = NULL;
-	this->busy = 0;
-	this->other = NULL;
-	this->m_alloc = alloc_device;
-	int alloc_ok = this->m_alloc->alloc(this->m_alloc,
-		this->width ? this->width : 1, this->height ? this->height : 1,
-		this->format, this->usage,
-		&this->handle, &this->stride);
-	assert(alloc_ok == 0);
-	this->youngest = 0;
-    };
+        this->busy = 0;
+        this->other = NULL;
+        this->m_alloc = alloc_device;
+        int alloc_ok = this->m_alloc->alloc(this->m_alloc,
+                this->width ? this->width : 1, this->height ? this->height : 1,
+                this->format, this->usage,
+                &this->handle, &this->stride);
+        assert(alloc_ok == 0);
+        this->youngest = 0;
+    }
     WaylandNativeWindowBuffer(ANativeWindowBuffer *other)
     {
-	ANativeWindowBuffer::width = other->width;
-	ANativeWindowBuffer::height = other->height;
-	ANativeWindowBuffer::format = other->format;
-	ANativeWindowBuffer::usage = other->usage;
-	ANativeWindowBuffer::handle = other->handle;
-	ANativeWindowBuffer::stride = other->stride;
-	this->wlbuffer = NULL;
-	this->busy = 0;
-	this->other = other;
-	this->m_alloc = NULL;
-	this->youngest = 0;
+        ANativeWindowBuffer::width = other->width;
+        ANativeWindowBuffer::height = other->height;
+        ANativeWindowBuffer::format = other->format;
+        ANativeWindowBuffer::usage = other->usage;
+        ANativeWindowBuffer::handle = other->handle;
+        ANativeWindowBuffer::stride = other->stride;
+        this->wlbuffer = NULL;
+        this->busy = 0;
+        this->other = other;
+        this->m_alloc = NULL;
+        this->youngest = 0;
     }
     ~WaylandNativeWindowBuffer()
     {
-	if (this->m_alloc)
-		m_alloc->free(m_alloc, this->handle);
+        if (this->m_alloc)
+             m_alloc->free(m_alloc, this->handle);
     }
+    void wlbuffer_from_native_handle(struct android_wlegl *android_wlegl);
+
+protected:
     void* vaddr;
     alloc_device_t* m_alloc;
 
-    public:
-    buffer_handle_t getHandle();
+public:
     struct wl_buffer *wlbuffer;
     int busy;
     int youngest;
     ANativeWindowBuffer *other;
 };
+
 
 class WaylandNativeWindow : public BaseNativeWindow {
 public:
@@ -131,6 +135,7 @@ protected:
     virtual int setBuffersFormat(int format);
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
+
 private:
     WaylandNativeWindowBuffer *addBuffer();
     void destroyBuffer(WaylandNativeWindowBuffer *);
@@ -159,3 +164,4 @@ private:
 };
 
 #endif
+// vim: noai:ts=4:sw=4:ss=4:expandtab

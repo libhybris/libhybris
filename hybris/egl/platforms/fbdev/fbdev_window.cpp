@@ -211,7 +211,7 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
     *buffer = fbnb;
     *fenceFd = -1;
 
-    TRACE("%u DONE --> %p", pthread_self(), fbnb);
+    TRACE("%lu DONE --> %p", pthread_self(), fbnb);
     pthread_mutex_unlock(&_mutex);
     HYBRIS_TRACE_END("fbdev-platform", "dequeueBuffer", "");
     return 0;
@@ -268,7 +268,7 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 
     m_freeBufs++;
 
-    TRACE("%u %p %p",pthread_self(), m_frontBuf, fbnb);
+    TRACE("%lu %p %p",pthread_self(), m_frontBuf, fbnb);
 
     pthread_cond_signal(&_cond);
     pthread_mutex_unlock(&_mutex);
@@ -491,7 +491,7 @@ int FbDevNativeWindow::setBufferCount(int cnt)
                             m_usage|GRALLOC_USAGE_HW_FB,
                             &fbnb->handle, &fbnb->stride);
 
-        TRACE("buffer %i is at %p (native %p) err=%s handle=%i stride=%i",
+        TRACE("buffer %i is at %p (native %p) err=%s handle=%p stride=%i",
                 i, fbnb, (ANativeWindowBuffer*)fbnb,
                 strerror(-err), fbnb->handle, fbnb->stride);
 
