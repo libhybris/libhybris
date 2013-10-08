@@ -28,7 +28,8 @@ class FbDevNativeWindowBuffer : public BaseNativeWindowBuffer {
 friend class FbDevNativeWindow;
 
 protected:
-    FbDevNativeWindowBuffer(unsigned int width,
+    FbDevNativeWindowBuffer(alloc_device_t* alloc,
+                            unsigned int width,
                             unsigned int height,
                             unsigned int format,
                             unsigned int usage) ;
@@ -36,6 +37,8 @@ protected:
 
 protected:
     int busy;
+    int status;
+    alloc_device_t* m_alloc;
 };
 
 
