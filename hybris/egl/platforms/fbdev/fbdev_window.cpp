@@ -30,7 +30,8 @@ static pthread_cond_t _cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
-FbDevNativeWindowBuffer::FbDevNativeWindowBuffer(unsigned int width,
+FbDevNativeWindowBuffer::FbDevNativeWindowBuffer(alloc_device_t* alloc_device,
+                            unsigned int width,
                             unsigned int height,
                             unsigned int format,
                             unsigned int usage)
@@ -40,8 +41,17 @@ FbDevNativeWindowBuffer::FbDevNativeWindowBuffer(unsigned int width,
     ANativeWindowBuffer::format = format;
     ANativeWindowBuffer::usage  = usage;
     busy = 0;
-    TRACE("width=%d height=%d format=x%x usage=x%x this=%p",
-        width, height, format, usage, this);
+    status = 0;
+    m_alloc = alloc_device;
+
+    if (m_alloc) {
+        status = m_alloc->alloc(m_alloc,
+                            width, height, format, usage,
+                            &handle, &stride);
+    }
+
+    TRACE("width=%d height=%d stride=%d format=x%x usage=x%x status=%s this=%p",
+        width, height, stride, format, usage, strerror(-status), this);
 }
 
 
@@ -49,6 +59,8 @@ FbDevNativeWindowBuffer::FbDevNativeWindowBuffer(unsigned int width,
 FbDevNativeWindowBuffer::~FbDevNativeWindowBuffer()
 {
     TRACE("%p", this);
+    if (m_alloc && handle)
+        m_alloc->free(m_alloc, handle);
 }
 
 
@@ -91,12 +103,7 @@ void FbDevNativeWindow::destroyBuffers()
     for (; it!=m_bufList.end(); ++it)
     {
         FbDevNativeWindowBuffer* fbnb = *it;
-        assert(fbnb->busy == 0);
-
-        m_alloc->free(m_alloc, fbnb->handle);
-
         fbnb->common.decRef(&fbnb->common);
-        assert(fbnb->common.decRef==NULL);
     }
     m_bufList.clear();
     m_freeBufs = 0;
@@ -205,7 +212,6 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
     HYBRIS_TRACE_END("fbdev-platform", "dequeueBuffer-wait", "");
     assert(fbnb!=NULL);
     fbnb->busy = 1;
-    //fbnb->common.incRef(&fbnb->common);
     m_freeBufs--;
 
     *buffer = fbnb;
@@ -251,7 +257,6 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 
     pthread_mutex_unlock(&_mutex);
 
-    //fbnb->common.decRef(&fbnb->common);
     HYBRIS_TRACE_BEGIN("fbdev-platform", "queueBuffer-post", "-%p", fbnb);
 
     int rv = m_fbDev->post(m_fbDev, fbnb->handle);
@@ -307,7 +312,16 @@ int FbDevNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 {
     TRACE("");
     FbDevNativeWindowBuffer* fbnb = (FbDevNativeWindowBuffer*)buffer;
-    fbnb->common.decRef(&fbnb->common);
+
+    pthread_mutex_lock(&_mutex);
+
+    fbnb->busy=0;
+
+    m_freeBufs++;
+
+    pthread_cond_signal(&_cond);
+    pthread_mutex_unlock(&_mutex);
+
     return 0;
 }
 
@@ -480,22 +494,17 @@ int FbDevNativeWindow::setBufferCount(int cnt)
 
     for(unsigned int i = 0; i < cnt; i++)
     {
-        FbDevNativeWindowBuffer *fbnb = new FbDevNativeWindowBuffer(
+        FbDevNativeWindowBuffer *fbnb = new FbDevNativeWindowBuffer(m_alloc,
                             m_fbDev->width, m_fbDev->height, m_fbDev->format,
                             m_usage|GRALLOC_USAGE_HW_FB );
 
         fbnb->common.incRef(&fbnb->common);
 
-        err = m_alloc->alloc(m_alloc,
-                            m_fbDev->width, m_fbDev->height, m_fbDev->format,
-                            m_usage|GRALLOC_USAGE_HW_FB,
-                            &fbnb->handle, &fbnb->stride);
-
         TRACE("buffer %i is at %p (native %p) err=%s handle=%p stride=%i",
                 i, fbnb, (ANativeWindowBuffer*)fbnb,
-                strerror(-err), fbnb->handle, fbnb->stride);
+                strerror(-fbnb->status), fbnb->handle, fbnb->stride);
 
-        if (err)
+        if (fbnb->status)
         {
             fbnb->common.decRef(&fbnb->common);
             fprintf(stderr,"WARNING: %s: allocated only %d buffers out of %d\n", __PRETTY_FUNCTION__, m_freeBufs, cnt);
