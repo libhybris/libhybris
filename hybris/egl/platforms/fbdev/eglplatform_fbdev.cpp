@@ -51,7 +51,7 @@ extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
 
 extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
 {
-	assert (inited == 1);
+	assert (inited >= 1);
 	assert (_nativewindow == NULL);
 
 	_nativewindow = new FbDevNativeWindow(gralloc, alloc, framebuffer);
