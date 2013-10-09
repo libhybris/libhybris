@@ -36,101 +36,10 @@
 #include <poll.h>
 
 #include <hybris/properties/properties.h>
+#include "properties_p.h"
+
 
 static const char property_service_socket[] = "/dev/socket/" PROP_SERVICE_NAME;
-
-/* Find a key value from a static /system/build.prop file */
-static char *find_key(const char *key)
-{
-	FILE *f = fopen("/system/build.prop", "r");
-	char buf[1024];
-	char *mkey, *value;
-
-	if (!f)
-		return NULL;
-
-	while (fgets(buf, 1024, f) != NULL) {
-		if (strchr(buf, '\r'))
-			*(strchr(buf, '\r')) = '\0';
-		if (strchr(buf, '\n'))
-			*(strchr(buf, '\n')) = '\0';
-
-		mkey = strtok(buf, "=");
-
-		if (!mkey)
-			continue;
-
-		value = strtok(NULL, "=");
-		if (!value)
-			continue;
-
-		/* Skip values that can be bigger than value max */
-		if (strlen(value) >= PROP_VALUE_MAX -1)
-			continue;
-
-		if (strcmp(key, mkey) == 0) {
-			fclose(f);
-			return strdup(value);
-		}
-	}
-
-	fclose(f);
-	return NULL;
-}
-
-/* Find a key value from the kernel command line, which is parsed
- * by Android at init (on an Android working system) */
-static char *find_key_kernel_cmdline(const char *key)
-{
-	char cmdline[1024];
-	char *ptr;
-	int fd;
-
-	fd = open("/proc/cmdline", O_RDONLY);
-	if (fd >= 0) {
-		int n = read(fd, cmdline, 1023);
-		if (n < 0) n = 0;
-
-		/* get rid of trailing newline, it happens */
-		if (n > 0 && cmdline[n-1] == '\n') n--;
-
-		cmdline[n] = 0;
-		close(fd);
-	} else {
-		cmdline[0] = 0;
-	}
-
-	ptr = cmdline;
-
-	while (ptr && *ptr) {
-		char *x = strchr(ptr, ' ');
-		if (x != 0) *x++ = 0;
-
-		char *name = ptr;
-		ptr = x;
-
-		char *value = strchr(name, '=');
-		int name_len = strlen(name);
-
-		if (value == 0) continue;
-		*value++ = 0;
-		if (name_len == 0) continue;
-
-		/* Skip values that can be bigger than value max */
-		if (strlen(value) >= PROP_VALUE_MAX -1)
-			continue;
-
-		if (!strncmp(name, "androidboot.", 12) && name_len > 12) {
-			const char *boot_prop_name = name + 12;
-			char prop[PROP_NAME_MAX];
-			snprintf(prop, sizeof(prop) -1, "ro.%s", boot_prop_name);
-			if (strcmp(prop, key) == 0)
-				return strdup(value);
-		}
-	}
-
-	return NULL;
-}
 
 /* Get/Set a property from the Android Init property socket */
 static int send_prop_msg(prop_msg_t *msg,
@@ -252,11 +161,8 @@ int property_get(const char *key, char *value, const char *default_value)
 	if (property_get_socket(key, value, default_value) == 0)
 		return strlen(value);
 
-	/* In case the socket is not available, parse the file by hand */
-	if ((ret = find_key(key)) == NULL) {
-		/* Property might be available via /proc/cmdline */
-		ret = find_key_kernel_cmdline(key);
-	}
+	/* In case the socket is not available, search the property file cache by hand */
+	ret = hybris_propcache_find(key);
 
 	if (ret) {
 		strcpy(value, ret);
