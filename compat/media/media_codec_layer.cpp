@@ -188,18 +188,20 @@ void media_codec_delegate_destroy(MediaCodecDelegate delegate)
 
     _MediaCodecDelegate *d = get_internal_delegate(delegate);
     if (d == NULL)
+    {
+        ALOGE("d == NULL, cannot destroy MediaCodecDelegate instance");
         return;
+    }
 
-    if (d->refcount)
-        return;
-
-    d->media_codec->stop();
-    d->looper->stop();
+    ALOGI("Releasing media_codec");
     d->media_codec->release();
+    ALOGI("Stopping looper");
+    d->looper->stop();
 
-    d->looper.clear();
-    d->media_codec.clear();
+    ALOGI("Setting refcount = 0");
+    d->refcount = 0;
 
+    ALOGI("Deleting the MediaCodecDelegate instance");
     delete d;
 }
 
@@ -220,10 +222,15 @@ void media_codec_delegate_unref(MediaCodecDelegate delegate)
 
     _MediaCodecDelegate *d = get_internal_delegate(delegate);
     if (d == NULL)
+    {
+        ALOGE("d == NULL, cannot unref MediaCodecDelegate instance");
         return;
+    }
 
-    if (d->refcount)
+    if (d->refcount > 1)
         d->refcount--;
+    else
+        media_codec_delegate_destroy (delegate);
 }
 
 #ifdef SIMPLE_PLAYER
