@@ -40,6 +40,7 @@
 
 
 static const char property_service_socket[] = "/dev/socket/" PROP_SERVICE_NAME;
+static int send_prop_msg_no_reply = 0;
 
 /* Get/Set a property from the Android Init property socket */
 static int send_prop_msg(prop_msg_t *msg,
@@ -57,6 +58,13 @@ static int send_prop_msg(prop_msg_t *msg,
 	int r;
 	int result = -1;
 	int patched_init = 0;
+
+	/* if we tried to talk to the server in the past and didn't get a reply,
+	 * it's fairly safe to say that init is not patched and this is all
+	 * hopeless, so we should just quit while we're ahead
+	 */
+	if (send_prop_msg_no_reply == 1)
+		return -EIO;
 
 	s = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (s < 0) {
@@ -101,6 +109,8 @@ static int send_prop_msg(prop_msg_t *msg,
 		if ((r >= 0) && (patched_init ||
 				(msg->cmd == PROP_MSG_SETPROP))) {
 			result = 0;
+		} else {
+			send_prop_msg_no_reply = 1;
 		}
 	}
 
