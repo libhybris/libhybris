@@ -45,6 +45,7 @@ int main(int argc, char **argv)
 	PFNEGLHYBRISUNLOCKNATIVEBUFFERPROC eglHybrisUnlockNativeBuffer;
 	PFNEGLHYBRISRELEASENATIVEBUFFERPROC eglHybrisReleaseNativeBuffer;
 	PFNEGLCREATEIMAGEKHRPROC eglCreateImageKHR;
+	PFNEGLDESTROYIMAGEKHRPROC eglDestroyImageKHR;
 
 	display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 	assert(eglGetError() == EGL_SUCCESS);
@@ -89,9 +90,14 @@ int main(int argc, char **argv)
 		eglHybrisUnlockNativeBuffer(buf);
 		assert((eglCreateImageKHR = (PFNEGLCREATEIMAGEKHRPROC) eglGetProcAddress("eglCreateImageKHR")) != NULL);
 		printf("Found eglCreateImageKHR\n");
-		assert(eglCreateImageKHR(
-					display, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_HYBRIS,
-					(EGLClientBuffer)buf, NULL) != EGL_NO_IMAGE_KHR);
+		EGLImageKHR image = eglCreateImageKHR(
+								display, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_HYBRIS,
+								(EGLClientBuffer)buf, NULL);
+		assert(image != EGL_NO_IMAGE_KHR);
+		assert((eglDestroyImageKHR = (PFNEGLDESTROYIMAGEKHRPROC) eglGetProcAddress("eglDestroyImageKHR")) != NULL);
+		printf("Found eglDestroyImageKHR\n");
+		assert(eglDestroyImageKHR(display, image));
+
 		assert((eglHybrisReleaseNativeBuffer = (PFNEGLHYBRISRELEASENATIVEBUFFERPROC) eglGetProcAddress("eglHybrisReleaseNativeBuffer")) != NULL);
 		printf("Found eglHybrisReleaseNativeBuffer\n");
 		eglHybrisReleaseNativeBuffer(buf);
