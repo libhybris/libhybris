@@ -525,7 +525,34 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
 }
 
 int WaylandNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fenceFd){
-    TRACE("%p WARN: STUB", buffer);
+    std::list<WaylandNativeWindowBuffer *>::iterator it;
+    WaylandNativeWindowBuffer *wnb = (WaylandNativeWindowBuffer*) buffer;
+
+    lock();
+    HYBRIS_TRACE_BEGIN("wayland-platform", "cancelBuffer", "-%p", wnb);
+
+    /* Check first that it really is our buffer */
+    for (it = m_bufList.begin(); it != m_bufList.end(); it++)
+    {
+        if ((*it) == wnb)
+            break;
+    }
+    assert(it != m_bufList.end());
+
+    wnb->busy = 0;
+    ++m_freeBufs;
+    HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "-%i", m_freeBufs);
+
+    for (it = m_bufList.begin(); it != m_bufList.end(); it++)
+    {
+        (*it)->youngest = 0;
+    }
+    wnb->youngest = 1;
+
+    pthread_cond_signal(&cond);
+
+    HYBRIS_TRACE_END("wayland-platform", "cancelBuffer", "-%p", wnb);
+    unlock();
     return 0;
 }
 
