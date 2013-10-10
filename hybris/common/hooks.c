@@ -1451,7 +1451,6 @@ static struct _hook hooks[] = {
 void *get_hooked_symbol(char *sym)
 {
     struct _hook *ptr = &hooks[0];
-    static int counter = -1;
 
     while (ptr->name != NULL)
     {
@@ -1465,10 +1464,10 @@ void *get_hooked_symbol(char *sym)
         /* safe */
         if (strcmp(sym, "pthread_sigmask") == 0)
            return NULL;
+
         /* not safe */
-        counter--;
-        LOGD("%s %i\n", sym, counter);
-        return (void *) counter;
+        LOGD("0xD15EA5E %s\n", sym);
+        return (void *) 0xD15EA5E;
     }
     return NULL;
 }
