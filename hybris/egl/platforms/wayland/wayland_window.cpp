@@ -252,7 +252,7 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 
     WaylandNativeWindowBuffer* wnb = *it;
     fronted.erase(it);
-    HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "%i", fronted.size());
+    HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "-%i", fronted.size());
 
     for (it = m_bufList.begin(); it != m_bufList.end(); it++)
     {
@@ -264,7 +264,7 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
     wnb->busy = 0;
 
     ++m_freeBufs;
-    HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "%i", m_freeBufs);
+    HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "-%i", m_freeBufs);
     for (it = m_bufList.begin(); it != m_bufList.end(); it++)
     {  
         (*it)->youngest = 0;
@@ -287,10 +287,10 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
     lock();
     HYBRIS_TRACE_BEGIN("wayland-platform", "dequeueBuffer_wait_for_buffer", "");
 
-    HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "%i", m_freeBufs);
+    HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "-%i", m_freeBufs);
 
     while (m_freeBufs==0) {
-        HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "%i", m_freeBufs);
+        HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "-%i", m_freeBufs);
 
         pthread_cond_wait(&cond,&mutex);
     }
@@ -342,9 +342,9 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
     *buffer = wnb;
     --m_freeBufs;
 
-    HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "%i", m_freeBufs);
-    HYBRIS_TRACE_BEGIN("wayland-platform", "dequeueBuffer_gotBuffer", "%p", wnb);
-    HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_gotBuffer", "%p", wnb);
+    HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "-%i", m_freeBufs);
+    HYBRIS_TRACE_BEGIN("wayland-platform", "dequeueBuffer_gotBuffer", "-%p", wnb);
+    HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_gotBuffer", "-%p", wnb);
     HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_wait_for_buffer", "");
 
     unlock();
@@ -496,7 +496,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     //--m_freeBufs;
     //pthread_cond_signal(&cond);
     fronted.push_back(wnb);
-    HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "%i", fronted.size());
+    HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "-%i", fronted.size());
 
     if (fronted.size() == m_bufList.size())
     {
@@ -511,7 +511,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
             {
                 break;
             }
-            HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "%i", fronted.size());
+            HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "-%i", fronted.size());
 
             if (fronted.size() != m_bufList.size())
                 break;
