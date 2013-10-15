@@ -111,6 +111,14 @@ extern "C" EGLBoolean eglplatformcommon_eglQueryWaylandBufferWL(EGLDisplay dpy,
 		*value = anwb->height;
 		return EGL_TRUE;
 	}
+
+#if defined(EGL_WAYLAND_Y_INVERTED_WL)
+	if (attribute == EGL_WAYLAND_Y_INVERTED_WL) {
+		*value = EGL_TRUE;
+		return EGL_TRUE;
+	}
+#endif
+
 	return EGL_FALSE ;
 }
 
