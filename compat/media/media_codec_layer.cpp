@@ -198,6 +198,8 @@ void media_codec_delegate_destroy(MediaCodecDelegate delegate)
     ALOGI("Stopping looper");
     d->looper->stop();
 
+    _SurfaceTextureClientHybris::getInstance().resetState();
+
     ALOGI("Setting refcount = 0");
     d->refcount = 0;
 
