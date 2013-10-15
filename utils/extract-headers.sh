@@ -9,9 +9,48 @@ PATCH=$5
 PATCH2=$6
 PATCH3=$7
 
-if [ x$ANDROID_ROOT = x -o "x$HEADERPATH" = x -o x$MAJOR = x -o x$MINOR = x ]; then
-    echo "Syntax: extract-headers.sh ANDROID_ROOT HEADERPATH MAJOR MINOR [PATCH PATCH2 PATCH3]"
+if [ x$ANDROID_ROOT = x -o "x$HEADERPATH" = x ]; then
+    echo "Syntax: extract-headers.sh ANDROID_ROOT HEADERPATH [MAJOR] [MINOR] [PATCH] [PATCH2] [PATCH3]"
     exit 1
+fi
+
+
+if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
+    VERSION_DEFAULTS=$ANDROID_ROOT/build/core/version_defaults.mk
+
+    parse_defaults_failed() {
+        echo "Error: Cannot read PLATFORM_VERSION from ${VERSION_DEFAULTS}."
+        echo "Please specify MAJOR, MINOR and PATCH manually to continue."
+        exit 1
+    }
+
+    if [ ! -f $VERSION_DEFAULTS ]; then
+        parse_defaults_failed
+    fi
+
+    PLATFORM_VERSION=$(egrep -o "PLATFORM_VERSION := [0-9.]+" $VERSION_DEFAULTS | awk '{ print $3 }')
+    if [ x$PLATFORM_VERSION = x ]; then
+        parse_defaults_failed
+    fi
+
+    MAJOR=$(echo $PLATFORM_VERSION | cut -d. -f1)
+    MINOR=$(echo $PLATFORM_VERSION | cut -d. -f2)
+    PATCH=$(echo $PLATFORM_VERSION | cut -d. -f3)
+    PATCH2=$(echo $PLATFORM_VERSION | cut -d. -f4)
+    PATCH3=$(echo $PLATFORM_VERSION | cut -d. -f5)
+
+    if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
+        parse_defaults_failed
+    fi
+
+    echo -n "Auto-detected version: ${MAJOR}.${MINOR}.${PATCH}"
+    if [ x$PATCH3 != x ]; then
+        echo ".${PATCH2}.${PATCH3}"
+    elif [ x$PATCH2 != x ]; then
+        echo ".${PATCH2}"
+    else
+        echo ""
+    fi
 fi
 
 # Make sure that the dir given contains at least some of the assumed structures.
