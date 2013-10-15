@@ -588,7 +588,12 @@ unsigned int WaylandNativeWindow::queueLength() const {
 
 unsigned int WaylandNativeWindow::type() const {
     TRACE("");
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=3
+    /* https://android.googlesource.com/platform/system/core/+/bcfa910611b42018db580b3459101c564f802552%5E!/ */
+    return NATIVE_WINDOW_SURFACE;
+#else
     return NATIVE_WINDOW_SURFACE_TEXTURE_CLIENT;
+#endif
 }
 
 unsigned int WaylandNativeWindow::transformHint() const {
