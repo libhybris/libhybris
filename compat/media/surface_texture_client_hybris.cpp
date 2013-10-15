@@ -62,7 +62,7 @@ _SurfaceTextureClientHybris::_SurfaceTextureClientHybris(const _SurfaceTextureCl
     : SurfaceTextureClient::SurfaceTextureClient(),
       Singleton<_SurfaceTextureClientHybris>::Singleton(),
       refcount(stch.refcount),
-      ready(0)
+      ready(false)
 {
     REPORT_FUNCTION()
 }
@@ -86,6 +86,12 @@ _SurfaceTextureClientHybris::~_SurfaceTextureClientHybris()
 bool _SurfaceTextureClientHybris::isReady() const
 {
     return ready;
+}
+
+void _SurfaceTextureClientHybris::resetState()
+{
+    refcount = 1;
+    ready = false;
 }
 
 int _SurfaceTextureClientHybris::dequeueBuffer(ANativeWindowBuffer** buffer, int* fenceFd)

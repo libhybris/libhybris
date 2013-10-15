@@ -32,6 +32,9 @@ struct _SurfaceTextureClientHybris : public android::SurfaceTextureClient,
     /** Has a texture id or EGLNativeWindowType been passed in, meaning rendering will function? **/
     bool isReady() const;
 
+    /** Reset the state of the static instance back to the same as a new instance **/
+    void resetState();
+
 public:
     int dequeueBuffer(ANativeWindowBuffer** buffer, int* fenceFd);
     int queueBuffer(ANativeWindowBuffer* buffer, int fenceFd);
