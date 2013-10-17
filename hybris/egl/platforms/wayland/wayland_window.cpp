@@ -189,6 +189,11 @@ WaylandNativeWindow::~WaylandNativeWindow()
         buf->wlbuffer = NULL;
         buf->common.decRef(&buf->common);
     }
+    if (frame_callback)
+        wl_callback_destroy(frame_callback);
+    wl_registry_destroy(registry);
+    wl_event_queue_destroy(wl_queue);
+    android_wlegl_destroy(m_android_wlegl);
 }
 
 void WaylandNativeWindow::frame() {
@@ -613,6 +618,9 @@ void WaylandNativeWindow::destroyBuffer(WaylandNativeWindowBuffer* wnb)
     TRACE("wnb:%p", wnb);
 
     assert(wnb != NULL);
+    if (wnb->wlbuffer)
+        wl_buffer_destroy(wnb->wlbuffer);
+    wnb->wlbuffer = NULL;
     wnb->common.decRef(&wnb->common);
     m_freeBufs--;
 }
