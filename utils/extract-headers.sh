@@ -117,4 +117,45 @@ fi
 mkdir -p $HEADERPATH/private
 cp $ANDROID_ROOT/system/core/include/private/android_filesystem_config.h $HEADERPATH/private
 
+
+# In order to make it easier to trace back the origins of headers, fetch
+# some repository information from the Git source tree (if available).
+# Tested with AOSP and CM.
+NOW=$(LC_ALL=C date)
+
+# Add here all sub-projects of AOSP/CM from which headers are extracted
+GIT_PROJECTS="
+    hardware/libhardware
+    hardware/libhardware_legacy
+    system/core
+    external/kernel-headers
+    external/libnfc-nxp
+"
+
+rm -f $HEADERPATH/SOURCE_GIT_REVISION_INFO
+(for GIT_PROJECT in $GIT_PROJECTS; do
+    TARGET_DIR=$ANDROID_ROOT/$GIT_PROJECT
+    echo "================================================"
+    echo "$GIT_PROJECT @ $NOW"
+    echo "================================================"
+    if [ -e $TARGET_DIR/.git ]; then
+        (
+        set -x
+        repo status $GIT_PROJECT
+        cd $TARGET_DIR
+        git show-ref --head
+        git remote -v
+        )
+        echo ""
+        echo ""
+    else
+        echo "WARNING: $GIT_PROJECT does not contain a Git repository"
+    fi
+done) > $HEADERPATH/git-revisions.txt 2>&1
+
+# Repo manifest that can be used to fetch the sources for re-extracting headers
+if [ -e $ANDROID_ROOT/.repo/manifest.xml ]; then
+    cp $ANDROID_ROOT/.repo/manifest.xml $HEADERPATH/
+fi
+
 exit 0
