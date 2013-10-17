@@ -613,6 +613,9 @@ void WaylandNativeWindow::destroyBuffer(WaylandNativeWindowBuffer* wnb)
     TRACE("wnb:%p", wnb);
 
     assert(wnb != NULL);
+    if (wnb->wlbuffer)
+        wl_buffer_destroy(wnb->wlbuffer);
+    wnb->wlbuffer = NULL;
     wnb->common.decRef(&wnb->common);
     m_freeBufs--;
 }
