@@ -65,3 +65,6 @@ propertiesincludedir = $(includedir)/hybris/properties
 propertiesinclude_HEADERS = \
 	hybris/properties/properties.h
 
+dlfcnincludedir = $(includedir)/hybris/dlfcn
+dlfcninclude_HEADERS = \
+	hybris/dlfcn/dlfcn.h
