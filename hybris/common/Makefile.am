@@ -18,6 +18,7 @@ libhybris_common_la_SOURCES = \
 	hooks.c \
 	hooks_shm.c \
 	strlcpy.c \
+	dlfcn.c \
 	logging.c
 libhybris_common_la_CFLAGS = \
 	-I$(top_srcdir)/include \
