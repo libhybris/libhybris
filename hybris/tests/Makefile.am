@@ -1,5 +1,6 @@
 bin_PROGRAMS = \
 	test_egl \
+	test_egl_configs \
 	test_glesv2 \
 	test_ui \
 	test_sf \
@@ -37,6 +38,14 @@ if WANT_MESA
 test_egl_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
 test_egl_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/egl/libEGL.la
+
+test_egl_configs_SOURCES = test_egl_configs.c
+test_egl_configs_CFLAGS = \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/include/android
+test_egl_configs_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/egl/libEGL.la
 
