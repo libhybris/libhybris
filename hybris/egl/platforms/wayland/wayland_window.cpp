@@ -29,6 +29,7 @@
 #include "wayland-egl-priv.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "logging.h"
 #include <android/android-version.h>
@@ -128,6 +129,16 @@ WaylandNativeWindow::wayland_roundtrip(WaylandNativeWindow *display)
         ret = wl_display_dispatch_queue(display->m_display, display->wl_queue);
 
     return ret;
+}
+
+static void check_fatal_error(struct wl_display *display)
+{
+    if (wl_display_get_error(display) != 0)
+    {
+        fprintf(stderr, "Wayland display got fatal error %i: %s\n", errno, strerror(errno));
+        fprintf(stderr, "The display is now unusable, aborting.\n");
+        abort();
+    }
 }
 
     static void
@@ -399,6 +410,7 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
 
     if (ret < 0) {
         TRACE("wl_display_dispatch_queue returned an error:%i", ret);
+        check_fatal_error(m_display);
         return ret;
     }
 
@@ -449,6 +461,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     if (ret < 0) {
         TRACE("wl_display_dispatch_queue returned an error");
         HYBRIS_TRACE_END("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
+        check_fatal_error(m_display);
         return ret;
     }
 
@@ -514,6 +527,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
             lock();
             if (ret == -1)
             {
+                check_fatal_error(m_display);
                 break;
             }
             HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "%i", fronted.size());
