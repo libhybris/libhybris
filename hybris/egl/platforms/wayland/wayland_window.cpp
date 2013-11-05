@@ -133,12 +133,18 @@ WaylandNativeWindow::wayland_roundtrip(WaylandNativeWindow *display)
 
 static void check_fatal_error(struct wl_display *display)
 {
-    if (wl_display_get_error(display) != 0)
-    {
-        fprintf(stderr, "Wayland display got fatal error %i: %s\n", errno, strerror(errno));
-        fprintf(stderr, "The display is now unusable, aborting.\n");
-        abort();
-    }
+    int error = wl_display_get_error(display);
+
+    if (error == 0)
+        return;
+
+    fprintf(stderr, "Wayland display got fatal error %i: %s\n", error, strerror(error));
+
+    if (errno != 0)
+        fprintf(stderr, "Additionally, errno was set to %i: %s\n", errno, strerror(errno));
+
+    fprintf(stderr, "The display is now unusable, aborting.\n");
+    abort();
 }
 
     static void
