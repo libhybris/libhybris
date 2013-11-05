@@ -96,7 +96,8 @@ eglplatformcommondir = $(includedir)/hybris/eglplatformcommon
 eglplatformcommon_HEADERS = \
 	support.h \
 	nativewindowbase.h \
-	eglplatformcommon.h
+	eglplatformcommon.h \
+	hybris_nativebufferext.h
 
 if WANT_WAYLAND
 libhybris_eglplatformcommon_la_LDFLAGS += \
