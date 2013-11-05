@@ -975,7 +975,7 @@ static char* my_fgets(char *s, int n, FILE *fp)
     return fgets(s, n, _get_actual_fp(fp));
 }
 
-static int my_fprintf(FILE *fp, const char *fmt, ...)
+FP_ATTRIB static int my_fprintf(FILE *fp, const char *fmt, ...)
 {
     int ret = 0;
 
@@ -1007,7 +1007,7 @@ static FILE* my_freopen(const char *filename, const char *mode, FILE *fp)
     return freopen(filename, mode, _get_actual_fp(fp));
 }
 
-static int my_fscanf(FILE *fp, const char *fmt, ...)
+FP_ATTRIB static int my_fscanf(FILE *fp, const char *fmt, ...)
 {
     int ret = 0;
 
