@@ -32,7 +32,8 @@ test_audio_LDADD = \
 test_egl_SOURCES = test_egl.c
 test_egl_CFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android
+	-I$(top_srcdir)/include/android \
+	-I$(top_srcdir)/egl/platforms/common
 
 if WANT_MESA
 test_egl_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
