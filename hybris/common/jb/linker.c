@@ -624,6 +624,12 @@ static int open_library(const char *name)
     if ((name[0] == '/') && ((fd = _open_lib(name)) >= 0))
         return fd;
 
+#ifdef DEFAULT_HYBRIS_LD_LIBRARY_PATH
+    if (getenv("HYBRIS_LD_LIBRARY_PATH") == NULL && *ldpaths == 0)
+    {
+        parse_library_path(DEFAULT_LD_LIBRARY_PATH, ":");
+    }
+#endif
     if (getenv("HYBRIS_LD_LIBRARY_PATH") != NULL && *ldpaths == 0)
     {
         parse_library_path(getenv("HYBRIS_LD_LIBRARY_PATH"), ":");

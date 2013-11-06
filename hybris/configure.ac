@@ -95,6 +95,14 @@ AC_ARG_WITH(default-egl-platform,
   [ ])
 AC_SUBST(DEFAULT_EGL_PLATFORM)
 
+DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib:/system/lib"
+AC_ARG_WITH(default-hybris-ld-library-path,
+  [  --with-default-hybris-ld-library-path=PATH1:PATH2:...     Use PATH1:PATH2 for default HYBRIS_LD_LIBRARY_PATH if not specified by environment ],
+  [ DEFAULT_HYBRIS_LD_LIBRARY_PATH="$withval" ],
+  [ ])
+AC_SUBST(DEFAULT_HYBRIS_LD_LIBRARY_PATH)
+
+
 android_headers_path=""
 AC_ARG_WITH(android-headers,
   [  --with-android-headers=DIR     Use android headers available in DIR. See utils/extract-headers.sh ],
@@ -198,6 +206,8 @@ echo
 echo "  headers path ...........: $android_headers_path"
 echo
 echo "  default egl platform ...: $DEFAULT_EGL_PLATFORM"
+echo
+echo "  default ld_library_path.: $DEFAULT_HYBRIS_LD_LIBRARY_PATH"
 echo
 echo "------------------------------------------------------------------------"
 echo
