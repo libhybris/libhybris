@@ -116,8 +116,8 @@ static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char
 
 static void _init_androidegl()
 {
-	_libegl = (void *) android_dlopen(getenv("LIBEGL") ? getenv("LIBEGL") : "/system/lib/libEGL.so", RTLD_LAZY);
-	_libgles = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("LIBGLESV2") : "/system/lib/libGLESv2.so", RTLD_LAZY);
+	_libegl = (void *) android_dlopen(getenv("LIBEGL") ? getenv("LIBEGL") : "libEGL.so", RTLD_LAZY);
+	_libgles = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("LIBGLESV2") : "libGLESv2.so", RTLD_LAZY);
 }
 
 #define EGL_DLSYM(fptr, sym) do { if (_libegl == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libegl, sym); } } while (0) 
