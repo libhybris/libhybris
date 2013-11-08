@@ -11,10 +11,12 @@ extern "C" {
 #include <eglplatformcommon.h>
 };
 
+#include "logging.h"
+
 static int inited = 0;
 static gralloc_module_t *gralloc = 0;
-static framebuffer_device_t *framebuffer = 0;
 static alloc_device_t *alloc = 0;
+static HWComposerNativeWindow *_nativewindow = NULL;
 
 extern "C" int hwcomposerws_IsValidDisplay(EGLNativeDisplayType display)
 {
@@ -27,22 +29,12 @@ extern "C" int hwcomposerws_IsValidDisplay(EGLNativeDisplayType display)
 			assert(0);
 		}
 
-		/* Not fatal on HW composer >= 1.1 */
-		err = framebuffer_open((hw_module_t *) gralloc, &framebuffer);
-		if (err) {
-			fprintf(stderr, "WARNING: failed to open framebuffer: (%s)\n",strerror(-err));
-		}
-		printf("** framebuffer_open: status=(%s) format=x%x", strerror(-err), framebuffer->format);
-	
-
 		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
 		if (err) {
 			fprintf(stderr, "ERROR: failed to open gralloc: (%s)\n",strerror(-err));
 			assert(0);
 		}
-		printf("** gralloc_open %p status=%s\n", gralloc, strerror(-err));
-
-		framebuffer_close(framebuffer);
+		TRACE("** gralloc_open %p status=%s", gralloc, strerror(-err));
 		eglplatformcommon_init(gralloc, alloc);
 	}
 
@@ -51,19 +43,24 @@ extern "C" int hwcomposerws_IsValidDisplay(EGLNativeDisplayType display)
 
 extern "C" EGLNativeWindowType hwcomposerws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
 {
-	assert (inited == 1);
-	assert (win != 0);
-	
+	assert (inited >= 1);
+	assert (_nativewindow == NULL);
+
 	HWComposerNativeWindow *window = static_cast<HWComposerNativeWindow *>((ANativeWindow *) win);
 	window->setup(gralloc, alloc);
-
-	return win;
+	_nativewindow = window;
+	_nativewindow->common.incRef(&_nativewindow->common);
+	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(_nativewindow);
 }
 
 extern "C" void hwcomposerws_DestroyWindow(EGLNativeWindowType win)
 {
-	HWComposerNativeWindow *window = static_cast<HWComposerNativeWindow *>((ANativeWindow *) win);
-	// TODO: Do any necessary cleanup on window
+	assert (_nativewindow != NULL);
+	assert (static_cast<HWComposerNativeWindow *>((struct ANativeWindow *)win) == _nativewindow);
+
+	_nativewindow->common.decRef(&_nativewindow->common);
+	/* We are done with it, refcounting will delete the window when appropriate */
+	_nativewindow = NULL;
 }
 
 extern "C" __eglMustCastToProperFunctionPointerType hwcomposerws_eglGetProcAddress(const char *procname) 
