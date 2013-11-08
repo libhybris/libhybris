@@ -81,6 +81,9 @@ print """
 
 void *android_dlopen(const char *filename, int flag);
 void *android_dlsym(void *name, const char *symbol);
+int android_dlclose(void *handle);
+const char *android_dlerror(void);
+int android_dladdr(const void *addr, void *info);
 """
 
 print AUTO_GENERATED_WARNING
