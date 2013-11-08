@@ -24,6 +24,7 @@
 #include <unistd.h>
 
 #include <android/android-version.h>
+
 extern "C" {
 #include <android/sync/sync.h>
 };
@@ -32,7 +33,8 @@ static pthread_cond_t _cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
-HWComposerNativeWindowBuffer::HWComposerNativeWindowBuffer(unsigned int width,
+HWComposerNativeWindowBuffer::HWComposerNativeWindowBuffer(alloc_device_t* alloc_device,
+                            unsigned int width,
                             unsigned int height,
                             unsigned int format,
                             unsigned int usage)
@@ -43,8 +45,17 @@ HWComposerNativeWindowBuffer::HWComposerNativeWindowBuffer(unsigned int width,
     ANativeWindowBuffer::usage  = usage;
     fenceFd = -1;
     busy = 0;
-    TRACE("width=%d height=%d format=x%x usage=x%x this=%p",
-        width, height, format, usage, this);
+    status = 0;
+    m_alloc = alloc_device;
+
+    if (m_alloc) {
+        status = m_alloc->alloc(m_alloc,
+                            width, height, format, usage,
+                            &handle, &stride);
+    }
+
+    TRACE("width=%d height=%d stride=%d format=x%x usage=x%x status=%s this=%p",
+        width, height, stride, format, usage, strerror(-status), this);
 }
 
 
@@ -52,6 +63,9 @@ HWComposerNativeWindowBuffer::HWComposerNativeWindowBuffer(unsigned int width,
 HWComposerNativeWindowBuffer::~HWComposerNativeWindowBuffer()
 {
     TRACE("%p", this);
+    if (m_alloc && handle)
+        m_alloc->free(m_alloc, handle);
+
 }
 
 
@@ -87,12 +101,7 @@ void HWComposerNativeWindow::destroyBuffers()
     for (; it!=m_bufList.end(); ++it)
     {
         HWComposerNativeWindowBuffer* fbnb = *it;
-        assert(fbnb->busy == 0);
-
-        m_alloc->free(m_alloc, fbnb->handle);
-
         fbnb->common.decRef(&fbnb->common);
-        assert(fbnb->common.decRef==NULL);
     }
     m_bufList.clear();
     m_freeBufs = 0;
@@ -135,10 +144,25 @@ int HWComposerNativeWindow::setSwapInterval(int interval)
  */
 int HWComposerNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fenceFd)
 {
-    TRACE("%lu", pthread_self());
+    HYBRIS_TRACE_BEGIN("hwcomposer-platform", "dequeueBuffer", "");
+
     HWComposerNativeWindowBuffer* fbnb=NULL;
 
     pthread_mutex_lock(&_mutex);
+
+    HYBRIS_TRACE_BEGIN("hwcomposer-platform", "dequeueBuffer-wait", "");
+#if defined(DEBUG)
+
+    if (m_frontBuf)
+        TRACE("Status: Has front buf %p", m_frontBuf);
+
+    std::list<HWComposerNativeWindowBuffer*>::iterator cit = m_bufList.begin();
+    for (; cit != m_bufList.end(); ++cit)
+    {
+        TRACE("Status: Buffer %p with busy %i\n", (*cit), (*cit)->busy);
+    }
+#endif
+
 
     while (m_freeBufs==0)
     {
@@ -152,7 +176,11 @@ int HWComposerNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *
         {
             if (*it==m_frontBuf)
                 continue;
-            if ((*it)->busy==0) break;
+            if ((*it)->busy==0)
+            {
+                TRACE("Found a free non-front buffer");
+                break;
+            }
         }
         if (it == m_bufList.end())
         {
@@ -164,17 +192,18 @@ int HWComposerNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *
         fbnb = *it;
         break;
     }
+    HYBRIS_TRACE_END("hwcomposer-platform", "dequeueBuffer-wait", "");
+
     assert(fbnb!=NULL);
     fbnb->busy = 1;
-    //fbnb->common.incRef(&fbnb->common);
     m_freeBufs--;
 
     *buffer = fbnb;
-    assert(*buffer == static_cast<ANativeWindowBuffer *>(fbnb));
     *fenceFd = -1;
 
     TRACE("%lu DONE --> %p", pthread_self(), fbnb);
     pthread_mutex_unlock(&_mutex);
+    HYBRIS_TRACE_END("hwcomposer-platform", "dequeueBuffer", "");
 
     return 0;
 }
@@ -203,7 +232,7 @@ int HWComposerNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenc
     TRACE("%lu %d", pthread_self(), fenceFd);
     HWComposerNativeWindowBuffer* fbnb = (HWComposerNativeWindowBuffer*) buffer;
 
-    assert(static_cast<HWComposerNativeWindowBuffer *>(buffer) == fbnb);
+    HYBRIS_TRACE_BEGIN("hwcomposer-platform", "queueBuffer", "-%p", fbnb);
     fbnb->fenceFd = fenceFd;
 
     pthread_mutex_lock(&_mutex);
@@ -217,7 +246,6 @@ int HWComposerNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenc
     assert(fbnb->busy==1);
     fbnb->busy = 2;
     m_frontBuf = fbnb;
-
     m_freeBufs++;
 
     sync_wait(fenceFd, -1);
@@ -227,6 +255,7 @@ int HWComposerNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenc
 
     TRACE("%lu %p %p",pthread_self(), m_frontBuf, fbnb);
     pthread_mutex_unlock(&_mutex);
+    HYBRIS_TRACE_END("hwcomposer-platform", "queueBuffer", "-%p", fbnb);
 
     return 0;
 }
@@ -296,7 +325,16 @@ int HWComposerNativeWindow::cancelBuffer(BaseNativeWindowBuffer* buffer, int fen
 {
     TRACE("");
     HWComposerNativeWindowBuffer* fbnb = (HWComposerNativeWindowBuffer*)buffer;
-    fbnb->common.decRef(&fbnb->common);
+
+    pthread_mutex_lock(&_mutex);
+
+    fbnb->busy=0;
+
+    m_freeBufs++;
+
+    pthread_cond_signal(&_cond);
+    pthread_mutex_unlock(&_mutex);
+
     return 0;
 }
 
@@ -454,22 +492,17 @@ int HWComposerNativeWindow::setBufferCount(int cnt)
 
     for(unsigned int i = 0; i < cnt; i++)
     {
-        HWComposerNativeWindowBuffer *fbnb = new HWComposerNativeWindowBuffer(
+        HWComposerNativeWindowBuffer *fbnb = new HWComposerNativeWindowBuffer(m_alloc,
                             m_width, m_height, m_bufFormat,
-                            m_usage|GRALLOC_USAGE_HW_COMPOSER|GRALLOC_USAGE_HW_FB);
+                            m_usage|GRALLOC_USAGE_HW_COMPOSER);
 
         fbnb->common.incRef(&fbnb->common);
 
-        err = m_alloc->alloc(m_alloc,
-                            m_width, m_height, m_bufFormat,
-                            m_usage|GRALLOC_USAGE_HW_COMPOSER|GRALLOC_USAGE_HW_FB,
-                            &fbnb->handle, &fbnb->stride);
-
-        TRACE("buffer %i is at %p (native %p) err=%s handle=%p stride=%i",
+        TRACE("buffer %i is at %p (native %p),err=%s, handle=%p stride=%i",
                 i, fbnb, (ANativeWindowBuffer*)fbnb,
-                strerror(-err), fbnb->handle, fbnb->stride);
+                strerror(-fbnb->status), fbnb->handle, fbnb->stride);
 
-        if (err)
+        if (fbnb->status)
         {
             fbnb->common.decRef(&fbnb->common);
             fprintf(stderr,"WARNING: %s: allocated only %d buffers out of %d\n", __PRETTY_FUNCTION__, m_freeBufs, cnt);

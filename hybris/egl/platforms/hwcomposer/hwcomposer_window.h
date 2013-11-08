@@ -28,7 +28,8 @@ class HWComposerNativeWindowBuffer : public BaseNativeWindowBuffer {
 friend class HWComposerNativeWindow;
 
 protected:
-    HWComposerNativeWindowBuffer(unsigned int width,
+    HWComposerNativeWindowBuffer(alloc_device_t* alloc,
+                            unsigned int width,
                             unsigned int height,
                             unsigned int format,
                             unsigned int usage) ;
@@ -37,6 +38,8 @@ protected:
 protected:
     int busy;
     int fenceFd;
+    int status;
+    alloc_device_t* m_alloc;
 };
 
 
