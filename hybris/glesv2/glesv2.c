@@ -173,7 +173,7 @@ static void         (*_glEGLImageTargetTexture2DOES) (GLenum target, GLeglImageO
 
 static void _init_androidglesv2()
 {
-	_libglesv2 = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("libGLESv2") : "/system/lib/libGLESv2.so", RTLD_LAZY);
+	_libglesv2 = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("LIBGLESV2") : "libGLESv2.so", RTLD_LAZY);
 }
 
 
