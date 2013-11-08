@@ -627,7 +627,7 @@ static int open_library(const char *name)
 #ifdef DEFAULT_HYBRIS_LD_LIBRARY_PATH
     if (getenv("HYBRIS_LD_LIBRARY_PATH") == NULL && *ldpaths == 0)
     {
-        parse_library_path(DEFAULT_LD_LIBRARY_PATH, ":");
+        parse_library_path(DEFAULT_HYBRIS_LD_LIBRARY_PATH, ":");
     }
 #endif
     if (getenv("HYBRIS_LD_LIBRARY_PATH") != NULL && *ldpaths == 0)
