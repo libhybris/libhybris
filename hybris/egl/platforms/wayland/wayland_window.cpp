@@ -482,7 +482,8 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
             debugenvchecked = 2;
         else
             debugenvchecked = 1;
-    } else if (debugenvchecked == 2)
+    }
+    if (debugenvchecked == 2)
     {
         HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_dumping_buffer", "-%p", wnb);
         hybris_dump_buffer_to_file(wnb->getNativeBuffer());
