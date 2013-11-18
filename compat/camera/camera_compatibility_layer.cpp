@@ -34,6 +34,7 @@
 #define LOG_TAG "CameraCompatibilityLayer"
 #include <utils/KeyedVector.h>
 #include <utils/Log.h>
+#include <utils/String16.h>
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__)
 
@@ -170,7 +171,11 @@ CameraControl* android_camera_connect_to(CameraType camera_type, CameraControlLi
 
 	CameraControl* cc = new CameraControl();
 	cc->listener = listener;
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR>=3
+	cc->camera = android::Camera::connect(camera_id, android::String16("hybris"), android::Camera::USE_CALLING_UID);
+#else
 	cc->camera = android::Camera::connect(camera_id);
+#endif
 
 	if (cc->camera == NULL)
 		return NULL;
