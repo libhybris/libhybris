@@ -540,6 +540,7 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 	control->camera->setPreviewTexture(control->preview_texture->getBufferQueue());
 }
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 void android_camera_set_preview_surface(CameraControl* control, SfSurface* surface)
 {
 	REPORT_FUNCTION();
@@ -549,6 +550,7 @@ void android_camera_set_preview_surface(CameraControl* control, SfSurface* surfa
 	android::Mutex::Autolock al(control->guard);
 	control->camera->setPreviewDisplay(surface->surface);
 }
+#endif
 
 void android_camera_start_preview(CameraControl* control)
 {
