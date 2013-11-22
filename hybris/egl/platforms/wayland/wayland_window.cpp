@@ -163,6 +163,7 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
     this->m_format = 1;
     this->wl_queue = wl_display_create_queue(display);
     this->registry = wl_display_get_registry(display);
+    this->m_android_wlegl = NULL;
     wl_proxy_set_queue((struct wl_proxy *) this->registry,
             this->wl_queue);
     wl_registry_add_listener(this->registry, &registry_listener, this);
