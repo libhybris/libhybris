@@ -74,9 +74,9 @@ extern "C" __eglMustCastToProperFunctionPointerType fbdevws_eglGetProcAddress(co
 	return eglplatformcommon_eglGetProcAddress(procname);
 }
 
-extern "C" void fbdevws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
+extern "C" void fbdevws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClientBuffer *buffer, const EGLint **attrib_list)
 {
-	eglplatformcommon_passthroughImageKHR(target, buffer);
+	eglplatformcommon_passthroughImageKHR(ctx, target, buffer, attrib_list);
 }
 
 struct ws_module ws_module_info = {

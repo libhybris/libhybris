@@ -48,7 +48,7 @@ static __eglMustCastToProperFunctionPointerType nullws_eglGetProcAddress(const c
 	return NULL;
 }
 
-static void nullws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
+static void nullws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClientBuffer *buffer, const EGLint **attrib_list)
 {
 }
 
