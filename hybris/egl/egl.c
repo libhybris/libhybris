@@ -421,18 +421,13 @@ EGLBoolean eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
 static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list)
 {
 	EGL_DLSYM(&_eglCreateImageKHR, "eglCreateImageKHR");
+	EGLContext newctx = ctx;
 	EGLenum newtarget = target;
 	EGLClientBuffer newbuffer = buffer;
+	const EGLint *newattrib_list = attrib_list;
 
-	ws_passthroughImageKHR(&newtarget, &newbuffer);
-	if (newtarget == EGL_NATIVE_BUFFER_ANDROID)
-	{
-		assert(((struct ANativeWindowBuffer *) newbuffer)->common.magic == ANDROID_NATIVE_BUFFER_MAGIC);
-		attrib_list=NULL;
-	}
-
-	EGLImageKHR ret = (*_eglCreateImageKHR)(dpy, EGL_NO_CONTEXT, newtarget, newbuffer, attrib_list);
-	return ret;
+	ws_passthroughImageKHR(&newctx, &newtarget, &newbuffer, &newattrib_list);
+	return (*_eglCreateImageKHR)(dpy, newctx, newtarget, newbuffer, newattrib_list);
 }
 
 static void _my_glEGLImageTargetTexture2DOES(GLenum target, GLeglImageOES image)

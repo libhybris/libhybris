@@ -7,7 +7,7 @@ struct ws_module {
 	EGLNativeWindowType (*CreateWindow)(EGLNativeWindowType win, EGLNativeDisplayType display);
 	void (*DestroyWindow)(EGLNativeWindowType win);
 	__eglMustCastToProperFunctionPointerType (*eglGetProcAddress)(const char *procname);
-	void (*passthroughImageKHR)(EGLenum *target, EGLClientBuffer *buffer);
+	void (*passthroughImageKHR)(EGLContext *ctx, EGLenum *target, EGLClientBuffer *buffer, const EGLint **attrib_list);
 	const char *(*eglQueryString)(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name));
 };
 
@@ -15,7 +15,7 @@ int ws_IsValidDisplay(EGLNativeDisplayType display);
 EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display);
 void ws_DestroyWindow(EGLNativeWindowType win);
 __eglMustCastToProperFunctionPointerType ws_eglGetProcAddress(const char *procname);
-void ws_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer);
+void ws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClientBuffer *buffer, const EGLint **attrib_list);
 const char *ws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name));
 
 #endif

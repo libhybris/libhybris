@@ -179,7 +179,7 @@ extern "C" EGLBoolean eglplatformcommon_eglHybrisReleaseNativeBuffer(EGLClientBu
 
 
 extern "C" void
-eglplatformcommon_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
+eglplatformcommon_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClientBuffer *buffer, const EGLint **attrib_list)
 {
 #ifdef WANT_WAYLAND
 	static int debugenvchecked = 0;
@@ -200,6 +200,8 @@ eglplatformcommon_passthroughImageKHR(EGLenum *target, EGLClientBuffer *buffer)
 		}
 		*buffer = (EGLClientBuffer) (ANativeWindowBuffer *) buf->buf;
 		*target = EGL_NATIVE_BUFFER_ANDROID;
+		*ctx = EGL_NO_CONTEXT;
+		*attrib_list = NULL;
 	}
 #endif
 }
