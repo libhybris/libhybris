@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Optimization refactoring by sharpneli <teemu.virolainen@gmail.com>
- * 
  */
 
 #define GL_GLEXT_PROTOTYPES
