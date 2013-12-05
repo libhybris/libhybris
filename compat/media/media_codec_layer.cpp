@@ -260,7 +260,7 @@ int media_codec_configure(MediaCodecDelegate delegate, MediaFormat format, Surfa
     ALOGD("SurfaceTextureClientHybris: %p", stch);
 
     // Make sure we're ready to configure the codec and the SurfaceTextureClient together
-    if (stch->hardwareRendering() && stch->isReady())
+    if (stch != NULL && stch->hardwareRendering() && stch->isReady())
     {
         ALOGD("Doing hardware decoding with hardware rendering");
         // TODO: Don't just pass NULL for the security when DRM is needed
