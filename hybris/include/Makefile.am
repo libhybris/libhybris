@@ -65,6 +65,10 @@ propertiesincludedir = $(includedir)/hybris/properties
 propertiesinclude_HEADERS = \
 	hybris/properties/properties.h
 
+mediaincludedir = $(includedir)/hybris/media
+mediainclude_HEADERS = \
+	hybris/media/media_compatibility_layer.h
+
 dlfcnincludedir = $(includedir)/hybris/dlfcn
 dlfcninclude_HEADERS = \
 	hybris/dlfcn/dlfcn.h

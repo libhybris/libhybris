@@ -4,7 +4,7 @@ if HAS_ANDROID_4_2_0
 SUBDIRS += libsync
 endif
 
-SUBDIRS += egl glesv1 glesv2 ui sf input camera
+SUBDIRS += egl glesv1 glesv2 ui sf input camera media
 if HAS_LIBNFC_NXP_HEADERS
 SUBDIRS += libnfc_nxp libnfc_ndef_nxp
 endif
