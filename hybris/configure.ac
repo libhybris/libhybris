@@ -180,6 +180,7 @@ AC_CONFIG_FILES([
 	sf/Makefile
 	input/Makefile
 	camera/Makefile
+	camera/libcamera.pc
 	include/Makefile
 	utils/Makefile
 	tests/Makefile
