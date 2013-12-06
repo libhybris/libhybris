@@ -8,3 +8,6 @@ libandroid_properties_la_CFLAGS += -ggdb -O0
 endif
 libandroid_properties_la_LDFLAGS = \
 	-version-info "1":"0":"0"
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = libandroid-properties.pc
