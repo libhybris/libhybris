@@ -72,7 +72,9 @@ int main(int argc, char** argv)
 
 	InputStackConfiguration config = {
 		enable_touch_point_visualization : true,
-		default_layer_for_touch_point_visualization : 10000
+		default_layer_for_touch_point_visualization : 10000,
+		input_area_width : 1024,
+		input_area_height : 1024
 	};
 
 	android_input_stack_initialize(&listener, &config);

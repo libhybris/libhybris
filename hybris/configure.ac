@@ -179,6 +179,7 @@ AC_CONFIG_FILES([
 	ui/Makefile
 	sf/Makefile
 	input/Makefile
+	input/libis.pc
 	camera/Makefile
 	include/Makefile
 	utils/Makefile

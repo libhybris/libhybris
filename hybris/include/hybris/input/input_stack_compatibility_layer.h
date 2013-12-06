@@ -105,6 +105,8 @@ extern "C" {
     {
         bool enable_touch_point_visualization;
         int default_layer_for_touch_point_visualization;
+        int input_area_width;
+        int input_area_height;
     };
 
     void android_input_stack_initialize(
