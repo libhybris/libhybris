@@ -779,9 +779,11 @@ static int my_pthread_rwlock_init(pthread_rwlock_t *__rwlock,
                                   __const pthread_rwlockattr_t *__attr)
 {
     pthread_rwlock_t *realrwlock = NULL;
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
-
+    pthread_rwlockattr_t *realattr = NULL;
     int pshared = 0;
+
+    if (__attr != NULL)
+        realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
 
     if (realattr)
         pthread_rwlockattr_getpshared(realattr, &pshared);
