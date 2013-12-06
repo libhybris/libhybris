@@ -181,6 +181,7 @@ AC_CONFIG_FILES([
 	input/Makefile
 	input/libis.pc
 	camera/Makefile
+	camera/libcamera.pc
 	include/Makefile
 	utils/Makefile
 	tests/Makefile

@@ -308,7 +308,7 @@ int main(int argc, char** argv)
 	event_listener.on_new_event = on_new_input_event;
 	event_listener.context = cc;
 
-	struct InputStackConfiguration input_configuration = { false, 25000 };
+	struct InputStackConfiguration input_configuration = { false, 25000, 1024, 1024 };
 
 	android_input_stack_initialize(&event_listener, &input_configuration);
 	android_input_stack_start();
