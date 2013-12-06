@@ -217,6 +217,7 @@ AC_CONFIG_FILES([
 	camera/libcamera.pc
 	vibrator/Makefile
 	vibrator/libvibrator.pc
+	media/Makefile
 	include/Makefile
 	utils/Makefile
 	tests/Makefile
