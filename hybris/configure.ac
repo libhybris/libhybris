@@ -150,6 +150,7 @@ AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test -f ${android_headers_path}/libnfc
 AC_CONFIG_FILES([
 	Makefile
 	properties/Makefile
+	properties/libandroid-properties.pc
 	common/Makefile
 	common/gingerbread/Makefile
 	common/ics/Makefile
@@ -178,6 +179,7 @@ AC_CONFIG_FILES([
 	libsync/libsync.pc
 	ui/Makefile
 	sf/Makefile
+	sf/libsf.pc
 	input/Makefile
 	input/libis.pc
 	camera/Makefile
