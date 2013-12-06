@@ -178,6 +178,7 @@ AC_CONFIG_FILES([
 	libsync/libsync.pc
 	ui/Makefile
 	sf/Makefile
+	sf/libsf.pc
 	input/Makefile
 	input/libis.pc
 	camera/Makefile
