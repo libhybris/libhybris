@@ -1239,37 +1239,7 @@ static int my_setlinebuf(FILE *fp)
     return 0;
 }
 
-long my_sysconf(int name)
-{
-  /*
-   * bionic has different values for the values below.
-   * TODO: compare the values between glibc and bionic and complete the mapping
-   */
-  switch (name) {
-  case 0x27:
-    return sysconf(_SC_PAGESIZE);
-  case 0x28:
-    return sysconf(_SC_PAGE_SIZE);
-  case 0x60:
-    return sysconf(_SC_NPROCESSORS_CONF);
-  case 0x61:
-    return sysconf(_SC_NPROCESSORS_ONLN);
-  default:
-    break;
-  }
-
-
-  long rv = sysconf(name);
-
-#ifdef DEBUG
-  if (rv == -1) {
-    printf("sysconf failed for %li\n", name);
-    exit(-1);
-  }
-#endif
-
-  return rv;
-}
+extern long my_sysconf(int name);
 
 FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
 {
