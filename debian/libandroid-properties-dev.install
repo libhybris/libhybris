@@ -1,0 +1,3 @@
+usr/lib/*/libandroid-properties.so
+usr/lib/*/pkgconfig/libandroid-properties.pc
+usr/include/hybris/properties
