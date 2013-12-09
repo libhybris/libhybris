@@ -1,0 +1,10 @@
+usr/lib/*/libhybris-eglplatformcommon.so.*
+usr/lib/*/libhybris-hwcomposerwindow.so.*
+usr/lib/*/libsync.so.*
+usr/lib/*/libui.so.*
+usr/lib/*/libsf.so.*
+usr/lib/*/libis.so.*
+usr/lib/*/libcamera.so.*
+usr/lib/*/libhybris/*.so
+usr/lib/*/libEGL.so.*		#PKGLIBDIR#
+usr/lib/*/libGLESv2.so.*	#PKGLIBDIR#

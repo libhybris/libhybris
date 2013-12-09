@@ -1,0 +1,339 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu1) UNRELEASED; urgency=low
+
+  * New upstream snapshot
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 06 Dec 2013 12:25:51 -0200
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu37) trusty; urgency=low
+
+  * Mark android-platform-headers Multi-Arch: foreign, so that libhardware-dev
+    is cross-installable.
+  * Use the right compiler if set up for cross-compiling.
+    Cross-build-dependencies won't work right due to the dep on
+    gcc-4.7/g++-4.7, but this will work better than anything else and you can
+    satisfy the build-deps by hand for now.
+
+ -- Steve Langasek <steve.langasek@ubuntu.com>  Sat, 23 Nov 2013 05:41:05 +0000
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu36) trusty; urgency=low
+
+  * 0035-hooks.c-adding-hooks-for-asprintf-and-vasprintf-both.patch:
+    - Missing hooks needed by the emulator EGL/GLES driver
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 14 Nov 2013 17:34:51 -0200
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu35) saucy; urgency=low
+
+  * 0034-Support-for-software-rendering-and-buffer-management.patch:
+    - Add a getter function that allows a client app to check to see if we
+      are doing hardware rendering.
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 14 Oct 2013 17:04:02 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu34) saucy; urgency=low
+
+  * 0034-Support-for-software-rendering-and-buffer-management.patch:
+    - Enable support for software rendering and improving buffer management
+      when decoding/rendering a video
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 09 Oct 2013 18:46:48 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu33) saucy; urgency=low
+
+  * 0033-hardware-adding-missing-power.h.patch:
+    - Adding missing libhardware power.h header
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 09 Oct 2013 11:48:44 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu32) saucy; urgency=low
+
+  * 0032-Make-the-decoding-rendering-loop-much-more-robust.-F.patch:
+    - Making the decoding/rendering loop more robust by releasing
+      the output buffers in case the hal call fails (LP: #1234207)
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 02 Oct 2013 22:48:24 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu31) saucy; urgency=low
+
+  * 0031-Fixes-bug-lp-1234007-out-of-index-crash-for-handling.patch:
+    - Fixing an out of index crash when handling media_codec_layer output
+      buffers list (LP: #1234007)
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 02 Oct 2013 11:35:46 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu30) saucy; urgency=low
+
+  * 0030-compat-media-also-support-decoding-with-playbin.patch:
+    - Refreshing patch adding another method to ask when the client is ready
+      for rendering
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 30 Sep 2013 16:08:45 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu29) saucy; urgency=low
+
+  * 0030-compat-media-also-support-decoding-with-playbin.patch:
+    - Improving rendering/decoding handling to also work with playbin
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 27 Sep 2013 13:54:55 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu28) saucy; urgency=low
+
+  * 0029-compat-input-take-full-geometry-by-default-in-input-.patch:
+    - Removing surfaceflinger dependency of the input stack by allowing the
+      consumer to pass the screen width and height
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 25 Sep 2013 23:21:51 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu27) saucy; urgency=low
+
+  * 0028-surface_texture_client_hybris-using-float-instead-of.patch:
+    - Using float directly instead of GLfloat to avoid conflicts with Qt
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 13 Sep 2013 10:30:57 -0400
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu26) saucy; urgency=low
+
+  * 0027-media-provide-a-method-to-check-the-compat-availabil.patch:
+    - Provide a runtime method to check if the media compat layer is available
+      in the system (/system from Android)
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 12 Sep 2013 11:13:39 -0400
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu25) saucy; urgency=low
+
+  * 0026-Added-a-function-to-get-the-transformation-matrix-an.patch:
+    - Adding extra surface texture calls for media playback
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 11 Sep 2013 10:33:17 -0400
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu24) saucy; urgency=low
+
+  * Moving the media HAL into a separated package (libmedia), so we can have
+    the proper package dependencies in the gst-plugins-bad package (otherwise
+    it ends up depending on libhybris, which breaks EGL for desktop).
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 10 Sep 2013 10:40:32 -0400
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu23) saucy; urgency=low
+
+  * 0025-audio.h-handling-the-float-based-function-calls-with.patch:
+    - Using proper aapcs attribute to the float based function calls in the
+      audio HAL
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 10 Sep 2013 09:48:48 -0400
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu22) saucy; urgency=low
+
+  * 0024-compat-input-block-poll-avoid-waking-up-at-every-500.patch:
+    - Block poll when retrieving the input events via HAL, to avoid waking up
+      at every 500 ms
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 04 Sep 2013 21:21:34 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu21) saucy; urgency=low
+
+  * 0010-hardware-include-adding-audio-hal-related-headers-fr.patch:
+    - Updating patch to really reflect headers from android-4.2.2_r1.2
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 29 Aug 2013 00:05:31 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu20) saucy; urgency=low
+
+  * 0023-compat-media-make-use-of-NativeBufferAllocator-inste.patch:
+    - Make media use a native buffer allocator so we don't need to depend on
+      surface flinger
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 28 Aug 2013 17:37:10 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu19) saucy; urgency=low
+
+  * 0022-compat-camera-make-use-of-native-buffer-allocator-in.patch:
+    - Make camera use a native buffer allocator so we don't need to depend on
+      surface flinger
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 27 Aug 2013 17:08:03 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu18) saucy; urgency=low
+
+  * 0021-hooks.c-also-add-a-matching-sysconf-for-_SC_NPROCESS.patch:
+    - Add a matching sysconf for _SC_NPROCESSORS_ONLN, used by libstagefright
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 26 Aug 2013 18:22:29 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu17) saucy; urgency=low
+
+  * 0020-Change-the-SurfaceTextureClientUbuntu-API-to-be-sing.patch:
+    - Change API to be singleton-based to work around Gstreamer playbin
+      weirdness.
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 26 Aug 2013 11:10:11 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu16) saucy; urgency=low
+
+  * 0019-Fix-last-argument-to-pthread_cond_timedwait.patch:
+    - Fixing last argument of pthread_cond_timedwait so it can work as
+      expected.
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 09 Aug 2013 10:51:32 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu15) saucy; urgency=low
+
+  * 0018-properties.c-better-handling-for-name-and-value-size.patch:
+    - Better handling key and size names, avoid overflow issue with a blob
+      used by nexus 4 (libqmi_cci.so) - bug found by diwic
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 09 Aug 2013 07:51:28 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu14) saucy; urgency=low
+
+  * debian/control: doing proper replaces/breaks for the new packages
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 06 Aug 2013 19:12:43 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu13) saucy; urgency=low
+
+  * debian/control:
+    - Creating android-platform-headers that contains the original Android
+      headers. This will later come from a different src package once we
+      rebase libhybris with current upstream.
+    - Moving libhardware2 and libhybris-common into separated packages,
+      so we don't have libmirclient depending on the egl/gles libraries.
+    - Split for other packages should happen once the library is renamed
+      with upstream, so we can use libhybris/android-foo instead
+  * 0017-common-hooks.c-handle-null-attr-in-pthread_rwlock_in.patch:
+    - Handle null attr in pthread_rwlock_init, as it's a valid use case
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 06 Aug 2013 15:44:07 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu12) saucy; urgency=low
+
+  * 0016-media-adding-files-for-media-codec-support-with-stag.patch:
+    - Adding media codec support to allow video decode using libstagefright
+      directly
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 31 Jul 2013 23:31:32 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu11) saucy; urgency=low
+
+  * 0015-camera_compatibility_layer.cpp-don-t-explicitly-rele.patch:
+    - Don't explicitly release frames, avoid crash on manta
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 18 Jul 2013 04:14:07 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu10) saucy; urgency=low
+
+  * debian/control: including missing ui headers into libhybris-dev
+    (LP: #1199953)
+  * 0014-input_compatibility_layer.cpp-avoid-blocking-on-exit.patch: avoid
+    blocking on exit and shutdown (LP: #1199897)
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 10 Jul 2013 19:36:09 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu9) saucy; urgency=low
+
+  * debian/control: build only for armhf, i386 and amd64
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 01 Jul 2013 19:27:07 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu8) saucy; urgency=low
+
+  * 0013-implement-getset-property-via-property-service.patch:
+    - Adding support for get/set property using the Android property service
+  * libandroid-properties1: new library to export the property_get,
+    property_set and property_list android calls
+  * libhybris-utils: new package providing the getprop and setprop utilities
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 01 Jul 2013 18:50:12 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu7) saucy; urgency=low
+
+  * Forcing GCC 4.7, to avoid issues with 4.8 ABI changes (temporarily until
+    the android side can be built with 4.8 as well)
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 26 Jun 2013 18:19:13 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu6) saucy; urgency=low
+
+  * Adding 0012-hooks.c-handle-invalid-mutex-in-pthread_mutex_destro.patch:
+    - Handling invalid mutex in pthread_mutex_destroy
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 25 Jun 2013 00:45:56 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu5) saucy; urgency=low
+
+  * 0010-hardware-include-adding-audio-hal-related-headers-fr.patch:
+    - Updating based on the version set upstream
+  * Adding 0011-hooks.c-no-need-to-map-strcasestr.patch:
+    - Remove hook for strcasesrt, glibc verision behaves differently
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 24 Jun 2013 23:03:45 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu4) saucy; urgency=low
+
+  * Adding 0010-hardware-include-adding-audio-hal-related-headers-fr.patch:
+    - Exporting headers needed to access the Android Audio HAL
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 24 Jun 2013 01:28:22 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu3) saucy; urgency=low
+
+  * Adding 0009-jb-linker.c-reduce-debugging-output-for-prelinked-li.patch:
+    - Reducing debugging output for the prelinked library detection logic
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 19 Jun 2013 22:28:28 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu2) saucy; urgency=low
+
+  * Adding 0008-hooks-shm-fixing-logic-with-cond-is-negative-error.patch:
+    - Fixing int -> unsigned int conversion when handling android shared cond
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 14 Jun 2013 05:57:51 -0300
+
+libhybris (0.1.0+git20130606+c5d897a-0ubuntu1) saucy; urgency=low
+
+  * New upstream snapshot
+  * Updating patches against latest upstream, dropping (already merged):
+    - 0005-egl-platform-common-implement-conversion-to-base-buf.patch
+    - 0006-hooks-using-shm-hybris-pshared.patch
+  * Fixing logging support, adding:
+    - 0006-jb-linker.c-allow-debug-of-the-linker-and-hooked-sym.patch
+    - 0007-jb-linker.c-ubuntu-touch-uses-dev-alog-instead-of-de.patch
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 07 Jun 2013 02:54:18 -0300
+
+libhybris (0.1.0+git20130606+6f67260-0ubuntu1) saucy; urgency=low
+
+  * New upstream snapshot
+  * Updating patches against latest upstream
+  * debian/rules: moving get-orig-source to get-packaged-orig-source
+  * debian/patches/0005-egl-platform-common-implement-conversion-to-base-buf.patch:
+    Implement native conversion to base buffer class
+  * debian/patches/0006-hooks-using-shm-hybris-pshared.patch: use SHM between
+    hybris instances for pshared mutex and condition (needed by MIR)
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 05 Jun 2013 22:22:02 -0300
+
+libhybris (0.1.0+git20130604+1b671a8-0ubuntu1) saucy; urgency=low
+
+  * New upstream snapshot
+  * Removed patches that are now available in upstream:
+    - 0001-hybris-include-separating-include-files-per-director.patch
+    - 0002-Input-adding-initial-compat-files-for-input.patch
+    - 0005-common-hooks.c-adding-hooks-used-by-the-ubuntu-media.patch
+    - 0007-common-properties.c-also-probe-property-from-kernel-.patch
+    - 0008-common-linkers-removing-Android.mk-files-are-they-ar.patch
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 04 Jun 2013 14:25:42 -0300
+
+libhybris (0.1.0+git20130601+dfb2e26-0ubuntu2) saucy; urgency=low
+
+  * debian/copyright: fixing license and copyright entries based on a review
+    done by Sebastien Bacher
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 04 Jun 2013 07:33:11 -0300
+
+libhybris (0.1.0+git20130601+dfb2e26-0ubuntu1) saucy; urgency=low
+
+  * Initial release for Ubuntu
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 04 Jun 2013 02:58:01 -0300

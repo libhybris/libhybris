@@ -1,0 +1,10 @@
+Subject: Collected Debian patches for libhybris
+Author: Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>
+
+The libhybris package is maintained in Git rather than maintaining
+patches as separate files, and separating the patches doesn't seem to
+be worth the effort.  They are therefore all included in this single
+Debian patch.
+
+For full commit history and separated commits, see the packaging Git
+repository.

@@ -1,0 +1,21 @@
+#!/bin/sh
+# Copyright (C) 2007 Mario Limonciello
+# Copyright (C) 2009-2011 Canonical Ltd.
+
+set -e
+
+PACKAGE_NAME=#DRIVERNAME#
+ARCH=`dpkg --print-architecture`
+
+if [ "$1" = "configure" ]; then
+
+    update-alternatives --force \
+        --install /#SYSCONFDIR#/ld.so.conf.d/#DEB_HOST_MULTIARCH#_EGL.conf #DEB_HOST_MULTIARCH#_egl_conf /#LDSOCONF# #ALTPRIORITY#
+
+    # ldconfig needs to be run immediately as we're changing /etc/ld.so.conf.d/ with
+    # alternatives.
+    LDCONFIG_NOTRIGGER=y ldconfig
+
+fi
+
+#DEBHELPER#
