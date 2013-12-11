@@ -1,8 +1,14 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu1) UNRELEASED; urgency=low
+libhybris (0.1.0+git20131207+e452e83-0ubuntu1) trusty; urgency=low
 
-  * New upstream snapshot
+  * New upstream snapshot:
+    - Rebasing patches and removing the ones that are already available in
+      upstream
+    - Performance improvements for the glesv2 hybris driver
+    - android-platform-headers renamed and migrated to a different source
+      package (android-headers)
+    - Most libraries can now be used via a pkg-config file
 
- -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 06 Dec 2013 12:25:51 -0200
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 11 Dec 2013 01:31:48 -0200
 
 libhybris (0.1.0+git20130606+c5d897a-0ubuntu37) trusty; urgency=low
 
