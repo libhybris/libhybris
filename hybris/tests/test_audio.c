@@ -15,6 +15,7 @@
  *
  */
 
+#include <android/android-config.h>
 #include <memory.h>
 #include <assert.h>
 #include <stdbool.h>

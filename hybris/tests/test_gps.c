@@ -16,6 +16,7 @@
  *
 */
 
+#include <android/android-config.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
