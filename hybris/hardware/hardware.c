@@ -15,6 +15,7 @@
  *
  */
 
+#include <android/android-config.h>
 #include <dlfcn.h>
 #include <stddef.h>
 #include <android/hardware/hardware.h>
