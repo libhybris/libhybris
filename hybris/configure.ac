@@ -107,6 +107,10 @@ android_headers_path=""
 AC_ARG_WITH(android-headers,
   [  --with-android-headers=DIR     Use android headers available in DIR. See utils/extract-headers.sh ],
   [
+      if [ ! test -e $withval/android-config.h ]; then
+	echo "Error! missing android-config.h in android header path"
+	exit 1
+      fi
       if [ ! test -e $withval/android-version.h ]; then
 	echo "Error! missing android-version.h in android header path"
 	exit 1
