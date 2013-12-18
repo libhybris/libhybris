@@ -120,12 +120,13 @@ AC_ARG_WITH(android-headers,
       android_headers_path="$withval"      
 
       # According to http://en.wikipedia.org/wiki/Android_version_history#Version_history_by_API_level
-      android_headers_major=`grep -E "define ANDROID_VERSION_MAJOR " $android_headers_path/android-version.h | sed "s|^\#define ANDROID_VERSION_MAJOR \(.*\)$|\1|g"`
+      android_headers_major=`awk '/ANDROID_VERSION_MAJOR/ {print $3;}' $android_headers_path/android-version.h`
 
-      android_headers_minor=`grep -E "define ANDROID_VERSION_MINOR " $android_headers_path/android-version.h | sed "s|^\#define ANDROID_VERSION_MINOR \(.*\)$|\1|g"`
+      android_headers_minor=`awk '/ANDROID_VERSION_MINOR/ {print $3;}' $android_headers_path/android-version.h`
 
-      android_headers_patch=`grep -E "define ANDROID_VERSION_PATCH " $android_headers_path/android-version.h | sed "s|^\#define ANDROID_VERSION_PATCH \(.*\)$|\1|g"`
-  
+      android_headers_patch=`awk '/ANDROID_VERSION_PATCH\s/ {print $3;}' $android_headers_path/android-version.h`
+
+
       if [ test "x$android_headers_major" = x ]; then
 	  echo "Error! Was unable to locate define ANDROID_VERSION_MAJOR in $android_headers_path/android-version.h"
       fi
