@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <android/android-config.h>
 #include "fbdev_window.h"
 #include "logging.h"
 
@@ -21,8 +22,6 @@
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
-
-#include <android/android-config.h>
 
 #define FRAMEBUFFER_PARTITIONS 2
 

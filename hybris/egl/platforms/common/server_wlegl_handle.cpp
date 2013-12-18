@@ -20,6 +20,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <android/android-config.h>
 #include <stdint.h>
 #include <cstring>
 #include <unistd.h>

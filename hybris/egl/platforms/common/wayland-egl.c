@@ -1,3 +1,4 @@
+#include <android/android-config.h>
 #include <stdlib.h>
 
 #include <wayland-client.h>

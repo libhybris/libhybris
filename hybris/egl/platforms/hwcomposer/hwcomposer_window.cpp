@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <android/android-config.h>
 #include "hwcomposer_window.h"
 #include "logging.h"
 
@@ -22,8 +23,6 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
-
-#include <android/android-config.h>
 
 extern "C" {
 #include <android/sync/sync.h>

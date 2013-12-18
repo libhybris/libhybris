@@ -1,3 +1,4 @@
+#include <android/android-config.h>
 #include <ws.h>
 #include <dlfcn.h>
 #include <stdlib.h>
