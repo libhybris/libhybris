@@ -114,10 +114,10 @@ AC_ARG_WITH(android-headers,
       if [ ! test -e $withval/android-version.h ]; then
 	echo "Error! missing android-version.h in android header path"
 	exit 1
-      fi 
+      fi
       rm -f include/android
-      ln -sf $withval include/android   	
-      android_headers_path="$withval"      
+      ln -sf $withval include/android
+      android_headers_path="$withval"
 
       # According to http://en.wikipedia.org/wiki/Android_version_history#Version_history_by_API_level
       android_headers_major=`awk '/ANDROID_VERSION_MAJOR/ {print $3;}' $android_headers_path/android-version.h`
@@ -221,4 +221,3 @@ echo
 echo "------------------------------------------------------------------------"
 echo
 echo "Now type 'make' to compile and 'make install' to install this package."
-
