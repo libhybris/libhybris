@@ -8,7 +8,7 @@
 
 #include "logging.h"
 
-#include <android/android-version.h>
+#include <android/android-config.h>
 
 #define TRACE(message, ...) HYBRIS_DEBUG_LOG(EGL, message, ##__VA_ARGS__)
 

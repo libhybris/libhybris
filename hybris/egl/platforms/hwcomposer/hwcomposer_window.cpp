@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <android/android-version.h>
+#include <android/android-config.h>
 
 extern "C" {
 #include <android/sync/sync.h>

@@ -32,7 +32,7 @@
 #include <errno.h>
 
 #include "logging.h"
-#include <android/android-version.h>
+#include <android/android-config.h>
 #include <eglhybris.h>
 
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2

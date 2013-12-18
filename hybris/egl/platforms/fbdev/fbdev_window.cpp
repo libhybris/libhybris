@@ -22,7 +22,7 @@
 #include <pthread.h>
 #include <stdio.h>
 
-#include <android/android-version.h>
+#include <android/android-config.h>
 
 #define FRAMEBUFFER_PARTITIONS 2
 
