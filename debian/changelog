@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu2) UNRELEASED; urgency=low
+libhybris (0.1.0+git20131207+e452e83-0ubuntu2) trusty; urgency=low
 
   * hybris/media: adding missing surface_texture_client_hardware_rendering
     function in surface_texture_client_hybris.h, that got removed during a
