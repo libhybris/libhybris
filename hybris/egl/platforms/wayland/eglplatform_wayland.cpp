@@ -24,6 +24,7 @@
  ** 
  ****************************************************************************************/
 
+#include <android/android-config.h>
 #include <ws.h>
 #include <malloc.h>
 #include <assert.h>

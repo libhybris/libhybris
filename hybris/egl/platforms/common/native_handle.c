@@ -16,6 +16,7 @@
 
 #define LOG_TAG "NativeHandle"
 
+#include <android/android-config.h>
 #include <stdint.h>
 #include <errno.h>
 #include <string.h>

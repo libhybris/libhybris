@@ -21,7 +21,7 @@
  * https://github.com/thp/libhybris-nfc-wrapper-generator
  **/
 
-#include <android/android-version.h>
+#include <android/android-config.h>
 
 #include <libnfc-nxp/phNfcTypes.h>
 #include <libnfc-nxp/phNfcIoctlCode.h>

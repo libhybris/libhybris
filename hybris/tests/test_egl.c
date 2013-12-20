@@ -15,6 +15,7 @@
  *
  */
 
+#include <android/android-config.h>
 #include <EGL/egl.h>
 #include <assert.h>
 #include <stdio.h>

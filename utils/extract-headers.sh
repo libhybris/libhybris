@@ -28,29 +28,15 @@ if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
         parse_defaults_failed
     fi
 
-    PLATFORM_VERSION=$(egrep -o "PLATFORM_VERSION := [0-9.]+" $VERSION_DEFAULTS | awk '{ print $3 }')
-    if [ x$PLATFORM_VERSION = x ]; then
-        parse_defaults_failed
-    fi
-
-    MAJOR=$(echo $PLATFORM_VERSION | cut -d. -f1)
-    MINOR=$(echo $PLATFORM_VERSION | cut -d. -f2)
-    PATCH=$(echo $PLATFORM_VERSION | cut -d. -f3)
-    PATCH2=$(echo $PLATFORM_VERSION | cut -d. -f4)
-    PATCH3=$(echo $PLATFORM_VERSION | cut -d. -f5)
+    IFS="." read MAJOR MINOR PATCH PATCH2 PATCH3 <<EOF
+$(IFS="." awk '/PLATFORM_VERSION := ([0-9.]+)/ { print $3; }' < $VERSION_DEFAULTS)
+EOF
 
     if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
         parse_defaults_failed
     fi
 
-    echo -n "Auto-detected version: ${MAJOR}.${MINOR}.${PATCH}"
-    if [ x$PATCH3 != x ]; then
-        echo ".${PATCH2}.${PATCH3}"
-    elif [ x$PATCH2 != x ]; then
-        echo ".${PATCH2}"
-    else
-        echo ""
-    fi
+    echo -n "Auto-detected version: ${MAJOR}.${MINOR}.${PATCH}";echo "${PATCH2:+.${PATCH2}}${PATCH3:+.${PATCH3}}"
 fi
 
 require_sources() {
@@ -110,13 +96,9 @@ require_sources \
 
 mkdir -p $HEADERPATH
 
-if [ x$PATCH2 = x ]; then
-    PATCH2=0
-fi
-
-if [ x$PATCH3 = x ]; then
-    PATCH3=0
-fi
+# Default PATCH2,3 to 0
+PATCH2=${PATCH2:-0}
+PATCH3=${PATCH3:-0}
 
 cat > $HEADERPATH/android-version.h << EOF
 #ifndef ANDROID_VERSION_H_
@@ -127,6 +109,35 @@ cat > $HEADERPATH/android-version.h << EOF
 #define ANDROID_VERSION_PATCH $PATCH
 #define ANDROID_VERSION_PATCH2 $PATCH2
 #define ANDROID_VERSION_PATCH3 $PATCH3
+
+#endif
+EOF
+
+cat > $HEADERPATH/android-config.h << EOF
+#ifndef HYBRIS_CONFIG_H_
+#define HYBRIS_CONFIG_H_
+
+/* When android is built for a specific device the build is
+   modified by BoardConfig.mk and possibly other mechanisms.
+   eg
+   device/samsung/i9305/BoardConfig.mk: 
+       COMMON_GLOBAL_CFLAGS += -DCAMERA_WITH_CITYID_PARAM
+   device/samsung/smdk4412-common/BoardCommonConfig.mk:
+       COMMON_GLOBAL_CFLAGS += -DEXYNOS4_ENHANCEMENTS
+
+   This file allows those global configurations, which are not
+   otherwise defined in the build headers, to be available in
+   hybris builds.
+
+   Typically it is generated at hardware adaptation time.
+
+   The CONFIG GOES HERE line can be used by automation to modify
+   this file.
+*/
+
+#include <android/android-version.h>
+
+/* CONFIG GOES HERE */
 
 #endif
 EOF

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <android/android-config.h>
 #include <assert.h>
 
 #include <hybris/ui/ui_compatibility_layer.h>

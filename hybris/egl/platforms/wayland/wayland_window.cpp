@@ -25,6 +25,7 @@
  ****************************************************************************************/
 
 
+#include <android/android-config.h>
 #include "wayland_window.h"
 #include "wayland-egl-priv.h"
 #include <assert.h>
@@ -32,7 +33,6 @@
 #include <errno.h>
 
 #include "logging.h"
-#include <android/android-version.h>
 #include <eglhybris.h>
 
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2

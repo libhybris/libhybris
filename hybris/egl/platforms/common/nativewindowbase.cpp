@@ -1,3 +1,4 @@
+#include <android/android-config.h>
 #include <string.h>
 #include <android/system/window.h>
 #include <android/hardware/gralloc.h>
@@ -7,8 +8,6 @@
 #include "nativewindowbase.h"
 
 #include "logging.h"
-
-#include <android/android-version.h>
 
 #define TRACE(message, ...) HYBRIS_DEBUG_LOG(EGL, message, ##__VA_ARGS__)
 
