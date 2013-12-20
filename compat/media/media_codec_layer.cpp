@@ -90,11 +90,7 @@ _MediaCodecDelegate::_MediaCodecDelegate(void *context)
 _MediaCodecDelegate::~_MediaCodecDelegate()
 {
     REPORT_FUNCTION()
-
-    refcount = 1;
 }
-
-_MediaCodecDelegate::Ptr delegate_session;
 
 static inline _MediaCodecDelegate *get_internal_delegate(MediaCodecDelegate delegate)
 {
@@ -126,16 +122,13 @@ MediaCodecDelegate media_codec_create_by_codec_name(const char *name)
 
     ProcessState::self()->startThreadPool();
 
-    _MediaCodecDelegate::Ptr d(new _MediaCodecDelegate(NULL));
+    _MediaCodecDelegate *d(new _MediaCodecDelegate(NULL));
     d->looper = new ALooper;
     d->looper->start();
 
-    d->looper->registerHandler(d);
     d->media_codec = android::MediaCodec::CreateByComponentName(d->looper, name);
 
-    delegate_session = d;
-
-    return d.get();
+    return d;
 }
 
 #ifdef SIMPLE_PLAYER
@@ -151,11 +144,6 @@ MediaCodec* media_codec_get(MediaCodecDelegate delegate)
 }
 #endif
 
-MediaCodecDelegate media_codec_get_delegate()
-{
-    return delegate_session.get();
-}
-
 MediaCodecDelegate media_codec_create_by_codec_type(const char *type)
 {
     REPORT_FUNCTION()
@@ -170,16 +158,13 @@ MediaCodecDelegate media_codec_create_by_codec_type(const char *type)
 
     ProcessState::self()->startThreadPool();
 
-    _MediaCodecDelegate::Ptr d(new _MediaCodecDelegate(NULL));
+    _MediaCodecDelegate *d(new _MediaCodecDelegate(NULL));
     d->looper = new ALooper;
     d->looper->start();
 
-    d->looper->registerHandler(d);
     d->media_codec = android::MediaCodec::CreateByType(d->looper, type, false);
 
-    delegate_session = d;
-
-    return d.get();
+    return d;
 }
 
 void media_codec_delegate_destroy(MediaCodecDelegate delegate)
@@ -197,8 +182,6 @@ void media_codec_delegate_destroy(MediaCodecDelegate delegate)
     d->media_codec->release();
     ALOGI("Stopping looper");
     d->looper->stop();
-
-    _SurfaceTextureClientHybris::getInstance().resetState();
 
     ALOGI("Setting refcount = 0");
     d->refcount = 0;
@@ -274,15 +257,14 @@ int media_codec_configure(MediaCodecDelegate delegate, MediaFormat format, Surfa
     // TODO: Don't just pass NULL for the security when DRM is needed
     d->media_codec->configure(aformat, surfaceTextureClient, NULL, flags);
 #else
-    assert(_SurfaceTextureClientHybris::hasInstance());
-    ALOGD("SurfaceTextureClientHybris(singleton): %p", &_SurfaceTextureClientHybris::getInstance());
+    ALOGD("SurfaceTextureClientHybris: %p", stch);
 
     // Make sure we're ready to configure the codec and the SurfaceTextureClient together
-    if (_SurfaceTextureClientHybris::getInstance().hardwareRendering() && _SurfaceTextureClientHybris::getInstance().isReady())
+    if (stch->hardwareRendering() && stch->isReady())
     {
         ALOGD("Doing hardware decoding with hardware rendering");
         // TODO: Don't just pass NULL for the security when DRM is needed
-        d->media_codec->configure(aformat, &_SurfaceTextureClientHybris::getInstance(), NULL, flags);
+        d->media_codec->configure(aformat, stch, NULL, flags);
     }
     else
     {
