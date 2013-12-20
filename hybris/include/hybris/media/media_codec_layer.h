@@ -41,13 +41,10 @@ extern "C" {
     MediaCodecDelegate media_codec_create_by_codec_name(const char *name);
     MediaCodecDelegate media_codec_create_by_codec_type(const char *type);
 
-// FIXME: This is a temporary function for testing:
 #ifdef SIMPLE_PLAYER
     android::MediaCodec* media_codec_get(MediaCodecDelegate delegate);
 #endif
-// FIXME: Temporary
 
-    MediaCodecDelegate media_codec_get_delegate();
     void media_codec_delegate_destroy(MediaCodecDelegate delegate);
     void media_codec_delegate_ref(MediaCodecDelegate delegate);
     void media_codec_delegate_unref(MediaCodecDelegate delegate);

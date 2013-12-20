@@ -95,10 +95,6 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_media_set_media_prepared_cb,
 // Media Codecs
 HYBRIS_IMPLEMENT_FUNCTION1(media, MediaCodecDelegate,
 	media_codec_create_by_codec_name, const char*);
-#ifdef SIMPLE_PLAYER
-HYBRIS_IMPLEMENT_FUNCTION0(media, MediaCodecDelegate,
-	media_codec_get_delegate);
-#endif
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_codec_delegate_destroy,
 	MediaCodecDelegate);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_codec_delegate_ref,
@@ -212,17 +208,18 @@ HYBRIS_IMPLEMENT_FUNCTION1(media, int32_t, media_format_get_crop_bottom,
 // SurfaceTextureClientHybris
 HYBRIS_IMPLEMENT_FUNCTION1(media, SurfaceTextureClientHybris,
 	surface_texture_client_create, EGLNativeWindowType);
-HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_create_by_id,
-	unsigned int);
-HYBRIS_IMPLEMENT_FUNCTION0(media, uint8_t,
-	surface_texture_client_is_ready_for_rendering);
-HYBRIS_IMPLEMENT_FUNCTION0(media, uint8_t,
-	surface_texture_client_hardware_rendering);
-HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_set_hardware_rendering,
-	uint8_t);
-HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_get_transformation_matrix,
-	GLfloat*);
-HYBRIS_IMPLEMENT_VOID_FUNCTION0(media, surface_texture_client_update_texture);
+HYBRIS_IMPLEMENT_FUNCTION1(media, SurfaceTextureClientHybris,
+	surface_texture_client_create_by_id, unsigned int);
+HYBRIS_IMPLEMENT_FUNCTION1(media, uint8_t,
+	surface_texture_client_is_ready_for_rendering, SurfaceTextureClientHybris);
+HYBRIS_IMPLEMENT_FUNCTION1(media, uint8_t,
+	surface_texture_client_hardware_rendering, SurfaceTextureClientHybris);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(media, surface_texture_client_set_hardware_rendering,
+	SurfaceTextureClientHybris, uint8_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(media, surface_texture_client_get_transformation_matrix,
+	SurfaceTextureClientHybris, GLfloat*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_update_texture,
+	SurfaceTextureClientHybris);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_destroy,
 	SurfaceTextureClientHybris);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_ref,

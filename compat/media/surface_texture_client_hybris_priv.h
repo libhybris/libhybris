@@ -16,14 +16,10 @@
  * Authored by: Jim Hodapp <jim.hodapp@canonical.com>
  */
 
-#include <utils/Singleton.h>
 #include <gui/SurfaceTextureClient.h>
 
-struct _SurfaceTextureClientHybris : public android::SurfaceTextureClient,
-                                     public android::Singleton<_SurfaceTextureClientHybris>
+struct _SurfaceTextureClientHybris : public android::SurfaceTextureClient
 {
-    friend class android::Singleton<_SurfaceTextureClientHybris>;
-
     _SurfaceTextureClientHybris();
     _SurfaceTextureClientHybris(const _SurfaceTextureClientHybris &stch);
     _SurfaceTextureClientHybris(const android::sp<android::ISurfaceTexture> &st);
@@ -31,9 +27,6 @@ struct _SurfaceTextureClientHybris : public android::SurfaceTextureClient,
 
     /** Has a texture id or EGLNativeWindowType been passed in, meaning rendering will function? **/
     bool isReady() const;
-
-    /** Reset the state of the static instance back to the same as a new instance **/
-    void resetState();
 
 public:
     int dequeueBuffer(ANativeWindowBuffer** buffer, int* fenceFd);
