@@ -1,9 +1,9 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu3) UNRELEASED; urgency=low
+libhybris (0.1.0+git20131207+e452e83-0ubuntu3) trusty; urgency=low
 
   * compat/media, hybris/media: removing singleton and simplifying the code now
     that most of the sync logic is happening in gstreamer
 
- -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 20 Dec 2013 13:20:26 -0200
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 23 Dec 2013 15:04:51 -0200
 
 libhybris (0.1.0+git20131207+e452e83-0ubuntu2) trusty; urgency=low
 
