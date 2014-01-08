@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu4) trusty; urgency=low
+
+  * debian/control: fix typo in descriptions (LP: #1255726, LP: #1259341)
+
+ -- Benjamin Kerensa <bkerensa@ubuntu.com>  Sun, 05 Jan 2014 13:37:00 -0800
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu3) trusty; urgency=low
 
   * compat/media, hybris/media: removing singleton and simplifying the code now

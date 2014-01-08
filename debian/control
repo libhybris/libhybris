@@ -39,7 +39,7 @@ Depends: ${shlibs:Depends},
          ${misc:Depends}
 Replaces: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu24)
 Breaks: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu24)
-Description: Library to provice access to the Android Media HAL
+Description: Library to provide access to the Android Media HAL
  Contains a library that provides access to the Android Media HAL,
  which abstract the access to the Android libstagefright based
  decoders.
@@ -68,7 +68,7 @@ Depends: ${shlibs:Depends},
          ${misc:Depends}
 Replaces: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
 Breaks: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
-Description: Library to provice access to the Android libhardware HAL
+Description: Library to provide access to the Android libhardware HAL
  Contains a library that provides access to the Android libhardware HAL,
  which can be used to access a wide range of other HALs, such as audio,
  power, gralloc, etc.
