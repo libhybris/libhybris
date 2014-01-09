@@ -25,7 +25,11 @@ namespace android {
 struct ABuffer;
 struct ALooper;
 struct AudioTrack;
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 struct ISurfaceTexture;
+#else
+struct IGraphicBufferProducer;
+#endif
 struct MediaCodec;
 struct NativeWindowWrapper;
 struct NuMediaExtractor;
@@ -34,7 +38,11 @@ struct SimplePlayer : public AHandler {
     SimplePlayer();
 
     status_t setDataSource(const char *path);
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     status_t setSurface(const sp<ISurfaceTexture> &surfaceTexture);
+#else
+    status_t setSurface(const sp<IGraphicBufferProducer> &surfaceTexture);
+#endif
     status_t prepare();
     status_t start();
     status_t stop();

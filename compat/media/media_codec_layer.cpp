@@ -253,13 +253,17 @@ int media_codec_configure(MediaCodecDelegate delegate, MediaFormat format, Surfa
     ALOGD("Format: %s", aformat->debugString().c_str());
 
 #ifdef SIMPLE_PLAYER
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     sp<SurfaceTextureClient> surfaceTextureClient = static_cast<SurfaceTextureClient*>(nativeWindow);
+#else
+    sp<Surface> surfaceTextureClient = static_cast<Surface*>(nativeWindow);
+#endif
     // TODO: Don't just pass NULL for the security when DRM is needed
     d->media_codec->configure(aformat, surfaceTextureClient, NULL, flags);
 #else
     ALOGD("SurfaceTextureClientHybris: %p", stch);
 
-    // Make sure we're ready to configure the codec and the SurfaceTextureClient together
+    // Make sure we're ready to configure the codec and the Surface/SurfaceTextureClient together
     if (stch != NULL && stch->hardwareRendering() && stch->isReady())
     {
         ALOGD("Doing hardware decoding with hardware rendering");
@@ -270,7 +274,7 @@ int media_codec_configure(MediaCodecDelegate delegate, MediaFormat format, Surfa
     {
         ALOGD("Doing hardware decoding path with software rendering");
         // This scenario is for hardware video decoding, but software rendering, therefore there's
-        // no need to pass a valid SurfaceTextureClient instance to configure()
+        // no need to pass a valid Surface/SurfaceTextureClient instance to configure()
         d->media_codec->configure(aformat, NULL, NULL, flags);
     }
 

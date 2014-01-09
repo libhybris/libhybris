@@ -31,7 +31,14 @@
 #include <media/mediaplayer.h>
 
 #include <binder/ProcessState.h>
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 #include <gui/SurfaceTexture.h>
+#else
+#include <gui/GLConsumer.h>
+#endif
+
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 #include <ui/GraphicBuffer.h>
 
@@ -64,7 +71,11 @@ sp<GraphicBuffer> NativeBufferAlloc::createGraphicBuffer(uint32_t w, uint32_t h,
 	return graphicBuffer;
 }
 }
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 struct FrameAvailableListener : public android::SurfaceTexture::FrameAvailableListener
+#else
+struct FrameAvailableListener : public android::GLConsumer::FrameAvailableListener
+#endif
 {
 	public:
 		FrameAvailableListener()
@@ -73,7 +84,7 @@ struct FrameAvailableListener : public android::SurfaceTexture::FrameAvailableLi
 		{
 		}
 
-		// From android::SurfaceTexture::FrameAvailableListener
+		// From android::GLConsumer/SurfaceTexture::FrameAvailableListener
 		void onFrameAvailable()
 		{
 			if (set_video_texture_needs_update_cb != NULL)
@@ -225,18 +236,30 @@ struct MediaPlayerWrapper : public android::MediaPlayer
 			source_fd = -1;
 		}
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 		android::status_t setVideoSurfaceTexture(const android::sp<android::SurfaceTexture> &surfaceTexture)
+#else
+		android::status_t setVideoSurfaceTexture(android::sp<android::BufferQueue> bq, const android::sp<android::GLConsumer> &surfaceTexture)
+#endif
 		{
 			REPORT_FUNCTION();
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 			surfaceTexture->getBufferQueue()->setBufferCount(5);
+#else
+			bq->setBufferCount(5);
+#endif
 			texture = surfaceTexture;
 			texture->setFrameAvailableListener(frame_listener);
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 			return MediaPlayer::setVideoSurfaceTexture(surfaceTexture->getBufferQueue());
+#else
+			return MediaPlayer::setVideoSurfaceTexture(bq);
+#endif
 		}
 
-		void updateSurfaceTexture()
+		void updateGLConsumer()
 		{
 			assert(texture != NULL);
 			texture->updateTexImage();
@@ -307,7 +330,11 @@ struct MediaPlayerWrapper : public android::MediaPlayer
 		void setSourceFd(int fd) { source_fd = fd; }
 
 	private:
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 		android::sp<android::SurfaceTexture> texture;
+#else
+		android::sp<android::GLConsumer> texture;
+#endif
 		android::sp<MediaPlayerListenerWrapper> media_player_listener;
 		android::sp<FrameAvailableListener> frame_listener;
 		float left_volume;
@@ -452,18 +479,35 @@ int android_media_set_preview_texture(MediaPlayerWrapper *mp, int texture_id)
 			);
 
 	android::sp<android::BufferQueue> buffer_queue(
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 			new android::BufferQueue(false, NULL, native_alloc)
+#else
+			new android::BufferQueue(NULL, native_alloc)
+#endif
 			);
 
 	static const bool allow_synchronous_mode = true;
-	// Create a new SurfaceTexture from the texture_id in synchronous mode (don't wait on all data in the buffer)
+	// Create a new GLConsumer/SurfaceTexture from the texture_id in synchronous mode (don't wait on all data in the buffer)
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 	mp->setVideoSurfaceTexture(android::sp<android::SurfaceTexture>(
 				new android::SurfaceTexture(
+#else
+	mp->setVideoSurfaceTexture(buffer_queue, android::sp<android::GLConsumer>(
+				new android::GLConsumer(
+#endif
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 					texture_id,
 					allow_synchronous_mode,
 					GL_TEXTURE_EXTERNAL_OES,
 					true,
 					buffer_queue)));
+#else
+					buffer_queue,
+					texture_id,
+					GL_TEXTURE_EXTERNAL_OES,
+					true,
+					false)));
+#endif
 
 	return OK;
 }
@@ -475,7 +519,7 @@ void android_media_update_surface_texture(MediaPlayerWrapper *mp)
 		return;
 	}
 
-	mp->updateSurfaceTexture();
+	mp->updateGLConsumer();
 }
 
 void android_media_surface_texture_get_transformation_matrix(MediaPlayerWrapper *mp, GLfloat* matrix)

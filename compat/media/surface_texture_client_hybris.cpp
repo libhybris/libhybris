@@ -29,7 +29,12 @@
 #include <utils/Log.h>
 #include <ui/Region.h>
 #include <gui/Surface.h>
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 #include <gui/SurfaceTextureClient.h>
+#endif
+
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__);
 
@@ -51,23 +56,34 @@ static inline _SurfaceTextureClientHybris *get_internal_stch(SurfaceTextureClien
     return s;
 }
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 _SurfaceTextureClientHybris::_SurfaceTextureClientHybris()
     : refcount(1),
       ready(false)
 {
     REPORT_FUNCTION()
 }
+#endif
 
 _SurfaceTextureClientHybris::_SurfaceTextureClientHybris(const _SurfaceTextureClientHybris &stch)
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     : SurfaceTextureClient::SurfaceTextureClient(),
+#else
+    : Surface::Surface(new BufferQueue()),
+#endif
       refcount(stch.refcount),
       ready(false)
 {
     REPORT_FUNCTION()
 }
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 _SurfaceTextureClientHybris::_SurfaceTextureClientHybris(const sp<ISurfaceTexture> &st)
     : SurfaceTextureClient::SurfaceTextureClient(st),
+#else
+_SurfaceTextureClientHybris::_SurfaceTextureClientHybris(const sp<IGraphicBufferProducer> &st)
+    : Surface::Surface(st),
+#endif
       refcount(1),
       ready(false)
 {
@@ -88,17 +104,31 @@ bool _SurfaceTextureClientHybris::isReady() const
 
 int _SurfaceTextureClientHybris::dequeueBuffer(ANativeWindowBuffer** buffer, int* fenceFd)
 {
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     return SurfaceTextureClient::dequeueBuffer(buffer, fenceFd);
+#else
+    return Surface::dequeueBuffer(buffer, fenceFd);
+#endif
 }
 
 int _SurfaceTextureClientHybris::queueBuffer(ANativeWindowBuffer* buffer, int fenceFd)
 {
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     return SurfaceTextureClient::queueBuffer(buffer, fenceFd);
+#else
+    return Surface::queueBuffer(buffer, fenceFd);
+#endif
 }
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 void _SurfaceTextureClientHybris::setISurfaceTexture(const sp<ISurfaceTexture>& surface_texture)
 {
     SurfaceTextureClient::setISurfaceTexture(surface_texture);
+#else
+void _SurfaceTextureClientHybris::setISurfaceTexture(const sp<IGraphicBufferProducer>& surface_texture)
+{
+    // We don't need to set up the IGraphicBufferProducer as stc needs it when created
+#endif
 
     // Ready for rendering
     ready = true;
@@ -116,14 +146,22 @@ bool _SurfaceTextureClientHybris::hardwareRendering()
 
 // ----- End _SurfaceTextureClientHybris API ----- //
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 static inline void set_surface(_SurfaceTextureClientHybris *stch, const sp<SurfaceTexture> &surface_texture)
+#else
+static inline void set_surface(sp<BufferQueue> bq, _SurfaceTextureClientHybris *stch, const sp<GLConsumer> &surface_texture)
+#endif
 {
     REPORT_FUNCTION()
 
     if (stch == NULL)
         return;
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     stch->setISurfaceTexture(surface_texture->getBufferQueue());
+#else
+    stch->setISurfaceTexture(bq);
+#endif
 }
 
 SurfaceTextureClientHybris surface_texture_client_create_by_id(unsigned int texture_id)
@@ -136,22 +174,31 @@ SurfaceTextureClientHybris surface_texture_client_create_by_id(unsigned int text
         return NULL;
     }
 
-    _SurfaceTextureClientHybris *stch(new _SurfaceTextureClientHybris);
-
-    ALOGD("stch: %p (%s)", stch, __PRETTY_FUNCTION__);
-
     // Use a new native buffer allocator vs the default one, which means it'll use the proper one
     // that will allow rendering to work with Mir
     sp<NativeBufferAlloc> native_alloc(new NativeBufferAlloc());
+
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
     sp<BufferQueue> buffer_queue(new BufferQueue(false, NULL, native_alloc));
+    _SurfaceTextureClientHybris *stch(new _SurfaceTextureClientHybris);
+#else
+    sp<BufferQueue> buffer_queue(new BufferQueue(NULL, native_alloc));
+    _SurfaceTextureClientHybris *stch(new _SurfaceTextureClientHybris(buffer_queue));
+#endif
+
+    ALOGD("stch: %p (%s)", stch, __PRETTY_FUNCTION__);
 
     if (stch->surface_texture != NULL)
       stch->surface_texture.clear();
 
     const bool allow_synchronous_mode = true;
-    stch->surface_texture = new SurfaceTexture(texture_id, allow_synchronous_mode,
-            GL_TEXTURE_EXTERNAL_OES, true, buffer_queue);
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
+    stch->surface_texture = new SurfaceTexture(texture_id, allow_synchronous_mode, GL_TEXTURE_EXTERNAL_OES, true, buffer_queue);
     set_surface(stch, stch->surface_texture);
+#else
+    stch->surface_texture = new GLConsumer(buffer_queue, texture_id, GL_TEXTURE_EXTERNAL_OES, true, false);
+    set_surface(buffer_queue, stch, stch->surface_texture);
+#endif
 
     return stch;
 }
@@ -266,5 +313,9 @@ void surface_texture_client_set_surface_texture(SurfaceTextureClientHybris stc, 
     }
 
     sp<Surface> surface = static_cast<Surface*>(native_window);
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     s->setISurfaceTexture(surface->getSurfaceTexture());
+#else
+    s->setISurfaceTexture(surface->getIGraphicBufferProducer());
+#endif
 }

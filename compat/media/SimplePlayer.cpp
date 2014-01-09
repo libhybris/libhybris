@@ -20,7 +20,10 @@
 
 #include "SimplePlayer.h"
 
+#include <gui/Surface.h>
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 #include <gui/SurfaceTextureClient.h>
+#endif
 #include <media/AudioTrack.h>
 #include <media/ICrypto.h>
 #include <media/stagefright/foundation/ABuffer.h>
@@ -70,10 +73,17 @@ status_t SimplePlayer::setDataSource(const char *path) {
 status_t SimplePlayer::setSurface(const sp<ISurfaceTexture> &surfaceTexture) {
     sp<AMessage> msg = new AMessage(kWhatSetSurface, id());
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     sp<SurfaceTextureClient> surfaceTextureClient;
     if (surfaceTexture != NULL) {
         surfaceTextureClient = new SurfaceTextureClient(surfaceTexture);
     }
+#else
+    sp<Surface> surfaceTextureClient;
+    if (surfaceTexture != NULL) {
+        surfaceTextureClient = new Surface(surfaceTexture);
+    }
+#endif
 
     msg->setObject(
             "native-window", new NativeWindowWrapper(surfaceTextureClient));
@@ -349,11 +359,19 @@ status_t SimplePlayer::onPrepare() {
         CHECK(state->mCodec != NULL);
 
 #ifdef USE_MEDIA_CODEC_LAYER
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
         err = media_codec_configure(state->mCodecDelegate, mformat, mNativeWindow->getSurfaceTextureClient().get(), 0);
+#else
+        err = media_codec_configure(state->mCodecDelegate, mformat, mNativeWindow->getSurface().get(), 0);
+#endif
 #else
         err = state->mCodec->configure(
                 format,
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
                 mNativeWindow->getSurfaceTextureClient(),
+#else
+                mNativeWindow->getSurface(),
+#endif
                 NULL /* crypto */,
                 0 /* flags */);
 #endif
