@@ -120,7 +120,12 @@ static void media_codec_list_get_num_codec_capabilities(size_t index, const char
     Vector<MediaCodecList::ProfileLevel> profile_levels;
     Vector<uint32_t> color_formats;
     ALOGD("index: %d, type: '%s'", index, type);
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
     status_t err = MediaCodecList::getInstance()->getCodecCapabilities(index, type, &profile_levels, &color_formats);
+#else
+    uint32_t flags;
+    status_t err = MediaCodecList::getInstance()->getCodecCapabilities(index, type, &profile_levels, &color_formats, &flags);
+#endif
     if (err != OK)
     {
         ALOGE("Failed to get the number of supported codec capabilities (err: %d)", err);
@@ -177,7 +182,12 @@ int media_codec_list_get_nth_codec_profile_level(size_t index, const char *type,
 
     Vector<MediaCodecList::ProfileLevel> profile_levels;
     Vector<uint32_t> formats;
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
     status_t err = MediaCodecList::getInstance()->getCodecCapabilities(index, type, &profile_levels, &formats);
+#else
+    uint32_t flags;
+    status_t err = MediaCodecList::getInstance()->getCodecCapabilities(index, type, &profile_levels, &formats, &flags);
+#endif
     if (err != OK)
     {
         ALOGE("Failed to get the nth codec profile level (err: %d)", err);
@@ -196,7 +206,12 @@ int media_codec_list_get_codec_color_formats(size_t index, const char *type, uin
 
     Vector<MediaCodecList::ProfileLevel> profile_levels;
     Vector<uint32_t> formats;
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
     status_t err = MediaCodecList::getInstance()->getCodecCapabilities(index, type, &profile_levels, &formats);
+#else
+    uint32_t flags;
+    status_t err = MediaCodecList::getInstance()->getCodecCapabilities(index, type, &profile_levels, &formats, &flags);
+#endif
     if (err != OK)
     {
         ALOGE("Failed to get the number of supported codec types (err: %d)", err);

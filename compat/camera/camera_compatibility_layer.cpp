@@ -27,8 +27,15 @@
 #include <binder/ProcessState.h>
 #include <camera/Camera.h>
 #include <camera/CameraParameters.h>
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 #include <gui/SurfaceTexture.h>
+#else
+#include <gui/GLConsumer.h>
+#endif
 #include <ui/GraphicBuffer.h>
+
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 #undef LOG_TAG
 #define LOG_TAG "CameraCompatibilityLayer"
@@ -38,7 +45,7 @@
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__)
 
-// From android::SurfaceTexture::FrameAvailableListener
+// From android::GLConsumer::FrameAvailableListener
 void CameraControl::onFrameAvailable()
 {
 	REPORT_FUNCTION();
@@ -516,28 +523,54 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 	assert(control);
 
 	static const bool allow_synchronous_mode = false;
+	static const bool is_controlled_by_app = false;
 
 	android::sp<android::NativeBufferAlloc> native_alloc(
 			new android::NativeBufferAlloc()
 			);
 
 	android::sp<android::BufferQueue> buffer_queue(
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 			new android::BufferQueue(false, NULL, native_alloc)
+#else
+			new android::BufferQueue(NULL, native_alloc)
+#endif
 			);
 
 	if (control->preview_texture == NULL) {
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 		control->preview_texture = android::sp<android::SurfaceTexture>(
 				new android::SurfaceTexture(
+#else
+		control->preview_texture = android::sp<android::GLConsumer>(
+				new android::GLConsumer(
+#endif
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 					texture_id,
 					allow_synchronous_mode,
 					GL_TEXTURE_EXTERNAL_OES,
 					true,
 					buffer_queue));
+#else
+					buffer_queue,
+					texture_id,
+					GL_TEXTURE_EXTERNAL_OES,
+					true,
+					is_controlled_by_app));
+#endif
 	}
 
 	control->preview_texture->setFrameAvailableListener(
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 			android::sp<android::SurfaceTexture::FrameAvailableListener>(control));
+#else
+			android::sp<android::GLConsumer::FrameAvailableListener>(control));
+#endif
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 	control->camera->setPreviewTexture(control->preview_texture->getBufferQueue());
+#else
+	control->camera->setPreviewTarget(buffer_queue);
+#endif
 }
 
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2

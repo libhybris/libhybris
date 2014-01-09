@@ -1,5 +1,6 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/../Android.common.mk
 
 HYBRIS_PATH := $(LOCAL_PATH)/../../hybris
 
@@ -28,8 +29,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libstagefright_foundation \
 	libEGL \
 	libGLESv2 \
-	libmedia \
-	libmedia_native
+	libmedia
 
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \
@@ -40,6 +40,7 @@ LOCAL_C_INCLUDES := \
 include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/../Android.common.mk
 
 LOCAL_SRC_FILES:= \
 	direct_media_test.cpp
@@ -72,6 +73,7 @@ LOCAL_SHARED_LIBRARIES := \
 include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/../Android.common.mk
 
 LOCAL_CFLAGS += -Wno-multichar -D SIMPLE_PLAYER -std=gnu++0x
 
@@ -89,7 +91,6 @@ LOCAL_SHARED_LIBRARIES := \
 	libutils \
 	libbinder \
 	libmedia \
-	libmedia_native \
 	libgui \
 	libcutils \
 	libui
