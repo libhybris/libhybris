@@ -25,6 +25,7 @@
 
 #include <utils/misc.h>
 
+#include <gui/Surface.h>
 #include <gui/SurfaceComposerClient.h>
 #include <ui/PixelFormat.h>
 #include <ui/Region.h>
