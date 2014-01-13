@@ -105,7 +105,6 @@ public:
 
     void lock();
     void unlock();
-    void frame();
     void releaseBuffer(struct wl_buffer *buffer);
     int postBuffer(ANativeWindowBuffer *buffer);
 
