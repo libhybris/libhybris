@@ -123,7 +123,9 @@ static void _hybris_shm_init()
         else {
             LOGD("Creating a new shared memory segment.");
 
-            _hybris_shm_fd = shm_open(HYBRIS_SHM_PATH, O_RDWR | O_CREAT, 0660);
+            mode_t pumask = umask(0);
+            _hybris_shm_fd = shm_open(HYBRIS_SHM_PATH, O_RDWR | O_CREAT, 0666);
+            umask(pumask);
             if (_hybris_shm_fd >= 0) {
                 ftruncate( _hybris_shm_fd, size_to_map );
                 /* Map the memory object */
