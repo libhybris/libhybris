@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu5) UNRELEASED; urgency=medium
+
+  * Allowing grouper to share the shm block between users for usc
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 14 Jan 2014 20:01:25 -0200
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu4) trusty; urgency=low
 
   * debian/control: fix typo in descriptions (LP: #1255726, LP: #1259341)
