@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu5) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20131207+e452e83-0ubuntu5) trusty; urgency=medium
 
   * Allowing grouper to share the shm block between users for usc
 
