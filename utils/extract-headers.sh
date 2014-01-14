@@ -131,7 +131,7 @@ cat > $HEADERPATH/android-config.h << EOF
 
    Typically it is generated at hardware adaptation time.
 
-   The CONFIG GOES HERE line can be used by automation to modify
+   The CONFIG GOES... line below can be used by automation to modify
    this file.
 */
 
