@@ -2,7 +2,7 @@ lib_LTLIBRARIES = \
 	libandroid-properties.la
 
 libandroid_properties_la_SOURCES = properties.c cache.c
-libandroid_properties_la_CFLAGS = -I$(top_srcdir)/include
+libandroid_properties_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/android
 if WANT_DEBUG
 libandroid_properties_la_CFLAGS += -ggdb -O0
 endif

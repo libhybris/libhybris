@@ -2,7 +2,7 @@ lib_LTLIBRARIES = \
 	libGLESv1_CM.la
 
 libGLESv1_CM_la_SOURCES = glesv1_cm.c
-libGLESv1_CM_la_CFLAGS = -I$(top_srcdir)/include
+libGLESv1_CM_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/android
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = glesv1_cm.pc
