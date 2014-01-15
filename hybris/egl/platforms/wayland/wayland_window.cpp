@@ -25,7 +25,7 @@
  ****************************************************************************************/
 
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include "wayland_window.h"
 #include "wayland-egl-priv.h"
 #include <assert.h>
@@ -37,7 +37,7 @@
 
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
 extern "C" {
-#include <android/sync/sync.h>
+#include <sync/sync.h>
 }
 #endif
 

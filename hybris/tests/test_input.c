@@ -17,7 +17,7 @@
  *              Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>
  */
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdbool.h>

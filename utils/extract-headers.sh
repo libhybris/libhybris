@@ -135,7 +135,7 @@ cat > $HEADERPATH/android-config.h << EOF
    this file.
 */
 
-#include <android/android-version.h>
+#include <android-version.h>
 
 /* CONFIG GOES HERE */
 

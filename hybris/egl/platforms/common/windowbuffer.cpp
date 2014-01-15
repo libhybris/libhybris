@@ -20,7 +20,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include <cstring>
 #include <cassert>
 #include "windowbuffer.h"
