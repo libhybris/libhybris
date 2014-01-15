@@ -74,8 +74,12 @@ static char *find_override(const char *filename)
         const char *basename = filename + hwoverride_len;
         DIR *vendorhwdir = NULL;
         struct dirent *entry;
-        vendorhwdir = opendir(HWVENDOR_PATH);
 
+        char *override_path = getenv("HYBRIS_HWOVERRIDE_PATH");
+        if (override_path == NULL)
+            override_path = HWVENDOR_PATH;
+
+        vendorhwdir = opendir(override_path);
         if (vendorhwdir == NULL)
             return NULL;
 
