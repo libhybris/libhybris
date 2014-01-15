@@ -16,7 +16,7 @@
  *
 */
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -26,7 +26,7 @@
 #include <getopt.h>
 #include <string.h>
 
-#include <android/hardware/gps.h>
+#include <hardware/gps.h>
 
 const GpsInterface* Gps = NULL;
 const AGpsInterface* AGps = NULL;

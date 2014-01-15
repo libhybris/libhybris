@@ -17,7 +17,7 @@
  *              Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>
  */
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>

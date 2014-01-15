@@ -15,15 +15,15 @@
  *
  */
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include <memory.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <android/hardware/audio.h>
-#include <android/hardware/hardware.h>
+#include <hardware/audio.h>
+#include <hardware/hardware.h>
 
 int main(int argc, char **argv)
 {

@@ -19,7 +19,7 @@
 
 #include "nativewindowbase.h"
 #include <linux/fb.h>
-#include <android/hardware/gralloc.h>
+#include <hardware/gralloc.h>
 
 #include <list>
 
