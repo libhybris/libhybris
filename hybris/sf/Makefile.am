@@ -2,7 +2,7 @@ lib_LTLIBRARIES = \
 	libsf.la
 
 libsf_la_SOURCES = sf.c
-libsf_la_CFLAGS = -I$(top_srcdir)/include
+libsf_la_CFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS)
 if WANT_TRACE
 libsf_la_CFLAGS += -DDEBUG
 endif
