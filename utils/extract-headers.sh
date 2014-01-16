@@ -1,16 +1,33 @@
 #! /bin/sh
 
 ANDROID_ROOT=$1
-HEADERPATH=$2
-MAJOR=$3
-MINOR=$4
+shift
+HEADERPATH=$1
+shift
+PKGCONFIGPATH=""
+error() {
+    echo $1 >2
+    exit 1
+}
 
-PATCH=$5
-PATCH2=$6
-PATCH3=$7
+while [ $# -gt 0 ]; do
+
+    case $1 in
+	*-version|-v)
+	    if [ "$2" = "" ]; then error "--version needs an argument"; fi
+	    IFS="." read MAJOR MINOR PATCH PATCH2 PATCH3 <<< "$2"
+	    echo "Using version ${MAJOR}.${MINOR}.${PATCH}.${PATCH2}.${PATCH3}"
+	    shift; shift;;
+	*-pkgconfigpath|-p)
+	    if [ "$2" = "" ]; then error "--version needs an argument"; fi
+	    PKGCONFIGPATH=$2
+	    shift; shift;;
+    esac
+done
 
 if [ x$ANDROID_ROOT = x -o "x$HEADERPATH" = x ]; then
-    echo "Syntax: extract-headers.sh ANDROID_ROOT HEADERPATH [MAJOR] [MINOR] [PATCH] [PATCH2] [PATCH3]"
+    echo "Syntax: extract-headers.sh ANDROID_ROOT HEADERPATH [--version MAJOR.MINOR.PATCH.[PATCH2].[PATCH3]] [--pkgconfigpath <installed header path>]"
+    echo " --version and --pkgconfigpath can be shortened to -v and -p"
     exit 1
 fi
 
@@ -215,6 +232,17 @@ done) > $HEADERPATH/git-revisions.txt 2>&1
 # Repo manifest that can be used to fetch the sources for re-extracting headers
 if [ -e $ANDROID_ROOT/.repo/manifest.xml ]; then
     cp $ANDROID_ROOT/.repo/manifest.xml $HEADERPATH/
+fi
+
+# Create a pkconfig if we know the installed path
+if [ "$PKGCONFIGPATH" != "" ] ; then
+    echo "Creating ${HEADERPATH}/android-headers.pc"
+    cat << EOF > ${HEADERPATH}/android-headers.pc
+Name: android-headers
+Description: Provides the headers for the droid system
+Version: ${MAJOR}.${MINOR}.${PATCH}
+Cflags: -I$PKGCONFIGPATH/
+EOF
 fi
 
 exit 0
