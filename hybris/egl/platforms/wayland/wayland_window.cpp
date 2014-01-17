@@ -479,6 +479,9 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     wl_display_flush(m_display);
     HYBRIS_TRACE_END("wayland-platform", "queueBuffer_attachdamagecommit", "-resource@%i", wl_proxy_get_id((struct wl_proxy *) wnb->wlbuffer));
 
+    m_window->attached_width = wnb->width;
+    m_window->attached_height = wnb->height;
+
     //--m_freeBufs;
     //pthread_cond_signal(&cond);
     fronted.push_back(wnb);
