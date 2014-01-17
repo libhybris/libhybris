@@ -1,48 +1,61 @@
 #! /bin/sh
 
-ANDROID_ROOT=$1
-shift
-HEADERPATH=$1
-shift
-PKGCONFIGPATH=""
 error() {
-    echo $1 >2
+    echo "Error: $1" >&2
+}
+usage() {
+    echo "Usage: extract-headers.sh [Options] <ANDROID_ROOT> <HEADER_PATH>"
+    echo
+    echo "  ANDROID_ROOT: Directory containing the Android source tree."
+    echo "  HEADER_PATH:  Where the headers will be extracted to."
+    echo
+    echo "Options:"
+    echo "  -v|--version MAJOR.MINOR.PATCH.[PATCH2].[PATCH3]]"
+    echo "               Override the Android version detected by this script"
     exit 1
 }
 
+##############
 while [ $# -gt 0 ]; do
-
     case $1 in
-	*-version|-v)
-	    if [ "$2" = "" ]; then error "--version needs an argument"; fi
-	    IFS="." read MAJOR MINOR PATCH PATCH2 PATCH3 <<< "$2"
-	    echo "Using version ${MAJOR}.${MINOR}.${PATCH}.${PATCH2}.${PATCH3}"
-	    shift; shift;;
-	*-pkgconfigpath|-p)
-	    if [ "$2" = "" ]; then error "--version needs an argument"; fi
-	    PKGCONFIGPATH=$2
-	    shift; shift;;
+    *-version|-v)
+        if [ x$2 = x ]; then error "--version needs an argument"; usage; fi
+        IFS="." read MAJOR MINOR PATCH PATCH2 PATCH3 <<EOF
+$2
+EOF
+        echo "Using version ${MAJOR}.${MINOR}.${PATCH}.${PATCH2}.${PATCH3}"
+        shift 2
+    ;;
+    *)
+        break
+    ;;
     esac
 done
 
-if [ x$ANDROID_ROOT = x -o "x$HEADERPATH" = x ]; then
-    echo "Syntax: extract-headers.sh ANDROID_ROOT HEADERPATH [--version MAJOR.MINOR.PATCH.[PATCH2].[PATCH3]] [--pkgconfigpath <installed header path>]"
-    echo " --version and --pkgconfigpath can be shortened to -v and -p"
+##############
+ANDROID_ROOT=$1
+HEADER_PATH=$2
+
+# Required arguments
+[ x$ANDROID_ROOT = x ] && error "missing argument ANDROID_ROOT" && usage
+[ x$HEADER_PATH = x ] && error "missing argument HEADER_PATH" && usage
+
+shift 2
+
+# check if android source exists
+if [ ! -e "$ANDROID_ROOT" ]; then
+    error "Cannot extract headers: '$ANDROID_ROOT' does not exist."
     exit 1
 fi
 
-
+# In case one of the version number is missing,
+# try to extract if from the version_defaults.mk
 if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
     VERSION_DEFAULTS=$ANDROID_ROOT/build/core/version_defaults.mk
 
-    parse_defaults_failed() {
-        echo "Error: Cannot read PLATFORM_VERSION from ${VERSION_DEFAULTS}."
-        echo "Please specify MAJOR, MINOR and PATCH manually to continue."
-        exit 1
-    }
-
+    echo "not all version fields supplied:  trying to extract from $VERSION_DEFAULTS"
     if [ ! -f $VERSION_DEFAULTS ]; then
-        parse_defaults_failed
+        error "$VERSION_DEFAULTS not found"
     fi
 
     IFS="." read MAJOR MINOR PATCH PATCH2 PATCH3 <<EOF
@@ -50,12 +63,15 @@ $(IFS="." awk '/PLATFORM_VERSION := ([0-9.]+)/ { print $3; }' < $VERSION_DEFAULT
 EOF
 
     if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
-        parse_defaults_failed
+        error "Cannot read PLATFORM_VERSION from ${VERSION_DEFAULTS}."
+        error "Please specify MAJOR, MINOR and PATCH manually to continue."
+        exit 1
     fi
 
     echo -n "Auto-detected version: ${MAJOR}.${MINOR}.${PATCH}";echo "${PATCH2:+.${PATCH2}}${PATCH3:+.${PATCH3}}"
 fi
 
+##############
 require_sources() {
     # require_sources [FILE|DIR] ...
     # Check if the given paths exist in the Android source
@@ -64,7 +80,7 @@ require_sources() {
         shift
 
         if [ ! -e "$SOURCE_PATH" ]; then
-            echo "Cannot extract headers: '$SOURCE_PATH' does not exist."
+            error "Cannot extract headers: '$SOURCE_PATH' does not exist."
             exit 1
         fi
     done
@@ -74,7 +90,7 @@ extract_headers_to() {
     # extract_headers_to <TARGET> [FILE|DIR] ...
     # For each FILE argument, copy it to TARGET
     # For each DIR argument, copy all its contents to TARGET
-    TARGET_DIRECTORY=$HEADERPATH/$1
+    TARGET_DIRECTORY=$HEADER_PATH/$1
     if [ ! -d "$TARGET_DIRECTORY" ]; then
         mkdir -p "$TARGET_DIRECTORY"
     fi
@@ -106,18 +122,19 @@ check_header_exists() {
     return 0
 }
 
+##############
 
 # Make sure that the dir given contains at least some of the assumed structures.
 require_sources \
     hardware/libhardware/include/hardware
 
-mkdir -p $HEADERPATH
+mkdir -p $HEADER_PATH
 
 # Default PATCH2,3 to 0
 PATCH2=${PATCH2:-0}
 PATCH3=${PATCH3:-0}
 
-cat > $HEADERPATH/android-version.h << EOF
+cat > $HEADER_PATH/android-version.h << EOF
 #ifndef ANDROID_VERSION_H_
 #define ANDROID_VERSION_H_
 
@@ -130,14 +147,14 @@ cat > $HEADERPATH/android-version.h << EOF
 #endif
 EOF
 
-cat > $HEADERPATH/android-config.h << EOF
+cat > $HEADER_PATH/android-config.h << EOF
 #ifndef HYBRIS_CONFIG_H_
 #define HYBRIS_CONFIG_H_
 
 /* When android is built for a specific device the build is
    modified by BoardConfig.mk and possibly other mechanisms.
    eg
-   device/samsung/i9305/BoardConfig.mk: 
+   device/samsung/i9305/BoardConfig.mk:
        COMMON_GLOBAL_CFLAGS += -DCAMERA_WITH_CITYID_PARAM
    device/samsung/smdk4412-common/BoardCommonConfig.mk:
        COMMON_GLOBAL_CFLAGS += -DEXYNOS4_ENHANCEMENTS
@@ -207,7 +224,18 @@ GIT_PROJECTS="
 "
 
 echo "Extracting Git revision information"
-rm -f $HEADERPATH/SOURCE_GIT_REVISION_INFO
+if ! which repo >/dev/null 2>&1; then
+    error "Failed to extract Git info: missing 'repo'"
+    exit 1
+fi
+if ! which git >/dev/null 2>&1; then
+    error "Failed to extract Git info: missing 'git'"
+    exit 1
+fi
+
+
+
+rm -f $HEADER_PATH/SOURCE_GIT_REVISION_INFO
 (for GIT_PROJECT in $GIT_PROJECTS; do
     TARGET_DIR=$ANDROID_ROOT/$GIT_PROJECT
     echo "================================================"
@@ -227,22 +255,40 @@ rm -f $HEADERPATH/SOURCE_GIT_REVISION_INFO
     else
         echo "WARNING: $GIT_PROJECT does not contain a Git repository"
     fi
-done) > $HEADERPATH/git-revisions.txt 2>&1
+done) > $HEADER_PATH/git-revisions.txt 2>&1
 
 # Repo manifest that can be used to fetch the sources for re-extracting headers
 if [ -e $ANDROID_ROOT/.repo/manifest.xml ]; then
-    cp $ANDROID_ROOT/.repo/manifest.xml $HEADERPATH/
+    cp $ANDROID_ROOT/.repo/manifest.xml $HEADER_PATH/
 fi
 
+find "$HEADER_PATH" -type f -exec chmod 0644 {} \;
+
+# Add a makefile to make packaging easier
+cat > ${HEADER_PATH}/Makefile << EOF
+PREFIX?=/usr/local
+INCLUDEDIR?=\$(PREFIX)/include/android
+all:
+	@echo "Use '\$(MAKE) install' to install"
+
+install:
+	mkdir -p \$(DESTDIR)/\$(INCLUDEDIR)
+	cp -r src \$(DESTDIR)/\$(INCLUDEDIR)
+	mkdir -p \$(DESTDIR)/\$(PREFIX)/lib/pkgconfig
+	sed -e 's;@prefix@;\$(PREFIX)/;g; s;@includedir@;\$(INCLUDEDIR);g' android-headers.pc.in > \$(DESTDIR)/\$(PREFIX)/lib/pkgconfig/android-headers.pc
+EOF
+
+
 # Create a pkconfig if we know the installed path
-if [ "$PKGCONFIGPATH" != "" ] ; then
-    echo "Creating ${HEADERPATH}/android-headers.pc"
-    cat << EOF > ${HEADERPATH}/android-headers.pc
+echo "Creating ${HEADER_PATH}/android-headers.pc.in"
+cat > ${HEADER_PATH}/android-headers.pc.in << EOF
+prefix=@prefix@
+includedir=@includedir@
+
 Name: android-headers
 Description: Provides the headers for the droid system
 Version: ${MAJOR}.${MINOR}.${PATCH}
-Cflags: -I$PKGCONFIGPATH/
+Cflags: -I@includedir@
 EOF
-fi
 
-exit 0
+# vim: noai:ts=4:sw=4:ss=4:expandtab
