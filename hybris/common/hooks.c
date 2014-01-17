@@ -1175,6 +1175,41 @@ static int my_setlinebuf(FILE *fp)
     return 0;
 }
 
+static inline void swap(void **a, void **b)
+{
+    void *tmp = *a;
+    *a = *b;
+    *b = tmp;
+}
+
+static int my_getaddrinfo(const char *hostname, const char *servname,
+    const struct addrinfo *hints, struct addrinfo **res)
+{
+    // make a local copy of hints
+    struct addrinfo *fixed_hints = (struct addrinfo*)malloc(sizeof(struct addrinfo));
+    memcpy(fixed_hints, hints, sizeof(struct addrinfo));
+    // fix bionic -> glibc missmatch
+    swap((void**)&(fixed_hints->ai_canonname), (void**)&(fixed_hints->ai_addr));
+    // do glibc getaddrinfo
+    int result = getaddrinfo(hostname, servname, fixed_hints, res);
+    // release the copy of hints
+    free(fixed_hints);
+    // fix bionic <- glibc missmatch
+    struct addrinfo *it = *res;
+    while(NULL != it)
+    {
+        swap((void**)&(it->ai_canonname), (void**)&(it->ai_addr));
+        it = it->ai_next;
+    }
+    return result;
+}
+
+static void my_freeaddrinfo(struct addrinfo *__ai)
+{
+    swap((void**)&(__ai->ai_canonname), (void**)&(__ai->ai_addr));
+    freeaddrinfo(__ai);
+}
+
 extern long my_sysconf(int name);
 
 FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
@@ -1392,7 +1427,8 @@ static struct _hook hooks[] = {
     {"__errno", __errno_location},
     {"__set_errno", my_set_errno},
     /* net specifics, to avoid __res_get_state */
-    {"getaddrinfo", getaddrinfo},
+    {"getaddrinfo", my_getaddrinfo},
+    {"freeaddrinfo", my_freeaddrinfo},
     {"gethostbyaddr", gethostbyaddr},
     {"gethostbyname", gethostbyname},
     {"gethostbyname2", gethostbyname2},
