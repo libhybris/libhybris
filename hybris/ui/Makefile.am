@@ -2,7 +2,7 @@ lib_LTLIBRARIES = \
 	libui.la
 
 libui_la_SOURCES = ui.c
-libui_la_CFLAGS = -I$(top_srcdir)/include
+libui_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/android
 if WANT_TRACE
 libui_la_CFLAGS += -DDEBUG
 endif

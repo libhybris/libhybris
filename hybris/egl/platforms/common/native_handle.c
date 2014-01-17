@@ -16,14 +16,14 @@
 
 #define LOG_TAG "NativeHandle"
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include <stdint.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <android/cutils/native_handle.h>
+#include <cutils/native_handle.h>
 
 native_handle_t* native_handle_create(int numFds, int numInts)
 {
