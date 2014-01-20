@@ -4,7 +4,7 @@ bin_PROGRAMS = \
 
 getprop_SOURCES = getprop.c
 getprop_CFLAGS = \
-	-I$(top_srcdir)/include -I$(top_srcdir)/include/android
+	-I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS)
 getprop_LDADD = \
 	$(top_builddir)/properties/libandroid-properties.la
 
