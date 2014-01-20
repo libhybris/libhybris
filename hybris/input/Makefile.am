@@ -2,7 +2,7 @@ lib_LTLIBRARIES = \
 	libis.la
 
 libis_la_SOURCES = is.c
-libis_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/android
+libis_la_CFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS)
 if WANT_TRACE
 libis_la_CFLAGS += -DDEBUG
 endif

@@ -5,7 +5,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libsync.pc
 
 libsync_la_SOURCES = sync.c
-libsync_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/android
+libsync_la_CFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS)
 if WANT_TRACE
 libsync_la_CFLAGS += -DDEBUG
 endif

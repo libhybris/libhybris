@@ -2,7 +2,7 @@ lib_LTLIBRARIES = \
 	libnfc_nxp.la
 
 libnfc_nxp_la_SOURCES = libnfc_nxp.c
-libnfc_nxp_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/android -I$(top_srcdir)/include/android/libnfc-nxp
+libnfc_nxp_la_CFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS) -I$(top_srcdir)/include/android/libnfc-nxp
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libnfc_nxp.pc

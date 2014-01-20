@@ -15,7 +15,7 @@ libhybris_hwcomposerwindow_la_CXXFLAGS = \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/egl \
 	-I$(top_srcdir)/egl/platforms/common \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 
 if WANT_TRACE
 libhybris_hwcomposerwindow_la_CXXFLAGS += -DDEBUG
@@ -43,7 +43,7 @@ eglplatform_hwcomposer_la_CXXFLAGS = \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/egl \
 	-I$(top_srcdir)/egl/platforms/common \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 
 if WANT_TRACE
 eglplatform_hwcomposer_la_CXXFLAGS += -DDEBUG
