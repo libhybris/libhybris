@@ -33,7 +33,7 @@
 #include <hybris/internal/binding.h>
 #include <string.h>
 
-#include <android/system/window.h>
+#include <system/window.h>
 #include "logging.h"
 
 static void *_libegl = NULL;

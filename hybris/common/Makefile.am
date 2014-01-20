@@ -23,6 +23,7 @@ libhybris_common_la_SOURCES = \
 	sysconf.c
 libhybris_common_la_CFLAGS = \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/include/android \
 	-I$(top_srcdir)/common
 if WANT_TRACE
 libhybris_common_la_CFLAGS += -DDEBUG

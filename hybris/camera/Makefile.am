@@ -2,7 +2,7 @@ lib_LTLIBRARIES = \
 	libcamera.la
 
 libcamera_la_SOURCES = camera.c
-libcamera_la_CFLAGS = -I$(top_srcdir)/include
+libcamera_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/android
 if WANT_TRACE
 libcamera_la_CFLAGS += -DDEBUG
 endif

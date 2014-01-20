@@ -16,7 +16,7 @@
  *
 */
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include <assert.h>
 #include <stdio.h>
 #include <pthread.h>
