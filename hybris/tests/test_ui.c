@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include <assert.h>
 
 #include <hybris/ui/ui_compatibility_layer.h>
-#include <android/hardware/gralloc.h>
-#include <android/system/graphics.h>
+#include <hardware/gralloc.h>
+#include <system/graphics.h>
 
 int main(int argc, char **argv)
 {

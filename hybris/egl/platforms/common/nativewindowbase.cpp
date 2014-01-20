@@ -1,7 +1,7 @@
-#include <android/android-config.h>
+#include <android-config.h>
 #include <string.h>
-#include <android/system/window.h>
-#include <android/hardware/gralloc.h>
+#include <system/window.h>
+#include <hardware/gralloc.h>
 #include "support.h"
 #include <stdarg.h>
 

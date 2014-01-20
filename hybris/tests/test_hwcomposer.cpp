@@ -15,7 +15,7 @@
  *
  */
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <assert.h>

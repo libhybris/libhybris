@@ -32,7 +32,7 @@ test_audio_LDADD = \
 test_egl_SOURCES = test_egl.c
 test_egl_CFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android \
+	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/egl/platforms/common
 
 if WANT_MESA
@@ -45,7 +45,7 @@ test_egl_LDADD = \
 test_egl_configs_SOURCES = test_egl_configs.c
 test_egl_configs_CFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 test_egl_configs_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/egl/libEGL.la
@@ -53,7 +53,7 @@ test_egl_configs_LDADD = \
 test_glesv2_SOURCES = test_glesv2.c
 test_glesv2_CFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 if WANT_MESA
 test_glesv2_CFLAGS += -DLIBHYBRIS_WANTS_MESA_X11_HEADERS
 endif
@@ -66,7 +66,7 @@ test_glesv2_LDADD = \
 test_hwcomposer_SOURCES = test_hwcomposer.cpp
 test_hwcomposer_CXXFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android \
+	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/egl/platforms/common \
 	-I$(top_srcdir)/egl/platforms/hwcomposer \
@@ -88,7 +88,7 @@ test_hwcomposer_LDADD = \
 test_sensors_SOURCES = test_sensors.c
 test_sensors_CFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 test_sensors_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/hardware/libhardware.la
@@ -96,7 +96,7 @@ test_sensors_LDADD = \
 test_lights_SOURCES = test_lights.c
 test_lights_CFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 
 test_lights_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
@@ -105,7 +105,7 @@ test_lights_LDADD = \
 test_ui_SOURCES = test_ui.c
 test_ui_CFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 test_ui_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/ui/libui.la
@@ -113,7 +113,7 @@ test_ui_LDADD = \
 test_sf_SOURCES = test_sf.c
 test_sf_CFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 test_sf_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/egl/libEGL.la \
@@ -123,15 +123,15 @@ test_sf_LDADD = \
 test_input_SOURCES = test_input.c
 test_input_CFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 test_input_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/input/libis.la
 
 test_camera_SOURCES = test_camera.c
 test_camera_CFLAGS = \
-	-I$(top_srcdir)/include
-	-I$(top_srcdir)/include/android
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS)
 
 test_camera_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
@@ -143,7 +143,7 @@ test_camera_LDADD = \
 test_gps_SOURCES = test_gps.c
 test_gps_CFLAGS = -pthread \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 
 if HAS_ANDROID_4_2_0
 test_gps_CFLAGS += -DHAS_ANDROID_4_2_0
@@ -157,7 +157,7 @@ test_gps_LDADD =  \
 test_nfc_SOURCES = test_nfc.c
 test_nfc_CFLAGS = \
 	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/include/android \
+	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/include/android/libnfc-nxp
 
 test_nfc_LDFLAGS =
