@@ -18,10 +18,10 @@
 #ifndef EGL_HYBRIS_H_
 #define EGL_HYBRIS_H_
 
-#include <android/hardware/gralloc.h>
+#include <hardware/gralloc.h>
 /* Needed for ICS window.h */
 #include <string.h>
-#include <android/system/window.h>
+#include <system/window.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -10,7 +10,7 @@ if HAS_ANDROID_2_3_0
 SUBDIRS = gingerbread
 libhybris_common_la_LIBADD= gingerbread/libandroid-linker.la
 else
-ERROR
+$(error No Android Version is defined)
 endif
 endif
 
@@ -23,6 +23,7 @@ libhybris_common_la_SOURCES = \
 	sysconf.c
 libhybris_common_la_CFLAGS = \
 	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common
 if WANT_TRACE
 libhybris_common_la_CFLAGS += -DDEBUG

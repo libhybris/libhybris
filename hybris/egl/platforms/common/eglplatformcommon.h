@@ -1,7 +1,7 @@
 #ifndef __EGLPLATFORMCOMMON_H
 #define __EGLPLATFORMCOMMON_H
 #include <string.h>
-#include <android/hardware/gralloc.h>
+#include <hardware/gralloc.h>
 #include <EGL/egl.h>
 
 void eglplatformcommon_init(gralloc_module_t *gralloc, alloc_device_t *allocdevice);

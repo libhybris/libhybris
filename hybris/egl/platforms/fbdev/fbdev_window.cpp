@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include "fbdev_window.h"
 #include "logging.h"
 

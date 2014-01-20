@@ -5,7 +5,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libhardware.pc
 
 libhardware_la_SOURCES = hardware.c
-libhardware_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/include/android
+libhardware_la_CFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS)
 if WANT_TRACE
 libhardware_la_CFLAGS += -DDEBUG
 endif

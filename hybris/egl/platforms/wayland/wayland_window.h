@@ -29,7 +29,7 @@
 #define Wayland_WINDOW_H
 #include "nativewindowbase.h"
 #include <linux/fb.h>
-#include <android/hardware/gralloc.h>
+#include <hardware/gralloc.h>
 extern "C" {
 
 #include <wayland-client.h>
