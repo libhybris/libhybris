@@ -12,6 +12,8 @@ usage() {
     echo "Options:"
     echo "  -v|--version MAJOR.MINOR.PATCH.[PATCH2].[PATCH3]]"
     echo "               Override the Android version detected by this script"
+    echo "  -p|--pkgconfigpath <path>"
+    echo "               pkgconfig path for the headers installed location"
     exit 1
 }
 
@@ -25,6 +27,11 @@ $2
 EOF
         echo "Using version ${MAJOR}.${MINOR}.${PATCH}.${PATCH2}.${PATCH3}"
         shift 2
+    ;;
+    *-pkgconfigpath|-p)
+	if [ "$2" = "" ]; then error "--pkgconfigpath needs an argument"; usage; fi
+	PKGCONFIGPATH=$2
+	shift 2
     ;;
     *)
         break
@@ -225,47 +232,52 @@ GIT_PROJECTS="
 
 echo "Extracting Git revision information"
 if ! which repo >/dev/null 2>&1; then
-    error "Failed to extract Git info: missing 'repo'"
-    exit 1
+    echo "Can't extract Git info: missing 'repo'"
+    SKIPGIT=1
 fi
 if ! which git >/dev/null 2>&1; then
-    error "Failed to extract Git info: missing 'git'"
-    exit 1
+    echo "Can't extract Git info: missing 'git'"
+    SKIPGIT=1
 fi
-
 
 
 rm -f $HEADER_PATH/SOURCE_GIT_REVISION_INFO
-(for GIT_PROJECT in $GIT_PROJECTS; do
-    TARGET_DIR=$ANDROID_ROOT/$GIT_PROJECT
-    echo "================================================"
-    echo "$GIT_PROJECT @ $NOW"
-    echo "================================================"
-    if [ -e $TARGET_DIR/.git ]; then
-        (
-        set -x
-        cd $ANDROID_ROOT
-        repo status $GIT_PROJECT
-        cd $TARGET_DIR
-        git show-ref --head
-        git remote -v
-        )
-        echo ""
-        echo ""
-    else
-        echo "WARNING: $GIT_PROJECT does not contain a Git repository"
-    fi
-done) > $HEADER_PATH/git-revisions.txt 2>&1
+if [ x$SKIPGIT != x1 ]; then
+    (for GIT_PROJECT in $GIT_PROJECTS; do
+	TARGET_DIR=$ANDROID_ROOT/$GIT_PROJECT
+	echo "================================================"
+	echo "$GIT_PROJECT @ $NOW"
+	echo "================================================"
+	if [ -e $TARGET_DIR/.git ]; then
+            (
+		set -x
+		cd $ANDROID_ROOT
+		repo status $GIT_PROJECT
+		cd $TARGET_DIR
+		git show-ref --head
+		git remote -v
+            )
+            echo ""
+            echo ""
+	else
+            echo "WARNING: $GIT_PROJECT does not contain a Git repository"
+	fi
+	done) > $HEADER_PATH/git-revisions.txt 2>&1
 
-# Repo manifest that can be used to fetch the sources for re-extracting headers
-if [ -e $ANDROID_ROOT/.repo/manifest.xml ]; then
-    cp $ANDROID_ROOT/.repo/manifest.xml $HEADER_PATH/
+    # Repo manifest that can be used to fetch the sources for re-extracting headers
+    if [ -e $ANDROID_ROOT/.repo/manifest.xml ]; then
+	cp $ANDROID_ROOT/.repo/manifest.xml $HEADER_PATH/
+    fi
 fi
 
 find "$HEADER_PATH" -type f -exec chmod 0644 {} \;
 
-# Add a makefile to make packaging easier
-cat > ${HEADER_PATH}/Makefile << EOF
+
+# Create a pkconfig if we know the final installation path otherwise
+# make a Makefile and a pc.in file for it to handle
+if [ x$PKGCONFIGPATH = x ]; then
+    # Add a makefile to make packaging easier
+    cat > ${HEADER_PATH}/Makefile << EOF
 PREFIX?=/usr/local
 INCLUDEDIR?=\$(PREFIX)/include/android
 all:
@@ -278,10 +290,8 @@ install:
 	sed -e 's;@prefix@;\$(PREFIX)/;g; s;@includedir@;\$(INCLUDEDIR);g' android-headers.pc.in > \$(DESTDIR)/\$(PREFIX)/lib/pkgconfig/android-headers.pc
 EOF
 
-
-# Create a pkconfig if we know the installed path
-echo "Creating ${HEADER_PATH}/android-headers.pc.in"
-cat > ${HEADER_PATH}/android-headers.pc.in << EOF
+    echo "Creating ${HEADER_PATH}/android-headers.pc.in"
+    cat > ${HEADER_PATH}/android-headers.pc.in << EOF
 prefix=@prefix@
 includedir=@includedir@
 
@@ -290,5 +300,13 @@ Description: Provides the headers for the droid system
 Version: ${MAJOR}.${MINOR}.${PATCH}
 Cflags: -I@includedir@
 EOF
-
+else
+    echo "Creating ${HEADER_PATH}/android-headers.pc"
+    cat > ${HEADER_PATH}/android-headers.pc << EOF
+Name: android-headers
+Description: Provides the headers for the droid system
+Version: ${MAJOR}.${MINOR}.${PATCH}
+Cflags: -I$PKGCONFIGPATH
+EOF
+fi
 # vim: noai:ts=4:sw=4:ss=4:expandtab
