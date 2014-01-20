@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: hwcomposer-egl
 Description: libhybris EGL platform library
 Version: @VERSION@
-Libs: -L${libdir} -lhybris-hwcomposerwindow
+Libs: -L${libdir} -lhybris-hwcomposerwindow -lhybris-hardware
 Cflags: -I${includedir} -I${includedir}/hybris/hwcomposerwindow
 
