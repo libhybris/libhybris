@@ -21,7 +21,6 @@
 #include <dlfcn.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #include <hybris/internal/binding.h>
 #include <hybris/internal/floating_point_abi.h>
@@ -49,6 +48,10 @@ static void         (*_glVertexAttrib4f)(GLuint indx, GLfloat x, GLfloat y, GLfl
 
 
 #define GLES2_LOAD(sym)  { *(&_ ## sym) = (void *) android_dlsym(_libglesv2, #sym);  } 
+
+/*
+This generates a function that when first called overwrites it's plt entry with new address. Subsequent calls jump directly at the target function in the android library. This means effectively 0 call overhead after the first call.
+*/
 
 #define GLES2_IDLOAD(sym) \
  __asm__ (".type " #sym ", %gnu_indirect_function"); \
