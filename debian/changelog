@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu6) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20131207+e452e83-0ubuntu6) trusty; urgency=medium
 
   * Making compat code compatible with Android 4.4.2
 
