@@ -42,9 +42,4 @@ server_wlegl_create(struct wl_display *wldpy, gralloc_module_t *gralloc);
 void
 server_wlegl_destroy(server_wlegl *wlegl);
 
-EGLImageKHR
-egl_create_image_wl(EGLDisplay egldisplay,
-		    struct wl_buffer *user_buffer,
-		    const EGLint *attrib_list);
-
 #endif /* SERVER_WLEGL_H */

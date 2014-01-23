@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include "fbdev_window.h"
 #include "logging.h"
 
@@ -64,8 +64,7 @@ FbDevNativeWindowBuffer::~FbDevNativeWindowBuffer()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-FbDevNativeWindow::FbDevNativeWindow(gralloc_module_t* gralloc,
-                            alloc_device_t* alloc,
+FbDevNativeWindow::FbDevNativeWindow( alloc_device_t* alloc,
                             framebuffer_device_t* fbDev)
 {
     m_alloc = alloc;

@@ -25,7 +25,7 @@
  ****************************************************************************************/
 
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include "wayland_window.h"
 #include "wayland-egl-priv.h"
 #include <assert.h>
@@ -37,7 +37,7 @@
 
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
 extern "C" {
-#include <android/sync/sync.h>
+#include <sync/sync.h>
 }
 #endif
 
@@ -147,7 +147,7 @@ static void check_fatal_error(struct wl_display *display)
     abort();
 }
 
-WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, const gralloc_module_t* gralloc, alloc_device_t* alloc_device)
+WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, alloc_device_t* alloc_device)
 {
     int wayland_ok;
 
@@ -171,7 +171,6 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
     assert(wayland_ok >= 0);
     assert(this->m_android_wlegl != NULL);
 
-    this->m_gralloc = gralloc;
     this->m_alloc = alloc_device;
 
     m_usage=GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;

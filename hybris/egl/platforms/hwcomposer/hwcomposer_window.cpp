@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <android/android-config.h>
+#include <android-config.h>
 #include "hwcomposer_window.h"
 #include "logging.h"
 
@@ -25,7 +25,7 @@
 #include <unistd.h>
 
 extern "C" {
-#include <android/sync/sync.h>
+#include <sync/sync.h>
 };
  
 static pthread_cond_t _cond = PTHREAD_COND_INITIALIZER;
