@@ -157,10 +157,10 @@ extract_headers_to system \
 extract_headers_to android \
     system/core/include/android
 
-check_header_exists external/kernel-headers/original/linux/sync.h && \
+check_header_exists bionic/libc/kernel/common/linux/sync.h
     extract_headers_to linux \
-        external/kernel-headers/original/linux/sync.h \
-        external/kernel-headers/original/linux/sw_sync.h
+        bionic/libc/kernel/common/linux/sync.h \
+        bionic/libc/kernel/common/linux/sw_sync.h
 
 check_header_exists system/core/include/sync/sync.h && \
     extract_headers_to sync \
@@ -185,7 +185,6 @@ GIT_PROJECTS="
     hardware/libhardware
     hardware/libhardware_legacy
     system/core
-    external/kernel-headers
     external/libnfc-nxp
 "
 
