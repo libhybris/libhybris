@@ -44,7 +44,7 @@ protected:
 
 class FbDevNativeWindow : public BaseNativeWindow {
 public:
-    FbDevNativeWindow(gralloc_module_t* gralloc, alloc_device_t* alloc,
+    FbDevNativeWindow(alloc_device_t* alloc,
          framebuffer_device_t* fbDev);
     ~FbDevNativeWindow();
 

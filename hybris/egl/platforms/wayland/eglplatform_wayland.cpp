@@ -66,7 +66,7 @@ extern "C" int waylandws_IsValidDisplay(EGLNativeDisplayType display)
 
 extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
 {
-	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, (struct wl_display *) display, gralloc, alloc);
+	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, (struct wl_display *) display, alloc);
 	window->common.incRef(&window->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }
