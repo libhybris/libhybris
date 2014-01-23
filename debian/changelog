@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu6) UNRELEASED; urgency=medium
+
+  * Making compat code compatible with Android 4.4.2
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 23 Jan 2014 02:38:35 -0200
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu5) trusty; urgency=medium
 
   * Allowing grouper to share the shm block between users for usc
