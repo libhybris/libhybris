@@ -55,7 +55,7 @@ extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, EGL
 	assert (inited >= 1);
 	assert (_nativewindow == NULL);
 
-	_nativewindow = new FbDevNativeWindow(gralloc, alloc, framebuffer);
+	_nativewindow = new FbDevNativeWindow(alloc, framebuffer);
 	_nativewindow->common.incRef(&_nativewindow->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(_nativewindow);
 }
