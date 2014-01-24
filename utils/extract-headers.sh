@@ -217,3 +217,4 @@ if [ -e $ANDROID_ROOT/.repo/manifest.xml ]; then
 fi
 
 exit 0
+# vim: noai:ts=4:sw=4:ss=4:expandtab
