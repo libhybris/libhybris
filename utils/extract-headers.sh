@@ -230,5 +230,7 @@ if [ -e $ANDROID_ROOT/.repo/manifest.xml ]; then
     cp $ANDROID_ROOT/.repo/manifest.xml $HEADERPATH/
 fi
 
+find "$HEADERPATH" -type f -exec chmod 0644 {} \;
+
 exit 0
 # vim: noai:ts=4:sw=4:ss=4:expandtab
