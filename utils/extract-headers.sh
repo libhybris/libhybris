@@ -72,9 +72,6 @@ extract_headers_to() {
     # For each FILE argument, copy it to TARGET
     # For each DIR argument, copy all its contents to TARGET
     TARGET_DIRECTORY=$HEADERPATH/$1
-    if [ ! -d "$TARGET_DIRECTORY" ]; then
-        mkdir -p "$TARGET_DIRECTORY"
-    fi
     echo "  $1"
     shift
 
@@ -83,24 +80,18 @@ extract_headers_to() {
         if [ -d $SOURCE_PATH ]; then
             for file in $SOURCE_PATH/*; do
                 echo "    $1/$(basename $file)"
+                mkdir -p $TARGET_DIRECTORY
                 cp $file $TARGET_DIRECTORY/
             done
-        else
+        elif [ -f $SOURCE_PATH ]; then
             echo "    $1"
+            mkdir -p $TARGET_DIRECTORY
             cp $SOURCE_PATH $TARGET_DIRECTORY/
+        else
+            echo "Missing file: $1"
         fi
         shift
     done
-}
-
-check_header_exists() {
-    # check_header_exists <FILENAME>
-    HEADER_FILE=$ANDROID_ROOT/$1
-    if [ ! -e "$HEADER_FILE" ]; then
-        return 1
-    fi
-
-    return 0
 }
 
 
@@ -171,19 +162,16 @@ extract_headers_to system \
 extract_headers_to android \
     system/core/include/android
 
-check_header_exists bionic/libc/kernel/common/linux/sync.h
-    extract_headers_to linux \
-        bionic/libc/kernel/common/linux/sync.h \
-        bionic/libc/kernel/common/linux/sw_sync.h
+extract_headers_to linux \
+    bionic/libc/kernel/common/linux/sync.h \
+    bionic/libc/kernel/common/linux/sw_sync.h
 
-check_header_exists system/core/include/sync/sync.h && \
-    extract_headers_to sync \
-        system/core/include/sync
+extract_headers_to sync \
+    system/core/include/sync
 
-check_header_exists external/libnfc-nxp/inc/phNfcConfig.h && \
-    extract_headers_to libnfc-nxp \
-        external/libnfc-nxp/inc \
-        external/libnfc-nxp/src
+extract_headers_to libnfc-nxp \
+    external/libnfc-nxp/inc \
+    external/libnfc-nxp/src
 
 extract_headers_to private \
     system/core/include/private/android_filesystem_config.h
