@@ -9,8 +9,22 @@ PATCH=$5
 PATCH2=$6
 PATCH3=$7
 
+usage() {
+    echo "Usage: extract-headers.sh <ANDROID_ROOT> <HEADER_PATH> [Android Platform Version]"
+    echo
+    echo "  ANDROID_ROOT: Directory containing the Android source tree."
+    echo "  HEADER_PATH:  Where the headers will be extracted to."
+    echo
+    echo "Android Platform Version:"
+    echo "  This field is optional. If not specified, automatic extraction is attempted."
+    echo
+    echo "Ex:"
+    echo "    ./extract-headers.sh  android-aosp/  /tmp/android-headers/  4 2 2"
+
+}
+
 if [ x$ANDROID_ROOT = x -o "x$HEADERPATH" = x ]; then
-    echo "Syntax: extract-headers.sh ANDROID_ROOT HEADERPATH [MAJOR] [MINOR] [PATCH] [PATCH2] [PATCH3]"
+    usage
     exit 1
 fi
 
