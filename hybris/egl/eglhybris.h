@@ -31,6 +31,10 @@ int hybris_register_buffer_handle(buffer_handle_t handle);
 int hybris_unregister_buffer_handle(buffer_handle_t handle);
 void hybris_dump_buffer_to_file(struct ANativeWindowBuffer *buf);
 
+void *hybris_android_egl_dlsym(const char *symbol);
+int hybris_egl_has_mapping(EGLSurface surface);
+EGLNativeWindowType hybris_egl_get_mapping(EGLSurface surface);
+
 #ifdef __cplusplus
 }
 #endif

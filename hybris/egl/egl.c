@@ -120,6 +120,20 @@ static void _init_androidegl()
 	_libgles = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("LIBGLESV2") : "libGLESv2.so", RTLD_LAZY);
 }
 
+static void * _android_egl_dlsym(const char *symbol)
+{
+	if (_libegl == NULL)
+		_init_androidegl();
+
+	return android_dlsym(_libegl, symbol);
+}
+
+struct ws_egl_interface hybris_egl_interface = {
+	_android_egl_dlsym,
+	egl_helper_has_mapping,
+	egl_helper_get_mapping,
+};
+
 #define EGL_DLSYM(fptr, sym) do { if (_libegl == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libegl, sym); } } while (0) 
 #define GLESv2_DLSYM(fptr, sym) do { if (_libgles == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libgles, sym); } } while (0) 
 

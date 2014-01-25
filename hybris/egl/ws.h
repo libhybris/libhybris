@@ -2,7 +2,18 @@
 #define __LIBHYBRIS_WS_H
 #include <EGL/egl.h>
 
+struct ws_egl_interface {
+	void * (*android_egl_dlsym)(const char *symbol);
+
+	int (*has_mapping)(EGLSurface surface);
+	EGLNativeWindowType (*get_mapping)(EGLSurface surface);
+};
+
+/* Defined in egl.c */
+extern struct ws_egl_interface hybris_egl_interface;
+
 struct ws_module {
+	void (*init_module)(struct ws_egl_interface *egl_interface);
 	int (*IsValidDisplay)(EGLNativeDisplayType display_id);
 	EGLNativeWindowType (*CreateWindow)(EGLNativeWindowType win, EGLNativeDisplayType display);
 	void (*DestroyWindow)(EGLNativeWindowType win);

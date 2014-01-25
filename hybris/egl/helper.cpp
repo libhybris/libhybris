@@ -40,6 +40,17 @@ int egl_helper_has_mapping(EGLSurface surface)
     return (_surface_window_map.find(surface) != _surface_window_map.end());
 }
 
+EGLNativeWindowType egl_helper_get_mapping(EGLSurface surface)
+{
+    std::map<EGLSurface,EGLNativeWindowType>::iterator it;
+    it = _surface_window_map.find(surface);
+
+    /* Caller must check with egl_helper_has_mapping() before */
+    assert(it != _surface_window_map.end());
+
+    return it->second;
+}
+
 EGLNativeWindowType egl_helper_pop_mapping(EGLSurface surface)
 {
     std::map<EGLSurface,EGLNativeWindowType>::iterator it;

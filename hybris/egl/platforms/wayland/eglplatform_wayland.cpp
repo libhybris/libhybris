@@ -46,21 +46,20 @@ extern "C" {
 #include "logging.h"
 #include "wayland-egl-priv.h"
 
-static int inited = 0;
 static gralloc_module_t *gralloc = 0;
 static alloc_device_t *alloc = 0;
 
-extern "C" int waylandws_IsValidDisplay(EGLNativeDisplayType display)
+extern "C" void waylandws_init_module(struct ws_egl_interface *egl_iface)
 {
 	int err;
-	if ( __sync_fetch_and_add(&inited,1)==0)
-	{
-		hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
-		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-		TRACE("++ %lu wayland: got gralloc %p err:%s", pthread_self(), gralloc, strerror(-err));
-		eglplatformcommon_init(gralloc, alloc);
-	}
+	hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
+	err = gralloc_open((const hw_module_t *) gralloc, &alloc);
+	TRACE("++ %lu wayland: got gralloc %p err:%s", pthread_self(), gralloc, strerror(-err));
+	eglplatformcommon_init(egl_iface, gralloc, alloc);
+}
 
+extern "C" int waylandws_IsValidDisplay(EGLNativeDisplayType display)
+{
 	return 1;
 }
 
@@ -100,6 +99,7 @@ extern "C" void waylandws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, 
 }
 
 struct ws_module ws_module_info = {
+	waylandws_init_module,
 	waylandws_IsValidDisplay,
 	waylandws_CreateWindow,
 	waylandws_DestroyWindow,
