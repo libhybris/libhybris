@@ -177,6 +177,8 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&cond, NULL);
     m_freeBufs = 0;
+    m_damage_rects = NULL;
+    m_damage_n_rects = 0;
     setBufferCount(3);
     HYBRIS_TRACE_END("wayland-platform", "create_window", "");
 }
@@ -414,9 +416,13 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
     return NO_ERROR;
 }
 
-void WaylandNativeWindow::prepareSwap()
+void WaylandNativeWindow::prepareSwap(EGLint *damage_rects, EGLint damage_n_rects)
 {
+    lock();
     m_buffer_committed = false;
+    m_damage_rects = damage_rects;
+    m_damage_n_rects = damage_n_rects;
+    unlock();
 }
 
 void WaylandNativeWindow::finishSwap()
@@ -429,6 +435,8 @@ void WaylandNativeWindow::finishSwap()
         wl_surface_commit(m_window->surface);
         wl_callback_destroy(wl_display_sync(m_display));
     }
+    m_damage_rects = NULL;
+    m_damage_n_rects = 0;
     unlock();
 }
 
@@ -487,11 +495,24 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
         wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
         wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
     }
-    TRACE("%p DAMAGE AREA: %dx%d", wnb, wnb->width, wnb->height);
     HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_attachdamagecommit", "-resource@%i", wl_proxy_get_id((struct wl_proxy *) wnb->wlbuffer));
 
     wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
-    wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
+    if (m_damage_n_rects > 0)
+    {
+        for (EGLint i = 0; i < m_damage_n_rects; ++i)
+        {
+            TRACE("%p DAMAGE AREA: %dx%d", wnb, m_damage_rects[i * 4 + 2], m_damage_rects[i * 4 + 3]);
+            wl_surface_damage(m_window->surface, m_damage_rects[i * 4],
+                wnb->height - m_damage_rects[i * 4 + 1] - m_damage_rects[i * 4 + 3],
+                m_damage_rects[i * 4 + 2], m_damage_rects[i * 4 + 3]);
+        }
+    }
+    else
+    {
+        TRACE("%p DAMAGE AREA: %dx%d", wnb, wnb->width, wnb->height);
+        wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
+    }
     wl_surface_commit(m_window->surface);
     // Some compositors, namely Weston, queue buffer release events instead
     // of sending them immediately.  If a frame event is used, this should

@@ -91,11 +91,11 @@ const char *ws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eg
 	return ws->eglQueryString(dpy, name, real_eglQueryString);
 }
 
-void ws_prepareSwap(EGLDisplay dpy, EGLNativeWindowType win)
+void ws_prepareSwap(EGLDisplay dpy, EGLNativeWindowType win, EGLint *damage_rects, EGLint damage_n_rects)
 {
 	_init_ws();
 	if (ws->prepareSwap)
-		ws->prepareSwap(dpy, win);
+		ws->prepareSwap(dpy, win, damage_rects, damage_n_rects);
 }
 
 void ws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win)

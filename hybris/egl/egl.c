@@ -415,20 +415,29 @@ EGLBoolean eglWaitNative(EGLint engine)
 	return (*_eglWaitNative)(engine); 
 }
 
-EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
+EGLBoolean _my_eglSwapBuffersWithDamageEXT(EGLDisplay dpy, EGLSurface surface, EGLint *rects, EGLint n_rects)
 {
 	EGLNativeWindowType win;
 	EGLBoolean ret; 
-	HYBRIS_TRACE_BEGIN("hybris-egl", "eglSwapBuffers", "");
+	HYBRIS_TRACE_BEGIN("hybris-egl", "eglSwapBuffersWithDamageEXT", "");
 	EGL_DLSYM(&_eglSwapBuffers, "eglSwapBuffers");
 	if (egl_helper_has_mapping(surface)) {
 		win = egl_helper_get_mapping(surface);
-		ws_prepareSwap(dpy, win);
+		ws_prepareSwap(dpy, win, rects, n_rects);
 		ret = (*_eglSwapBuffers)(dpy, surface);
 		ws_finishSwap(dpy, win);
 	} else {
 		ret = (*_eglSwapBuffers)(dpy, surface);
 	}
+	HYBRIS_TRACE_END("hybris-egl", "eglSwapBuffersWithDamageEXT", "");
+	return ret;
+}
+
+EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
+{
+	EGLBoolean ret;
+	HYBRIS_TRACE_BEGIN("hybris-egl", "eglSwapBuffers", "");
+	ret = _my_eglSwapBuffersWithDamageEXT(dpy, surface, NULL, 0);
 	HYBRIS_TRACE_END("hybris-egl", "eglSwapBuffers", "");
 	return ret;
 }
@@ -466,6 +475,10 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 	{
 		return _my_eglCreateImageKHR;
 	} 
+	else if (strcmp(procname, "eglSwapBuffersWithDamageEXT") == 0)
+	{
+		return _my_eglSwapBuffersWithDamageEXT;
+	}
 	else if (strcmp(procname, "glEGLImageTargetTexture2DOES") == 0)
 	{
 		return _my_glEGLImageTargetTexture2DOES;

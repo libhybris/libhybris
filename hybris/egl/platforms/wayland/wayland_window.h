@@ -108,7 +108,7 @@ public:
     void releaseBuffer(struct wl_buffer *buffer);
     int postBuffer(ANativeWindowBuffer *buffer);
 
-    void prepareSwap();
+    void prepareSwap(EGLint *damage_rects, EGLint damage_n_rects);
     void finishSwap();
 
     static void sync_callback(void *data, struct wl_callback *callback, uint32_t serial);
@@ -161,6 +161,7 @@ private:
     pthread_cond_t cond;
     int m_freeBufs;
     bool m_buffer_committed;
+    EGLint *m_damage_rects, m_damage_n_rects;
     struct wl_callback *frame_callback;
     static int wayland_roundtrip(WaylandNativeWindow *display);
 };
