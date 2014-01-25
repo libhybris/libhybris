@@ -475,6 +475,11 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
     wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
     wl_surface_commit(m_window->surface);
+    // Some compositors, namely Weston, queue buffer release events instead
+    // of sending them immediately.  If a frame event is used, this should
+    // not be a problem.  Without a frame event, we need to send a sync
+    // request to ensure that they get flushed.
+    wl_callback_destroy(wl_display_sync(m_display));
     wl_display_flush(m_display);
     HYBRIS_TRACE_END("wayland-platform", "queueBuffer_attachdamagecommit", "-resource@%i", wl_proxy_get_id((struct wl_proxy *) wnb->wlbuffer));
 
