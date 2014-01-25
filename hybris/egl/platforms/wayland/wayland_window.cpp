@@ -414,6 +414,24 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
     return NO_ERROR;
 }
 
+void WaylandNativeWindow::prepareSwap()
+{
+    m_buffer_committed = false;
+}
+
+void WaylandNativeWindow::finishSwap()
+{
+    lock();
+    if (! m_buffer_committed) {
+        // If, for some reason, we have not seen a call to queueBuffer yet,
+        // we need to commit anyway.  Some EGL stacks will just not bother
+        // queueing a buffer if nothing has been rendererd.
+        wl_surface_commit(m_window->surface);
+        wl_callback_destroy(wl_display_sync(m_display));
+    }
+    unlock();
+}
+
 static int debugenvchecked = 0;
 
 int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
@@ -481,6 +499,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     // request to ensure that they get flushed.
     wl_callback_destroy(wl_display_sync(m_display));
     wl_display_flush(m_display);
+    m_buffer_committed = true;
     HYBRIS_TRACE_END("wayland-platform", "queueBuffer_attachdamagecommit", "-resource@%i", wl_proxy_get_id((struct wl_proxy *) wnb->wlbuffer));
 
     m_window->attached_width = wnb->width;

@@ -36,6 +36,9 @@
 extern "C" {
 #include <eglplatformcommon.h>
 };
+#include <eglhybris.h>
+
+#include <EGL/eglext.h>
 
 extern "C" {
 #include <wayland-client.h>
@@ -49,6 +52,13 @@ extern "C" {
 static gralloc_module_t *gralloc = 0;
 static alloc_device_t *alloc = 0;
 
+
+static const char *  (*_eglQueryString)(EGLDisplay dpy, EGLint name) = NULL;
+static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char *procname) = NULL;
+static EGLSyncKHR (*_eglCreateSyncKHR)(EGLDisplay dpy, EGLenum type, const EGLint *attrib_list) = NULL;
+static EGLBoolean (*_eglDestroySyncKHR)(EGLDisplay dpy, EGLSyncKHR sync) = NULL;
+static EGLint (*_eglClientWaitSyncKHR)(EGLDisplay dpy, EGLSyncKHR sync, EGLint flags, EGLTimeKHR timeout) = NULL;
+
 extern "C" void waylandws_init_module(struct ws_egl_interface *egl_iface)
 {
 	int err;
@@ -56,6 +66,33 @@ extern "C" void waylandws_init_module(struct ws_egl_interface *egl_iface)
 	err = gralloc_open((const hw_module_t *) gralloc, &alloc);
 	TRACE("++ %lu wayland: got gralloc %p err:%s", pthread_self(), gralloc, strerror(-err));
 	eglplatformcommon_init(egl_iface, gralloc, alloc);
+}
+
+static void _init_egl_funcs(EGLDisplay display)
+{
+	if (_eglQueryString != NULL)
+		return;
+
+	_eglQueryString = (const char * (*)(void*, int))
+			hybris_android_egl_dlsym("eglQueryString");
+	assert(_eglQueryString);
+	_eglGetProcAddress = (__eglMustCastToProperFunctionPointerType (*)(const char *))
+			hybris_android_egl_dlsym("eglGetProcAddress");
+	assert(_eglGetProcAddress);
+
+	const char *extensions = (*_eglQueryString)(display, EGL_EXTENSIONS);
+
+	if (strstr(extensions, "EGL_KHR_fence_sync")) {
+		_eglCreateSyncKHR = (PFNEGLCREATESYNCKHRPROC)
+				(*_eglGetProcAddress)("eglCreateSyncKHR");
+		assert(_eglCreateSyncKHR);
+		_eglDestroySyncKHR = (PFNEGLDESTROYSYNCKHRPROC)
+				(*_eglGetProcAddress)("eglDestroySyncKHR");
+		assert(_eglDestroySyncKHR);
+		_eglClientWaitSyncKHR = (PFNEGLCLIENTWAITSYNCKHRPROC)
+				(*_eglGetProcAddress)("eglClientWaitSyncKHR");
+		assert(_eglClientWaitSyncKHR);
+	}
 }
 
 extern "C" int waylandws_IsValidDisplay(EGLNativeDisplayType display)
@@ -98,6 +135,24 @@ extern "C" void waylandws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, 
 	eglplatformcommon_passthroughImageKHR(ctx, target, buffer, attrib_list);
 }
 
+extern "C" void waylandws_prepareSwap(EGLDisplay dpy, EGLNativeWindowType win)
+{
+	WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
+	window->prepareSwap();
+}
+
+extern "C" void waylandws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win)
+{
+	_init_egl_funcs(dpy);
+	WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
+	if (_eglCreateSyncKHR) {
+		EGLSyncKHR sync = (*_eglCreateSyncKHR)(dpy, EGL_SYNC_FENCE_KHR, NULL);
+		(*_eglClientWaitSyncKHR)(dpy, sync, 0, EGL_FOREVER_KHR);
+		(*_eglDestroySyncKHR)(dpy, sync);
+	}
+	window->finishSwap();
+}
+
 struct ws_module ws_module_info = {
 	waylandws_init_module,
 	waylandws_IsValidDisplay,
@@ -105,7 +160,9 @@ struct ws_module ws_module_info = {
 	waylandws_DestroyWindow,
 	waylandws_eglGetProcAddress,
 	waylandws_passthroughImageKHR,
-	eglplatformcommon_eglQueryString
+	eglplatformcommon_eglQueryString,
+	waylandws_prepareSwap,
+	waylandws_finishSwap,
 };
 
 

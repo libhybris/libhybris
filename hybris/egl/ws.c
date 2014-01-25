@@ -91,4 +91,18 @@ const char *ws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eg
 	return ws->eglQueryString(dpy, name, real_eglQueryString);
 }
 
+void ws_prepareSwap(EGLDisplay dpy, EGLNativeWindowType win)
+{
+	_init_ws();
+	if (ws->prepareSwap)
+		ws->prepareSwap(dpy, win);
+}
+
+void ws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win)
+{
+	_init_ws();
+	if (ws->finishSwap)
+		ws->finishSwap(dpy, win);
+}
+
 // vim:ts=4:sw=4:noexpandtab
