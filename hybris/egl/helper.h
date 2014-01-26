@@ -36,6 +36,9 @@ void egl_helper_push_mapping(EGLSurface surface, EGLNativeWindowType window);
 /* Check if a mapping for a surface exist */
 int egl_helper_has_mapping(EGLSurface surface);
 
+/* Return (without removing) the mapping for a surface */
+EGLNativeWindowType egl_helper_get_mapping(EGLSurface surface);
+
 /* Return and remove the mapping for a surface */
 EGLNativeWindowType egl_helper_pop_mapping(EGLSurface surface);
 

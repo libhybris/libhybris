@@ -22,13 +22,30 @@
 
 #include "windowbuffer.h"
 
+static struct ws_egl_interface *my_egl_interface;
 static gralloc_module_t *my_gralloc = 0;
 static alloc_device_t *my_alloc = 0;
 
-extern "C" void eglplatformcommon_init(gralloc_module_t *gralloc, alloc_device_t *allocdevice)
+extern "C" void eglplatformcommon_init(struct ws_egl_interface *egl_iface, gralloc_module_t *gralloc, alloc_device_t *allocdevice)
 {
+	my_egl_interface = egl_iface;
 	my_gralloc = gralloc;
 	my_alloc = allocdevice;
+}
+
+extern "C" void *hybris_android_egl_dlsym(const char *symbol)
+{
+	return (*my_egl_interface->android_egl_dlsym)(symbol);
+}
+
+extern "C" int hybris_egl_has_mapping(EGLSurface surface)
+{
+	return (*my_egl_interface->has_mapping)(surface);
+}
+
+EGLNativeWindowType hybris_egl_get_mapping(EGLSurface surface)
+{
+	return (*my_egl_interface->get_mapping)(surface);
 }
 
 extern "C" int hybris_register_buffer_handle(buffer_handle_t handle)
