@@ -9,8 +9,22 @@ PATCH=$5
 PATCH2=$6
 PATCH3=$7
 
+usage() {
+    echo "Usage: extract-headers.sh <ANDROID_ROOT> <HEADER_PATH> [Android Platform Version]"
+    echo
+    echo "  ANDROID_ROOT: Directory containing the Android source tree."
+    echo "  HEADER_PATH:  Where the headers will be extracted to."
+    echo
+    echo "Android Platform Version:"
+    echo "  This field is optional. If not specified, automatic extraction is attempted."
+    echo
+    echo "Ex:"
+    echo "    ./extract-headers.sh  android-aosp/  /tmp/android-headers/  4 2 2"
+
+}
+
 if [ x$ANDROID_ROOT = x -o "x$HEADERPATH" = x ]; then
-    echo "Syntax: extract-headers.sh ANDROID_ROOT HEADERPATH [MAJOR] [MINOR] [PATCH] [PATCH2] [PATCH3]"
+    usage
     exit 1
 fi
 
@@ -58,9 +72,6 @@ extract_headers_to() {
     # For each FILE argument, copy it to TARGET
     # For each DIR argument, copy all its contents to TARGET
     TARGET_DIRECTORY=$HEADERPATH/$1
-    if [ ! -d "$TARGET_DIRECTORY" ]; then
-        mkdir -p "$TARGET_DIRECTORY"
-    fi
     echo "  $1"
     shift
 
@@ -69,24 +80,18 @@ extract_headers_to() {
         if [ -d $SOURCE_PATH ]; then
             for file in $SOURCE_PATH/*; do
                 echo "    $1/$(basename $file)"
+                mkdir -p $TARGET_DIRECTORY
                 cp $file $TARGET_DIRECTORY/
             done
-        else
+        elif [ -f $SOURCE_PATH ]; then
             echo "    $1"
+            mkdir -p $TARGET_DIRECTORY
             cp $SOURCE_PATH $TARGET_DIRECTORY/
+        else
+            echo "Missing file: $1"
         fi
         shift
     done
-}
-
-check_header_exists() {
-    # check_header_exists <FILENAME>
-    HEADER_FILE=$ANDROID_ROOT/$1
-    if [ ! -e "$HEADER_FILE" ]; then
-        return 1
-    fi
-
-    return 0
 }
 
 
@@ -157,19 +162,16 @@ extract_headers_to system \
 extract_headers_to android \
     system/core/include/android
 
-check_header_exists bionic/libc/kernel/common/linux/sync.h
-    extract_headers_to linux \
-        bionic/libc/kernel/common/linux/sync.h \
-        bionic/libc/kernel/common/linux/sw_sync.h
+extract_headers_to linux \
+    bionic/libc/kernel/common/linux/sync.h \
+    bionic/libc/kernel/common/linux/sw_sync.h
 
-check_header_exists system/core/include/sync/sync.h && \
-    extract_headers_to sync \
-        system/core/include/sync
+extract_headers_to sync \
+    system/core/include/sync
 
-check_header_exists external/libnfc-nxp/inc/phNfcConfig.h && \
-    extract_headers_to libnfc-nxp \
-        external/libnfc-nxp/inc \
-        external/libnfc-nxp/src
+extract_headers_to libnfc-nxp \
+    external/libnfc-nxp/inc \
+    external/libnfc-nxp/src
 
 extract_headers_to private \
     system/core/include/private/android_filesystem_config.h
@@ -216,4 +218,28 @@ if [ -e $ANDROID_ROOT/.repo/manifest.xml ]; then
     cp $ANDROID_ROOT/.repo/manifest.xml $HEADERPATH/
 fi
 
+# Add a makefile to make packaging easier
+cat > ${HEADERPATH}/Makefile << EOF
+PREFIX?=/usr/local
+INCLUDEDIR?=\$(PREFIX)/include/android
+all:
+	@echo "Use '\$(MAKE) install' to install"
+
+install:
+	mkdir -p \$(DESTDIR)/\$(INCLUDEDIR)
+	cp android-config.h android-version.h \$(DESTDIR)/\$(INCLUDEDIR)
+	cp -r hardware \$(DESTDIR)/\$(INCLUDEDIR)
+	cp -r hardware_legacy \$(DESTDIR)/\$(INCLUDEDIR)
+	cp -r cutils \$(DESTDIR)/\$(INCLUDEDIR)
+	cp -r system \$(DESTDIR)/\$(INCLUDEDIR)
+	cp -r android \$(DESTDIR)/\$(INCLUDEDIR)
+	cp -r linux \$(DESTDIR)/\$(INCLUDEDIR)
+	cp -r sync \$(DESTDIR)/\$(INCLUDEDIR)
+	cp -r libnfc-nxp \$(DESTDIR)/\$(INCLUDEDIR)
+	cp -r private \$(DESTDIR)/\$(INCLUDEDIR)
+EOF
+
+find "$HEADERPATH" -type f -exec chmod 0644 {} \;
+
 exit 0
+# vim: noai:ts=4:sw=4:ss=4:expandtab
