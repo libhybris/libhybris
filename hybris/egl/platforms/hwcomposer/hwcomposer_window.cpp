@@ -247,9 +247,11 @@ int HWComposerNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenc
     m_frontBuf = fbnb;
     m_freeBufs++;
 
-    sync_wait(fenceFd, -1);
-    ::close(fenceFd);    
-
+    if (fenceFd >= 0)
+    {
+        sync_wait(fenceFd, -1);
+        ::close(fenceFd);    
+    }
     pthread_cond_signal(&_cond);
 
     TRACE("%lu %p %p",pthread_self(), m_frontBuf, fbnb);
