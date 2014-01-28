@@ -78,7 +78,7 @@ extract_headers_to() {
     while [ $# -gt 0 ]; do
         SOURCE_PATH=$ANDROID_ROOT/$1
         if [ -d $SOURCE_PATH ]; then
-            for file in $SOURCE_PATH/*; do
+            for file in $SOURCE_PATH/*.h; do
                 echo "    $1/$(basename $file)"
                 mkdir -p $TARGET_DIRECTORY
                 cp $file $TARGET_DIRECTORY/
