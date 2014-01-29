@@ -166,6 +166,8 @@ private:
     struct wl_callback *frame_callback;
     static int wayland_roundtrip(WaylandNativeWindow *display);
     int m_use_frame_callback;
+    int m_wait_post_frame;
+    int m_wait_queue_frame;
 };
 
 #endif

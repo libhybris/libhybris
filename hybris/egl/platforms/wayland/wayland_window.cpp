@@ -42,6 +42,8 @@ extern "C" {
 #endif
 
 #define FRAME_CALLBACK_ENV "HYBRIS_WAYLAND_USE_FRAME_CALLBACK"
+#define FRAME_WAIT_POST_BUFFER_ENV "HYBRIS_WAYLAND_WAIT_POST_FRAME"
+#define FRAME_WAIT_QUEUE_BUFFER_ENV "HYBRIS_WAYLAND_WAIT_QUEUE_FRAME"
 
 void WaylandNativeWindowBuffer::wlbuffer_from_native_handle(struct android_wlegl *android_wlegl)
 {
@@ -179,6 +181,12 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
     this->m_use_frame_callback = 0;
     if (getenv(FRAME_CALLBACK_ENV))
         this->m_use_frame_callback = 1;
+    this->m_wait_post_frame = 0;
+    if (getenv(FRAME_WAIT_POST_BUFFER_ENV))
+        this->m_wait_post_frame = 1;
+    this->m_wait_queue_frame = 0;
+    if (getenv(FRAME_WAIT_QUEUE_BUFFER_ENV))
+        this->m_wait_queue_frame = 1;
 
     wl_proxy_set_queue((struct wl_proxy *) this->registry,
             this->wl_queue);
@@ -414,7 +422,14 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
     lock();
     wnb->busy = 1;
     unlock();
-    ret = wl_display_dispatch_queue_pending(m_display, this->wl_queue);
+
+    if (this->m_wait_post_frame) {
+        /* XXX locking/something is a bit fishy here */
+        while (this->frame_callback && ret != -1) {
+            ret = wl_display_dispatch_queue(m_display, this->wl_queue);
+        }
+    } else
+        ret = wl_display_dispatch_queue_pending(m_display, this->wl_queue);
 
     if (ret < 0) {
         TRACE("wl_display_dispatch_queue returned an error:%i", ret);
@@ -487,6 +502,12 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     unlock();
     /* XXX locking/something is a bit fishy here */
     HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
+
+    if (this->m_wait_queue_frame) {
+        while (this->frame_callback && ret != -1) {
+            ret = wl_display_dispatch_queue(m_display, this->wl_queue);
+        }
+    }
 
     if (ret < 0) {
         TRACE("wl_display_dispatch_queue returned an error");
