@@ -24,6 +24,12 @@ typedef EGLBoolean (EGLAPIENTRYP PFNEGLHYBRISLOCKNATIVEBUFFERPROC)(EGLClientBuff
 typedef EGLBoolean (EGLAPIENTRYP PFNEGLHYBRISUNLOCKNATIVEBUFFERPROC)(EGLClientBuffer buffer);
 typedef EGLBoolean (EGLAPIENTRYP PFNEGLHYBRISRELEASENATIVEBUFFERPROC)(EGLClientBuffer buffer);
 
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLHYBRISGETNATIVEBUFFERINFOPROC)(EGLClientBuffer buffer, int *num_ints, int *num_fds);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLHYBRISSERIALIZENATIVEBUFFERPROC)(EGLClientBuffer buffer, int *ints, int *fds);
+
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLHYBRISCREATEREMOTEBUFFERPROC)(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint stride,
+                                                                     int num_ints, int *ints, int num_fds, int *fds, EGLClientBuffer *buffer);
+
 enum {
     /* buffer is never read in software */
     HYBRIS_USAGE_SW_READ_NEVER         = 0x00000000,
