@@ -22,6 +22,7 @@ struct ws_module {
 	const char *(*eglQueryString)(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name));
 	void (*prepareSwap)(EGLDisplay dpy, EGLNativeWindowType win, EGLint *damage_rects, EGLint damage_n_rects);
 	void (*finishSwap)(EGLDisplay dpy, EGLNativeWindowType win);
+	void (*setSwapInterval)(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval);
 };
 
 int ws_IsValidDisplay(EGLNativeDisplayType display);
@@ -32,5 +33,6 @@ void ws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClientBuffer *b
 const char *ws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name));
 void ws_prepareSwap(EGLDisplay dpy, EGLNativeWindowType win, EGLint *damage_rects, EGLint damage_n_rects);
 void ws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win);
+void ws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval);
 
 #endif
