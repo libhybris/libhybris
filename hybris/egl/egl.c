@@ -252,12 +252,17 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 {
 	EGL_DLSYM(&_eglCreateWindowSurface, "eglCreateWindowSurface");
 
+	HYBRIS_TRACE_BEGIN("hybris-egl", "eglCreateWindowSurface", "");
 	win = ws_CreateWindow(win,  _egldisplay2NDT(dpy));
 	
 	assert(((struct ANativeWindowBuffer *) win)->common.magic == ANDROID_NATIVE_WINDOW_MAGIC);
 
+	HYBRIS_TRACE_BEGIN("native-egl", "eglCreateWindowSurface", "");
 	EGLSurface result = (*_eglCreateWindowSurface)(dpy, config, win, attrib_list);
+	HYBRIS_TRACE_END("native-egl", "eglCreateWindowSurface", "");
 	egl_helper_push_mapping(result, win);
+
+	HYBRIS_TRACE_END("hybris-egl", "eglCreateWindowSurface", "");
 	return result;
 }
 
@@ -353,8 +358,26 @@ EGLBoolean eglReleaseTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer)
 
 EGLBoolean eglSwapInterval(EGLDisplay dpy, EGLint interval)
 {
+	EGLBoolean ret;
+	EGLSurface surface;
+	EGLNativeWindowType win;
+	HYBRIS_TRACE_BEGIN("hybris-egl", "eglSwapInterval", "=%d", interval);
+
+	/* Some egl implementations don't pass through the setSwapInterval
+	 * call.  Since we may support various swap intervals internally, we'll
+	 * call it anyway and then give the wrapped egl implementation a chance
+	 * to chage it. */
+	EGL_DLSYM(&_eglGetCurrentSurface, "eglGetCurrentSurface");
+	surface = (*_eglGetCurrentSurface)(EGL_DRAW);
+	if (egl_helper_has_mapping(surface))
+	    ws_setSwapInterval(dpy, egl_helper_get_mapping(surface), interval);
+
+	HYBRIS_TRACE_BEGIN("native-egl", "eglSwapInterval", "=%d", interval);
 	EGL_DLSYM(&_eglSwapInterval, "eglSwapInterval");
-	return (*_eglSwapInterval)(dpy, interval);
+	ret = (*_eglSwapInterval)(dpy, interval);
+	HYBRIS_TRACE_END("native-egl", "eglSwapInterval", "");
+	HYBRIS_TRACE_END("hybris-egl", "eglSwapInterval", "");
+	return ret;
 }
 
 EGLContext eglCreateContext(EGLDisplay dpy, EGLConfig config,
