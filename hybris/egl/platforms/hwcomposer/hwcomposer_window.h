@@ -52,7 +52,8 @@ public:
 
     void lockFrontBuffer(HWComposerNativeWindowBuffer **buffer);
     void unlockFrontBuffer(HWComposerNativeWindowBuffer *buffer);
-
+    int getFenceBufferFd(HWComposerNativeWindowBuffer *buffer);
+    void setFenceBufferFd(HWComposerNativeWindowBuffer *buffer, int fd);
 protected:
     // overloads from BaseNativeWindow
     virtual int setSwapInterval(int interval);

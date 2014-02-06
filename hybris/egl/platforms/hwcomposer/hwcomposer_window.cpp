@@ -198,7 +198,7 @@ int HWComposerNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *
     m_freeBufs--;
 
     *buffer = fbnb;
-    *fenceFd = -1;
+    *fenceFd = fbnb->fenceFd;
 
     TRACE("%lu DONE --> %p", pthread_self(), fbnb);
     pthread_mutex_unlock(&_mutex);
@@ -246,12 +246,8 @@ int HWComposerNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenc
     fbnb->busy = 2;
     m_frontBuf = fbnb;
     m_freeBufs++;
-
-    if (fenceFd >= 0)
-    {
-        sync_wait(fenceFd, -1);
-        ::close(fenceFd);    
-    }
+    
+    fbnb->fenceFd = fenceFd;
     pthread_cond_signal(&_cond);
 
     TRACE("%lu %p %p",pthread_self(), m_frontBuf, fbnb);
@@ -259,6 +255,16 @@ int HWComposerNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenc
     HYBRIS_TRACE_END("hwcomposer-platform", "queueBuffer", "-%p", fbnb);
 
     return 0;
+}
+
+int HWComposerNativeWindow::getFenceBufferFd(HWComposerNativeWindowBuffer *buffer)
+{
+    return buffer->fenceFd;
+}
+
+void HWComposerNativeWindow::setFenceBufferFd(HWComposerNativeWindowBuffer *buffer, int fd)
+{
+    buffer->fenceFd = fd;
 }
 
 void HWComposerNativeWindow::lockFrontBuffer(HWComposerNativeWindowBuffer **buffer)
