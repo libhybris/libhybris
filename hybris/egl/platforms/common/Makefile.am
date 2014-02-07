@@ -92,6 +92,11 @@ libhybris_eglplatformcommon_la_LDFLAGS = \
 	$(top_builddir)/common/libhybris-common.la \
 	-version-info "1":"0":"0"
 
+if HAS_ANDROID_4_2_0
+libhybris_eglplatformcommon_la_LDFLAGS += $(top_builddir)/libsync/libsync.la
+endif
+
+
 eglplatformcommondir = $(includedir)/hybris/eglplatformcommon
 eglplatformcommon_HEADERS = \
 	support.h \
