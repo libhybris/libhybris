@@ -50,8 +50,6 @@ public:
     void setup(gralloc_module_t* gralloc, alloc_device_t* alloc);
 
 
-    void lockFrontBuffer(HWComposerNativeWindowBuffer **buffer);
-    void unlockFrontBuffer(HWComposerNativeWindowBuffer *buffer);
     int getFenceBufferFd(HWComposerNativeWindowBuffer *buffer);
     void setFenceBufferFd(HWComposerNativeWindowBuffer *buffer, int fd);
 protected:
@@ -76,7 +74,7 @@ protected:
     virtual int setBuffersFormat(int format);
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
-
+    virtual void present(HWComposerNativeWindowBuffer *buffer) = 0;
 private:
     void destroyBuffers();
 

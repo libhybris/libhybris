@@ -86,6 +86,49 @@ const float vertexArray[] = {
 };
 
 
+class HWComposer : public HWComposerNativeWindow
+{
+	private:
+		hwc_layer_1_t *fblayer;
+		hwc_composer_device_1_t *hwcdevice;
+		hwc_display_contents_1_t **mlist;
+	protected:
+		void present(HWComposerNativeWindowBuffer *buffer);
+
+	public:
+
+		HWComposer(unsigned int width, unsigned int height, unsigned int format, hwc_composer_device_1_t *device, hwc_display_contents_1_t **mList, hwc_layer_1_t *layer);
+		void set();	
+};
+
+HWComposer::HWComposer(unsigned int width, unsigned int height, unsigned int format, hwc_composer_device_1_t *device, hwc_display_contents_1_t **mList, hwc_layer_1_t *layer) : HWComposerNativeWindow(width, height, format)
+{
+	fblayer = layer;
+	hwcdevice = device;
+	mlist = mList;
+}
+
+void HWComposer::present(HWComposerNativeWindowBuffer *buffer)
+{
+	int oldretire = mlist[0]->retireFenceFd;
+	mlist[0]->retireFenceFd = -1;
+	fblayer->handle = buffer->handle;
+	fblayer->acquireFenceFd = getFenceBufferFd(buffer);
+	fblayer->releaseFenceFd = -1;
+	int err = hwcdevice->prepare(hwcdevice, HWC_NUM_DISPLAY_TYPES, mlist);
+	assert(err == 0);
+
+	err = hwcdevice->set(hwcdevice, HWC_NUM_DISPLAY_TYPES, mlist);
+	assert(err == 0);
+	setFenceBufferFd(buffer, fblayer->releaseFenceFd);
+
+	if (oldretire != -1)
+	{   
+		sync_wait(oldretire, -1);
+		close(oldretire);
+	}
+} 
+
 int main(int argc, char **argv)
 {
 	EGLDisplay display;
@@ -132,35 +175,6 @@ int main(int argc, char **argv)
 
 	printf("width: %i height: %i\n", attr_values[0], attr_values[1]);
 
-	HWComposerNativeWindow *win = new HWComposerNativeWindow(attr_values[0], attr_values[1], HAL_PIXEL_FORMAT_RGBA_8888);
-
-
-	display = eglGetDisplay(NULL);
-	assert(eglGetError() == EGL_SUCCESS);
-	assert(display != EGL_NO_DISPLAY);
-
-	rv = eglInitialize(display, 0, 0);
-	assert(eglGetError() == EGL_SUCCESS);
-	assert(rv == EGL_TRUE);
-
-	eglChooseConfig((EGLDisplay) display, attr, &ecfg, 1, &num_config);
-	assert(eglGetError() == EGL_SUCCESS);
-	assert(rv == EGL_TRUE);
-
-	surface = eglCreateWindowSurface((EGLDisplay) display, ecfg, (EGLNativeWindowType) static_cast<ANativeWindow *> (win), NULL);
-	assert(eglGetError() == EGL_SUCCESS);
-	assert(surface != EGL_NO_SURFACE);
-
-	context = eglCreateContext((EGLDisplay) display, ecfg, EGL_NO_CONTEXT, ctxattr);
-	assert(eglGetError() == EGL_SUCCESS);
-	assert(context != EGL_NO_CONTEXT);
-
-	assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
-
-	const char *version = (const char *)glGetString(GL_VERSION);
-	assert(version);
-	printf("%s\n",version);
-
 	size_t size = sizeof(hwc_display_contents_1_t) + 2 * sizeof(hwc_layer_1_t);
 	hwc_display_contents_1_t *list = (hwc_display_contents_1_t *) malloc(size);
 	hwc_display_contents_1_t **mList = (hwc_display_contents_1_t **) malloc(HWC_NUM_DISPLAY_TYPES * sizeof(hwc_display_contents_1_t *));
@@ -203,6 +217,37 @@ int main(int argc, char **argv)
 	list->flags = HWC_GEOMETRY_CHANGED;
 	list->numHwLayers = 2;
 
+
+	HWComposer *win = new HWComposer(attr_values[0], attr_values[1], HAL_PIXEL_FORMAT_RGBA_8888, hwcDevicePtr, mList, &list->hwLayers[1]);
+
+	display = eglGetDisplay(NULL);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(display != EGL_NO_DISPLAY);
+
+	rv = eglInitialize(display, 0, 0);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(rv == EGL_TRUE);
+
+	eglChooseConfig((EGLDisplay) display, attr, &ecfg, 1, &num_config);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(rv == EGL_TRUE);
+
+
+
+	surface = eglCreateWindowSurface((EGLDisplay) display, ecfg, (EGLNativeWindowType) static_cast<ANativeWindow *> (win), NULL);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(surface != EGL_NO_SURFACE);
+
+	context = eglCreateContext((EGLDisplay) display, ecfg, EGL_NO_CONTEXT, ctxattr);
+	assert(eglGetError() == EGL_SUCCESS);
+	assert(context != EGL_NO_CONTEXT);
+
+	assert(eglMakeCurrent((EGLDisplay) display, surface, surface, context) == EGL_TRUE);
+
+	const char *version = (const char *)glGetString(GL_VERSION);
+	assert(version);
+	printf("%s\n",version);
+
 	GLuint vertexShader   = load_shader ( vertex_src , GL_VERTEX_SHADER  );     // load vertex shader
 	GLuint fragmentShader = load_shader ( fragment_src , GL_FRAGMENT_SHADER );  // load fragment shader
 
@@ -237,43 +282,6 @@ int main(int argc, char **argv)
 		glDrawArrays ( GL_TRIANGLE_STRIP, 0, 5 );
 
 		eglSwapBuffers ( (EGLDisplay) display, surface );  // get the rendered buffer to the screen
-
-		HWComposerNativeWindowBuffer *front;	
-		win->lockFrontBuffer(&front);	
-
-		mList[0]->hwLayers[1].handle = front->handle;
-		mList[0]->hwLayers[0].handle = NULL;
-		mList[0]->hwLayers[0].flags = HWC_SKIP_LAYER;
-
-		oldretire = mList[0]->retireFenceFd;
-		oldrelease = mList[0]->hwLayers[1].releaseFenceFd;
-		oldrelease2 = mList[0]->hwLayers[0].releaseFenceFd;
-
-		int err = hwcDevicePtr->prepare(hwcDevicePtr, HWC_NUM_DISPLAY_TYPES, mList);
-		assert(err == 0);		
-
-		err = hwcDevicePtr->set(hwcDevicePtr, HWC_NUM_DISPLAY_TYPES, mList);
-		assert(err == 0);
-		
-		assert(mList[0]->hwLayers[0].releaseFenceFd == -1);
-	
-		win->unlockFrontBuffer(front);
-
-		if (oldrelease != -1)
-		{
-			sync_wait(oldrelease, -1);
-			close(oldrelease);
-		}
-		if (oldrelease2 != -1)
-		{
-			sync_wait(oldrelease2, -1);
-			close(oldrelease2);
-		}
-		if (oldretire != -1)
-		{
-			sync_wait(oldretire, -1);
-			close(oldretire);
-		}
 	}
 
 	printf("stop\n");
