@@ -5,11 +5,20 @@
 #include "support.h"
 #include <stdarg.h>
 
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
+extern "C" {
+#include <sync/sync.h>
+}
+#endif
+
+
 #include "nativewindowbase.h"
 
 #include "logging.h"
 
 #define TRACE(message, ...) HYBRIS_DEBUG_LOG(EGL, message, ##__VA_ARGS__)
+
+
 
 BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 {
@@ -152,7 +161,17 @@ int BaseNativeWindow::_dequeueBuffer_DEPRECATED(ANativeWindow* window, ANativeWi
 	BaseNativeWindowBuffer* temp = static_cast<BaseNativeWindowBuffer*>(*buffer);
 	int fenceFd = -1;
 	int ret = static_cast<BaseNativeWindow*>(window)->dequeueBuffer(&temp, &fenceFd);
+
 	*buffer = static_cast<ANativeWindowBuffer*>(temp);
+
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
+	if (fenceFd >= 0)
+	{
+		sync_wait(fenceFd, -1);
+		close(fenceFd);
+	}
+#endif
+
 	return ret;
 }
 
