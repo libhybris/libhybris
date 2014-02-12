@@ -450,6 +450,7 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
     wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
     wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
     wl_surface_commit(m_window->surface);
+    wl_display_flush(m_display);
     //--m_freeBufs;
     //pthread_cond_signal(&cond);
     posted.push_back(wnb);
@@ -476,6 +477,7 @@ void WaylandNativeWindow::finishSwap()
         // queueing a buffer if nothing has been rendererd.
         wl_surface_commit(m_window->surface);
         wl_callback_destroy(wl_display_sync(m_display));
+        wl_display_flush(m_display);
     }
     m_damage_rects = NULL;
     m_damage_n_rects = 0;
