@@ -65,11 +65,22 @@ _SurfaceTextureClientHybris::_SurfaceTextureClientHybris()
 }
 #endif
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR>=4
+_SurfaceTextureClientHybris::_SurfaceTextureClientHybris(const sp<BufferQueue> &bq)
+    : Surface::Surface(bq, true),
+      refcount(1),
+      ready(false)
+{
+    REPORT_FUNCTION()
+}
+#endif
+
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 _SurfaceTextureClientHybris::_SurfaceTextureClientHybris(const _SurfaceTextureClientHybris &stch)
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     : SurfaceTextureClient::SurfaceTextureClient(),
 #else
-    : Surface::Surface(new BufferQueue()),
+    : Surface::Surface(new BufferQueue(), true),
 #endif
       refcount(stch.refcount),
       ready(false)
@@ -82,13 +93,14 @@ _SurfaceTextureClientHybris::_SurfaceTextureClientHybris(const sp<ISurfaceTextur
     : SurfaceTextureClient::SurfaceTextureClient(st),
 #else
 _SurfaceTextureClientHybris::_SurfaceTextureClientHybris(const sp<IGraphicBufferProducer> &st)
-    : Surface::Surface(st),
+    : Surface::Surface(st, true),
 #endif
       refcount(1),
       ready(false)
 {
     REPORT_FUNCTION()
 }
+#endif
 
 _SurfaceTextureClientHybris::~_SurfaceTextureClientHybris()
 {
@@ -149,7 +161,7 @@ bool _SurfaceTextureClientHybris::hardwareRendering()
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 static inline void set_surface(_SurfaceTextureClientHybris *stch, const sp<SurfaceTexture> &surface_texture)
 #else
-static inline void set_surface(sp<BufferQueue> bq, _SurfaceTextureClientHybris *stch, const sp<GLConsumer> &surface_texture)
+static inline void set_surface(_SurfaceTextureClientHybris *stch, const sp<GLConsumer> &surface_texture)
 #endif
 {
     REPORT_FUNCTION()
@@ -160,7 +172,7 @@ static inline void set_surface(sp<BufferQueue> bq, _SurfaceTextureClientHybris *
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     stch->setISurfaceTexture(surface_texture->getBufferQueue());
 #else
-    stch->setISurfaceTexture(bq);
+    stch->setISurfaceTexture(stch->getIGraphicBufferProducer());
 #endif
 }
 
@@ -196,9 +208,9 @@ SurfaceTextureClientHybris surface_texture_client_create_by_id(unsigned int text
     stch->surface_texture = new SurfaceTexture(texture_id, allow_synchronous_mode, GL_TEXTURE_EXTERNAL_OES, true, buffer_queue);
     set_surface(stch, stch->surface_texture);
 #else
-    stch->surface_texture = new GLConsumer(buffer_queue, texture_id, GL_TEXTURE_EXTERNAL_OES, true, false);
-    set_surface(buffer_queue, stch, stch->surface_texture);
+    stch->surface_texture = new GLConsumer(buffer_queue, texture_id, GL_TEXTURE_EXTERNAL_OES, true, true);
 #endif
+    set_surface(stch, stch->surface_texture);
 
     return stch;
 }

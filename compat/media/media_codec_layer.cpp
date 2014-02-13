@@ -395,6 +395,8 @@ int media_codec_flush(MediaCodecDelegate delegate)
     if (d == NULL)
         return BAD_VALUE;
 
+    d->available_output_buffer_infos.clear();
+
     return d->media_codec->flush();
 }
 
@@ -556,6 +558,7 @@ int media_codec_dequeue_output_buffer(MediaCodecDelegate delegate, MediaCodecBuf
 
     int ret = d->media_codec->dequeueOutputBuffer(&info->index, &info->offset, &info->size, &info->presentation_time_us, &info->flags, timeout_us);
     ALOGD("dequeueOutputBuffer() ret: %d", ret);
+    info->render_retries = 0;
 
     if (ret == -EAGAIN)
     {
@@ -647,7 +650,7 @@ int media_codec_dequeue_input_buffer(MediaCodecDelegate delegate, size_t *index,
     status_t ret = d->media_codec->dequeueInputBuffer(index, timeout_us);
     if (ret == -EAGAIN)
     {
-        ALOGD("dequeueInputBuffer returned %d", ret);
+        ALOGD("dequeueInputBuffer returned %d, tried timeout: %d", ret, timeout_us);
         return INFO_TRY_AGAIN_LATER;
     }
     else if (ret == OK)
@@ -664,6 +667,7 @@ int media_codec_dequeue_input_buffer(MediaCodecDelegate delegate, size_t *index,
 int media_codec_release_output_buffer(MediaCodecDelegate delegate, size_t index, uint8_t render)
 {
     REPORT_FUNCTION()
+    ALOGV("Requesting to release output buffer index: %d, render: %d", index, render);
 
     _MediaCodecDelegate *d = get_internal_delegate(delegate);
     if (d == NULL)
@@ -671,38 +675,55 @@ int media_codec_release_output_buffer(MediaCodecDelegate delegate, size_t index,
 
     status_t ret = OK;
 
-    while (d->available_output_buffer_infos.size() != 0 && d->output_format_changed)
+    auto it = d->available_output_buffer_infos.begin();
+    while (it != d->available_output_buffer_infos.end())
     {
-        const MediaCodecBufferInfo *info = &*d->available_output_buffer_infos.begin();
-
-        /* Make sure to handle insane buffer index values properly. These can
-         * occur during seeking and EOS states */
-        if (info->index > d->output_buffers.size())
+        MediaCodecBufferInfo *info = &*it;
+        ALOGD("info index: %d", info->index);
+        ALOGD("info render_retries: %u", info->render_retries);
+        if (info->render_retries == 1)
         {
-            ALOGE("Output buffer index %d is invalid. Skipping render and release.", info->index);
-            break;
-        }
-
-        // Either render and release the output buffer, or just release.
-        if (render)
-        {
-            ALOGD("Rendering and releasing output buffer %d from the available indices list", info->index);
+            ALOGV("Rendering and releasing output buffer %d from the available indices list", info->index);
             ret = d->media_codec->renderOutputBufferAndRelease(info->index);
-        }
-        else
-        {
-            ALOGD("Releasing output buffer %d from the available indices list", info->index);
-            ret = d->media_codec->releaseOutputBuffer(info->index);
-        }
-        if (ret != OK) {
-            ALOGE("Failed to release output buffer (ret: %d, index: %d)", ret, info->index);
-            if (ret == -EACCES) {
-                ALOGD("Releasing all of the output buffers from the available indices list");
-                d->available_output_buffer_infos.clear();
+            if (ret != OK)
+            {
+                ALOGE("Failed to release output buffer (ret: %d, index: %d)", ret, info->index);
+                ++info->render_retries;
             }
-            break;
+            else
+            {
+                ALOGV("Successfully rendered output buffer %d on a second try.", info->index);
+                d->available_output_buffer_infos.erase(it);
+            }
         }
-        ALOGD("Released output buffer %d from the available buffer infos list", info->index);
+        else if (info->render_retries > 1)
+        {
+            ALOGV("Tried to render output buffer %d twice, dropping.", info->index);
+            ret = d->media_codec->releaseOutputBuffer(info->index);
+            d->available_output_buffer_infos.erase(d->available_output_buffer_infos.begin());
+        }
+
+        ++it;
+    }
+
+    MediaCodecBufferInfo *info = &*d->available_output_buffer_infos.begin();
+    // Either render and release the output buffer, or just release.
+    if (render)
+    {
+        ALOGV("Rendering and releasing output buffer %d from the available indices list", info->index);
+        ret = d->media_codec->renderOutputBufferAndRelease(info->index);
+    }
+    else
+    {
+        ALOGV("Releasing output buffer %d from the available indices list", info->index);
+        ret = d->media_codec->releaseOutputBuffer(info->index);
+    }
+    if (ret != OK)
+    {
+        ALOGE("Failed to release output buffer (ret: %d, index: %d)", ret, info->index);
+        ++info->render_retries;
+    } else {
+        ALOGV("Released output buffer %d from the available buffer infos list", info->index);
         d->available_output_buffer_infos.erase(d->available_output_buffer_infos.begin());
     }
 

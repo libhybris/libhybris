@@ -36,7 +36,7 @@ struct _SurfaceTextureClientHybris : public android::Surface
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     _SurfaceTextureClientHybris(const android::sp<android::ISurfaceTexture> &st);
 #else
-    _SurfaceTextureClientHybris(const android::sp<android::IGraphicBufferProducer> &st);
+    _SurfaceTextureClientHybris(const android::sp<android::BufferQueue> &bq);
 #endif
     ~_SurfaceTextureClientHybris();
 
