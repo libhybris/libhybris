@@ -75,6 +75,7 @@ extern "C" {
         size_t size;
         int64_t presentation_time_us;
         uint32_t flags;
+        uint8_t render_retries;
     };
     typedef struct _MediaCodecBufferInfo MediaCodecBufferInfo;
 
