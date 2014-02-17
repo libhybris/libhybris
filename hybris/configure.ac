@@ -210,6 +210,8 @@ AC_CONFIG_FILES([
 	input/libis.pc
 	camera/Makefile
 	camera/libcamera.pc
+	vibrator/Makefile
+	vibrator/libvibrator.pc
 	include/Makefile
 	utils/Makefile
 	tests/Makefile
