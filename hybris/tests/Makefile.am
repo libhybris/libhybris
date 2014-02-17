@@ -7,6 +7,7 @@ bin_PROGRAMS = \
 	test_sensors \
 	test_input \
 	test_camera \
+	test_vibrator \
 	test_gps
 
 if HAS_ANDROID_4_2_0
@@ -163,3 +164,12 @@ test_nfc_LDFLAGS =
 test_nfc_LDADD = \
 	$(top_builddir)/libnfc_nxp/libnfc_nxp.la \
 	$(top_builddir)/hardware/libhardware.la
+
+test_vibrator_SOURCES = test_vibrator.c
+test_vibrator_CFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS)
+test_vibrator_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/vibrator/libvibrator.la
+
