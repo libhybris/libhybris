@@ -143,6 +143,8 @@ private:
     WaylandNativeWindowBuffer *addBuffer();
     void destroyBuffer(WaylandNativeWindowBuffer *);
     void destroyBuffers();
+    int readQueue(bool block);
+
     std::list<WaylandNativeWindowBuffer *> m_bufList;
     std::list<WaylandNativeWindowBuffer *> fronted;
     std::list<WaylandNativeWindowBuffer *> posted;
@@ -160,6 +162,7 @@ private:
     struct wl_registry *registry;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
+    int m_queueReads;
     int m_freeBufs;
     bool m_buffer_committed;
     EGLint *m_damage_rects, m_damage_n_rects;
