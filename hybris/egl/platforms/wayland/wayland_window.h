@@ -158,6 +158,7 @@ public:
     void lock();
     void unlock();
     void frame();
+    void resize(unsigned int width, unsigned int height);
     void releaseBuffer(struct wl_buffer *buffer);
     int postBuffer(ANativeWindowBuffer *buffer);
 
