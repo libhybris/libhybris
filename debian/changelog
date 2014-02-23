@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu7) trusty; urgency=medium
+
+  * media: fixing code for 4.4 and improving the release_output_buffer logic
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 21 Feb 2014 00:57:19 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu6) trusty; urgency=medium
 
   * Making compat code compatible with Android 4.4.2
