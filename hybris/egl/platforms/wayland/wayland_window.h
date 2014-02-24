@@ -38,6 +38,7 @@ extern "C" {
 #include <pthread.h>
 }
 #include <list>
+#include <deque>
 
 class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
 {
@@ -149,6 +150,7 @@ private:
     std::list<WaylandNativeWindowBuffer *> fronted;
     std::list<WaylandNativeWindowBuffer *> posted;
     std::list<WaylandNativeWindowBuffer *> post_registered;
+    std::deque<WaylandNativeWindowBuffer *> queue;
     struct wl_egl_window *m_window;
     struct wl_display *m_display;
     unsigned int m_width;
@@ -164,7 +166,6 @@ private:
     pthread_cond_t cond;
     int m_queueReads;
     int m_freeBufs;
-    bool m_buffer_committed;
     EGLint *m_damage_rects, m_damage_n_rects;
     struct wl_callback *frame_callback;
     int m_swap_interval;

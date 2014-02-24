@@ -384,6 +384,7 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
 
     wnb->busy = 1;
     *buffer = wnb;
+    queue.push_back(wnb);
     --m_freeBufs;
 
     HYBRIS_TRACE_COUNTER("wayland-platform", "m_freeBufs", "%i", m_freeBufs);
@@ -500,7 +501,6 @@ int WaylandNativeWindow::readQueue(bool block)
 void WaylandNativeWindow::prepareSwap(EGLint *damage_rects, EGLint damage_n_rects)
 {
     lock();
-    m_buffer_committed = false;
     m_damage_rects = damage_rects;
     m_damage_n_rects = damage_n_rects;
     unlock();
@@ -510,14 +510,50 @@ void WaylandNativeWindow::finishSwap()
 {
     int ret = 0;
     lock();
-    if (! m_buffer_committed) {
-        // If, for some reason, we have not seen a call to queueBuffer yet,
-        // we need to commit anyway.  Some EGL stacks will just not bother
-        // queueing a buffer if nothing has been rendererd.
-        wl_surface_commit(m_window->surface);
-        wl_callback_destroy(wl_display_sync(m_display));
-        wl_display_flush(m_display);
+
+    WaylandNativeWindowBuffer *wnb = queue.front();
+    queue.pop_front();
+    wnb->busy = 1;
+
+    ret = readQueue(false);
+    if (this->frame_callback) {
+        do {
+            ret = readQueue(true);
+        } while (this->frame_callback && ret != -1);
     }
+    if (ret < 0) {
+        HYBRIS_TRACE_END("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
+        return;
+    }
+
+    if (wnb->wlbuffer == NULL)
+    {
+        wnb->wlbuffer_from_native_handle(m_android_wlegl);
+        TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
+        wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
+        wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
+    }
+
+    if (m_swap_interval > 0) {
+        this->frame_callback = wl_surface_frame(m_window->surface);
+        wl_callback_add_listener(this->frame_callback, &frame_listener, this);
+        wl_proxy_set_queue((struct wl_proxy *) this->frame_callback, this->wl_queue);
+    }
+
+    wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
+    wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
+    wl_surface_commit(m_window->surface);
+    // Some compositors, namely Weston, queue buffer release events instead
+    // of sending them immediately.  If a frame event is used, this should
+    // not be a problem.  Without a frame event, we need to send a sync
+    // request to ensure that they get flushed.
+    wl_callback_destroy(wl_display_sync(m_display));
+    wl_display_flush(m_display);
+    fronted.push_back(wnb);
+
+    m_window->attached_width = wnb->width;
+    m_window->attached_height = wnb->height;
+
     m_damage_rects = NULL;
     m_damage_n_rects = 0;
     unlock();
@@ -532,23 +568,6 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
 
     HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer", "-%p", wnb);
     lock();
-    wnb->busy = 1;
-
-    /* XXX locking/something is a bit fishy here */
-    HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
-
-    ret = readQueue(false);
-    if (this->frame_callback) {
-        do {
-            ret = readQueue(true);
-        } while (this->frame_callback && ret != -1);
-    }
-    if (ret < 0) {
-        HYBRIS_TRACE_END("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
-        return ret;
-    }
-
-    HYBRIS_TRACE_END("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
 
     if (debugenvchecked == 0)
     {
@@ -572,53 +591,6 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     HYBRIS_TRACE_END("wayland-platform", "queueBuffer_waiting_for_fence", "-%p", wnb);
 #endif
 
-    if (wnb->wlbuffer == NULL)
-    {
-        wnb->wlbuffer_from_native_handle(m_android_wlegl);
-        TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
-        wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
-        wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
-    }
-    HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_attachdamagecommit", "-resource@%i", wl_proxy_get_id((struct wl_proxy *) wnb->wlbuffer));
-
-    if (m_swap_interval > 0) {
-        this->frame_callback = wl_surface_frame(m_window->surface);
-        wl_callback_add_listener(this->frame_callback, &frame_listener, this);
-        wl_proxy_set_queue((struct wl_proxy *) this->frame_callback, this->wl_queue);
-    }
-
-    wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
-    if (m_damage_n_rects > 0)
-    {
-        for (EGLint i = 0; i < m_damage_n_rects; ++i)
-        {
-            TRACE("%p DAMAGE AREA: %dx%d", wnb, m_damage_rects[i * 4 + 2], m_damage_rects[i * 4 + 3]);
-            wl_surface_damage(m_window->surface, m_damage_rects[i * 4],
-                wnb->height - m_damage_rects[i * 4 + 1] - m_damage_rects[i * 4 + 3],
-                m_damage_rects[i * 4 + 2], m_damage_rects[i * 4 + 3]);
-        }
-    }
-    else
-    {
-        TRACE("%p DAMAGE AREA: %dx%d", wnb, wnb->width, wnb->height);
-        wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
-    }
-    wl_surface_commit(m_window->surface);
-    // Some compositors, namely Weston, queue buffer release events instead
-    // of sending them immediately.  If a frame event is used, this should
-    // not be a problem.  Without a frame event, we need to send a sync
-    // request to ensure that they get flushed.
-    wl_callback_destroy(wl_display_sync(m_display));
-    wl_display_flush(m_display);
-    m_buffer_committed = true;
-    HYBRIS_TRACE_END("wayland-platform", "queueBuffer_attachdamagecommit", "-resource@%i", wl_proxy_get_id((struct wl_proxy *) wnb->wlbuffer));
-
-    m_window->attached_width = wnb->width;
-    m_window->attached_height = wnb->height;
-
-    //--m_freeBufs;
-    //pthread_cond_signal(&cond);
-    fronted.push_back(wnb);
     HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "%i", fronted.size());
     HYBRIS_TRACE_END("wayland-platform", "queueBuffer", "-%p", wnb);
     unlock();
