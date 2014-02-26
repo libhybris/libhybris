@@ -21,6 +21,49 @@
 #include <stdlib.h>
 #include <hardware/sensors.h>
 
+static void process_event(sensors_event_t *data)
+{
+    switch (data->type) {
+        case SENSOR_TYPE_ACCELEROMETER:
+            printf("Accelerometer: %+08.2f, %+08.2f, %+08.2f", data->acceleration.x,
+                    data->acceleration.y, data->acceleration.z);
+            break;
+        case SENSOR_TYPE_ORIENTATION:
+            printf("Orientation: %+08.2f, %+08.2f, %+08.2f", data->orientation.x,
+                    data->orientation.y, data->orientation.z);
+            break;
+        case SENSOR_TYPE_GYROSCOPE:
+            printf("Gyroscope: %+08.2f, %+08.2f, %+08.2f", data->gyro.x,
+                    data->gyro.y, data->gyro.z);
+            break;
+        case SENSOR_TYPE_LIGHT:
+            printf("Light: %+08.2f", data->light);
+            break;
+        case SENSOR_TYPE_PROXIMITY:
+            printf("Proximity: %+08.2f", data->distance);
+            break;
+        default:
+            printf("Other sensor data (not parsed yet, type=%d)", data->type);
+    }
+}
+
+static void print_sensor_info(int i, struct sensor_t const *s)
+{
+    printf("=== Sensor %d ==\n", i);
+    printf("Name: %s\n", s->name);
+    printf("Vendor: %s\n", s->vendor);
+    printf("Version: 0x%x\n", s->version);
+    printf("Handle: 0x%x\n", s->handle);
+    printf("Type: %d\n", s->type);
+    printf("maxRange: %.f\n", s->maxRange);
+    printf("resolution: %.f\n", s->resolution);
+    printf("power: %.f mA\n", s->power);
+    printf("minDelay: %d\n", s->minDelay);
+    //printf("fifoReservedEventCount: %d\n", s->fifoReservedEventCount);
+    //printf("fifoMaxEventCount: %d\n", s->fifoMaxEventCount);
+    printf("\n\n\n");
+}
+
 int main(int argc, char **argv)
 {
 	struct hw_module_t *hwmod;
@@ -58,21 +101,12 @@ int main(int argc, char **argv)
         int sensors = smod->get_sensors_list(smod, &sensors_list);
         printf("Got %d sensors\n", sensors);
 
-        int i, j, res;
-        for (i=0; i<sensors; i++) {
-            struct sensor_t const *s = sensors_list + i;
-            printf("=== Sensor %d ==\n", i);
-            printf("Name: %s\n", s->name);
-            printf("Vendor: %s\n", s->vendor);
-            printf("Version: 0x%x\n", s->version);
-            printf("Handle: 0x%x\n", s->handle);
-            printf("Type: %d\n", s->type);
-            printf("maxRange: %.f\n", s->maxRange);
-            printf("resolution: %.f\n", s->resolution);
-            printf("power: %.f mA\n", s->power);
-            printf("minDelay: %d\n", s->minDelay);
-            //printf("fifoReservedEventCount: %d\n", s->fifoReservedEventCount);
-            //printf("fifoMaxEventCount: %d\n", s->fifoMaxEventCount);
+        int res;
+        int poll_sensor = ((argc == 2) ? atoi(argv[1]) : -1);
+
+        if (poll_sensor != -1 && poll_sensor < sensors) {
+            struct sensor_t const *s = sensors_list + poll_sensor;
+            print_sensor_info(poll_sensor, s);
 
             res = dev->setDelay(dev, s->handle, s->minDelay);
             if (res != 0) {
@@ -83,20 +117,29 @@ int main(int argc, char **argv)
                 printf("Could not activate sensor: %s\n", strerror(-res));
             } else {
                 printf("Reading events\n");
-                for (j=0; j<30; j++) {
+                while (1) {
                     sensors_event_t data;
-                    printf("Polling... ");
+                    data.sensor = -1;
+                    printf("\rPolling... ");
                     fflush(stdout);
-                    res = dev->poll(dev, &data, 1);
-                    printf("got event\n");
+                    while (dev->poll(dev, &data, 1) != 1);
+                    printf(" ");
+                    if (data.sensor == poll_sensor) {
+                        process_event(&data);
+                    }
+                    printf("\33[K");
+                    fflush(stdout);
                 }
                 res = dev->activate(dev, s->handle, 0);
                 if (res != 0) {
                     printf("Could not deactivate sensor: %s\n", strerror(-res));
                 }
             }
-
-            printf("\n\n\n");
+        } else {
+            int i;
+            for (i=0; i<sensors; i++) {
+                print_sensor_info(i, sensors_list + i);
+            }
         }
 
 	if (sensors_close(dev) < 0) {
