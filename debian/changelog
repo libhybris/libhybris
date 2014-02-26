@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu8) UNRELEASED; urgency=medium
+
+  * common: also protecting the bionic system property calls
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 26 Feb 2014 01:34:19 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu7) trusty; urgency=medium
 
   * media: fixing code for 4.4 and improving the release_output_buffer logic
