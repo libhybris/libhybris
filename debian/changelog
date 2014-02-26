@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu8) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20131207+e452e83-0ubuntu8) trusty; urgency=medium
 
   * common: also protecting the bionic system property calls
 
