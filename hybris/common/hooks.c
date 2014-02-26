@@ -1331,6 +1331,56 @@ FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
 	return strtod_l(nptr, endptr, hybris_locale);
 }
 
+static int __my_system_property_read(const void *pi, char *name, char *value)
+{
+    return property_get(name, value, NULL);
+}
+
+static int __my_system_property_get(const char *name, char *value)
+{
+    return property_get(name, value, NULL);
+}
+
+static int __my_system_property_foreach(void (*propfn)(const void *pi, void *cookie), void *cookie)
+{
+    return 0;
+}
+
+static const void *__my_system_property_find(const char *name)
+{
+    return NULL;
+}
+
+static unsigned int __my_system_property_serial(const void *pi)
+{
+    return 0;
+}
+
+static int __my_system_property_wait(const void *pi)
+{
+    return 0;
+}
+
+static int __my_system_property_update(void *pi, const char *value, unsigned int len)
+{
+    return 0;
+}
+
+static int __my_system_property_add(const char *name, unsigned int namelen, const char *value, unsigned int valuelen)
+{
+    return 0;
+}
+
+static unsigned int __my_system_property_wait_any(unsigned int serial)
+{
+    return 0;
+}
+
+static const void *__my_system_property_find_nth(unsigned n)
+{
+    return NULL;
+}
+
 extern int __cxa_atexit(void (*)(void*), void*, void*);
 extern void __cxa_finalize(void * d);
 
@@ -1647,6 +1697,17 @@ static struct _hook hooks[] = {
     {"getgrgid", getgrgid},
     {"__cxa_atexit", __cxa_atexit},
     {"__cxa_finalize", __cxa_finalize},
+    {"__system_property_read", __my_system_property_read},
+    {"__system_property_get", __my_system_property_get},
+    {"__system_property_set", property_set},
+    {"__system_property_foreach", __my_system_property_foreach},
+    {"__system_property_find", __my_system_property_find},
+    {"__system_property_serial", __my_system_property_serial},
+    {"__system_property_wait", __my_system_property_wait},
+    {"__system_property_update", __my_system_property_update},
+    {"__system_property_add", __my_system_property_add},
+    {"__system_property_wait_any", __my_system_property_wait_any},
+    {"__system_property_find_nth", __my_system_property_find_nth},
     {NULL, NULL},
 };
 
