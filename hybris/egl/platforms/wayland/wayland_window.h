@@ -153,6 +153,7 @@ private:
     std::deque<WaylandNativeWindowBuffer *> queue;
     struct wl_egl_window *m_window;
     struct wl_display *m_display;
+    WaylandNativeWindowBuffer *m_lastBuffer;
     unsigned int m_width;
     unsigned int m_height;
     unsigned int m_format;

@@ -198,6 +198,7 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
     m_freeBufs = 0;
     m_damage_rects = NULL;
     m_damage_n_rects = 0;
+    m_lastBuffer = 0;
     setBufferCount(3);
     HYBRIS_TRACE_END("wayland-platform", "create_window", "");
 }
@@ -512,7 +513,13 @@ void WaylandNativeWindow::finishSwap()
     lock();
 
     WaylandNativeWindowBuffer *wnb = queue.front();
-    queue.pop_front();
+    if (!wnb) {
+        wnb = m_lastBuffer;
+    } else {
+        queue.pop_front();
+    }
+    assert(wnb);
+    m_lastBuffer = wnb;
     wnb->busy = 1;
 
     ret = readQueue(false);
