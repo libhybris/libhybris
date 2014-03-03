@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu9) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20131207+e452e83-0ubuntu9) trusty; urgency=medium
 
   * camera_compatibility_layer.cpp: in our case the texture is controlled by
     the app (avoid locks in gl consumer) LP: #1282701
