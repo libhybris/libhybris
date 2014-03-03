@@ -1,3 +1,10 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu9) UNRELEASED; urgency=medium
+
+  * camera_compatibility_layer.cpp: in our case the texture is controlled by
+    the app (avoid locks in gl consumer) LP: #1282701
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 03 Mar 2014 14:24:20 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu8) trusty; urgency=medium
 
   * common: also protecting the bionic system property calls
