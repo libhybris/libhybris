@@ -69,6 +69,9 @@ hybris_set_log_level(enum hybris_log_level level);
 void *
 hybris_get_thread_id();
 
+double
+hybris_get_thread_time();
+
 enum hybris_log_format hybris_logging_format();
 
 int hybris_should_trace(const char *module, const char *tracepoint);
@@ -93,13 +96,13 @@ extern FILE *hybris_logging_target;
                        ##__VA_ARGS__); \
                 fflush(hybris_logging_target); \
               } else if (hybris_logging_format() == HYBRIS_LOG_FORMAT_SYSTRACE) { \
-                fprintf(hybris_logging_target, "B|%i|%s(%s) %s:%d (%s) " message "\n", \
-                      getpid(), module, __PRETTY_FUNCTION__, __FILE__, __LINE__, \
+                fprintf(hybris_logging_target, "B|%i|%.9f|%s(%s) %s:%d (%s) " message "\n", \
+                      getpid(), hybris_get_thread_time(), module, __PRETTY_FUNCTION__, __FILE__, __LINE__, \
                       #level + 11 /* + 11 = strip leading "HYBRIS_LOG_" */, \
                       ##__VA_ARGS__); \
                 fflush(hybris_logging_target); \
-                fprintf(hybris_logging_target, "E|%i|%s(%s) %s:%d (%s) " message "\n", \
-                      getpid(), module, __PRETTY_FUNCTION__, __FILE__, __LINE__, \
+                fprintf(hybris_logging_target, "E|%i|%.9f|%s(%s) %s:%d (%s) " message "\n", \
+                      getpid(), hybris_get_thread_time(), module, __PRETTY_FUNCTION__, __FILE__, __LINE__, \
                       #level + 11 /* + 11 = strip leading "HYBRIS_LOG_" */, \
                       ##__VA_ARGS__); \
                 fflush(hybris_logging_target); \
@@ -113,19 +116,19 @@ extern FILE *hybris_logging_target;
               pthread_mutex_lock(&hybris_logging_mutex); \
               if (hybris_logging_format() == HYBRIS_LOG_FORMAT_NORMAL) \
               { \
-                fprintf(hybris_logging_target, "PID: %i Tracepoint-%c/%s::%s" message "\n", \
-                      getpid(), what, tracepoint, module, \
+                fprintf(hybris_logging_target, "PID: %i TTIME: %.9f Tracepoint-%c/%s::%s" message "\n", \
+                      getpid(), hybris_get_thread_time(), what, tracepoint, module, \
                       ##__VA_ARGS__); \
                 fflush(hybris_logging_target); \
               } else if (hybris_logging_format() == HYBRIS_LOG_FORMAT_SYSTRACE) { \
                 if (what == 'B') \
-                   fprintf(hybris_logging_target, "B|%i|%s::%s" message "", \
-                      getpid(), tracepoint, module, ##__VA_ARGS__); \
+                   fprintf(hybris_logging_target, "B|%i|%.9f|%s::%s" message "", \
+                      getpid(), hybris_get_thread_time(), tracepoint, module, ##__VA_ARGS__); \
                 else if (what == 'E') \
                    fprintf(hybris_logging_target, "E"); \
                 else \
-                   fprintf(hybris_logging_target, "C|%i|%s::%s-%i|" message "", \
-                      getpid(), tracepoint, module, getpid(), ##__VA_ARGS__); \
+                   fprintf(hybris_logging_target, "C|%i|%.9f|%s::%s-%i|" message "", \
+                      getpid(), hybris_get_thread_time(), tracepoint, module, getpid(), ##__VA_ARGS__); \
                 fflush(hybris_logging_target); \
               } \
              pthread_mutex_unlock(&hybris_logging_mutex); \
