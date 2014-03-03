@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <time.h>
 
 FILE *hybris_logging_target = NULL;
 
@@ -107,6 +108,17 @@ void *
 hybris_get_thread_id()
 {
     return (void *)pthread_self();
+}
+
+double
+hybris_get_thread_time()
+{
+    struct timespec now;
+    if(clock_gettime(CLOCK_THREAD_CPUTIME_ID, &now) == 0) {
+	return (double)now.tv_sec + (double)now.tv_nsec / 1000000000.0;
+    } else {
+	return -1.0;
+    }    
 }
 
 int
