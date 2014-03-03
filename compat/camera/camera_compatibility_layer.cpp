@@ -523,7 +523,7 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 	assert(control);
 
 	static const bool allow_synchronous_mode = false;
-	static const bool is_controlled_by_app = false;
+	static const bool is_controlled_by_app = true;
 
 	android::sp<android::NativeBufferAlloc> native_alloc(
 			new android::NativeBufferAlloc()
