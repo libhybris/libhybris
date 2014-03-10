@@ -128,6 +128,9 @@ WaylandNativeWindow::wayland_roundtrip(WaylandNativeWindow *display)
     while (ret == 0 && !done)
         ret = wl_display_dispatch_queue(display->m_display, display->wl_queue);
 
+    if (ret < 0)
+        fprintf(stderr, "WaylandNativeWindow::wayland_roundtrip: wl_display_dispatch_queue returned -1 with errno: %d, done: %d\n", errno, done);
+
     return ret;
 }
 
@@ -389,7 +392,7 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
     ret = wl_display_dispatch_queue_pending(m_display, this->wl_queue);
 
     if (ret < 0) {
-        TRACE("wl_display_dispatch_queue returned an error:%i", ret);
+        TRACE("wl_display_dispatch_queue returned an error:%i, errno: %i", ret, errno);
         check_fatal_error(m_display);
         return ret;
     }
