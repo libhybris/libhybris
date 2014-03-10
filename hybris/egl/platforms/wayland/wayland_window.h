@@ -105,6 +105,7 @@ public:
 
     void lock();
     void unlock();
+    void frame();
     void releaseBuffer(struct wl_buffer *buffer);
     int postBuffer(ANativeWindowBuffer *buffer);
 
@@ -164,6 +165,9 @@ private:
     EGLint *m_damage_rects, m_damage_n_rects;
     struct wl_callback *frame_callback;
     static int wayland_roundtrip(WaylandNativeWindow *display);
+    int m_use_frame_callback;
+    int m_wait_post_frame;
+    int m_wait_queue_frame;
 };
 
 #endif
