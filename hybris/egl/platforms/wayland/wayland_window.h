@@ -105,9 +105,11 @@ public:
 
     void lock();
     void unlock();
+    void frame();
     void releaseBuffer(struct wl_buffer *buffer);
     int postBuffer(ANativeWindowBuffer *buffer);
 
+    virtual int setSwapInterval(int interval);
     void prepareSwap(EGLint *damage_rects, EGLint damage_n_rects);
     void finishSwap();
 
@@ -119,7 +121,6 @@ public:
 
 protected:
     // overloads from BaseNativeWindow
-    virtual int setSwapInterval(int interval);
     virtual int dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd);
     virtual int lockBuffer(BaseNativeWindowBuffer* buffer);
     virtual int queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd);
@@ -163,6 +164,7 @@ private:
     bool m_buffer_committed;
     EGLint *m_damage_rects, m_damage_n_rects;
     struct wl_callback *frame_callback;
+    int m_swap_interval;
     static int wayland_roundtrip(WaylandNativeWindow *display);
 };
 

@@ -105,4 +105,11 @@ void ws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win)
 		ws->finishSwap(dpy, win);
 }
 
+void ws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval)
+{
+	_init_ws();
+	if (ws->setSwapInterval)
+		ws->setSwapInterval(dpy, win, interval);
+}
+
 // vim:ts=4:sw=4:noexpandtab

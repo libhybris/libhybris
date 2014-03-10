@@ -147,6 +147,18 @@ static void check_fatal_error(struct wl_display *display)
     abort();
 }
 
+static void
+wayland_frame_callback(void *data, struct wl_callback *callback, uint32_t time)
+{
+    WaylandNativeWindow *surface = static_cast<WaylandNativeWindow *>(data);
+    surface->frame();
+    wl_callback_destroy(callback);
+}
+
+static const struct wl_callback_listener frame_listener = {
+    wayland_frame_callback
+};
+
 WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, alloc_device_t* alloc_device)
 {
     int wayland_ok;
@@ -161,11 +173,17 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
     this->m_defaultHeight = window->height;
     this->m_window->resize_callback = resize_callback;
     this->m_format = 1;
+    this->frame_callback = NULL;
     this->wl_queue = wl_display_create_queue(display);
     this->registry = wl_display_get_registry(display);
     wl_proxy_set_queue((struct wl_proxy *) this->registry,
             this->wl_queue);
     wl_registry_add_listener(this->registry, &registry_listener, this);
+
+	const_cast<int&>(ANativeWindow::minSwapInterval) = 0;
+	const_cast<int&>(ANativeWindow::maxSwapInterval) = 1;
+    // This is the default as per the EGL documentation
+    this->m_swap_interval = 1;
 
     wayland_ok = wayland_roundtrip(this);
     assert(wayland_ok >= 0);
@@ -194,14 +212,38 @@ WaylandNativeWindow::~WaylandNativeWindow()
         buf->wlbuffer = NULL;
         buf->common.decRef(&buf->common);
     }
+    if (frame_callback)
+        wl_callback_destroy(frame_callback);
     wl_registry_destroy(registry);
     wl_event_queue_destroy(wl_queue);
     android_wlegl_destroy(m_android_wlegl);
 }
 
+void WaylandNativeWindow::frame() {
+    HYBRIS_TRACE_BEGIN("wayland-platform", "frame_event", "");
+
+    this->frame_callback = NULL;
+
+    HYBRIS_TRACE_END("wayland-platform", "frame_event", "");
+}
+
 // overloads from BaseNativeWindow
 int WaylandNativeWindow::setSwapInterval(int interval) {
     TRACE("interval:%i", interval);
+
+    if (interval < 0)
+        interval = 0;
+    if (interval > 1)
+        interval = 1;
+
+    HYBRIS_TRACE_BEGIN("wayland-platform", "swap_interval", "=%d", interval);
+
+    lock();
+    m_swap_interval = interval;
+    unlock();
+
+    HYBRIS_TRACE_END("wayland-platform", "swap_interval", "");
+    
     return 0;
 }
 
@@ -386,7 +428,7 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
     lock();
     wnb->busy = 1;
     unlock();
-    ret = wl_display_dispatch_queue_pending(m_display, this->wl_queue);
+    ret = wl_display_dispatch_queue(m_display, this->wl_queue);
 
     if (ret < 0) {
         TRACE("wl_display_dispatch_queue returned an error:%i", ret);
@@ -408,6 +450,7 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
     wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
     wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
     wl_surface_commit(m_window->surface);
+    wl_display_flush(m_display);
     //--m_freeBufs;
     //pthread_cond_signal(&cond);
     posted.push_back(wnb);
@@ -434,6 +477,7 @@ void WaylandNativeWindow::finishSwap()
         // queueing a buffer if nothing has been rendererd.
         wl_surface_commit(m_window->surface);
         wl_callback_destroy(wl_display_sync(m_display));
+        wl_display_flush(m_display);
     }
     m_damage_rects = NULL;
     m_damage_n_rects = 0;
@@ -453,6 +497,9 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
     unlock();
     /* XXX locking/something is a bit fishy here */
     HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
+    do {
+        ret = wl_display_dispatch_queue(m_display, this->wl_queue);
+    } while (this->frame_callback && ret != -1);
 
     if (ret < 0) {
         TRACE("wl_display_dispatch_queue returned an error");
@@ -499,6 +546,12 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
         wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
     }
     HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_attachdamagecommit", "-resource@%i", wl_proxy_get_id((struct wl_proxy *) wnb->wlbuffer));
+
+    if (m_swap_interval > 0) {
+        this->frame_callback = wl_surface_frame(m_window->surface);
+        wl_callback_add_listener(this->frame_callback, &frame_listener, this);
+        wl_proxy_set_queue((struct wl_proxy *) this->frame_callback, this->wl_queue);
+    }
 
     wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
     if (m_damage_n_rects > 0)
