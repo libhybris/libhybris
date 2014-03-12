@@ -168,6 +168,12 @@ extern "C" void waylandws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win)
 	window->finishSwap();
 }
 
+extern "C" void waylandws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval)
+{
+	WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
+	window->setSwapInterval(interval);
+}
+
 struct ws_module ws_module_info = {
 	waylandws_init_module,
 	waylandws_IsValidDisplay,
@@ -178,6 +184,7 @@ struct ws_module ws_module_info = {
 	waylandws_eglQueryString,
 	waylandws_prepareSwap,
 	waylandws_finishSwap,
+	waylandws_setSwapInterval,
 };
 
 
