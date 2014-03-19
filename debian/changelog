@@ -1,3 +1,17 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu10) UNRELEASED; urgency=medium
+
+  [ Iain Lane ]
+  * Turn on wayland support to provide libwayland-egl, which mesa in Ubuntu
+    relies on. This makes libhybris a viable provider of the
+    <deb-multi-arch>_egl_conf alternate. (LP: #1206371)
+
+  [ Ricardo Salveti de Araujo ]
+  * debian/rules: changing default alternatives priority to be lower than
+    the one provided by mesa (EGL/GLES), avoid breaking normal desktop
+    (LP: #1232962)
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 18 Mar 2014 21:47:34 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu9) trusty; urgency=medium
 
   * camera_compatibility_layer.cpp: in our case the texture is controlled by

@@ -6,5 +6,6 @@ usr/lib/*/libsf.so.*
 usr/lib/*/libis.so.*
 usr/lib/*/libcamera.so.*
 usr/lib/*/libhybris/*.so
+usr/lib/*/libwayland-egl.so.*		#PKGLIBDIR#
 usr/lib/*/libEGL.so.*		#PKGLIBDIR#
 usr/lib/*/libGLESv2.so.*	#PKGLIBDIR#

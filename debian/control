@@ -9,7 +9,8 @@ Build-Depends: debhelper (>= 9.0.0),
                g++-4.7,
                quilt,
                pkg-config,
-               libgles2-mesa-dev
+               libgles2-mesa-dev,
+               libwayland-dev
 Standards-Version: 3.9.4
 Section: libs
 Vcs-Git: git://phablet.ubuntu.com/ubuntu/libhybris.git

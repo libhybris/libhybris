@@ -27,7 +27,7 @@ ifneq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
 endif
 
 # Priority of the alternatives
-alt_priority    := 1000
+alt_priority    := 400
 
 # Directory naming schemes
 PKG_dirname             := $(PKG_driver)-egl
@@ -58,9 +58,9 @@ get-packaged-orig-source:
 
 override_dh_auto_configure:
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
-	dh_auto_configure --sourcedirectory=hybris -- --enable-arch=arm --with-android-headers=/usr/include/android
+	dh_auto_configure --sourcedirectory=hybris -- --enable-wayland --enable-arch=arm --with-android-headers=/usr/include/android
 else
-	dh_auto_configure --sourcedirectory=hybris -- --enable-arch=x86 --with-android-headers=/usr/include/android
+	dh_auto_configure --sourcedirectory=hybris -- --enable-wayland --enable-arch=x86 --with-android-headers=/usr/include/android
 endif
 
 override_dh_install:
