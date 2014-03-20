@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu12) trusty; urgency=medium
+
+  * input: add method to check if compat side is available
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 19 Mar 2014 22:23:43 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu11) trusty; urgency=medium
 
   * hardware.c: hw_get_module should return an error if module not found,
