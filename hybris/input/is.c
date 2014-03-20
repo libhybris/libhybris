@@ -28,6 +28,14 @@
 
 HYBRIS_LIBRARY_INITIALIZE(is, COMPAT_LIBRARY_PATH);
 
+int android_input_check_availability()
+{
+	/* Both are defined via HYBRIS_LIBRARY_INITIALIZE */
+	if (!is_handle)
+		hybris_is_initialize();
+	return is_handle ? 1 : 0;
+}
+
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(is, android_input_stack_initialize,
 	struct AndroidEventListener*, struct InputStackConfiguration*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION0(is, android_input_stack_start);
