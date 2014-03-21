@@ -38,6 +38,7 @@ extern "C" {
 #include <pthread.h>
 }
 #include <list>
+#include <deque>
 
 class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
 {
@@ -105,9 +106,11 @@ public:
 
     void lock();
     void unlock();
+    void frame();
     void releaseBuffer(struct wl_buffer *buffer);
     int postBuffer(ANativeWindowBuffer *buffer);
 
+    virtual int setSwapInterval(int interval);
     void prepareSwap(EGLint *damage_rects, EGLint damage_n_rects);
     void finishSwap();
 
@@ -119,7 +122,6 @@ public:
 
 protected:
     // overloads from BaseNativeWindow
-    virtual int setSwapInterval(int interval);
     virtual int dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd);
     virtual int lockBuffer(BaseNativeWindowBuffer* buffer);
     virtual int queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd);
@@ -142,12 +144,16 @@ private:
     WaylandNativeWindowBuffer *addBuffer();
     void destroyBuffer(WaylandNativeWindowBuffer *);
     void destroyBuffers();
+    int readQueue(bool block);
+
     std::list<WaylandNativeWindowBuffer *> m_bufList;
     std::list<WaylandNativeWindowBuffer *> fronted;
     std::list<WaylandNativeWindowBuffer *> posted;
     std::list<WaylandNativeWindowBuffer *> post_registered;
+    std::deque<WaylandNativeWindowBuffer *> queue;
     struct wl_egl_window *m_window;
     struct wl_display *m_display;
+    WaylandNativeWindowBuffer *m_lastBuffer;
     unsigned int m_width;
     unsigned int m_height;
     unsigned int m_format;
@@ -159,10 +165,11 @@ private:
     struct wl_registry *registry;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
+    int m_queueReads;
     int m_freeBufs;
-    bool m_buffer_committed;
     EGLint *m_damage_rects, m_damage_n_rects;
     struct wl_callback *frame_callback;
+    int m_swap_interval;
     static int wayland_roundtrip(WaylandNativeWindow *display);
 };
 
