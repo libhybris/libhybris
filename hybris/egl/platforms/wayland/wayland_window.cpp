@@ -205,11 +205,10 @@ int WaylandNativeWindow::setSwapInterval(int interval) {
     return 0;
 }
 
-static void
+    static void
 wl_buffer_release(void *data, struct wl_buffer *buffer)
 {
     WaylandNativeWindow *win = static_cast<WaylandNativeWindow *>(data);
-    TRACE("win %p", win);
     win->releaseBuffer(buffer);
 }
 
@@ -219,7 +218,6 @@ static struct wl_buffer_listener wl_buffer_listener = {
 
 void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 {
-    HYBRIS_TRACE_BEGIN("wayland-platform", "releaseBuffer", "");
     lock();
     std::list<WaylandNativeWindowBuffer *>::iterator it = posted.begin();
 
@@ -249,9 +247,11 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
     }
     assert(it != fronted.end());
 
+
+
     WaylandNativeWindowBuffer* wnb = *it;
     fronted.erase(it);
-    HYBRIS_TRACE_COUNTER("wayland-platform", "releaseBuffer#fronted.size", "%i", fronted.size());
+    HYBRIS_TRACE_COUNTER("wayland-platform", "fronted.size", "%i", fronted.size());
 
     for (it = m_bufList.begin(); it != m_bufList.end(); it++)
     {
@@ -259,6 +259,7 @@ void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
             break;
     }
     assert(it != m_bufList.end());
+    HYBRIS_TRACE_BEGIN("wayland-platform", "releaseBuffer", "-%p", wnb);
     wnb->busy = 0;
 
     ++m_freeBufs;
@@ -304,12 +305,11 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
 
     if (it==m_bufList.end()) {
         HYBRIS_TRACE_BEGIN("wayland-platform", "dequeueBuffer_worst_case_scenario", "");
+        HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_worst_case_scenario", "");
 
         it = m_bufList.begin();
         for (; it != m_bufList.end() && (*it)->busy; it++)
         {}
-
-        HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_worst_case_scenario", "");
         
     }
     if (it==m_bufList.end()) {
@@ -347,7 +347,6 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
     HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_wait_for_buffer", "");
 
     unlock();
-    HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer", "-%p", wnb);
     return NO_ERROR;
 }
 
@@ -435,7 +434,6 @@ void WaylandNativeWindow::finishSwap()
         // queueing a buffer if nothing has been rendererd.
         wl_surface_commit(m_window->surface);
         wl_callback_destroy(wl_display_sync(m_display));
-        TRACE("Committed surface after eglSwapBuffers");
     }
     m_damage_rects = NULL;
     m_damage_n_rects = 0;
