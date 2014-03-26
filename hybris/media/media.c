@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Canonical Ltd
+ * Copyright (C) 2013-2014 Canonical Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,12 @@
 #include <stdbool.h>
 
 #include <hybris/internal/binding.h>
+#include <hybris/media/decoding_service.h>
 #include <hybris/media/media_compatibility_layer.h>
-#include <hybris/media/recorder_compatibility_layer.h>
 #include <hybris/media/media_codec_layer.h>
 #include <hybris/media/media_codec_list.h>
 #include <hybris/media/media_format_layer.h>
+#include <hybris/media/recorder_compatibility_layer.h>
 #include <hybris/media/surface_texture_client_hybris.h>
 
 #define COMPAT_LIBRARY_PATH "/system/lib/libmedia_compat_layer.so"
@@ -91,6 +92,17 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_media_set_playback_complete_cb,
 	struct MediaPlayerWrapper*, on_playback_complete, void*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_media_set_media_prepared_cb,
 	struct MediaPlayerWrapper*, on_media_prepared, void*);
+
+// DecodingService
+HYBRIS_IMPLEMENT_VOID_FUNCTION0(media, decoding_service_init);
+HYBRIS_IMPLEMENT_FUNCTION0(media, IGBCWrapperHybris,
+	decoding_service_get_igraphicbufferconsumer);
+HYBRIS_IMPLEMENT_FUNCTION0(media, IGraphicBufferProducerHybris,
+	decoding_service_get_igraphicbufferproducer);
+HYBRIS_IMPLEMENT_FUNCTION0(media, DSSessionWrapperHybris,
+	decoding_service_create_session);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(media, decoding_service_set_client_death_cb,
+	DecodingClientDeathCbHybris, void*);
 
 // Media Codecs
 HYBRIS_IMPLEMENT_FUNCTION1(media, MediaCodecDelegate,
@@ -210,6 +222,16 @@ HYBRIS_IMPLEMENT_FUNCTION1(media, SurfaceTextureClientHybris,
 	surface_texture_client_create, EGLNativeWindowType);
 HYBRIS_IMPLEMENT_FUNCTION1(media, SurfaceTextureClientHybris,
 	surface_texture_client_create_by_id, unsigned int);
+HYBRIS_IMPLEMENT_FUNCTION1(media, SurfaceTextureClientHybris,
+	surface_texture_client_create_by_igbp, IGBPWrapperHybris);
+HYBRIS_IMPLEMENT_FUNCTION2(media, GLConsumerWrapperHybris,
+	gl_consumer_create_by_id_with_igbc, unsigned int, IGBCWrapperHybris);
+HYBRIS_IMPLEMENT_FUNCTION3(media, int,
+	gl_consumer_set_frame_available_cb, GLConsumerWrapperHybris, FrameAvailableCbHybris, void*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(media, gl_consumer_get_transformation_matrix,
+	GLConsumerWrapperHybris, GLfloat*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, gl_consumer_update_texture,
+	GLConsumerWrapperHybris);
 HYBRIS_IMPLEMENT_FUNCTION1(media, uint8_t,
 	surface_texture_client_is_ready_for_rendering, SurfaceTextureClientHybris);
 HYBRIS_IMPLEMENT_FUNCTION1(media, uint8_t,

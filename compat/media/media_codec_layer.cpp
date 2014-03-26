@@ -28,6 +28,10 @@
 
 #include "media_format_layer_priv.h"
 #include "surface_texture_client_hybris_priv.h"
+#include "decoding_service_priv.h"
+
+#include <binder/IPCThreadState.h>
+#include <binder/ProcessState.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -43,6 +47,9 @@
 #include <media/stagefright/MediaCodec.h>
 #include <media/stagefright/MediaErrors.h>
 #include <media/stagefright/NativeWindowWrapper.h>
+
+#include <gui/IGraphicBufferProducer.h>
+#include <binder/IServiceManager.h>
 
 #include <utils/Vector.h>
 #include <utils/Log.h>
@@ -107,6 +114,87 @@ static inline _MediaCodecDelegate *get_internal_delegate(MediaCodecDelegate dele
 
     return d;
 }
+
+// ----- DecodingService C API ----- //
+//
+// FIXME: These functions really need to be moved into decoding_service.cpp, but for some
+// reason were segfaulting when I tried them in there last
+
+namespace {
+
+    DecodingClient& decoding_client_instance()
+    {
+        static DecodingClient instance;
+        return instance;
+    }
+}
+
+void decoding_service_init()
+{
+    REPORT_FUNCTION();
+
+    // Register the service with Binder ServiceManager
+    DecodingService::instantiate();
+
+    ProcessState::self()->startThreadPool();
+}
+
+IGBCWrapperHybris decoding_service_get_igraphicbufferconsumer()
+{
+    REPORT_FUNCTION();
+
+    sp<IGraphicBufferConsumer> consumer;
+    decoding_client_instance().getIGraphicBufferConsumer(&consumer);
+    IGBCWrapper *wrapper = new IGBCWrapper(consumer);
+    return wrapper;
+}
+
+IGBPWrapperHybris decoding_service_get_igraphicbufferproducer()
+{
+    REPORT_FUNCTION();
+
+    sp<IServiceManager> service_manager = defaultServiceManager();
+    sp<IBinder> service = service_manager->getService(
+            String16(IDecodingService::exported_service_name()));
+
+    sp<IGraphicBufferProducer> producer;
+    DecodingClient::service_instance()->getIGraphicBufferProducer(&producer);
+    IGBPWrapper *wrapper = new IGBPWrapper(producer);
+
+    return wrapper;
+}
+
+DSSessionWrapperHybris decoding_service_create_session()
+{
+    REPORT_FUNCTION();
+
+    sp<IServiceManager> service_manager = defaultServiceManager();
+    sp<IBinder> service = service_manager->getService(
+            String16(IDecodingService::exported_service_name()));
+
+    // Create a new decoding service session
+    sp<BnDecodingServiceSession> session(new BnDecodingServiceSession());
+    // This new session will destroy and replace any existing session
+    DecodingClient::service_instance()->registerSession(session);
+    DSSessionWrapper *wrapper(new DSSessionWrapper(session));
+
+    return wrapper;
+}
+
+void decoding_service_set_client_death_cb(DecodingClientDeathCbHybris cb, void *context)
+{
+    REPORT_FUNCTION();
+
+    if (cb == NULL)
+    {
+        ALOGE("cb must not be NULL");
+        return;
+    }
+
+    DecodingService::service_instance()->setDecodingClientDeathCb(cb, context);
+}
+
+// ----- End of DecodingService C API ----- //
 
 MediaCodecDelegate media_codec_create_by_codec_name(const char *name)
 {
@@ -277,7 +365,6 @@ int media_codec_configure(MediaCodecDelegate delegate, MediaFormat format, Surfa
         // no need to pass a valid Surface/SurfaceTextureClient instance to configure()
         d->media_codec->configure(aformat, NULL, NULL, flags);
     }
-
 #endif
 
     return OK;
@@ -650,7 +737,7 @@ int media_codec_dequeue_input_buffer(MediaCodecDelegate delegate, size_t *index,
     status_t ret = d->media_codec->dequeueInputBuffer(index, timeout_us);
     if (ret == -EAGAIN)
     {
-        ALOGD("dequeueInputBuffer returned %d, tried timeout: %d", ret, timeout_us);
+        ALOGD("dequeueInputBuffer returned %d, tried timeout: %lld", ret, timeout_us);
         return INFO_TRY_AGAIN_LATER;
     }
     else if (ret == OK)

@@ -12,6 +12,7 @@ LOCAL_SRC_FILES:= \
 	media_codec_list.cpp \
 	media_format_layer.cpp \
 	surface_texture_client_hybris.cpp \
+	decoding_service.cpp \
 	recorder_compatibility_layer.cpp
 
 LOCAL_MODULE:= libmedia_compat_layer

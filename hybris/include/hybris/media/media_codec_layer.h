@@ -34,9 +34,18 @@ extern "C" {
 #endif
 
     typedef void* MediaCodecDelegate;
+    typedef void* DSSessionWrapperHybris;
 
     typedef void (*on_texture_needs_update)(void *context);
     void media_codec_set_texture_needs_update_cb(MediaCodecDelegate delegate, on_texture_needs_update cb, void *context);
+
+    // DecodingService API
+    void decoding_service_init();
+
+    IGBCWrapperHybris decoding_service_get_igraphicbufferconsumer();
+    IGBPWrapperHybris decoding_service_get_igraphicbufferproducer();
+    DSSessionWrapperHybris decoding_service_create_session();
+    void decoding_service_set_client_death_cb(DecodingClientDeathCbHybris cb, void *context);
 
     MediaCodecDelegate media_codec_create_by_codec_name(const char *name);
     MediaCodecDelegate media_codec_create_by_codec_type(const char *type);
