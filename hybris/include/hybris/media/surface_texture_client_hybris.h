@@ -42,10 +42,25 @@ extern "C" {
     };
 
     typedef void* SurfaceTextureClientHybris;
+    typedef void* GLConsumerHybris;
+    typedef void* GLConsumerWrapperHybris;
+    typedef void* IGraphicBufferConsumerHybris;
+    typedef void* IGraphicBufferProducerHybris;
+    typedef void* IGBCWrapperHybris;
+    typedef void* IGBPWrapperHybris;
+
+    /** Used to set a callback function to be called when a frame is ready to be rendered **/
+    typedef void (*FrameAvailableCbHybris)(GLConsumerWrapperHybris wrapper, void *context);
+    typedef void (*DecodingClientDeathCbHybris)(void *context);
 
     //SurfaceTextureClientHybris surface_texture_client_get_instance();
     SurfaceTextureClientHybris surface_texture_client_create(EGLNativeWindowType native_window);
     SurfaceTextureClientHybris surface_texture_client_create_by_id(unsigned int texture_id);
+    SurfaceTextureClientHybris surface_texture_client_create_by_igbp(IGBPWrapperHybris wrapper);
+    GLConsumerWrapperHybris gl_consumer_create_by_id_with_igbc(unsigned int texture_id, IGBCWrapperHybris wrapper);
+    int gl_consumer_set_frame_available_cb(GLConsumerWrapperHybris wrapper, FrameAvailableCbHybris cb, void *context);
+    void gl_consumer_get_transformation_matrix(GLConsumerWrapperHybris wrapper, float *matrix) FP_ATTRIB;
+    void gl_consumer_update_texture(GLConsumerWrapperHybris wrapper);
     uint8_t surface_texture_client_is_ready_for_rendering(SurfaceTextureClientHybris stc);
     uint8_t surface_texture_client_hardware_rendering(SurfaceTextureClientHybris stc);
     void surface_texture_client_set_hardware_rendering(SurfaceTextureClientHybris stc, uint8_t hardware_rendering);
