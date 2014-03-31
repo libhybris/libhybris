@@ -48,9 +48,9 @@ public:
          framebuffer_device_t* fbDev);
     ~FbDevNativeWindow();
 
-protected:
     // overloads from BaseNativeWindow
     virtual int setSwapInterval(int interval);
+protected:
 
     virtual int dequeueBuffer(BaseNativeWindowBuffer** buffer, int* fenceFd);
     virtual int queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd);

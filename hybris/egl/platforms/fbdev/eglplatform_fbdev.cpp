@@ -80,6 +80,12 @@ extern "C" void fbdevws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EG
 	eglplatformcommon_passthroughImageKHR(ctx, target, buffer, attrib_list);
 }
 
+extern "C" void fbdevws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval)
+{
+	FbDevNativeWindow *window = static_cast<FbDevNativeWindow *>((struct ANativeWindow *)win);
+	window->setSwapInterval(interval);
+}
+
 struct ws_module ws_module_info = {
 	fbdevws_init_module,
 	fbdevws_IsValidDisplay,
@@ -87,7 +93,10 @@ struct ws_module ws_module_info = {
 	fbdevws_DestroyWindow,
 	fbdevws_eglGetProcAddress,
 	fbdevws_passthroughImageKHR,
-	eglplatformcommon_eglQueryString
+	eglplatformcommon_eglQueryString,
+	NULL,
+	NULL,
+	fbdevws_setSwapInterval,
 };
 
 // vim:ts=4:sw=4:noexpandtab
