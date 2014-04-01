@@ -209,6 +209,11 @@ status_t DecodingService::registerSession(const sp<IDecodingServiceSession>& ses
     ALOGD("Entering %s", __PRETTY_FUNCTION__);
     status_t ret = session->asBinder()->linkToDeath(android::sp<android::IBinder::DeathRecipient>(this));
     this->session = session;
+
+    // Create a new BufferQueue instance so that the next created client plays
+    // video correctly
+    createBufferQueue();
+
     return ret;
 }
 
@@ -216,7 +221,13 @@ status_t DecodingService::unregisterSession()
 {
     ALOGD("Entering %s", __PRETTY_FUNCTION__);
     if (session != NULL)
+    {
         session->asBinder()->unlinkToDeath(this);
+        session.clear();
+        // Reset the BufferQueue instance so that the next created client plays
+        // video correctly
+        buffer_queue.clear();
+    }
 
     return OK;
 }
@@ -232,8 +243,8 @@ void DecodingService::createBufferQueue()
     buffer_queue = new BufferQueue(false, NULL, native_alloc);
 #else
     buffer_queue = new BufferQueue(g_buffer_alloc);
-    ALOGD("buffer_queue: %p", (void*)buffer_queue.get());
 #endif
+    ALOGD("buffer_queue: %p", (void*)buffer_queue.get());
     buffer_queue->setBufferCount(5);
 }
 
@@ -242,6 +253,8 @@ void DecodingService::binderDied(const wp<IBinder>& who)
     ALOGD("Entering %s", __PRETTY_FUNCTION__);
     if (client_death_cb != NULL)
         client_death_cb(client_death_context);
+
+    unregisterSession();
 }
 
 sp<BpDecodingService> DecodingClient::decoding_service = NULL;
