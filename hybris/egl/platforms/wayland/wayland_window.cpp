@@ -160,6 +160,7 @@ static const struct wl_callback_listener frame_listener = {
 };
 
 WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, alloc_device_t* alloc_device)
+                   : m_android_wlegl(NULL)
 {
     int wayland_ok;
 
