@@ -125,7 +125,7 @@ WaylandNativeWindow::wayland_roundtrip(WaylandNativeWindow *display)
     callback = wl_display_sync(display->m_display);
     wl_callback_add_listener(callback, &sync_listener, &done);
     wl_proxy_set_queue((struct wl_proxy *) callback, display->wl_queue);
-    while (ret == 0 && !done)
+    while (ret >= 0 && !done)
         ret = wl_display_dispatch_queue(display->m_display, display->wl_queue);
 
     return ret;
@@ -160,6 +160,7 @@ static const struct wl_callback_listener frame_listener = {
 };
 
 WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, alloc_device_t* alloc_device)
+                   : m_android_wlegl(NULL)
 {
     int wayland_ok;
 
