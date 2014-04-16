@@ -157,6 +157,9 @@ extract_headers_to hardware_legacy \
 extract_headers_to cutils \
     system/core/include/cutils
 
+extract_headers_to log \
+    system/core/include/log
+
 extract_headers_to system \
     system/core/include/system
 
