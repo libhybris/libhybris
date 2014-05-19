@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu15) UNRELEASED; urgency=medium
+
+  * tests/Makefile.am: adding test_audio back
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 19 May 2014 16:52:16 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu14) trusty; urgency=medium
 
   * Make sure a client can render video if it connects to media-hub a
