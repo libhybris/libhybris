@@ -1,4 +1,5 @@
 bin_PROGRAMS = \
+	test_audio \
 	test_egl \
 	test_egl_configs \
 	test_glesv2 \
@@ -26,7 +27,8 @@ endif
 
 test_audio_SOURCES = test_audio.c
 test_audio_CFLAGS = \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/include/android
 test_audio_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/hardware/libhardware.la
