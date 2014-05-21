@@ -221,6 +221,8 @@ WaylandNativeWindow::~WaylandNativeWindow()
     wl_registry_destroy(registry);
     wl_event_queue_destroy(wl_queue);
     android_wlegl_destroy(m_android_wlegl);
+    m_window->nativewindow = NULL;
+    m_window->resize_callback = NULL;
 }
 
 void WaylandNativeWindow::frame() {
