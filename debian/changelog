@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu16) UNRELEASED; urgency=medium
+
+  * test_audio.c: improving test, creating both input and output streams
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 22 May 2014 20:26:57 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu15) utopic; urgency=medium
 
   * tests/Makefile.am: adding test_audio back
