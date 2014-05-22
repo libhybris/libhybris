@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu16) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20131207+e452e83-0ubuntu16) utopic; urgency=medium
 
   * test_audio.c: improving test, creating both input and output streams
 
