@@ -1,5 +1,31 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES := \
+	camera_service.cpp
+
+LOCAL_SHARED_LIBRARIES := \
+	libcameraservice \
+	libmedialogservice \
+	libcutils \
+	libmedia_compat_layer \
+	libmediaplayerservice \
+	libutils \
+	liblog \
+	libbinder
+
+LOCAL_C_INCLUDES := \
+    frameworks/av/media/libmediaplayerservice \
+    frameworks/av/services/medialog \
+    frameworks/av/services/camera/libcameraservice
+
+LOCAL_MODULE := camera_service
+
+include $(BUILD_EXECUTABLE)
+
+# -------------------------------------------------
+
+include $(CLEAR_VARS)
 include $(LOCAL_PATH)/../Android.common.mk
 
 HYBRIS_PATH := $(LOCAL_PATH)/../../hybris
@@ -13,7 +39,10 @@ LOCAL_SRC_FILES:= \
 	media_format_layer.cpp \
 	surface_texture_client_hybris.cpp \
 	decoding_service.cpp \
-	recorder_compatibility_layer.cpp
+	media_recorder_layer.cpp \
+	media_recorder.cpp \
+	media_recorder_client.cpp \
+	media_recorder_factory.cpp
 
 LOCAL_MODULE:= libmedia_compat_layer
 LOCAL_MODULE_TAGS := optional
@@ -30,15 +59,21 @@ LOCAL_SHARED_LIBRARIES := \
 	libstagefright_foundation \
 	libEGL \
 	libGLESv2 \
-	libmedia
+	libmedia \
+	libcameraservice \
+	libmediaplayerservice
 
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \
 	frameworks/base/media/libstagefright/include \
 	frameworks/base/include/media/stagefright \
-	frameworks/base/include/media
+	frameworks/base/include/media \
+	frameworks/av/media \
+	frameworks/av/services/camera/libcameraservice
 
 include $(BUILD_SHARED_LIBRARY)
+
+# -------------------------------------------------
 
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/../Android.common.mk
