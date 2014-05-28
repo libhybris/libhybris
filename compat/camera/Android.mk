@@ -44,6 +44,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libis_compat_layer \
 	libsf_compat_layer \
 	libcamera_compat_layer \
+	libmedia_compat_layer \
 	libcutils \
 	libcamera_client \
 	libutils \
