@@ -73,6 +73,12 @@ int main(int argc, char **argv)
 
 	audiohw->open_output_stream(audiohw, 0, AUDIO_DEVICE_OUT_DEFAULT,
 			AUDIO_OUTPUT_FLAG_PRIMARY, &config_out, &stream_out);
+
+	/* Try it again */
+	if (!stream_out)
+		audiohw->open_output_stream(audiohw, 0, AUDIO_DEVICE_OUT_DEFAULT,
+				AUDIO_OUTPUT_FLAG_PRIMARY, &config_out, &stream_out);
+
 	assert(stream_out != NULL);
 
 	fprintf(stdout, "Successfully created audio output stream: sample rate: %u, channel_mask: %u, format: %u\n",
