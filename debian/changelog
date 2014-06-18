@@ -1,3 +1,10 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu17) utopic; urgency=medium
+
+  * Enabling test_lights again (with fixes)
+  * test_audio.c: retry stream_out in case it fails in the first try
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 17 Jun 2014 22:47:51 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu16) utopic; urgency=medium
 
   * test_audio.c: improving test, creating both input and output streams
