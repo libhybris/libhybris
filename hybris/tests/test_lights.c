@@ -30,18 +30,17 @@ int main(int argc, char **argv)
 	hw_get_module(LIGHTS_HARDWARE_MODULE_ID, (const hw_module_t**) &hwmod);
 	assert(hwmod != NULL);
 
-	assert(light_device_open(hwmod, LIGHT_ID_NOTIFICATIONS, &notifications) == 0);
-	assert(notifications != 0);
+	hwmod->methods->open(hwmod, LIGHT_ID_NOTIFICATIONS, (hw_device_t **) &notifications);
+	assert(notifications != NULL);
 
 	memset(&notification_state, 0, sizeof(struct light_state_t));
 	notification_state.color = 0xffffffff;
 	notification_state.flashMode = LIGHT_FLASH_TIMED;
-	notification_state.flashOnMS = 1000;
+	notification_state.flashOnMS = 2000;
 	notification_state.flashOffMS = 1000;
+	notification_state.brightnessMode = BRIGHTNESS_MODE_USER;
 
 	assert(notifications->set_light(notifications, &notification_state) == 0);
-
-	light_device_close(notifications);
 
 	return 0;
 }

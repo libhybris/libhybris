@@ -7,6 +7,7 @@ bin_PROGRAMS = \
 	test_sf \
 	test_sensors \
 	test_input \
+	test_lights \
 	test_camera \
 	test_vibrator \
 	test_media \
