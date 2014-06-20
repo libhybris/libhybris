@@ -92,7 +92,7 @@ server_wlegl_buffer_create(uint32_t id,
 	}
         
 	buffer->buf = new RemoteWindowBuffer(
-		width, height, stride, format, usage, handle, wlegl->gralloc);
+	        width, height, stride, format, usage, handle, wlegl->gralloc, NULL);
 	buffer->buf->common.incRef(&buffer->buf->common);
 	return buffer;
 }

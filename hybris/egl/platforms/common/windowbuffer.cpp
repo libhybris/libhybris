@@ -27,7 +27,11 @@
 
 RemoteWindowBuffer::~RemoteWindowBuffer()
 {
+    if (!m_allocated) {
 	this->m_gralloc->unregisterBuffer(this->m_gralloc, this->handle);
 	native_handle_close(this->handle);
 	native_handle_delete(const_cast<native_handle_t*>(this->handle)); 
+    } else if (this->m_alloc) {
+      this->m_alloc->free((alloc_device_t *)this->m_alloc, this->handle);
+    }
 }
