@@ -161,7 +161,7 @@ extern "C" EGLBoolean eglplatformcommon_eglHybrisCreateRemoteBuffer(EGLint width
 
 	if (ret == 0)
 	{
-		RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, stride, format, usage, (buffer_handle_t)native, my_gralloc);
+	        RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, stride, format, usage, (buffer_handle_t)native, my_gralloc, my_alloc);
 		buf->common.incRef(&buf->common);
 		*buffer = (EGLClientBuffer) static_cast<ANativeWindowBuffer *>(buf);
 		return EGL_TRUE;
@@ -183,8 +183,9 @@ extern "C" EGLBoolean eglplatformcommon_eglHybrisCreateNativeBuffer(EGLint width
 
 	if (ret == 0)
 	{
-		RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, _stride, format, usage, _handle, my_gralloc);
+	        RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, _stride, format, usage, _handle, my_gralloc, my_alloc);
 		buf->common.incRef(&buf->common);
+		buf->setAllocated(true);
 		*buffer = (EGLClientBuffer) static_cast<ANativeWindowBuffer *>(buf);
 		*stride = _stride;
 		return EGL_TRUE;
