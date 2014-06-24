@@ -1,3 +1,14 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu18) UNRELEASED; urgency=medium
+
+  [ Jim Hodapp ]
+  * compat: adding camera_service, also exporting the media_recorder
+    functionality
+
+  [ Ricardo Salveti de Araujo ]
+  * Makefile.am: installing additional header for media_recorder
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 24 Jun 2014 11:42:07 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu17) utopic; urgency=medium
 
   * Enabling test_lights again (with fixes)
