@@ -6,6 +6,7 @@ libhybris (0.1.0+git20131207+e452e83-0ubuntu18) UNRELEASED; urgency=medium
 
   [ Ricardo Salveti de Araujo ]
   * Makefile.am: installing additional header for media_recorder
+  * debian/control: bumping standards-version to 3.9.5
 
  -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 24 Jun 2014 11:42:07 -0300
 
