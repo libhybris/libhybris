@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu18) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20131207+e452e83-0ubuntu18) utopic; urgency=medium
 
   [ Jim Hodapp ]
   * compat: adding camera_service, also exporting the media_recorder
