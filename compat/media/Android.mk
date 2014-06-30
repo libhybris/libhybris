@@ -71,6 +71,19 @@ LOCAL_C_INCLUDES := \
 	frameworks/av/media \
 	frameworks/av/services/camera/libcameraservice
 
+ifeq ($(strip $(MTK_CAMERA_BSP_SUPPORT)),yes)
+LOCAL_C_INCLUDES += $(TOP)/mediatek/kernel/include/linux/vcodec
+LOCAL_SHARED_LIBRARIES += \
+	libvcodecdrv
+
+LOCAL_C_INCLUDES+= \
+	$(TOP)/$(MTK_PATH_SOURCE)/frameworks-ext/av/media/libmediaplayerservice \
+	$(TOP)/$(MTK_PATH_SOURCE)/frameworks-ext/av/include \
+	$(TOP)/$(MTK_PATH_SOURCE)/frameworks-ext/av/media/libstagefright/include \
+	$(TOP)/$(MTK_PATH_PLATFORM)/frameworks/libmtkplayer \
+	$(TOP)/$(MTK_PATH_SOURCE)/frameworks/av/include
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 # -------------------------------------------------
