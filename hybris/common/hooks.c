@@ -709,9 +709,8 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
         *((unsigned int *) mutex) = (unsigned int) realmutex;
     }
 
-    /* TODO: Android uses CLOCK_MONOTONIC here but I am not sure which one to use */
     struct timespec tv;
-    clock_gettime(CLOCK_REALTIME, &tv);
+    clock_gettime(CLOCK_MONOTONIC_RAW, &tv);
     tv.tv_sec += reltime->tv_sec;
     tv.tv_nsec += reltime->tv_nsec;
     if (tv.tv_nsec >= 1000000000) {
