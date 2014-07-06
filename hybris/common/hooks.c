@@ -18,7 +18,7 @@
  *
  */
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 
 #include "hooks_shm.h"
 
@@ -493,8 +493,7 @@ static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned _
         *((int *)__mutex) = (int) realmutex;
     }
 
-    /* TODO: Android uses CLOCK_MONOTONIC here but I am not sure which one to use */
-    clock_gettime(CLOCK_REALTIME, &tv);
+    clock_gettime(CLOCK_MONOTONIC_RAW, &tv);
     tv.tv_sec += __msecs/1000;
     tv.tv_nsec += (__msecs % 1000) * 1000000;
     if (tv.tv_nsec >= 1000000000) {

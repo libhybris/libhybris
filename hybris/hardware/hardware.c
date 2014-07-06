@@ -19,7 +19,7 @@
 #include <dlfcn.h>
 #include <stddef.h>
 #include <hardware/hardware.h>
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 
 static void *_libhardware = NULL;
 

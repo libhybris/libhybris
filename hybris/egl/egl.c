@@ -30,7 +30,7 @@
 #include <assert.h>
 
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 #include <string.h>
 
 #include <system/window.h>

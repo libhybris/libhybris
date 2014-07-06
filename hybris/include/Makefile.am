@@ -68,3 +68,9 @@ propertiesinclude_HEADERS = \
 dlfcnincludedir = $(includedir)/hybris/dlfcn
 dlfcninclude_HEADERS = \
 	hybris/dlfcn/dlfcn.h
+
+commonincludedir = $(includedir)/hybris/common
+commoninclude_HEADERS = \
+	hybris/common/binding.h \
+	hybris/common/floating_point_abi.h \
+	hybris/common/dlfcn.h

@@ -24,7 +24,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 
 #define GLESV1_CM_LIBRARY_PATH "/system/lib/libGLESv1_CM.so"
 

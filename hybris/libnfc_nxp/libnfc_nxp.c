@@ -54,7 +54,7 @@ typedef void   (*pphDal4Nfc_DeferFuncPointer_t) (void * );
 #include <stddef.h>
 #include <stdlib.h>
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 
 HYBRIS_LIBRARY_INITIALIZE(libnfc_so, "/system/lib/libnfc.so");
 
