@@ -48,7 +48,8 @@ extern "C" {
         SCENE_MODE_ACTION,
         SCENE_MODE_NIGHT,
         SCENE_MODE_PARTY,
-        SCENE_MODE_SUNSET
+        SCENE_MODE_SUNSET,
+        SCENE_MODE_HDR
     } SceneMode;
 
     typedef enum
