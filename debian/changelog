@@ -1,3 +1,10 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu19) UNRELEASED; urgency=medium
+
+  * Added Camera's scene mode parameter value for HDR
+  * compat/camera: adding extras required by the mtk bsp
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 08 Jul 2014 19:51:08 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu18) utopic; urgency=medium
 
   [ Jim Hodapp ]
