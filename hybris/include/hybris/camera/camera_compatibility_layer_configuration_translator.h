@@ -108,7 +108,8 @@ extern "C" {
         android::CameraParameters::SCENE_MODE_ACTION,
         android::CameraParameters::SCENE_MODE_NIGHT,
         android::CameraParameters::SCENE_MODE_PARTY,
-        android::CameraParameters::SCENE_MODE_SUNSET
+        android::CameraParameters::SCENE_MODE_SUNSET,
+        android::CameraParameters::SCENE_MODE_HDR
     };
 
     static android::KeyedVector<android::String8, SceneMode> init_scene_modes_lut()
@@ -119,6 +120,7 @@ extern "C" {
         m.add(android::String8(android::CameraParameters::SCENE_MODE_NIGHT), SCENE_MODE_NIGHT);
         m.add(android::String8(android::CameraParameters::SCENE_MODE_PARTY), SCENE_MODE_PARTY);
         m.add(android::String8(android::CameraParameters::SCENE_MODE_SUNSET), SCENE_MODE_SUNSET);
+        m.add(android::String8(android::CameraParameters::SCENE_MODE_HDR), SCENE_MODE_HDR);
 
         return m;
     }
