@@ -105,6 +105,8 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_enumerate_supported_previ
 	struct CameraControl*, size_callback, void*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_enumerate_supported_video_sizes,
 	struct CameraControl*, size_callback, void*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_enumerate_supported_scene_modes,
+	struct CameraControl*, scene_mode_callback, void*);
 
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(camera, android_camera_update_preview_texture, struct CameraControl*);
 
