@@ -112,9 +112,9 @@ extern "C" {
         android::CameraParameters::SCENE_MODE_HDR
     };
 
-    static android::KeyedVector<android::String8, SceneMode> init_scene_modes_lut()
+    static android::DefaultKeyedVector<android::String8, SceneMode> init_scene_modes_lut()
     {
-        android::KeyedVector<android::String8, SceneMode> m;
+        android::DefaultKeyedVector<android::String8, SceneMode> m(SCENE_MODE_AUTO);
         m.add(android::String8(android::CameraParameters::SCENE_MODE_AUTO), SCENE_MODE_AUTO);
         m.add(android::String8(android::CameraParameters::SCENE_MODE_ACTION), SCENE_MODE_ACTION);
         m.add(android::String8(android::CameraParameters::SCENE_MODE_NIGHT), SCENE_MODE_NIGHT);
@@ -125,7 +125,7 @@ extern "C" {
         return m;
     }
 
-    static android::KeyedVector<android::String8, SceneMode> scene_modes_lut = init_scene_modes_lut();
+    static android::DefaultKeyedVector<android::String8, SceneMode> scene_modes_lut = init_scene_modes_lut();
 
     static const char* auto_focus_modes[] =
     {

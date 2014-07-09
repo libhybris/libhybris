@@ -45,6 +45,8 @@
 #include <utils/Log.h>
 #include <utils/String16.h>
 
+#include <cstring>
+
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__)
 
 // From android::GLConsumer::FrameAvailableListener
@@ -303,6 +305,31 @@ void android_camera_set_scene_mode(CameraControl* control, SceneMode mode)
 			android::CameraParameters::KEY_SCENE_MODE,
 			scene_modes[mode]);
 	control->camera->setParameters(control->camera_parameters.flatten());
+}
+
+void android_camera_enumerate_supported_scene_modes(CameraControl* control, scene_mode_callback cb, void* ctx)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	android::String8 raw_modes;
+	raw_modes = android::String8(
+					control->camera_parameters.get(
+						android::CameraParameters::KEY_SUPPORTED_SCENE_MODES));
+
+	const char delimiter[2] = ",";
+	char *token;
+	android::String8 mode;
+	char *raw_modes_mutable = strdup(raw_modes.string());
+
+	token = strtok(raw_modes_mutable, delimiter);
+
+	while (token != NULL) {
+		mode = android::String8(token);
+		cb(ctx, scene_modes_lut.valueFor(mode));
+		token = strtok(NULL, delimiter);
+	}
 }
 
 void android_camera_get_scene_mode(CameraControl* control, SceneMode* mode)
