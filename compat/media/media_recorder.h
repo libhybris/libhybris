@@ -27,6 +27,7 @@
 #include <utils/Errors.h>
 #include <media/IMediaRecorderClient.h>
 #include <media/IMediaDeathNotifier.h>
+#include <media/IMediaRecorder.h>
 
 namespace android {
 
@@ -201,6 +202,7 @@ class MediaRecorderListener: virtual public RefBase
 {
 public:
     virtual void notify(int msg, int ext1, int ext2) = 0;
+    virtual void readAudio() = 0;
 };
 
 class MediaRecorder : public BnMediaRecorderClient,
@@ -235,6 +237,7 @@ public:
     status_t    close();
     status_t    release();
     void        notify(int msg, int ext1, int ext2);
+    void        readAudio();
     sp<IGraphicBufferProducer>     querySurfaceMediaSourceFromMediaServer();
 
 private:
@@ -243,7 +246,7 @@ private:
 
     sp<IMediaRecorder>          mMediaRecorder;
     sp<MediaRecorderListener>   mListener;
-    sp<IMediaRecorderFactory>    mMediaRecorderFactory;
+    sp<IMediaRecorderFactory>   mMediaRecorderFactory;
 
     // Reference to IGraphicBufferProducer
     // for encoding GL Frames. That is useful only when the
@@ -258,6 +261,7 @@ private:
     bool                        mIsOutputFileSet;
     Mutex                       mLock;
     Mutex                       mNotifyLock;
+    Mutex                       mReadAudioLock;
 };
 
 };  // namespace android

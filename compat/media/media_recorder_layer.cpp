@@ -47,7 +47,9 @@ class MediaRecorderListenerWrapper : public android::MediaRecorderListener
 public:
     MediaRecorderListenerWrapper()
         : error_cb(NULL),
-          error_context(NULL)
+          error_context(NULL),
+          read_audio_cb(NULL),
+          read_audio_context(NULL)
 {
 }
 
@@ -69,6 +71,16 @@ public:
         }
     }
 
+    void readAudio()
+    {
+        REPORT_FUNCTION();
+        if (read_audio_cb != NULL) {
+            read_audio_cb(read_audio_context);
+        }
+        else
+            ALOGW("Failed to call read_audio_cb since it's NULL");
+    }
+
     void setErrorCb(on_recorder_msg_error cb, void *context)
     {
         REPORT_FUNCTION();
@@ -76,9 +88,18 @@ public:
         error_context = context;
     }
 
+    void setReadAudioCb(on_recorder_read_audio cb, void *context)
+    {
+        REPORT_FUNCTION();
+        read_audio_cb = cb;
+        read_audio_context = context;
+    }
+
 private:
     on_recorder_msg_error error_cb;
     void *error_context;
+    on_recorder_read_audio read_audio_cb;
+    void *read_audio_context;
 };
 
 /*!
@@ -89,14 +110,18 @@ struct MediaRecorderWrapper : public android::MediaRecorder
 public:
     MediaRecorderWrapper()
         : MediaRecorder(),
-        media_recorder_listener(new MediaRecorderListenerWrapper())
+          media_recorder_listener(new MediaRecorderListenerWrapper())
 {
-    setListener(media_recorder_listener);
 }
 
     ~MediaRecorderWrapper()
     {
         reset();
+    }
+
+    void init()
+    {
+        setListener(media_recorder_listener);
     }
 
     void setErrorCb(on_recorder_msg_error cb, void *context)
@@ -105,6 +130,14 @@ public:
 
         assert(media_recorder_listener != NULL);
         media_recorder_listener->setErrorCb(cb, context);
+    }
+
+    void setAudioReadCb(on_recorder_read_audio cb, void *context)
+    {
+        REPORT_FUNCTION();
+
+        assert(media_recorder_listener != NULL);
+        media_recorder_listener->setReadAudioCb(cb, context);
     }
 
 private:
@@ -128,6 +161,19 @@ void android_recorder_set_error_cb(MediaRecorderWrapper *mr, on_recorder_msg_err
     }
 
     mr->setErrorCb(cb, context);
+}
+
+void android_recorder_set_audio_read_cb(MediaRecorderWrapper *mr, on_recorder_read_audio cb,
+        void *context)
+{
+    REPORT_FUNCTION();
+
+    if (mr == NULL) {
+        ALOGE("mr must not be NULL");
+        return;
+    }
+
+    mr->setAudioReadCb(cb, context);
 }
 
 /*!
@@ -182,6 +228,8 @@ int android_recorder_setCamera(MediaRecorderWrapper *mr, CameraControl* control)
         ALOGE("control must not be NULL");
         return android::BAD_VALUE;
     }
+
+    mr->init();
 
     return mr->setCamera(control->camera->remote(), control->camera->getRecordingProxy());
 }

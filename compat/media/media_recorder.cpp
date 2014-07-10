@@ -17,7 +17,7 @@
  ** limitations under the License.
  */
 
-//#define LOG_NDEBUG 0
+#define LOG_NDEBUG 0
 #define LOG_TAG "MediaRecorder"
 
 #include "media_recorder.h"
@@ -672,6 +672,13 @@ status_t MediaRecorder::setListener(const sp<MediaRecorderListener>& listener)
     Mutex::Autolock _l(mLock);
     mListener = listener;
 
+    if (mMediaRecorder != NULL) {
+        // Sets a listener so that when the named pipe reader in RecordThread is ready,
+        // we can bubble up to media_recorder_layer to signal the app that it's ready
+        // to do audio recording
+        mMediaRecorder->setListener(this);
+    }
+
     return NO_ERROR;
 }
 
@@ -709,6 +716,24 @@ void MediaRecorder::notify(int msg, int ext1, int ext2)
         Mutex::Autolock _l(mNotifyLock);
         ALOGV("callback application");
         listener->notify(msg, ext1, ext2);
+        ALOGV("back from callback");
+    }
+}
+
+void MediaRecorder::readAudio()
+{
+    ALOGV("%s", __PRETTY_FUNCTION__);
+
+    sp<MediaRecorderListener> listener;
+    status_t ret = NO_ERROR;
+    mLock.lock();
+    listener = mListener;
+    mLock.unlock();
+
+    if (listener != NULL) {
+        Mutex::Autolock _l(mReadAudioLock);
+        ALOGV("callback application");
+        listener->readAudio();
         ALOGV("back from callback");
     }
 }

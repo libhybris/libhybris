@@ -20,8 +20,10 @@
 #undef LOG_TAG
 #define LOG_TAG "CameraServiceCompatLayer"
 
+#include "camera_record_service.h"
 #include "media_recorder_factory.h"
 #include "media_recorder.h"
+
 #include <CameraService.h>
 
 #include <signal.h>
@@ -37,11 +39,13 @@ int main(int argc, char** argv)
 {
     signal(SIGPIPE, SIG_IGN);
 
-    ALOGV("Starting RecordingService (MediaRecorderFactory & CameraService)");
+    ALOGV("Starting camera services (MediaRecorderFactory, CameraRecordService & CameraService)");
 
     // Instantiate the in-process MediaRecorderFactory which is responsible
     // for creating a new IMediaRecorder (MediaRecorder) instance over Binder
     MediaRecorderFactory::instantiate();
+    // Enable audio recording for camera recording
+    CameraRecordService::instantiate();
     CameraService::instantiate();
     ProcessState::self()->startThreadPool();
     IPCThreadState::self()->joinThreadPool();
