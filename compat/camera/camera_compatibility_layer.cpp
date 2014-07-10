@@ -17,7 +17,7 @@
  *              Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>
  */
 
-#define LOG_NDEBUG 0
+//#define LOG_NDEBUG 0
 
 #include <hybris/internal/camera_control.h>
 #include <hybris/camera/camera_compatibility_layer.h>

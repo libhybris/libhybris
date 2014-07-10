@@ -39,6 +39,9 @@ LOCAL_SRC_FILES:= \
 	media_format_layer.cpp \
 	surface_texture_client_hybris.cpp \
 	decoding_service.cpp \
+	camera_record_service.cpp \
+	record_track.cpp \
+	record_thread.cpp \
 	media_recorder_layer.cpp \
 	media_recorder.cpp \
 	media_recorder_client.cpp \
@@ -60,6 +63,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libEGL \
 	libGLESv2 \
 	libmedia \
+	libaudioutils \
 	libcameraservice \
 	libmediaplayerservice
 
@@ -69,6 +73,9 @@ LOCAL_C_INCLUDES := \
 	frameworks/base/include/media/stagefright \
 	frameworks/base/include/media \
 	frameworks/av/media \
+	frameworks/av/include \
+	frameworks/native/include \
+	system/media/audio_utils/include \
 	frameworks/av/services/camera/libcameraservice
 
 ifeq ($(strip $(MTK_CAMERA_BSP_SUPPORT)),yes)

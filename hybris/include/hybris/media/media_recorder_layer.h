@@ -92,11 +92,19 @@ extern "C" {
         ANDROID_AUDIO_ENCODER_AAC_ELD = 5
     } AudioEncoder;
 
+    /* Defines how many bytes to read of the microphone at a time. This value
+       is how many bytes AudioFlinger would read max at a time from the microphone,
+       so duplicate using that value here since that code is well tested. */
+    #define MIC_READ_BUF_SIZE 960
+
     // Callback types
     typedef void (*on_recorder_msg_error)(void *context);
+    typedef void (*on_recorder_read_audio)(void *context);
 
     // Callback setters
     void android_recorder_set_error_cb(struct MediaRecorderWrapper *mr, on_recorder_msg_error cb,
+                                       void *context);
+    void android_recorder_set_audio_read_cb(struct MediaRecorderWrapper *mr, on_recorder_read_audio cb,
                                        void *context);
 
     // Main recorder control API

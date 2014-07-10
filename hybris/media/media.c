@@ -28,7 +28,7 @@
 #include <hybris/media/media_codec_layer.h>
 #include <hybris/media/media_codec_list.h>
 #include <hybris/media/media_format_layer.h>
-#include <hybris/media/recorder_compatibility_layer.h>
+#include <hybris/media/media_recorder_layer.h>
 #include <hybris/media/surface_texture_client_hybris.h>
 
 #define COMPAT_LIBRARY_PATH "/system/lib/libmedia_compat_layer.so"
@@ -291,4 +291,6 @@ HYBRIS_IMPLEMENT_FUNCTION1(media, int, android_recorder_release,
 
 // Recorder Callbacks
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_recorder_set_error_cb,
-	struct MediaRecorderWrapper *, on_recorder_msg_error, void*);
+	struct MediaRecorderWrapper*, on_recorder_msg_error, void*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_recorder_set_audio_read_cb,
+	struct MediaRecorderWrapper*, on_recorder_read_audio, void*);
