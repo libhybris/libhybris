@@ -70,6 +70,8 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_preview_fps,
 	struct CameraControl*, int);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_rotation,
 	struct CameraControl*, int);
+HYBRIS_IMPLEMENT_VOID_FUNCTION6(camera, android_camera_set_location,
+	struct CameraControl*, const float*, const float*, const float*, int, const char*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_set_video_size,
 	struct CameraControl*, int, int);
 
