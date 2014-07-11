@@ -744,6 +744,30 @@ void android_camera_set_rotation(CameraControl* control, int rotation)
 	control->camera->setParameters(control->camera_parameters.flatten());
 }
 
+void android_camera_set_location(CameraControl* control, const float* latitude, const float* longitude, const float* altitude, int timestamp, const char* method)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	control->camera_parameters.setFloat(
+			android::CameraParameters::KEY_GPS_LATITUDE,
+			*latitude);
+	control->camera_parameters.setFloat(
+			android::CameraParameters::KEY_GPS_LONGITUDE,
+			*longitude);
+	control->camera_parameters.setFloat(
+			android::CameraParameters::KEY_GPS_ALTITUDE,
+			*altitude);
+	control->camera_parameters.set(
+			android::CameraParameters::KEY_GPS_TIMESTAMP,
+			timestamp);
+	control->camera_parameters.set(
+			android::CameraParameters::KEY_GPS_PROCESSING_METHOD,
+			method);
+	control->camera->setParameters(control->camera_parameters.flatten());
+}
+
 void android_camera_enumerate_supported_video_sizes(CameraControl* control, size_callback cb, void* ctx)
 {
 	REPORT_FUNCTION();
