@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu20) utopic; urgency=medium
+
+  * Added function to retrieve list of supported camera's scene modes
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 11 Jul 2014 12:10:49 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu19) utopic; urgency=medium
 
   * Added Camera's scene mode parameter value for HDR
