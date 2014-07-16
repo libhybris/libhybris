@@ -137,6 +137,7 @@ extern "C" {
 
     // Set photo metadata
     void android_camera_set_rotation(struct CameraControl* control, int rotation);
+    void android_camera_set_location(struct CameraControl* control, const float* latitude, const float* longitude, const float* altitude, int timestamp, const char* method);
 
     // Video support
     void android_camera_enumerate_supported_video_sizes(struct CameraControl* control, size_callback cb, void* ctx);
