@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu21) UNRELEASED; urgency=medium
+
+  * compat/camera: adding metadata setter for GPS location
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 16 Jul 2014 16:08:09 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu20) utopic; urgency=medium
 
   * Added function to retrieve list of supported camera's scene modes
