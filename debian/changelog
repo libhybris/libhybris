@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu21) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20131207+e452e83-0ubuntu21) utopic; urgency=medium
 
   * compat/camera: adding metadata setter for GPS location
 
