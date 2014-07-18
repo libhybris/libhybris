@@ -45,6 +45,8 @@
 #include <utils/Log.h>
 #include <utils/String16.h>
 
+#include <gui/NativeBufferAlloc.h>
+
 #include <cstring>
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__)
@@ -562,7 +564,7 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 			new android::BufferQueue(false, NULL, native_alloc)
 #else
-			new android::BufferQueue(NULL, native_alloc)
+			new android::BufferQueue(NULL)
 #endif
 			);
 
