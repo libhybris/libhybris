@@ -211,15 +211,15 @@ SurfaceTextureClientHybris surface_texture_client_create_by_id(unsigned int text
         return NULL;
     }
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
     // Use a new native buffer allocator vs the default one, which means it'll use the proper one
     // that will allow rendering to work with Mir
     sp<NativeBufferAlloc> native_alloc(new NativeBufferAlloc());
 
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
     sp<BufferQueue> buffer_queue(new BufferQueue(false, NULL, native_alloc));
     _SurfaceTextureClientHybris *stch(new _SurfaceTextureClientHybris);
 #else
-    sp<BufferQueue> buffer_queue(new BufferQueue(NULL, native_alloc));
+    sp<BufferQueue> buffer_queue(new BufferQueue(NULL));
     _SurfaceTextureClientHybris *stch(new _SurfaceTextureClientHybris(buffer_queue));
 #endif
 

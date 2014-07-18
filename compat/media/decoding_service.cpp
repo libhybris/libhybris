@@ -38,6 +38,7 @@ typedef void* EGLSyncKHR;
 #include <gui/IGraphicBufferProducer.h>
 #include <gui/IGraphicBufferConsumer.h>
 #include <gui/Surface.h>
+#include <gui/NativeBufferAlloc.h>
 
 namespace android {
 
@@ -240,9 +241,10 @@ void DecodingService::createBufferQueue()
 
     // This BuferQueue is shared between the client and the service
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
+    sp<NativeBufferAlloc> native_alloc(new NativeBufferAlloc());
     buffer_queue = new BufferQueue(false, NULL, native_alloc);
 #else
-    buffer_queue = new BufferQueue(g_buffer_alloc);
+    buffer_queue = new BufferQueue(NULL);
 #endif
     ALOGD("buffer_queue: %p", (void*)buffer_queue.get());
     buffer_queue->setBufferCount(5);
