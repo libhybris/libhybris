@@ -44,6 +44,8 @@
 
 #include <utils/Log.h>
 
+#include <gui/NativeBufferAlloc.h>
+
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__)
 
 namespace android
@@ -482,7 +484,7 @@ int android_media_set_preview_texture(MediaPlayerWrapper *mp, int texture_id)
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 			new android::BufferQueue(false, NULL, native_alloc)
 #else
-			new android::BufferQueue(NULL, native_alloc)
+			new android::BufferQueue(NULL)
 #endif
 			);
 
