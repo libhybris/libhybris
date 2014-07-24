@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu22) utopic; urgency=medium
+
+  * compat: roll back local changes for native buffer allocators
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 24 Jul 2014 02:29:36 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu21) utopic; urgency=medium
 
   * compat/camera: adding metadata setter for GPS location
