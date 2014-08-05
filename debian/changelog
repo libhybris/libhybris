@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu23) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20131207+e452e83-0ubuntu23) utopic; urgency=medium
 
   [ Jim Hodapp ]
   * compat/camera: export additional interface and logic for audio
