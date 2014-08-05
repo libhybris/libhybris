@@ -1,3 +1,11 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu23) UNRELEASED; urgency=medium
+
+  [ Jim Hodapp ]
+  * compat/camera: export additional interface and logic for audio
+    support when recording videos
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 05 Aug 2014 17:02:19 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu22) utopic; urgency=medium
 
   * compat: roll back local changes for native buffer allocators
