@@ -1,3 +1,11 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu24) utopic; urgency=medium
+
+  [ Jim Hodapp ]
+  * Moved audio record source files from libhybris source tree to
+    frameworks/av/media/libmedia
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 06 Aug 2014 17:10:52 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu23) utopic; urgency=medium
 
   [ Jim Hodapp ]
