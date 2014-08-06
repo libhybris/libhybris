@@ -8,6 +8,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libcameraservice \
 	libmedialogservice \
 	libcutils \
+	libmedia \
 	libmedia_compat_layer \
 	libmediaplayerservice \
 	libutils \
@@ -39,9 +40,6 @@ LOCAL_SRC_FILES:= \
 	media_format_layer.cpp \
 	surface_texture_client_hybris.cpp \
 	decoding_service.cpp \
-	camera_record_service.cpp \
-	record_track.cpp \
-	record_thread.cpp \
 	media_recorder_layer.cpp \
 	media_recorder.cpp \
 	media_recorder_client.cpp \
@@ -64,7 +62,6 @@ LOCAL_SHARED_LIBRARIES := \
 	libGLESv2 \
 	libmedia \
 	libaudioutils \
-	libcameraservice \
 	libmediaplayerservice
 
 LOCAL_C_INCLUDES := \
