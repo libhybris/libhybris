@@ -37,9 +37,11 @@
 #include <errno.h>
 #include <dirent.h>
 #include <sys/types.h>
+#include <stdarg.h>
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <fcntl.h>
 
 #include <unistd.h>
 #include <locale.h>
@@ -1256,6 +1258,45 @@ FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
 	return strtod_l(nptr, endptr, hybris_locale);
 }
 
+struct open_redirect {
+	const char *from;
+	const char *to;
+};
+
+struct open_redirect open_redirects[] = {
+	{ "/dev/log/main", "/dev/log_main" },
+	{ "/dev/log/radio", "/dev/log_radio" },
+	{ "/dev/log/system", "/dev/log_system" },
+	{ "/dev/log/events", "/dev/log_events" },
+	{ NULL, NULL }
+};
+
+int my_open(const char *pathname, int flags, ...)
+{
+	va_list ap;
+	mode_t mode = 0;
+	const char *target_path = pathname;
+
+	if (pathname != NULL) {
+		struct open_redirect *entry = &open_redirects[0];
+		while (entry->from != NULL) {
+			if (strcmp(pathname, entry->from) == 0) {
+				target_path = entry->to;
+				break;
+			}
+			entry++;
+		}
+	}
+
+	if (flags & O_CREAT) {
+		va_start(ap, flags);
+		mode = va_arg(ap, mode_t);
+		va_end(ap);
+	}
+
+	return open(target_path, flags, mode);
+}
+
 static char* use_from_bionic[] = {
     "setjmp",
     "longjmp",
@@ -1407,6 +1448,8 @@ static struct _hook hooks[] = {
     {"seekdir", seekdir},
     {"telldir", telldir},
     {"dirfd", dirfd},
+    /* fcntl.h */
+    {"open", my_open},
     // TODO: scandir, scandirat, alphasort, versionsort
     {NULL, NULL},
 };
