@@ -20,10 +20,10 @@
 #undef LOG_TAG
 #define LOG_TAG "CameraServiceCompatLayer"
 
-#include "camera_record_service.h"
 #include "media_recorder_factory.h"
 #include "media_recorder.h"
 
+#include <media/camera_record_service.h>
 #include <CameraService.h>
 
 #include <signal.h>
