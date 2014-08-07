@@ -118,8 +118,7 @@ static int send_prop_msg(prop_msg_t *msg,
 	return result;
 }
 
-int property_list(void (*propfn)(const char *key, const char *value, void *cookie),
-		void *cookie)
+int property_list(void (*propfn)(const char *key, const char *value, void *cookie), void *cookie)
 {
 	int err;
 	prop_msg_t msg;
@@ -128,9 +127,9 @@ int property_list(void (*propfn)(const char *key, const char *value, void *cooki
 	msg.cmd = PROP_MSG_LISTPROP;
 
 	err = send_prop_msg(&msg, propfn, cookie);
-	if (err < 0) {
-		return err;
-	}
+	if (err < 0)
+		/* fallback to property cache */
+		hybris_propcache_list((hybris_propcache_list_cb) propfn, cookie);
 
 	return 0;
 }
