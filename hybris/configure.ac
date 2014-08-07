@@ -186,6 +186,8 @@ AC_CONFIG_FILES([
 	camera/libcamera.pc
 	media/Makefile
 	media/libmedia.pc
+	wifi/Makefile
+	wifi/libwifi.pc
 	include/Makefile
 	utils/Makefile
 	tests/Makefile

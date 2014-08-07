@@ -11,7 +11,8 @@ bin_PROGRAMS = \
 	test_camera \
 	test_media \
 	test_recorder \
-	test_gps
+	test_gps \
+	test_wifi
 
 if HAS_ANDROID_4_2_0
 bin_PROGRAMS += test_hwcomposer
@@ -191,3 +192,11 @@ test_nfc_LDFLAGS =
 test_nfc_LDADD = \
 	$(top_builddir)/libnfc_nxp/libnfc_nxp.la \
 	$(top_builddir)/hardware/libhardware.la
+
+test_wifi_SOURCES = test_wifi.c
+test_wifi_CFLAGS = \
+        -I$(top_srcdir)/include \
+        -I$(top_srcdir)/include/android
+test_wifi_LDADD = \
+	$(top_builddir)/wifi/libwifi.la
+
