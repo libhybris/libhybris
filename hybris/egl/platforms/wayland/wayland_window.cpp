@@ -41,9 +41,21 @@ extern "C" {
 }
 #endif
 
+static void
+buffer_create_sync_callback(void *data, struct wl_callback *callback, uint32_t serial)
+{
+   struct wl_callback **created_callback = static_cast<struct wl_callback **>(data);
 
+   *created_callback = NULL;
+   wl_callback_destroy(callback);
+}
 
-void WaylandNativeWindowBuffer::wlbuffer_from_native_handle(struct android_wlegl *android_wlegl)
+static const struct wl_callback_listener buffer_create_sync_listener = {
+   buffer_create_sync_callback
+};
+
+void WaylandNativeWindowBuffer::wlbuffer_from_native_handle(struct android_wlegl *android_wlegl,
+                                                            struct wl_display *display, struct wl_event_queue *queue)
 {
     struct wl_array ints;
     int *ints_data;
@@ -66,6 +78,10 @@ void WaylandNativeWindowBuffer::wlbuffer_from_native_handle(struct android_wlegl
             format, usage, wlegl_handle);
 
     android_wlegl_handle_destroy(wlegl_handle);
+
+    creation_callback = wl_display_sync(display);
+    wl_callback_add_listener(creation_callback, &buffer_create_sync_listener, &creation_callback);
+    wl_proxy_set_queue((struct wl_proxy *)creation_callback, queue);
 }
 
 void WaylandNativeWindow::resize_callback(struct wl_egl_window *egl_window, void *)
@@ -210,10 +226,7 @@ WaylandNativeWindow::~WaylandNativeWindow()
     for (; it != m_bufList.end(); it++)
     {
         WaylandNativeWindowBuffer* buf=*it;
-        if (buf->wlbuffer)
-            wl_buffer_destroy(buf->wlbuffer);
-        buf->wlbuffer = NULL;
-        buf->common.decRef(&buf->common);
+        destroyBuffer(buf);
     }
     if (frame_callback)
         wl_callback_destroy(frame_callback);
@@ -444,7 +457,7 @@ int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
 
     if (wnb->wlbuffer == NULL)
     {
-        wnb->wlbuffer_from_native_handle(m_android_wlegl);
+        wnb->wlbuffer_from_native_handle(m_android_wlegl, m_display, wl_queue);
         TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
         wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
         wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
@@ -536,7 +549,7 @@ void WaylandNativeWindow::finishSwap()
 
     if (wnb->wlbuffer == NULL)
     {
-        wnb->wlbuffer_from_native_handle(m_android_wlegl);
+        wnb->wlbuffer_from_native_handle(m_android_wlegl, m_display, wl_queue);
         TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
         wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
         wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
@@ -710,6 +723,16 @@ void WaylandNativeWindow::destroyBuffer(WaylandNativeWindowBuffer* wnb)
     TRACE("wnb:%p", wnb);
 
     assert(wnb != NULL);
+
+    int ret = 0;
+    while (ret != -1 && wnb->creation_callback)
+        ret = wl_display_dispatch_queue(m_display, wl_queue);
+
+    if (wnb->creation_callback) {
+        wl_callback_destroy(wnb->creation_callback);
+        wnb->creation_callback = NULL;
+    }
+
     if (wnb->wlbuffer)
         wl_buffer_destroy(wnb->wlbuffer);
     wnb->wlbuffer = NULL;
