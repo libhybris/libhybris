@@ -1,3 +1,10 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu25) UNRELEASED; urgency=medium
+
+  [ Alfonso Sanchez-Beato ]
+  * Adding support for the wifi HAL
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 13 Aug 2014 01:32:42 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu24) utopic; urgency=medium
 
   [ Jim Hodapp ]
