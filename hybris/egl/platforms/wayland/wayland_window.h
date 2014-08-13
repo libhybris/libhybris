@@ -56,6 +56,7 @@ protected:
         ANativeWindowBuffer::format = format;
         ANativeWindowBuffer::usage = usage;
         this->wlbuffer = NULL;
+        this->creation_callback = NULL;
         this->busy = 0;
         this->other = NULL;
         this->m_alloc = alloc_device;
@@ -75,6 +76,7 @@ protected:
         ANativeWindowBuffer::handle = other->handle;
         ANativeWindowBuffer::stride = other->stride;
         this->wlbuffer = NULL;
+        this->creation_callback = NULL;
         this->busy = 0;
         this->other = other;
         this->m_alloc = NULL;
@@ -85,7 +87,9 @@ protected:
         if (this->m_alloc)
              m_alloc->free(m_alloc, this->handle);
     }
-    void wlbuffer_from_native_handle(struct android_wlegl *android_wlegl);
+    void wlbuffer_from_native_handle(struct android_wlegl *android_wlegl,
+                                     struct wl_display *display,
+                                     struct wl_event_queue *queue);
 
 protected:
     void* vaddr;
@@ -93,6 +97,7 @@ protected:
 
 public:
     struct wl_buffer *wlbuffer;
+    struct wl_callback *creation_callback;
     int busy;
     int youngest;
     ANativeWindowBuffer *other;
