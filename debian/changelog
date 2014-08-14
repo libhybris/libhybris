@@ -3,6 +3,10 @@ libhybris (0.1.0+git20131207+e452e83-0ubuntu26) UNRELEASED; urgency=medium
   [ Yu-Cheng Chou <ianchou821@gmail.com> ]
   * debian/control: fix typo in description (LP: #1259444)
 
+  [ Daniel van Vugt ]
+  * hooks: converting linear search into a binary search
+    (LP: #1343198)
+
  -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 14 Aug 2014 17:45:44 -0300
 
 libhybris (0.1.0+git20131207+e452e83-0ubuntu25) utopic; urgency=medium

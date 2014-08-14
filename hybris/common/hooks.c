@@ -1574,21 +1574,32 @@ static struct _hook hooks[] = {
     {"__system_property_add", __my_system_property_add},
     {"__system_property_wait_any", __my_system_property_wait_any},
     {"__system_property_find_nth", __my_system_property_find_nth},
-    {NULL, NULL},
 };
+
+static int hook_cmp(const void *a, const void *b)
+{
+    return strcmp(((struct _hook*)a)->name, ((struct _hook*)b)->name);
+}
 
 void *get_hooked_symbol(char *sym)
 {
-    struct _hook *ptr = &hooks[0];
     static int counter = -1;
+    static int sorted = 0;
+    const int nhooks = sizeof(hooks) / sizeof(hooks[0]);
+    void *found = NULL;
+    struct _hook key;
 
-    while (ptr->name != NULL)
+    if (!sorted)
     {
-        if (strcmp(sym, ptr->name) == 0){
-            return ptr->func;
-        }
-        ptr++;
+        qsort(hooks, nhooks, sizeof(hooks[0]), hook_cmp);
+        sorted = 1;
     }
+
+    key.name = sym;
+    found = bsearch(&key, hooks, nhooks, sizeof(hooks[0]), hook_cmp);
+    if (found != NULL)
+        return ((struct _hook*)found)->func;
+
     if (strstr(sym, "pthread") != NULL)
     {
         /* safe */
