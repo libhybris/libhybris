@@ -86,9 +86,9 @@ Depends: libhardware2 (= ${binary:Version}),
 Replaces: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
 Breaks: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
 Description: Development files for libhardware
- Contains the development files the Android libhardware HAL, which can be
- used to access a wide range of other HALs, such as audio, power, gralloc,
- etc.
+ Contains the development files for the Android libhardware HAL, which can
+ be used to access a wide range of other HALs, such as audio, power,
+ gralloc, etc.
  .
  Hybris is a solution that allows the use of bionic-based HW adaptations in
  glibc systems.
