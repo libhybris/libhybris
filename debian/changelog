@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu26) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20131207+e452e83-0ubuntu26) utopic; urgency=medium
 
   [ Yu-Cheng Chou <ianchou821@gmail.com> ]
   * debian/control: fix typo in description (LP: #1259444)
