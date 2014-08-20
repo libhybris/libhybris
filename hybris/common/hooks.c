@@ -46,6 +46,7 @@
 #include <search.h>
 
 #include <hybris/properties/properties.h>
+#include <hybris/dlfcn/dlfcn.h>
 
 static locale_t hybris_locale;
 static int locale_inited = 0;
@@ -1394,7 +1395,7 @@ static struct _hook hooks[] = {
     {"__errno", __errno_location},
     {"__set_errno", my_set_errno},
     {"sysconf", my_sysconf},
-    {"dlopen", android_dlopen},
+    {"dlopen", hybris_dlopen_resolvefirst},
     {"dlerror", android_dlerror},
     {"dlsym", android_dlsym},
     {"dladdr", android_dladdr},

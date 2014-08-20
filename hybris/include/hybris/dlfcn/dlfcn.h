@@ -26,6 +26,7 @@ void *hybris_dlopen(const char *filename, int flag);
 void *hybris_dlsym(void *handle, const char *symbol);
 int   hybris_dlclose(void *handle);
 char *hybris_dlerror(void);
+void *hybris_dlopen_resolvefirst(const char *filename, int flag);
 
 #ifdef __cplusplus
 }
