@@ -23,7 +23,7 @@
 #define HYBRIS_BINDING_H_
 
 /* floating_point_abi.h defines FP_ATTRIB */
-#include <hybris/internal/floating_point_abi.h>
+#include <hybris/common/floating_point_abi.h>
 
 void *android_dlopen(const char *filename, int flag);
 void *android_dlsym(void *name, const char *symbol);
@@ -41,7 +41,7 @@ int android_dladdr(const void *addr, void *info);
  * an updated version of this header file:
  *
  *    python utils/generate_wrapper_macros.py > \
- *       hybris/include/hybris/internal/binding.h
+ *       hybris/include/hybris/common/binding.h
  *
  * If you need macros with more arguments, just customize the
  * MAX_ARGS variable in generate_wrapper_macros.py.
@@ -435,7 +435,7 @@ int android_dladdr(const void *addr, void *info);
  * an updated version of this header file:
  *
  *    python utils/generate_wrapper_macros.py > \
- *       hybris/include/hybris/internal/binding.h
+ *       hybris/include/hybris/common/binding.h
  *
  * If you need macros with more arguments, just customize the
  * MAX_ARGS variable in generate_wrapper_macros.py.

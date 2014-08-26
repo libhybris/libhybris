@@ -20,7 +20,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 
 HYBRIS_LIBRARY_INITIALIZE(vibrator, "/system/lib/libhardware_legacy.so");
 

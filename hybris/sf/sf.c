@@ -21,7 +21,7 @@
 #include <dlfcn.h>
 #include <stddef.h>
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 #include <hybris/surface_flinger/surface_flinger_compatibility_layer.h>
 
 #define COMPAT_LIBRARY_PATH "/system/lib/libsf_compat_layer.so"

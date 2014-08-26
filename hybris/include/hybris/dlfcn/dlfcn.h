@@ -15,22 +15,7 @@
  *
  */
 
-#ifndef _HYBRIS_DLFCN_H_
-#define _HYBRIS_DLFCN_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void *hybris_dlopen(const char *filename, int flag);
-void *hybris_dlsym(void *handle, const char *symbol);
-int   hybris_dlclose(void *handle);
-char *hybris_dlerror(void);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // _HYBRIS_DLFCN_H_
+/* File was moved. Just providing it here for compatibility */
+#include <hybris/common/dlfcn.h>
 
 // vim: noai:ts=4:sw=4:ss=4:expandtab

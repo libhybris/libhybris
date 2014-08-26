@@ -3,7 +3,7 @@
 #include <dlfcn.h>
 #include <stdlib.h>
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 
 static void * (*_androidCreateDisplaySurface)();
 

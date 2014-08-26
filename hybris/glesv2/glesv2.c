@@ -22,8 +22,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include <hybris/internal/binding.h>
-#include <hybris/internal/floating_point_abi.h>
+#include <hybris/common/binding.h>
+#include <hybris/common/floating_point_abi.h>
 
 static void *_libglesv2 = NULL;
 

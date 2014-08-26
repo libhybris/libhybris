@@ -15,30 +15,22 @@
  *
  */
 
-#include <../include/hybris/dlfcn/dlfcn.h>
-#include <../include/hybris/common/binding.h>
+#ifndef _HYBRIS_DLFCN_H_
+#define _HYBRIS_DLFCN_H_
 
-void *hybris_dlopen(const char *filename, int flag)
-{
-    return android_dlopen(filename,flag);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void *hybris_dlopen(const char *filename, int flag);
+void *hybris_dlsym(void *handle, const char *symbol);
+int   hybris_dlclose(void *handle);
+char *hybris_dlerror(void);
+
+#ifdef __cplusplus
 }
+#endif
 
-
-void *hybris_dlsym(void *handle, const char *symbol)
-{
-    return android_dlsym(handle,symbol);
-}
-
-
-int   hybris_dlclose(void *handle)
-{
-    return android_dlclose(handle);
-}
-
-
-char *hybris_dlerror(void)
-{
-    return android_dlerror();
-}
+#endif // _HYBRIS_DLFCN_H_
 
 // vim: noai:ts=4:sw=4:ss=4:expandtab
