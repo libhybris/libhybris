@@ -180,6 +180,9 @@ extract_headers_to libnfc-nxp \
 extract_headers_to private \
     system/core/include/private/android_filesystem_config.h
 
+extract_headers_to linux \
+    external/kernel-headers/original/linux/android_alarm.h \
+    external/kernel-headers/original/linux/binder.h
 
 # In order to make it easier to trace back the origins of headers, fetch
 # some repository information from the Git source tree (if available).
@@ -192,6 +195,7 @@ GIT_PROJECTS="
     hardware/libhardware_legacy
     system/core
     external/libnfc-nxp
+    external/linux-headers
 "
 
 echo "Extracting Git revision information"
