@@ -147,6 +147,17 @@ cat > $HEADERPATH/android-config.h << EOF
 #endif
 EOF
 
+cat <<< 'Name: Android header files
+Description: Header files needed to write applications for the Android platform
+Version: androidversion
+
+prefix=/usr
+exec_prefix=${prefix}
+includedir=${prefix}/include
+
+Cflags: -I${includedir}/android' > $HEADERPATH/android-headers.pc
+sed -i -e s:androidversion:$MAJOR.$MINOR.$PATCH:g $HEADERPATH/android-headers.pc
+
 extract_headers_to hardware \
     hardware/libhardware/include/hardware
 
@@ -180,6 +191,9 @@ extract_headers_to libnfc-nxp \
 extract_headers_to private \
     system/core/include/private/android_filesystem_config.h
 
+extract_headers_to linux \
+    external/kernel-headers/original/linux/android_alarm.h \
+    external/kernel-headers/original/linux/binder.h
 
 # In order to make it easier to trace back the origins of headers, fetch
 # some repository information from the Git source tree (if available).
@@ -192,6 +206,7 @@ GIT_PROJECTS="
     hardware/libhardware_legacy
     system/core
     external/libnfc-nxp
+    external/linux-headers
 "
 
 echo "Extracting Git revision information"
@@ -231,7 +246,8 @@ all:
 
 install:
 	mkdir -p \$(DESTDIR)/\$(INCLUDEDIR)
-	cp android-config.h android-version.h \$(DESTDIR)/\$(INCLUDEDIR)
+	cp android-config.h android-version.h android-headers.pc \$(DESTDIR)/\$(INCLUDEDIR)
+	sed -i -e s:prefix=/usr:prefix=\$(PREFIX):g \$(DESTDIR)/\$(INCLUDEDIR)/android-headers.pc
 	cp -r hardware \$(DESTDIR)/\$(INCLUDEDIR)
 	cp -r hardware_legacy \$(DESTDIR)/\$(INCLUDEDIR)
 	cp -r cutils \$(DESTDIR)/\$(INCLUDEDIR)
