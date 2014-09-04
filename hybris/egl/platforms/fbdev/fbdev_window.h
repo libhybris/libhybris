@@ -73,13 +73,17 @@ protected:
 
 private:
     void destroyBuffers();
+    void reallocateBuffers();
 
 private:
     framebuffer_device_t* m_fbDev;
     alloc_device_t* m_alloc;
     unsigned int m_usage;
     unsigned int m_bufFormat;
+    unsigned int m_bufferCount;
     int m_freeBufs;
+    bool m_allocateBuffers;
+
     std::list<FbDevNativeWindowBuffer*> m_bufList;
     FbDevNativeWindowBuffer* m_frontBuf;
 };
