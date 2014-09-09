@@ -175,7 +175,6 @@ int property_get(const char *key, char *value, const char *default_value)
 
 	if (ret) {
 		strcpy(value, ret);
-		free(ret);
 		return strlen(value);
 	} else if (default_value != NULL) {
 		strcpy(value, default_value);

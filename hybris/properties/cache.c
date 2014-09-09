@@ -73,7 +73,7 @@ char *hybris_propcache_find(const char *key)
 	/* then look up the key and do a copy if we get a result */
 	struct hybris_prop_value *prop = cache_find_internal(key);
 	if (prop)
-		ret = strdup(prop->value);
+		return prop->value;
 
 out:
 	return ret;
