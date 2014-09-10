@@ -1297,6 +1297,19 @@ int my_open(const char *pathname, int flags, ...)
 	return open(target_path, flags, mode);
 }
 
+/**
+ * NOTE: Normally we don't have to wrap __system_property_get (libc.so) as it is only used
+ * through the property_get (libcutils.so) function. However when property_get is used
+ * internally in libcutils.so we don't have any chance to hook our replacement in.
+ * Therefore we have to hook __system_property_get too and just replace it with the
+ * implementation of our internal property handling
+ */
+
+int my_system_property_get(const char *name, const char *value)
+{
+	return property_get(name, value, NULL);
+}
+
 static char* use_from_bionic[] = {
     "setjmp",
     "longjmp",
@@ -1306,6 +1319,7 @@ static char* use_from_bionic[] = {
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
+    {"__system_property_get", my_system_property_get },
     {"malloc", my_malloc },
     {"memcpy",my_memcpy},
     {"strlen",my_strlen},
