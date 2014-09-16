@@ -71,6 +71,8 @@ FbDevNativeWindow::FbDevNativeWindow( alloc_device_t* alloc,
     m_fbDev = fbDev;
     m_bufFormat = m_fbDev->format;
     m_usage = GRALLOC_USAGE_HW_FB;
+    m_bufferCount = 0;
+    m_allocateBuffers = true;
 
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
     if (m_fbDev->numFramebuffers>0)
@@ -148,6 +150,9 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
     FbDevNativeWindowBuffer* fbnb=NULL;
 
     pthread_mutex_lock(&_mutex);
+
+    if (m_allocateBuffers)
+        reallocateBuffers();
 
     HYBRIS_TRACE_BEGIN("fbdev-platform", "dequeueBuffer-wait", "");
 #if defined(DEBUG)
@@ -451,12 +456,9 @@ unsigned int FbDevNativeWindow::transformHint() const
  */
 int FbDevNativeWindow::setUsage(int usage)
 {
-    int need_realloc = (m_usage != usage);
+    m_allocateBuffers = (m_usage != usage);
     TRACE("usage=x%x realloc=%d", usage, need_realloc);
     m_usage = usage;
-    if (need_realloc)
-        this->setBufferCount(m_bufList.size());
-
     return NO_ERROR;
 }
 
@@ -469,11 +471,9 @@ int FbDevNativeWindow::setUsage(int usage)
  */
 int FbDevNativeWindow::setBuffersFormat(int format)
 {
-    int need_realloc = (format != m_bufFormat);
+    m_allocateBuffers |= (format != m_bufFormat);
     TRACE("format=x%x realloc=%d", format, need_realloc);
     m_bufFormat = format;
-    if (need_realloc)
-        this->setBufferCount(m_bufList.size());
     return NO_ERROR;
 }
 
@@ -485,12 +485,18 @@ int FbDevNativeWindow::setBuffersFormat(int format)
 int FbDevNativeWindow::setBufferCount(int cnt)
 {
     TRACE("cnt=%d", cnt);
-    int err=NO_ERROR;
-    pthread_mutex_lock(&_mutex);
+    if (m_bufferCount != cnt) {
+        m_bufferCount = cnt;
+        m_allocateBuffers = true;
+    }
+    return NO_ERROR;
+}
 
+void FbDevNativeWindow::reallocateBuffers()
+{
     destroyBuffers();
 
-    for(unsigned int i = 0; i < cnt; i++)
+    for(unsigned int i = 0; i < m_bufferCount; i++)
     {
         FbDevNativeWindowBuffer *fbnb = new FbDevNativeWindowBuffer(m_alloc,
                             m_fbDev->width, m_fbDev->height, m_fbDev->format,
@@ -505,16 +511,15 @@ int FbDevNativeWindow::setBufferCount(int cnt)
         if (fbnb->status)
         {
             fbnb->common.decRef(&fbnb->common);
-            fprintf(stderr,"WARNING: %s: allocated only %d buffers out of %d\n", __PRETTY_FUNCTION__, m_freeBufs, cnt);
+            fprintf(stderr,"WARNING: %s: allocated only %d buffers out of %d\n", __PRETTY_FUNCTION__, m_freeBufs, m_bufferCount);
             break;
         }
 
         m_freeBufs++;
         m_bufList.push_back(fbnb);
     }
-    pthread_mutex_unlock(&_mutex);
 
-    return err;
+    m_allocateBuffers = false;
 }
 
 /*
