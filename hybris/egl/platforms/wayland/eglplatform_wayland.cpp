@@ -30,6 +30,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <assert.h>
@@ -102,6 +103,17 @@ extern "C" int waylandws_IsValidDisplay(EGLNativeDisplayType display)
 
 extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
 {
+	struct wl_egl_window *wl_window = (struct wl_egl_window*) win;
+	struct wl_display *wl_display = (struct wl_display*) display;
+
+	if (wl_window == 0 || wl_display == 0) {
+		HYBRIS_ERROR("Running with EGL_PLATFORM=wayland without setup wayland environment is not possible");
+		HYBRIS_ERROR("If you want to run a standlone EGL client do it like this:");
+		HYBRIS_ERROR(" $ export EGL_PLATFORM=null");
+		HYBRIS_ERROR(" $ test_glevs2");
+		abort();
+	}
+
 	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, (struct wl_display *) display, alloc);
 	window->common.incRef(&window->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
