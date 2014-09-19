@@ -92,6 +92,11 @@ void WaylandNativeWindow::resize_callback(struct wl_egl_window *egl_window, void
         egl_window->width,egl_window->height);
 }
 
+void WaylandNativeWindow::free_callback(struct wl_egl_window *egl_window, void *)
+{
+    ((WaylandNativeWindow*)(egl_window->nativewindow))->m_window = 0;
+}
+
 void WaylandNativeWindow::lock()
 {
     pthread_mutex_lock(&this->mutex);
@@ -189,6 +194,7 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
     this->m_defaultWidth = window->width;
     this->m_defaultHeight = window->height;
     this->m_window->resize_callback = resize_callback;
+    this->m_window->free_callback = free_callback;
     this->m_format = 1;
     this->frame_callback = NULL;
     this->wl_queue = wl_display_create_queue(display);
@@ -230,8 +236,11 @@ WaylandNativeWindow::~WaylandNativeWindow()
     wl_registry_destroy(registry);
     wl_event_queue_destroy(wl_queue);
     android_wlegl_destroy(m_android_wlegl);
-    m_window->nativewindow = NULL;
-    m_window->resize_callback = NULL;
+    if (m_window) {
+	    m_window->nativewindow = NULL;
+	    m_window->resize_callback = NULL;
+	    m_window->free_callback = NULL;
+    }
 }
 
 void WaylandNativeWindow::frame() {
