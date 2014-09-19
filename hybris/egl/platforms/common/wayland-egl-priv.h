@@ -27,6 +27,7 @@ struct wl_egl_window {
 
 	void *nativewindow;
 	void (*resize_callback)(struct wl_egl_window *, void *);
+	void (*free_callback)(struct wl_egl_window *, void *);
 };
 
 #ifdef  __cplusplus

@@ -43,6 +43,8 @@ wl_egl_window_create(struct wl_surface *surface,
 WL_EGL_EXPORT void
 wl_egl_window_destroy(struct wl_egl_window *egl_window)
 {
+	if (egl_window->free_callback)
+		egl_window->free_callback(egl_window, NULL);
 	free(egl_window);
 }
 
