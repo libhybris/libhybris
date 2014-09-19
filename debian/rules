@@ -21,6 +21,9 @@ DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 export CC=gcc-4.7
 export CXX=g++-4.7
 
+# Strong needs at least gcc 4.9
+export DEB_BUILD_MAINT_OPTIONS=hardening=-stackprotectorstrong
+
 ifneq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
 	CC :=$(DEB_HOST_GNU_TYPE)-$(CC)
 	CXX :=$(DEB_HOST_GNU_TYPE)-$(CXX)

@@ -1,3 +1,10 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu27) UNRELEASED; urgency=medium
+
+  * debian/rules: using hardening=-stackprotectorstrong as that's not
+    supported with gcc 4.7
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Fri, 19 Sep 2014 03:34:34 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu26) utopic; urgency=medium
 
   [ Yu-Cheng Chou <ianchou821@gmail.com> ]
