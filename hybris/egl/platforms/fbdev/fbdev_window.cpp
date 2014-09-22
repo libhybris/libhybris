@@ -457,7 +457,7 @@ unsigned int FbDevNativeWindow::transformHint() const
 int FbDevNativeWindow::setUsage(int usage)
 {
     m_allocateBuffers = (m_usage != usage);
-    TRACE("usage=x%x realloc=%d", usage, need_realloc);
+    TRACE("usage=x%x m_allocateBuffers=%d", usage, m_allocateBuffers);
     m_usage = usage;
     return NO_ERROR;
 }
@@ -472,7 +472,7 @@ int FbDevNativeWindow::setUsage(int usage)
 int FbDevNativeWindow::setBuffersFormat(int format)
 {
     m_allocateBuffers |= (format != m_bufFormat);
-    TRACE("format=x%x realloc=%d", format, need_realloc);
+    TRACE("format=x%x m_allocateBuffers=%d", format, m_allocateBuffers);
     m_bufFormat = format;
     return NO_ERROR;
 }
