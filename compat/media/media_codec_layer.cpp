@@ -338,6 +338,19 @@ int media_codec_configure(MediaCodecDelegate delegate, MediaFormat format, Surfa
     if (format_priv->max_input_size > 0)
         aformat->setInt32("max-input-size", format_priv->max_input_size);
 
+    if (format_priv->csd.get() != NULL) {
+        const size_t csd_size = format_priv->csd->size();
+
+        ALOGD("Adding csd (%zu bytes)", csd_size);
+
+        sp<ABuffer> buffer = new ABuffer(csd_size);
+        memcpy(buffer->data(), format_priv->csd->data(), csd_size);
+
+        buffer->meta()->setInt32("csd", true);
+        buffer->meta()->setInt64("timeUs", 0);
+        aformat->setBuffer("csd-0", buffer);
+    }
+
     ALOGD("Format: %s", aformat->debugString().c_str());
 
 #ifdef SIMPLE_PLAYER
@@ -427,6 +440,9 @@ int media_codec_queue_csd(MediaCodecDelegate delegate, MediaFormat format)
         CHECK_LE(srcBuffer->size(), dstBuffer->capacity());
         dstBuffer->setRange(0, srcBuffer->size());
         memcpy(dstBuffer->data(), srcBuffer->data(), srcBuffer->size());
+
+        dstBuffer->meta()->setInt32("csd", true);
+        dstBuffer->meta()->setInt64("timeUs", 0);
 
         AString err_msg;
         err = d->media_codec->queueInputBuffer(
