@@ -43,7 +43,8 @@ LOCAL_SRC_FILES:= \
 	media_recorder_layer.cpp \
 	media_recorder.cpp \
 	media_recorder_client.cpp \
-	media_recorder_factory.cpp
+	media_recorder_factory.cpp \
+	media_recorder_observer.cpp
 
 LOCAL_MODULE:= libmedia_compat_layer
 LOCAL_MODULE_TAGS := optional

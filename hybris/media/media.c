@@ -251,6 +251,12 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, surface_texture_client_unref,
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(media, surface_texture_client_set_surface_texture,
 	SurfaceTextureClientHybris, EGLNativeWindowType);
 
+// Recorder Observer
+HYBRIS_IMPLEMENT_FUNCTION0(media, struct MediaRecorderObserver*,
+	android_media_recorder_observer_new);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_media_recorder_observer_set_cb,
+	struct MediaRecorderObserver*, media_recording_started_cb, void*);
+
 // Recorder
 HYBRIS_IMPLEMENT_FUNCTION0(media, struct MediaRecorderWrapper*,
 	android_media_new_recorder);
