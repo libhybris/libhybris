@@ -19,8 +19,7 @@
 #include "media_recorder_client.h"
 
 #include <libmediaplayerservice/StagefrightRecorder.h>
-
-#include <utils/Log.h>
+#include <binder/IServiceManager.h>
 
 #define LOG_NDEBUG 0
 #define LOG_TAG "MediaRecorderClient"
@@ -32,6 +31,13 @@ using namespace android;
 MediaRecorderClient::MediaRecorderClient()
 {
     REPORT_FUNCTION();
+
+    sp<IServiceManager> service_manager = defaultServiceManager();
+    sp<IBinder> service = service_manager->getService(
+        String16(IMediaRecorderObserver::exported_service_name()));
+
+    media_recorder_observer = new BpMediaRecorderObserver(service);
+
     recorder = new android::StagefrightRecorder;
 }
 
@@ -226,6 +232,10 @@ status_t MediaRecorderClient::start()
         ALOGE("recorder must not be NULL");
         return NO_INIT;
     }
+
+    if (media_recorder_observer != NULL)
+        media_recorder_observer->recordingStarted();
+
     return recorder->start();
 }
 
@@ -237,6 +247,10 @@ status_t MediaRecorderClient::stop()
         ALOGE("recorder must not be NULL");
         return NO_INIT;
     }
+
+    if (media_recorder_observer != NULL)
+        media_recorder_observer->recordingStopped();
+
     return recorder->stop();
 }
 

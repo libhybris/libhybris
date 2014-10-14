@@ -22,12 +22,15 @@
 #include <hybris/internal/camera_control.h>
 #include <hybris/media/media_recorder_layer.h>
 
+#include "media_recorder_observer.h"
+
 #include <media/IMediaRecorder.h>
 
 namespace android {
 
 class MediaRecorderBase;
 class Mutex;
+class BpMediaRecorderObserver;
 
 /*!
  * \brief The MediaRecorderClient struct wraps the service side of the MediaRecorder class
@@ -65,6 +68,7 @@ public:
     virtual sp<IGraphicBufferProducer> querySurfaceMediaSource();
 
 private:
+    sp<BpMediaRecorderObserver> media_recorder_observer;
     MediaRecorderBase *recorder;
     Mutex recorder_lock;
 };

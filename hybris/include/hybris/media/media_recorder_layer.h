@@ -26,6 +26,13 @@
 extern "C" {
 #endif
 
+    // Media Recorder Observer API
+    struct MediaRecorderObserver;
+    struct MediaRecorderObserver *android_media_recorder_observer_new();
+
+    typedef void (*media_recording_started_cb)(bool started, void *context);
+    void android_media_recorder_observer_set_cb(struct MediaRecorderObserver *observer, media_recording_started_cb cb, void *context);
+
     struct MediaRecorderWrapper;
     struct CameraControl;
 
