@@ -1,10 +1,11 @@
-libhybris (0.1.0+git20131207+e452e83-0ubuntu28) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20131207+e452e83-0ubuntu28) utopic; urgency=medium
 
   [ Alfonso Sanchez-Beato ]
   * media/compat: Add CSD to data for configuring codec (LP: #1378397)
 
   [ Ricardo Mendoza ]
   * Implement Observer interface for the MediaRecorder class
+    (LP: #1362658)
 
  -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 14 Oct 2014 22:05:15 -0300
 
