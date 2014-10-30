@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Canonical Ltd
+ * Copyright (C) 2013-2014 Canonical Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,8 +107,10 @@ extern "C" {
     void android_camera_get_preview_fps_range(struct CameraControl* control, int* min, int* max);
     void android_camera_get_preview_fps(struct CameraControl* control, int* fps);
     void android_camera_enumerate_supported_picture_sizes(struct CameraControl* control, size_callback cb, void* ctx);
+    void android_camera_enumerate_supported_thumbnail_sizes(struct CameraControl* control, size_callback cb, void* ctx);
     void android_camera_get_preview_size(struct CameraControl* control, int* width, int* height);
     void android_camera_get_picture_size(struct CameraControl* control, int* width, int* height);
+    void android_camera_get_thumbnail_size(struct CameraControl* control, int* width, int* height);
 
     void android_camera_get_current_zoom(struct CameraControl* control, int* zoom);
     void android_camera_get_max_zoom(struct CameraControl* control, int* max_zoom);
@@ -125,6 +127,7 @@ extern "C" {
     void android_camera_set_preview_size(struct CameraControl* control, int width, int height);
     void android_camera_set_preview_fps(struct CameraControl* control, int fps);
     void android_camera_set_picture_size(struct CameraControl* control, int width, int height);
+    void android_camera_set_thumbnail_size(struct CameraControl* control, int width, int height);
     void android_camera_set_effect_mode(struct CameraControl* control, EffectMode mode);
     void android_camera_set_flash_mode(struct CameraControl* control, FlashMode mode);
     void android_camera_set_white_balance_mode(struct CameraControl* control, WhiteBalanceMode mode);

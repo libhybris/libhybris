@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2013 Canonical Ltd
+ * Copyright (C) 2013-2014 Canonical Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,8 @@
  * limitations under the License.
  *
  * Authored by: Thomas Voß <thomas.voss@canonical.com>
- *              Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>
+ *				Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>
+ *				Jim Hodapp <jim.hodapp@canonical.com>
  */
 
 //#define LOG_NDEBUG 0
@@ -486,6 +487,67 @@ void android_camera_get_picture_size(CameraControl* control, int* width, int* he
 	android::Mutex::Autolock al(control->guard);
 
 	control->camera_parameters.getPictureSize(width, height);
+}
+
+void android_camera_set_thumbnail_size(struct CameraControl* control, int width, int height)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+
+	control->camera_parameters.set(
+			android::CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH,
+			width);
+	control->camera_parameters.set(
+			android::CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT,
+			height);
+	control->camera->setParameters(control->camera_parameters.flatten());
+}
+
+void android_camera_get_thumbnail_size(struct CameraControl* control, int* width, int* height)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+
+	*width = atoi(control->camera_parameters.get(android::CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH));
+	*height = atoi(control->camera_parameters.get(android::CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT));
+}
+
+void android_camera_enumerate_supported_thumbnail_sizes(struct CameraControl* control, size_callback cb, void* ctx)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	// e.g. 800x600,320x240
+	android::String8 sizes = android::String8(
+			control->camera_parameters.get(
+				android::CameraParameters::KEY_SUPPORTED_JPEG_THUMBNAIL_SIZES));
+
+	const char delimiter[2] = ",";
+	const char size_delimiter[2] = "x";
+	char *token, *save_ptr, *save_ptr1;
+	int height = 0, width = 0;
+	char *sizes_mutable = strdup(sizes.string());
+
+	ALOGD("Supported thumbnail sizes: %s", sizes.string());
+	// Get the first <width>x<height to the left of ','
+	token = strtok_r(sizes_mutable, delimiter, &save_ptr);
+
+	while (token != NULL) {
+		// Parse <width>x<height> token
+		char *w = strtok_r(token, size_delimiter, &save_ptr1);
+		char *h = strtok_r(NULL, size_delimiter, &save_ptr1);
+		width = atoi(w);
+		height = atoi(h);
+		if (width > 0 && height > 0)
+			cb(ctx, width, height);
+		// Get the next <width>x<height> pair
+		token = strtok_r(NULL, delimiter, &save_ptr);
+	}
 }
 
 void android_camera_set_picture_size(CameraControl* control, int width, int height)
