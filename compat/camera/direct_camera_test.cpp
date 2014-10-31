@@ -49,6 +49,7 @@ int32_t current_zoom_level = 1;
 bool new_camera_frame_available = true;
 static CameraControl* camera_control = NULL;
 int camera_width = 0, camera_height = 0;
+int thumbnail_width = 0, thumbnail_height = 0;
 static MediaRecorderWrapper *recorder = NULL;
 bool recording = false;
 
@@ -144,6 +145,17 @@ void size_cb(void* ctx, int width, int height)
 	if (width == 1024 && height == 768) {
 		camera_width = 1024;
 		camera_height = 768;
+	}
+}
+
+void thumbnail_size_cb(void* ctx, int width, int height)
+{
+	static bool do_once = true;
+	printf("Supported thumbnail size: [%d,%d]\n", width, height);
+	if (do_once) {
+		printf("Selecting thumbnail size: [%dx%d]\n", width, height);
+		thumbnail_width = width;
+		thumbnail_height = height;
 	}
 }
 
@@ -555,12 +567,21 @@ int main(int argc, char** argv)
 	android_input_stack_initialize(&event_listener, &input_configuration);
 	android_input_stack_start();
 
+	// Set the still photo size
 	android_camera_enumerate_supported_picture_sizes(camera_control, size_cb, NULL);
 	if (camera_width == 0 && camera_height == 0) {
 		camera_width = 320;
 		camera_height = 240;
 	}
 	android_camera_set_picture_size(camera_control, camera_width, camera_height);
+
+	// Set the still photo thumbnail size
+	android_camera_enumerate_supported_thumbnail_sizes(camera_control, thumbnail_size_cb, NULL);
+	if (thumbnail_width == 0 && thumbnail_height == 0) {
+		thumbnail_width = 320;
+		thumbnail_height = 240;
+	}
+	android_camera_set_thumbnail_size(camera_control, thumbnail_width, thumbnail_height);
 
 	AutoFocusMode af_mode;
 	android_camera_get_auto_focus_mode(camera_control, &af_mode);
