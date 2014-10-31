@@ -1,3 +1,11 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu29) vivid; urgency=medium
+
+  [ Jim Hodapp ]
+  * Add hybris API that allows retrieval of supported camera still
+    image thumbnail sizes that qtubuntu-camera can take advantage of.
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 30 Oct 2014 22:38:05 -0400
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu28) utopic; urgency=medium
 
   [ Alfonso Sanchez-Beato ]
