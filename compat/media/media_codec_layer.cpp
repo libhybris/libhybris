@@ -164,7 +164,7 @@ IGBPWrapperHybris decoding_service_get_igraphicbufferproducer()
     return wrapper;
 }
 
-DSSessionWrapperHybris decoding_service_create_session()
+DSSessionWrapperHybris decoding_service_create_session(uint32_t handle)
 {
     REPORT_FUNCTION();
 
@@ -175,13 +175,13 @@ DSSessionWrapperHybris decoding_service_create_session()
     // Create a new decoding service session
     sp<BnDecodingServiceSession> session(new BnDecodingServiceSession());
     // This new session will destroy and replace any existing session
-    DecodingClient::service_instance()->registerSession(session);
+    DecodingClient::service_instance()->registerSession(session, handle);
     DSSessionWrapper *wrapper(new DSSessionWrapper(session));
 
     return wrapper;
 }
 
-void decoding_service_set_client_death_cb(DecodingClientDeathCbHybris cb, void *context)
+void decoding_service_set_client_death_cb(DecodingClientDeathCbHybris cb, uint32_t handle, void *context)
 {
     REPORT_FUNCTION();
 
@@ -191,7 +191,7 @@ void decoding_service_set_client_death_cb(DecodingClientDeathCbHybris cb, void *
         return;
     }
 
-    DecodingService::service_instance()->setDecodingClientDeathCb(cb, context);
+    DecodingService::service_instance()->setDecodingClientDeathCb(cb, handle, context);
 }
 
 // ----- End of DecodingService C API ----- //

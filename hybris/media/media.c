@@ -99,10 +99,10 @@ HYBRIS_IMPLEMENT_FUNCTION0(media, IGBCWrapperHybris,
 	decoding_service_get_igraphicbufferconsumer);
 HYBRIS_IMPLEMENT_FUNCTION0(media, IGraphicBufferProducerHybris,
 	decoding_service_get_igraphicbufferproducer);
-HYBRIS_IMPLEMENT_FUNCTION0(media, DSSessionWrapperHybris,
-	decoding_service_create_session);
-HYBRIS_IMPLEMENT_VOID_FUNCTION2(media, decoding_service_set_client_death_cb,
-	DecodingClientDeathCbHybris, void*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, DSSessionWrapperHybris,
+	decoding_service_create_session, uint32_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, decoding_service_set_client_death_cb,
+	DecodingClientDeathCbHybris, uint32_t, void*);
 
 // Media Codecs
 HYBRIS_IMPLEMENT_FUNCTION1(media, MediaCodecDelegate,
