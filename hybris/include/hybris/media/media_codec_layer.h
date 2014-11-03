@@ -44,8 +44,8 @@ extern "C" {
 
     IGBCWrapperHybris decoding_service_get_igraphicbufferconsumer();
     IGBPWrapperHybris decoding_service_get_igraphicbufferproducer();
-    DSSessionWrapperHybris decoding_service_create_session();
-    void decoding_service_set_client_death_cb(DecodingClientDeathCbHybris cb, void *context);
+    DSSessionWrapperHybris decoding_service_create_session(uint32_t handle);
+    void decoding_service_set_client_death_cb(DecodingClientDeathCbHybris cb, uint32_t handle, void *context);
 
     MediaCodecDelegate media_codec_create_by_codec_name(const char *name);
     MediaCodecDelegate media_codec_create_by_codec_type(const char *type);
