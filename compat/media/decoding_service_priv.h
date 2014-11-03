@@ -26,6 +26,11 @@
 
 namespace android {
 
+typedef struct {
+    DecodingClientDeathCbHybris cb;
+    void *context;
+} ClientCb;
+
 class IGraphicBufferConsumer;
 class IGraphicBufferProducer;
 class BufferQueue;
@@ -70,7 +75,7 @@ public:
 
     virtual status_t getIGraphicBufferConsumer(sp<IGraphicBufferConsumer>* gbc) = 0;
     virtual status_t getIGraphicBufferProducer(sp<IGraphicBufferProducer>* gbp) = 0;
-    virtual status_t registerSession(const sp<IDecodingServiceSession>& session) = 0;
+    virtual status_t registerSession(const sp<IDecodingServiceSession>& session, uint32_t handle) = 0;
     virtual status_t unregisterSession() = 0;
 };
 
@@ -94,7 +99,7 @@ public:
 
     virtual status_t getIGraphicBufferConsumer(sp<IGraphicBufferConsumer>* gbc);
     virtual status_t getIGraphicBufferProducer(sp<IGraphicBufferProducer>* gbp);
-    virtual status_t registerSession(const sp<IDecodingServiceSession>& session);
+    virtual status_t registerSession(const sp<IDecodingServiceSession>& session, uint32_t handle);
     virtual status_t unregisterSession();
 };
 
@@ -108,13 +113,13 @@ public:
     static void instantiate();
     static sp<DecodingService>& service_instance();
 
-    virtual void setDecodingClientDeathCb(DecodingClientDeathCbHybris cb, void* context);
+    virtual void setDecodingClientDeathCb(DecodingClientDeathCbHybris cb, uint32_t handle, void* context);
 
     // IDecodingService interface:
     virtual status_t getIGraphicBufferConsumer(sp<IGraphicBufferConsumer>* gbc);
     virtual status_t getIGraphicBufferProducer(sp<IGraphicBufferProducer>* gbp);
 
-    virtual status_t registerSession(const sp<IDecodingServiceSession>& session);
+    virtual status_t registerSession(const sp<IDecodingServiceSession>& session, uint32_t handle);
     virtual status_t unregisterSession();
 
     /** Get notified when the Binder connection to the client dies **/
@@ -129,6 +134,8 @@ private:
     sp<IDecodingServiceSession> session;
     DecodingClientDeathCbHybris client_death_cb;
     void *client_death_context;
+    KeyedVector< uint32_t, ClientCb* > clients;
+    KeyedVector< sp<IBinder>, ClientCb* > clientCbs;
 };
 
 class DecodingClient

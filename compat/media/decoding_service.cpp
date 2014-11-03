@@ -82,8 +82,9 @@ status_t BnDecodingService::onTransact(
         case REGISTER_SESSION: {
             CHECK_INTERFACE(IDecodingService, data, reply);
             sp<IBinder> binder = data.readStrongBinder();
+            uint32_t handle = data.readInt32();
             sp<IDecodingServiceSession> session(new BpDecodingServiceSession(binder));
-            registerSession(session);
+            registerSession(session, handle);
 
             return NO_ERROR;
         } break;
@@ -118,12 +119,13 @@ status_t BpDecodingService::getIGraphicBufferProducer(sp<IGraphicBufferProducer>
     return NO_ERROR;
 }
 
-status_t BpDecodingService::registerSession(const sp<IDecodingServiceSession>& session)
+status_t BpDecodingService::registerSession(const sp<IDecodingServiceSession>& session, uint32_t handle)
 {
     ALOGD("Entering %s", __PRETTY_FUNCTION__);
     Parcel data, reply;
     data.writeInterfaceToken(IDecodingService::getInterfaceDescriptor());
     data.writeStrongBinder(session->asBinder());
+    data.writeInt32(handle);
     remote()->transact(REGISTER_SESSION, data, &reply);
     return NO_ERROR;
 }
@@ -175,12 +177,15 @@ sp<DecodingService>& DecodingService::service_instance()
     return decoding_service;
 }
 
-void DecodingService::setDecodingClientDeathCb(DecodingClientDeathCbHybris cb, void* context)
+void DecodingService::setDecodingClientDeathCb(DecodingClientDeathCbHybris cb, uint32_t handle, void* context)
 {
     ALOGD("Entering %s", __PRETTY_FUNCTION__);
 
-    client_death_cb = cb;
-    client_death_context = context;
+    ClientCb *holder = (ClientCb*) malloc(sizeof(ClientCb));
+    holder->cb = cb;
+    holder->context = context;
+
+    clients.add(handle, holder);
 }
 
 status_t DecodingService::getIGraphicBufferConsumer(sp<IGraphicBufferConsumer>* gbc)
@@ -205,11 +210,14 @@ status_t DecodingService::getIGraphicBufferProducer(sp<IGraphicBufferProducer>* 
     return OK;
 }
 
-status_t DecodingService::registerSession(const sp<IDecodingServiceSession>& session)
+status_t DecodingService::registerSession(const sp<IDecodingServiceSession>& session, uint32_t handle)
 {
     ALOGD("Entering %s", __PRETTY_FUNCTION__);
-    status_t ret = session->asBinder()->linkToDeath(android::sp<android::IBinder::DeathRecipient>(this));
-    this->session = session;
+
+    // Add session/handle to running clients map and connect death observer
+    status_t ret = session->asBinder()->linkToDeath(sp<IBinder::DeathRecipient>(this));
+    clientCbs.add(session->asBinder(), clients.valueFor(handle));
+    clients.removeItem(handle);
 
     // Create a new BufferQueue instance so that the next created client plays
     // video correctly
@@ -253,8 +261,15 @@ void DecodingService::createBufferQueue()
 void DecodingService::binderDied(const wp<IBinder>& who)
 {
     ALOGD("Entering %s", __PRETTY_FUNCTION__);
-    if (client_death_cb != NULL)
-        client_death_cb(client_death_context);
+
+    sp<IBinder> sp = who.promote();
+    ClientCb *cb = clientCbs.valueFor(sp);
+
+    if (cb && cb->cb != NULL) {
+        cb->cb(cb->context);
+        free(cb);
+        clientCbs.removeItem(sp);
+    }
 
     unregisterSession();
 }
