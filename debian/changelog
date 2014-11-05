@@ -1,3 +1,10 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu31) vivid; urgency=medium
+
+  [ Ricardo Mendoza ]
+  * compat/media: improve client death notification registration and handler
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 05 Nov 2014 18:15:23 -0200
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu30) vivid; urgency=medium
 
   [ Jim Hodapp ]
