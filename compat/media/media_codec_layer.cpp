@@ -54,6 +54,7 @@
 #include <utils/Vector.h>
 #include <utils/Log.h>
 #include <utils/RefBase.h>
+#include <utils/Mutex.h>
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__);
 
@@ -83,6 +84,7 @@ public:
 
     void *context;
     unsigned int refcount;
+    mutable Mutex rel_lock;
 };
 
 _MediaCodecDelegate::_MediaCodecDelegate(void *context)
@@ -775,6 +777,9 @@ int media_codec_release_output_buffer(MediaCodecDelegate delegate, size_t index,
     _MediaCodecDelegate *d = get_internal_delegate(delegate);
     if (d == NULL)
         return BAD_VALUE;
+
+    /* This function can be called from multiple threads from gstreamer */
+    Mutex::Autolock autoLock(d->rel_lock);
 
     status_t ret = OK;
 
