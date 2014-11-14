@@ -1,3 +1,10 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu32) vivid; urgency=medium
+
+  [ Alfonso Sanchez-Beato ]
+  * media: thread-protect release of media buffers
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 13 Nov 2014 22:09:31 -0200
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu31) vivid; urgency=medium
 
   [ Ricardo Mendoza ]
