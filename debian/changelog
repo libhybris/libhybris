@@ -1,3 +1,12 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu33) vivid; urgency=medium
+
+  [Yuan-Chen Cheng]
+  * Use PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP in dlfcn.c for
+    bionic/linker/dlfcn.cpp use it and needed by certain android bsp.
+    This is basically a cherry-pick from android upstream.
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 20 Nov 2014 19:48:28 -0200
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu32) vivid; urgency=medium
 
   [ Alfonso Sanchez-Beato ]
