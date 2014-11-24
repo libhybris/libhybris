@@ -894,3 +894,25 @@ void android_camera_set_video_size(CameraControl* control, int width, int height
 	control->camera_parameters.setVideoSize(width, height);
 	control->camera->setParameters(control->camera_parameters.flatten());
 }
+
+void android_camera_set_jpeg_quality(CameraControl* control, int quality)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	control->camera_parameters.set(
+			android::CameraParameters::KEY_JPEG_QUALITY,
+			quality);
+	control->camera->setParameters(control->camera_parameters.flatten());
+}
+
+void android_camera_get_jpeg_quality(CameraControl* control, int* quality)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	*quality = atoi(control->camera_parameters.get(
+            android::CameraParameters::KEY_JPEG_QUALITY));
+}

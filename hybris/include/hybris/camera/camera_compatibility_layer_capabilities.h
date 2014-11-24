@@ -111,6 +111,7 @@ extern "C" {
     void android_camera_get_preview_size(struct CameraControl* control, int* width, int* height);
     void android_camera_get_picture_size(struct CameraControl* control, int* width, int* height);
     void android_camera_get_thumbnail_size(struct CameraControl* control, int* width, int* height);
+    void android_camera_get_jpeg_quality(struct CameraControl* control, int* quality);
 
     void android_camera_get_current_zoom(struct CameraControl* control, int* zoom);
     void android_camera_get_max_zoom(struct CameraControl* control, int* max_zoom);
@@ -134,6 +135,7 @@ extern "C" {
     void android_camera_set_scene_mode(struct CameraControl* control, SceneMode mode);
     void android_camera_set_auto_focus_mode(struct CameraControl* control, AutoFocusMode mode);
     void android_camera_set_preview_format(struct CameraControl* control, CameraPixelFormat format);
+    void android_camera_set_jpeg_quality(struct CameraControl* control, int quality);
 
     void android_camera_set_focus_region(struct CameraControl* control, FocusRegion* region);
     void android_camera_reset_focus_region(struct CameraControl* control);
