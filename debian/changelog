@@ -1,3 +1,10 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu34) vivid; urgency=medium
+
+  [Florian Boucault]
+  * camera/compat: added getter/setter for JPEG encoding quality.
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Tue, 25 Nov 2014 11:12:26 -0200
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu33) vivid; urgency=medium
 
   [Yuan-Chen Cheng]
