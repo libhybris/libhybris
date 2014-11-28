@@ -1316,6 +1316,13 @@ static char* use_from_bionic[] = {
     NULL
 };
 
+static __thread void *tls_hooks[16];
+
+void *__get_tls_hooks()
+{
+  return tls_hooks;
+}
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -1465,6 +1472,7 @@ static struct _hook hooks[] = {
     /* fcntl.h */
     {"open", my_open},
     // TODO: scandir, scandirat, alphasort, versionsort
+    {"__get_tls_hooks", __get_tls_hooks},
     {NULL, NULL},
 };
 
