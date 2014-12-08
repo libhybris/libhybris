@@ -1,3 +1,13 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu35) vivid; urgency=medium
+
+  [ Alfonso Sanchez-Beato ]
+  * media: thread-protect list output buffer infos list
+
+  [ Mathieu Trudel-Lapierre ]
+  * wifi: add method to check if compat side is available
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 08 Dec 2014 14:28:57 -0200
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu34) vivid; urgency=medium
 
   [Florian Boucault]
