@@ -26,6 +26,13 @@
 
 HYBRIS_LIBRARY_INITIALIZE(wifi, COMPAT_LIBRARY_PATH);
 
+int wifi_compat_check_availability()
+{
+	/* Both are defined via HYBRIS_LIBRARY_INITIALIZE */
+	hybris_wifi_initialize();
+	return wifi_handle ? 1 : 0;
+}
+
 HYBRIS_IMPLEMENT_FUNCTION0(wifi, int, wifi_load_driver);
 HYBRIS_IMPLEMENT_FUNCTION0(wifi, int, wifi_unload_driver);
 HYBRIS_IMPLEMENT_FUNCTION0(wifi, int, is_wifi_driver_loaded);
