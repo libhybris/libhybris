@@ -78,13 +78,13 @@ public:
     Vector<sp<ABuffer> > input_buffers;
     Vector<sp<ABuffer> > output_buffers;
     List<MediaCodecBufferInfo> available_output_buffer_infos;
+    Mutex mtx_output_buffer_infos;
     List<size_t> available_input_buffer_indices;
     bool output_format_changed;
     bool hardware_rendering;
 
     void *context;
     unsigned int refcount;
-    mutable Mutex rel_lock;
 };
 
 _MediaCodecDelegate::_MediaCodecDelegate(void *context)
@@ -500,7 +500,11 @@ int media_codec_flush(MediaCodecDelegate delegate)
     if (d == NULL)
         return BAD_VALUE;
 
+    d->mtx_output_buffer_infos.lock();
+
     d->available_output_buffer_infos.clear();
+
+    d->mtx_output_buffer_infos.unlock();
 
     return d->media_codec->flush();
 }
@@ -690,8 +694,12 @@ int media_codec_dequeue_output_buffer(MediaCodecDelegate delegate, MediaCodecBuf
     ALOGD("presentation_time_us: %lld", info->presentation_time_us);
     ALOGD("flags: %d", info->flags);
 
+    d->mtx_output_buffer_infos.lock();
+
     // Keep track of the used output buffer info
     d->available_output_buffer_infos.push_back(*info);
+
+    d->mtx_output_buffer_infos.unlock();
 
     return OK;
 }
@@ -778,10 +786,10 @@ int media_codec_release_output_buffer(MediaCodecDelegate delegate, size_t index,
     if (d == NULL)
         return BAD_VALUE;
 
-    /* This function can be called from multiple threads from gstreamer */
-    Mutex::Autolock autoLock(d->rel_lock);
-
     status_t ret = OK;
+
+    /* This function can be called from multiple threads from gstreamer */
+    Mutex::Autolock autoLock(d->mtx_output_buffer_infos);
 
     auto it = d->available_output_buffer_infos.begin();
     while (it != d->available_output_buffer_infos.end())
