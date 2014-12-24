@@ -82,6 +82,8 @@ extern "C" void hybris_dump_buffer_to_file(ANativeWindowBuffer *buf)
 	snprintf(b, 1020, "vaddr.%p.%p.%i.%is%ix%ix%i", buf, vaddr, cnt, buf->width, buf->stride, buf->height, bytes_pp);
 	cnt++;
 	int fd = ::open(b, O_WRONLY|O_CREAT, S_IRWXU);
+	if(fd < 0)
+		return;
 
 	::write(fd, vaddr, buf->stride * buf->height * bytes_pp);
 	::close(fd);
