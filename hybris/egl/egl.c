@@ -17,6 +17,8 @@
 
 /* EGL function pointers */
 #define EGL_EGLEXT_PROTOTYPES
+/* For RTLD_DEFAULT */
+#define _GNU_SOURCE
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
@@ -507,9 +509,16 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 		return _my_glEGLImageTargetTexture2DOES;
 	}
 	__eglMustCastToProperFunctionPointerType ret = ws_eglGetProcAddress(procname);
-	if (ret == NULL)
-		return (*_eglGetProcAddress)(procname);
-	else return ret;
+
+	if (ret == NULL) {
+#ifdef RTLD_DEFAULT
+		ret = dlsym(RTLD_DEFAULT, procname);
+		if (ret == NULL)
+#endif
+			ret = (*_eglGetProcAddress)(procname);
+	}
+
+	return ret;
 }
 
 EGLBoolean eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
