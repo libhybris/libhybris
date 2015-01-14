@@ -30,7 +30,8 @@ extern "C" {
         FLASH_MODE_OFF,
         FLASH_MODE_AUTO,
         FLASH_MODE_ON,
-        FLASH_MODE_TORCH
+        FLASH_MODE_TORCH,
+        FLASH_MODE_RED_EYE
     } FlashMode;
 
     typedef enum
@@ -97,6 +98,7 @@ extern "C" {
 
     typedef void (*size_callback)(void* ctx, int width, int height);
     typedef void (*scene_mode_callback)(void* ctx, SceneMode mode);
+    typedef void (*flash_mode_callback)(void* ctx, FlashMode mode);
 
     // Dumps the camera parameters to stdout.
     void android_camera_dump_parameters(struct CameraControl* control);
@@ -118,6 +120,7 @@ extern "C" {
 
     void android_camera_get_effect_mode(struct CameraControl* control, EffectMode* mode);
     void android_camera_get_flash_mode(struct CameraControl* control, FlashMode* mode);
+    void android_camera_enumerate_supported_flash_modes(struct CameraControl* control, flash_mode_callback cb, void* ctx);
     void android_camera_get_white_balance_mode(struct CameraControl* control, WhiteBalanceMode* mode);
     void android_camera_enumerate_supported_scene_modes(struct CameraControl* control, scene_mode_callback cb, void* ctx);
     void android_camera_get_scene_mode(struct CameraControl* control, SceneMode* mode);
