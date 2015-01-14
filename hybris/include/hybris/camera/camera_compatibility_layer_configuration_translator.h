@@ -96,6 +96,7 @@ extern "C" {
         m.add(android::String8(android::CameraParameters::FLASH_MODE_AUTO), FLASH_MODE_AUTO);
         m.add(android::String8(android::CameraParameters::FLASH_MODE_ON), FLASH_MODE_ON);
         m.add(android::String8(android::CameraParameters::FLASH_MODE_TORCH), FLASH_MODE_TORCH);
+        m.add(android::String8(android::CameraParameters::FLASH_MODE_RED_EYE), FLASH_MODE_RED_EYE);
 
         return m;
     }

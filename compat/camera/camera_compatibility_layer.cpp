@@ -271,6 +271,35 @@ void android_camera_get_flash_mode(CameraControl* control, FlashMode* mode)
 		*mode = FLASH_MODE_OFF;
 }
 
+void android_camera_enumerate_supported_flash_modes(CameraControl* control, flash_mode_callback cb, void* ctx)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	android::String8 raw_modes;
+	raw_modes = android::String8(
+			control->camera_parameters.get(
+				android::CameraParameters::KEY_SUPPORTED_FLASH_MODES));
+
+	const char delimiter[2] = ",";
+	char *token;
+	android::String8 mode;
+	char *raw_modes_mutable = strdup(raw_modes.string());
+
+	token = strtok(raw_modes_mutable, delimiter);
+
+	while (token != NULL) {
+		uint32_t index = flash_modes_lut.indexOfKey(mode);
+
+		mode = android::String8(token);
+		if (flash_modes_lut.indexOfKey(mode) >= 0) {
+			cb(ctx, flash_modes_lut.valueFor(mode));
+		}
+		token = strtok(NULL, delimiter);
+	}
+}
+
 void android_camera_set_white_balance_mode(CameraControl* control, WhiteBalanceMode mode)
 {
 	REPORT_FUNCTION();
