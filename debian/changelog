@@ -1,3 +1,10 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu36) vivid; urgency=medium
+
+  [ Ugo Riboni ]
+  * camera: expose the ability to query the supported flash modes
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Wed, 14 Jan 2015 19:28:56 -0200
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu35) vivid; urgency=medium
 
   [ Alfonso Sanchez-Beato ]
