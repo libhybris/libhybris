@@ -74,7 +74,7 @@ FbDevNativeWindow::FbDevNativeWindow( alloc_device_t* alloc,
     m_bufferCount = 0;
     m_allocateBuffers = true;
 
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
     if (m_fbDev->numFramebuffers>0)
         setBufferCount(m_fbDev->numFramebuffers);
     else
