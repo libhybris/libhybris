@@ -38,12 +38,17 @@ static void nullws_init_module(struct ws_egl_interface *egl_iface)
 
 }
 
-static int nullws_IsValidDisplay(EGLNativeDisplayType display)
+static struct _EGLDisplay *nullws_GetDisplay(EGLNativeDisplayType display)
 {
-	return 1;
+	return malloc(sizeof(struct _EGLDisplay));
 }
 
-static EGLNativeWindowType nullws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
+static void nullws_Terminate(struct _EGLDisplay *dpy)
+{
+	free(dpy);
+}
+
+static EGLNativeWindowType nullws_CreateWindow(EGLNativeWindowType win, struct _EGLDisplay *display)
 {
 	if (win == 0)
 	{
@@ -60,7 +65,8 @@ static void nullws_DestroyWindow(EGLNativeWindowType win)
 
 struct ws_module ws_module_info = {
 	nullws_init_module,
-	nullws_IsValidDisplay,
+	nullws_GetDisplay,
+	nullws_Terminate,
 	nullws_CreateWindow,
 	nullws_DestroyWindow,
 	eglplatformcommon_eglGetProcAddress,

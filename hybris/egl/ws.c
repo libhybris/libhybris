@@ -55,13 +55,19 @@ static void _init_ws()
 }
 
 
-int ws_IsValidDisplay(EGLNativeDisplayType display)
+struct _EGLDisplay *ws_GetDisplay(EGLNativeDisplayType display)
 {
 	_init_ws();
-	return ws->IsValidDisplay(display);
+	return ws->GetDisplay(display);
 }
 
-EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
+void ws_Terminate(struct _EGLDisplay *dpy)
+{
+	_init_ws();
+	ws->Terminate(dpy);
+}
+
+EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, struct _EGLDisplay *display)
 {
 	_init_ws();
 	return ws->CreateWindow(win, display);

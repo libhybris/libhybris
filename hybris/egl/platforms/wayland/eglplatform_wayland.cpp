@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <assert.h>
+#include <stdlib.h>
 extern "C" {
 #include <eglplatformcommon.h>
 };
@@ -49,6 +50,8 @@ extern "C" {
 #include "wayland_window.h"
 #include "logging.h"
 #include "wayland-egl-priv.h"
+#include "server_wlegl_buffer.h"
+#include "wayland-android-client-protocol.h"
 
 static gralloc_module_t *gralloc = 0;
 static alloc_device_t *alloc = 0;
@@ -59,6 +62,15 @@ static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char
 static EGLSyncKHR (*_eglCreateSyncKHR)(EGLDisplay dpy, EGLenum type, const EGLint *attrib_list) = NULL;
 static EGLBoolean (*_eglDestroySyncKHR)(EGLDisplay dpy, EGLSyncKHR sync) = NULL;
 static EGLint (*_eglClientWaitSyncKHR)(EGLDisplay dpy, EGLSyncKHR sync, EGLint flags, EGLTimeKHR timeout) = NULL;
+
+struct WaylandDisplay {
+	_EGLDisplay base;
+
+	wl_display *wl_dpy;
+	wl_event_queue *queue;
+	wl_registry *registry;
+	android_wlegl *wlegl;
+};
 
 extern "C" void waylandws_init_module(struct ws_egl_interface *egl_iface)
 {
@@ -96,12 +108,67 @@ static void _init_egl_funcs(EGLDisplay display)
 	}
 }
 
-extern "C" int waylandws_IsValidDisplay(EGLNativeDisplayType display)
+static void registry_handle_global(void *data, wl_registry *registry, uint32_t name, const char *interface, uint32_t version)
 {
-	return 1;
+	WaylandDisplay *dpy = (WaylandDisplay *)data;
+
+	if (strcmp(interface, "android_wlegl") == 0) {
+		dpy->wlegl = static_cast<android_wlegl *>(wl_registry_bind(registry, name, &android_wlegl_interface, 1));
+	}
 }
 
-extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
+static const wl_registry_listener registry_listener = {
+    registry_handle_global
+};
+
+static void callback_done(void *data, wl_callback *cb, uint32_t d)
+{
+    WaylandDisplay *dpy = (WaylandDisplay *)data;
+
+    wl_callback_destroy(cb);
+    if (!dpy->wlegl) {
+        fprintf(stderr, "Fatal: the server doesn't advertise the android_wlegl global!");
+        abort();
+    }
+}
+
+static const wl_callback_listener callback_listener = {
+    callback_done
+};
+
+extern "C" _EGLDisplay *waylandws_GetDisplay(EGLNativeDisplayType display)
+{
+	WaylandDisplay *wdpy = new WaylandDisplay;
+	wdpy->wl_dpy = (wl_display *)display;
+	wdpy->wlegl = NULL;
+	wdpy->queue = wl_display_create_queue(wdpy->wl_dpy);
+	wdpy->registry = wl_display_get_registry(wdpy->wl_dpy);
+	wl_proxy_set_queue((wl_proxy *) wdpy->registry, wdpy->queue);
+	wl_registry_add_listener(wdpy->registry, &registry_listener, wdpy);
+
+	wl_callback *cb = wl_display_sync(wdpy->wl_dpy);
+	wl_proxy_set_queue((wl_proxy *) cb, wdpy->queue);
+	wl_callback_add_listener(cb, &callback_listener, wdpy);
+
+	return &wdpy->base;
+}
+
+extern "C" void waylandws_Terminate(_EGLDisplay *dpy)
+{
+	WaylandDisplay *wdpy = (WaylandDisplay *)dpy;
+	int ret = 0;
+	// We still have the sync callback on flight, wait for it to arrive
+	while (ret == 0 && !wdpy->wlegl) {
+		ret = wl_display_dispatch_queue(wdpy->wl_dpy, wdpy->queue);
+	}
+	assert(ret >= 0);
+	android_wlegl_destroy(wdpy->wlegl);
+	wl_registry_destroy(wdpy->registry);
+	wl_event_queue_destroy(wdpy->queue);
+	delete wdpy;
+}
+
+extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, _EGLDisplay *display)
 {
 	struct wl_egl_window *wl_window = (struct wl_egl_window*) win;
 	struct wl_display *wl_display = (struct wl_display*) display;
@@ -114,7 +181,16 @@ extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, E
 		abort();
 	}
 
-	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, (struct wl_display *) display, alloc);
+	WaylandDisplay *wdpy = (WaylandDisplay *)display;
+
+	int ret = 0;
+	while (ret == 0 && !wdpy->wlegl) {
+		ret = wl_display_dispatch_queue(wdpy->wl_dpy, wdpy->queue);
+	}
+	assert(ret >= 0);
+
+	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy,
+                                                          wdpy->queue, wdpy->wlegl, alloc);
 	window->common.incRef(&window->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }
@@ -132,12 +208,37 @@ extern "C" int waylandws_post(EGLNativeWindowType win, void *buffer)
 	return ((WaylandNativeWindow *) eglwin->nativewindow)->postBuffer((ANativeWindowBuffer *) buffer);
 }
 
+extern "C" wl_buffer *waylandws_createWlBuffer(EGLDisplay dpy, EGLImageKHR image)
+{
+	egl_image *img = reinterpret_cast<egl_image *>(image);
+	if (!img) {
+	    // The spec says we should send a EGL_BAD_PARAMETER error here, but we don't have the
+	    // means, as of now.
+	    return NULL;
+	}
+	if (img->target == EGL_WAYLAND_BUFFER_WL) {
+		WaylandDisplay *wdpy = (WaylandDisplay *)hybris_egl_display_get_mapping(dpy);
+		server_wlegl_buffer *buf = server_wlegl_buffer_from((wl_buffer *)img->egl_buffer);
+		WaylandNativeWindowBuffer wnb(buf->buf);
+		// The buffer will be managed by the app, so pass NULL as the queue so that
+		// it will be assigned to the default queue
+		wnb.wlbuffer_from_native_handle(wdpy->wlegl, wdpy->wl_dpy, NULL);
+		return wnb.wlbuffer;
+	}
+	// EGL_BAD_MATCH
+	return NULL;
+}
+
 extern "C" __eglMustCastToProperFunctionPointerType waylandws_eglGetProcAddress(const char *procname) 
 {
 	if (strcmp(procname, "eglHybrisWaylandPostBuffer") == 0)
 	{
 		return (__eglMustCastToProperFunctionPointerType) waylandws_post;
 	}
+	else if (strcmp(procname, "eglCreateWaylandBufferFromImageWL") == 0)
+    {
+        return (__eglMustCastToProperFunctionPointerType) waylandws_createWlBuffer;
+    }
 	else
 	return eglplatformcommon_eglGetProcAddress(procname);
 }
@@ -155,7 +256,7 @@ extern "C" const char *waylandws_eglQueryString(EGLDisplay dpy, EGLint name, con
 		assert(ret != NULL);
 		static char eglextensionsbuf[512];
 		snprintf(eglextensionsbuf, 510, "%s %s", ret,
-			"EGL_EXT_swap_buffers_with_damage "
+			"EGL_EXT_swap_buffers_with_damage EGL_WL_create_wayland_buffer_from_image"
 		);
 		ret = eglextensionsbuf;
 	}
@@ -188,7 +289,8 @@ extern "C" void waylandws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType wi
 
 struct ws_module ws_module_info = {
 	waylandws_init_module,
-	waylandws_IsValidDisplay,
+	waylandws_GetDisplay,
+	waylandws_Terminate,
 	waylandws_CreateWindow,
 	waylandws_DestroyWindow,
 	waylandws_eglGetProcAddress,
