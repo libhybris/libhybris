@@ -1343,7 +1343,7 @@ static struct _hook hooks[] = {
     {"pthread_mutex_lock_timeout_np", my_pthread_mutex_lock_timeout_np},
     {"pthread_mutexattr_init", pthread_mutexattr_init},
     {"pthread_mutexattr_destroy", pthread_mutexattr_destroy},
-    {"pthread_mutexattr_getttype", pthread_mutexattr_gettype},
+    {"pthread_mutexattr_gettype", pthread_mutexattr_gettype},
     {"pthread_mutexattr_settype", pthread_mutexattr_settype},
     {"pthread_mutexattr_getpshared", pthread_mutexattr_getpshared},
     {"pthread_mutexattr_setpshared", my_pthread_mutexattr_setpshared},
