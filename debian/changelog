@@ -1,3 +1,16 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu37) vivid; urgency=medium
+
+  * Backporting fixes from upstream before doing a new rebase:
+    - sysconf mapping
+    - New optimization via gnu dispatching: zero call overhead glesv2
+      wrapper
+    - dlsym the symbols in eglGetProcAddress from the glibc libraries
+    - hooks.c: Switch to CLOCK_MONOTONIC_RAW instead of CLOCK_REALTIME
+    - hooks.c: fixing typos in function calls
+    - Fix a missmatch between glibc's addrinfo and bionic's getaddrinfo
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Thu, 12 Mar 2015 01:16:13 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu36) vivid; urgency=medium
 
   [ Ugo Riboni ]
