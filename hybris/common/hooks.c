@@ -1575,7 +1575,7 @@ static struct _hook hooks[] = {
     {"pthread_attr_setguardsize", my_pthread_attr_setguardsize},
     {"pthread_attr_getguardsize", my_pthread_attr_getguardsize},
     {"pthread_attr_setscope", my_pthread_attr_setscope},
-    {"pthread_attr_setscope", my_pthread_attr_getscope},
+    {"pthread_attr_getscope", my_pthread_attr_getscope},
     {"pthread_getattr_np", my_pthread_getattr_np},
     {"pthread_rwlockattr_init", my_pthread_rwlockattr_init},
     {"pthread_rwlockattr_destroy", my_pthread_rwlockattr_destroy},
