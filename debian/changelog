@@ -1,3 +1,10 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu38) vivid; urgency=medium
+
+  * Reverting switch to CLOCK_MONOTONIC_RAW as that caused a regression
+    when recording videos with krillin
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 16 Mar 2015 15:59:00 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu37) vivid; urgency=medium
 
   * Backporting fixes from upstream before doing a new rebase:
