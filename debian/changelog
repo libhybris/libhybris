@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20131207+e452e83-0ubuntu39) vivid; urgency=medium
+
+  * linker: adding dl_iterate_phdr for ARM (required by Android 5 blobs)
+
+ -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Mon, 06 Apr 2015 20:53:06 -0300
+
 libhybris (0.1.0+git20131207+e452e83-0ubuntu38) vivid; urgency=medium
 
   * Reverting switch to CLOCK_MONOTONIC_RAW as that caused a regression
