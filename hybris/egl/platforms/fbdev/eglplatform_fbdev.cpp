@@ -44,13 +44,23 @@ extern "C" void fbdevws_init_module(struct ws_egl_interface *egl_iface)
 	eglplatformcommon_init(egl_iface, gralloc, alloc);
 }
 
-extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
+extern "C" _EGLDisplay *fbdevws_GetDisplay(EGLNativeDisplayType display)
 {
 	assert (gralloc != NULL);
-	return display == EGL_DEFAULT_DISPLAY;
+
+	_EGLDisplay *dpy = 0;
+	if (display == EGL_DEFAULT_DISPLAY) {
+		dpy = new _EGLDisplay;
+	}
+	return dpy;
 }
 
-extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
+extern "C" void fbdevws_Terminate(_EGLDisplay *dpy)
+{
+	delete dpy;
+}
+
+extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, _EGLDisplay *display)
 {
 	assert (gralloc != NULL);
 	assert (_nativewindow == NULL);
@@ -88,7 +98,8 @@ extern "C" void fbdevws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win,
 
 struct ws_module ws_module_info = {
 	fbdevws_init_module,
-	fbdevws_IsValidDisplay,
+	fbdevws_GetDisplay,
+	fbdevws_Terminate,
 	fbdevws_CreateWindow,
 	fbdevws_DestroyWindow,
 	fbdevws_eglGetProcAddress,

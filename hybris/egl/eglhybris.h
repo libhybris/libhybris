@@ -35,6 +35,8 @@ void *hybris_android_egl_dlsym(const char *symbol);
 int hybris_egl_has_mapping(EGLSurface surface);
 EGLNativeWindowType hybris_egl_get_mapping(EGLSurface surface);
 
+struct _EGLDisplay *hybris_egl_display_get_mapping(EGLDisplay dpy);
+
 #ifdef __cplusplus
 }
 #endif

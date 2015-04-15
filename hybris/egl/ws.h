@@ -1,6 +1,7 @@
 #ifndef __LIBHYBRIS_WS_H
 #define __LIBHYBRIS_WS_H
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
 
 struct ws_egl_interface {
 	void * (*android_egl_dlsym)(const char *symbol);
@@ -9,13 +10,26 @@ struct ws_egl_interface {
 	EGLNativeWindowType (*get_mapping)(EGLSurface surface);
 };
 
+struct egl_image
+{
+    EGLImageKHR egl_image;
+    EGLClientBuffer egl_buffer;
+    EGLenum target;
+};
+
 /* Defined in egl.c */
 extern struct ws_egl_interface hybris_egl_interface;
 
+struct _EGLDisplay {
+	EGLDisplay dpy;
+};
+
 struct ws_module {
 	void (*init_module)(struct ws_egl_interface *egl_interface);
-	int (*IsValidDisplay)(EGLNativeDisplayType display_id);
-	EGLNativeWindowType (*CreateWindow)(EGLNativeWindowType win, EGLNativeDisplayType display);
+
+	struct _EGLDisplay *(*GetDisplay)(EGLNativeDisplayType native);
+	void (*Terminate)(struct _EGLDisplay *display);
+	EGLNativeWindowType (*CreateWindow)(EGLNativeWindowType win, struct _EGLDisplay *display);
 	void (*DestroyWindow)(EGLNativeWindowType win);
 	__eglMustCastToProperFunctionPointerType (*eglGetProcAddress)(const char *procname);
 	void (*passthroughImageKHR)(EGLContext *ctx, EGLenum *target, EGLClientBuffer *buffer, const EGLint **attrib_list);
@@ -25,8 +39,9 @@ struct ws_module {
 	void (*setSwapInterval)(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval);
 };
 
-int ws_IsValidDisplay(EGLNativeDisplayType display);
-EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display);
+struct _EGLDisplay *ws_GetDisplay(EGLNativeDisplayType native);
+void ws_Terminate(struct _EGLDisplay *dpy);
+EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, struct _EGLDisplay *display);
 void ws_DestroyWindow(EGLNativeWindowType win);
 __eglMustCastToProperFunctionPointerType ws_eglGetProcAddress(const char *procname);
 void ws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClientBuffer *buffer, const EGLint **attrib_list);
