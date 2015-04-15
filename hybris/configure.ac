@@ -67,6 +67,11 @@ AC_ARG_ENABLE(wayland,
   [wayland="no"])
 AM_CONDITIONAL( [WANT_WAYLAND], [test x"$wayland" = x"yes"])
 
+AC_ARG_ENABLE(wayland_serverside_buffers,
+  [  --enable-wayland_serverside_buffers            Enable serverside buffer allocation for wayland (default=enabled)],
+  [wayland_serverside_buffers=$enableval],
+  [wayland_serverside_buffers=yes])
+AM_CONDITIONAL( [WANT_WL_SERVERSIDE_BUFFERS], [test x"$wayland_serverside_buffers" = x"yes"])
 
 AC_ARG_ENABLE(arch,
   [  --enable-arch[=arch]     Compile specific CPU target(default=arm)

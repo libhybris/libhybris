@@ -21,6 +21,10 @@ if WANT_DEBUG
 eglplatform_wayland_la_CXXFLAGS += -ggdb -O0
 endif
 
+if !WANT_WL_SERVERSIDE_BUFFERS
+eglplatform_wayland_la_CXXFLAGS += -DHYBRIS_NO_SERVER_SIDE_BUFFERS
+endif
+
 
 
 eglplatform_wayland_la_LDFLAGS = \
