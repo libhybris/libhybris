@@ -134,17 +134,30 @@ extern "C" EGLBoolean eglplatformcommon_eglQueryWaylandBufferWL(EGLDisplay dpy,
 	return EGL_FALSE ;
 }
 
-extern "C" EGLBoolean eglplatformcommon_eglHybrisGetHardwareBufferHandleWL(EGLDisplay dpy, struct wl_resource *buffer, void **handle)
-{
-    if (!buffer)
-        return EGL_FALSE;
-    server_wlegl_buffer *buf  = server_wlegl_buffer_from(buffer);
+// Added as part of EGL_HYBRIS_WL_acquire_native_buffer. Buffers are released
+// and decRef'ed using eglHybrisReleaseNativeBuffer
+extern "C" EGLBoolean eglplatformcommon_eglHybrisAcquireNativeBufferWL(EGLDisplay dpy, struct wl_resource *wlBuffer, EGLClientBuffer *buffer)
+ {
+     if (!buffer)
+         return EGL_FALSE;
+    server_wlegl_buffer *buf  = server_wlegl_buffer_from(wlBuffer);
     ANativeWindowBuffer* anwb = (ANativeWindowBuffer *) buf->buf;
-    *handle = (void *) anwb->handle;
+    anwb->common.incRef(&anwb->common);
+    *buffer = (EGLClientBuffer *) anwb;
     return EGL_TRUE;
 }
 
 #endif
+
+// Added as part of EGL_HYBRIS_native_buffer2
+extern "C" EGLBoolean eglplatformcommon_eglHybrisNativeBufferHandle(EGLDisplay dpy, EGLClientBuffer buffer, void **handle)
+{
+	if (!buffer || !handle)
+		return EGL_FALSE;
+	ANativeWindowBuffer *anwb = (ANativeWindowBuffer *) buffer;
+	*handle = (void *) anwb->handle;
+	return EGL_TRUE;
+}
 
 extern "C" void eglplatformcommon_eglHybrisGetNativeBufferInfo(EGLClientBuffer buffer, int *num_ints, int *num_fds)
 {
@@ -290,9 +303,9 @@ extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProc
 		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglQueryWaylandBufferWL;
 	}
 	else
-    if (strcmp(procname, "eglHybrisGetHardwareBufferHandleWL") == 0)
+    if (strcmp(procname, "eglHybrisAcquireNativeBufferWL") == 0)
     {
-        return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisGetHardwareBufferHandleWL;
+        return (__eglMustCastToProperFunctionPointerType) eglplatformcommon_eglHybrisAcquireNativeBufferWL;
     }
     else
 #endif
@@ -330,6 +343,11 @@ extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProc
 	{
 		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisCreateRemoteBuffer;
 	}
+	else
+	if (strcmp(procname, "eglHybrisNativeBufferHandle") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisNativeBufferHandle;
+	}
 	return NULL;
 }
 
@@ -341,7 +359,7 @@ extern "C" const char *eglplatformcommon_eglQueryString(EGLDisplay dpy, EGLint n
 		const char *ret = (*real_eglQueryString)(dpy, name);
 		static char eglextensionsbuf[512];
 		assert(ret != NULL);
-		snprintf(eglextensionsbuf, 510, "%sEGL_HYBRIS_native_buffer EGL_HYBRIS_WL_hardware_buffer_handle %s", ret,
+		snprintf(eglextensionsbuf, 510, "%sEGL_HYBRIS_native_buffer2 EGL_HYBRIS_WL_acquire_native_buffer %s", ret,
 #ifdef WANT_WAYLAND
 			"EGL_WL_bind_wayland_display "
 #else
