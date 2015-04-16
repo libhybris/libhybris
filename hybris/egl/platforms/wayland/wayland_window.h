@@ -24,7 +24,6 @@
  **
  ****************************************************************************************/
 
-
 #ifndef Wayland_WINDOW_H
 #define Wayland_WINDOW_H
 #include "nativewindowbase.h"
@@ -132,7 +131,7 @@ public:
 class ServerWaylandBuffer : public WaylandNativeWindowBuffer
 {
 public:
-    ServerWaylandBuffer(unsigned int w, unsigned int h, int format, int usage, gralloc_module_t *gralloc, android_wlegl *android_wlegl);
+    ServerWaylandBuffer(unsigned int w, unsigned int h, int format, int usage, gralloc_module_t *gralloc, android_wlegl *android_wlegl, struct wl_event_queue *queue);
     ~ServerWaylandBuffer()
     {
         wl_array_release(&ints);
@@ -153,7 +152,7 @@ public:
 
 class WaylandNativeWindow : public BaseNativeWindow {
 public:
-    WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, alloc_device_t* alloc_device, gralloc_module_t *gralloc);
+    WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, android_wlegl *wlegl, alloc_device_t* alloc_device, gralloc_module_t *gralloc);
     ~WaylandNativeWindow();
 
     void lock();
@@ -215,7 +214,6 @@ private:
     unsigned int m_usage;
     struct android_wlegl *m_android_wlegl;
     alloc_device_t* m_alloc;
-    struct wl_registry *registry;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     int m_queueReads;

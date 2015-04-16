@@ -113,7 +113,7 @@ static void registry_handle_global(void *data, wl_registry *registry, uint32_t n
 	WaylandDisplay *dpy = (WaylandDisplay *)data;
 
 	if (strcmp(interface, "android_wlegl") == 0) {
-		dpy->wlegl = static_cast<android_wlegl *>(wl_registry_bind(registry, name, &android_wlegl_interface, 1));
+		dpy->wlegl = static_cast<struct android_wlegl *>(wl_registry_bind(registry, name, &android_wlegl_interface, std::min(2u, version)));
 	}
 }
 
@@ -189,7 +189,7 @@ extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, _
 	}
 	assert(ret >= 0);
 
-	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy, alloc, gralloc);
+	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy, wdpy->wlegl, alloc, gralloc);
 	window->common.incRef(&window->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }
