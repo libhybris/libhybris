@@ -2,7 +2,6 @@
  * Copyright (c) 2012 Carsten Munk <carsten.munk@gmail.com>
  * Copyright (c) 2012 Canonical Ltd
  * Copyright (c) 2013 Christophe Chapuis <chris.chapuis@gmail.com>
- * Copyright (c) 2013 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +32,8 @@
 #include <strings.h>
 #include <dlfcn.h>
 #include <pthread.h>
+#include <sys/xattr.h>
+#include <grp.h>
 #include <signal.h>
 #include <errno.h>
 #include <dirent.h>
@@ -43,9 +44,10 @@
 #include <sys/shm.h>
 #include <fcntl.h>
 
+#include <netdb.h>
 #include <unistd.h>
+#include <syslog.h>
 #include <locale.h>
-#include <search.h>
 
 #include <hybris/properties/properties.h>
 
@@ -1258,6 +1260,8 @@ FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
 	return strtod_l(nptr, endptr, hybris_locale);
 }
 
+extern int __cxa_atexit(void (*)(void*), void*, void*);
+
 struct open_redirect {
 	const char *from;
 	const char *to;
@@ -1310,12 +1314,6 @@ int my_system_property_get(const char *name, const char *value)
 	return property_get(name, value, NULL);
 }
 
-static char* use_from_bionic[] = {
-    "setjmp",
-    "longjmp",
-    NULL
-};
-
 static __thread void *tls_hooks[16];
 
 void *__get_tls_hooks()
@@ -1327,10 +1325,72 @@ static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
     {"__system_property_get", my_system_property_get },
+    {"getenv", getenv },
+    {"printf", printf },
     {"malloc", my_malloc },
+    {"free", free },
+    {"calloc", calloc },
+    {"cfree", cfree },
+    {"realloc", realloc },
+    {"memalign", memalign },
+    {"valloc", valloc },
+    {"pvalloc", pvalloc },
+    {"fread", fread },
+    {"getxattr", getxattr},
+    /* string.h */
+    {"memccpy",memccpy},
+    {"memchr",memchr},
+    {"memrchr",memrchr},
+    {"memcmp",memcmp},
     {"memcpy",my_memcpy},
+    {"memmove",memmove},
+    {"memset",memset},
+    {"memmem",memmem},
+    //  {"memswap",memswap},
+    {"index",index},
+    {"rindex",rindex},
+    {"strchr",strchr},
+    {"strrchr",strrchr},
     {"strlen",my_strlen},
+    {"strcmp",strcmp},
+    {"strcpy",strcpy},
+    {"strcat",strcat},
+    {"strcasecmp",strcasecmp},
+    {"strncasecmp",strncasecmp},
+    {"strdup",strdup},
+    {"strstr",strstr},
+    {"strtok",strtok},
+    {"strtok_r",strtok_r},
+    {"strerror",strerror},
+    {"strerror_r",strerror_r},
+    {"strnlen",strnlen},
+    {"strncat",strncat},
+    {"strndup",strndup},
+    {"strncmp",strncmp},
+    {"strncpy",strncpy},
     {"strtod", my_strtod},
+    //{"strlcat",strlcat},
+    //{"strlcpy",strlcpy},
+    {"strcspn",strcspn},
+    {"strpbrk",strpbrk},
+    {"strsep",strsep},
+    {"strspn",strspn},
+    {"strsignal",strsignal},
+    {"getgrnam", getgrnam},
+    {"strcoll",strcoll},
+    {"strxfrm",strxfrm},
+    /* strings.h */
+    {"bcmp",bcmp},
+    {"bcopy",bcopy},
+    {"bzero",bzero},
+    {"ffs",ffs},
+    {"index",index},
+    {"rindex",rindex},
+    {"strcasecmp",strcasecmp},
+    {"strncasecmp",strncasecmp},
+    /* dirent.h */
+    {"opendir", opendir},
+    {"closedir", closedir},
     /* pthread.h */
     {"pthread_atfork", pthread_atfork},
     {"pthread_create", my_pthread_create},
@@ -1408,6 +1468,16 @@ static struct _hook hooks[] = {
     /* stdio.h */
     {"__isthreaded", &__my_isthreaded},
     {"__sF", &my_sF},
+    {"fopen", fopen},
+    {"fdopen", fdopen},
+    {"popen", popen},
+    {"puts", puts},
+    {"sprintf", sprintf},
+    {"asprintf", asprintf},
+    {"vasprintf", vasprintf},
+    {"snprintf", snprintf},
+    {"vsprintf", vsprintf},
+    {"vsnprintf", vsnprintf},
     {"clearerr", my_clearerr},
     {"fclose", my_fclose},
     {"feof", my_feof},
@@ -1436,6 +1506,7 @@ static struct _hook hooks[] = {
     {"setbuf", my_setbuf},
     {"setvbuf", my_setvbuf},
     {"ungetc", my_ungetc},
+    {"vasprintf", vasprintf},
     {"vfprintf", my_vfprintf},
     {"vfscanf", my_vfscanf},
     {"fileno", my_fileno},
@@ -1453,6 +1524,13 @@ static struct _hook hooks[] = {
     {"setlinebuf", my_setlinebuf},
     {"__errno", __errno_location},
     {"__set_errno", my_set_errno},
+    /* net specifics, to avoid __res_get_state */
+    {"getaddrinfo", getaddrinfo},
+    {"gethostbyaddr", gethostbyaddr},
+    {"gethostbyname", gethostbyname},
+    {"gethostbyname2", gethostbyname2},
+    {"gethostent", gethostent},
+    {"strftime", strftime},
     {"sysconf", my_sysconf},
     {"dlopen", android_dlopen},
     {"dlerror", android_dlerror},
@@ -1473,137 +1551,52 @@ static struct _hook hooks[] = {
     {"open", my_open},
     // TODO: scandir, scandirat, alphasort, versionsort
     {"__get_tls_hooks", __get_tls_hooks},
+    {"sscanf", sscanf},
+    {"scanf", scanf},
+    {"vscanf", vscanf},
+    {"vsscanf", vsscanf},
+    {"openlog", openlog},
+    {"syslog", syslog},
+    {"closelog", closelog},
+    {"vsyslog", vsyslog},
+    {"timer_create", timer_create},
+    {"timer_settime", timer_settime},
+    {"timer_gettime", timer_gettime},
+    {"timer_delete", timer_delete},
+    {"timer_getoverrun", timer_getoverrun},
+    {"abort", abort},
+    {"writev", writev},
+    /* unistd.h */
+    {"access", access},
+    /* grp.h */
+    {"getgrgid", getgrgid},
+    {"__cxa_atexit", __cxa_atexit},
     {NULL, NULL},
 };
 
-struct hsearch_data *htab=NULL;
-
-void* hook_add(const char *func_name, void *func_ptr)
+void *get_hooked_symbol(char *sym)
 {
-    #define MAX_HTAB_ENTRIES 400
-    if (htab == NULL) {
-        htab = calloc(1, sizeof(struct hsearch_data));
-        hcreate_r(MAX_HTAB_ENTRIES, htab);
-    }
-
-    ENTRY e, *ep=NULL;
-    e.key = strdup(func_name);
-    e.data = func_ptr;
-    int rv = hsearch_r(e, ENTER, &ep, htab);
-    if (ep == NULL) {
-        fprintf(stderr, "entry failed:%s %s\n",func_name, strerror(errno));
-        return NULL;
-    }
-
-    LOGD("HOOKED:%s",func_name);
-    return ep->data;
-}
-
-void* hook_add_from_lib(const char *func_name, const char *lib_name)
-{
-    static void *lib_handle=NULL;
-
-    if (lib_handle==NULL)
-        lib_handle = dlopen(lib_name, RTLD_LAZY);
-
-    if (lib_handle == NULL) {
-        return NULL;
-    }
-
-    void *dl_sym = dlsym(lib_handle, func_name);
-    if (dl_sym == NULL)
-        return NULL;
-
-    return hook_add(func_name,dl_sym);
-}
-
-void* hook_find(const char *func_name)
-{
-    ENTRY e, *ep=NULL;
-    e.key = func_name;
-    int rv = hsearch_r(e, FIND, &ep, htab);
-    if (!rv) {
-        return NULL;
-    }
-
-    LOGD("FOUND:%s",func_name,ep->data);
-    return ep->data;
-}
-
-void hooks_install()
-{
-    static int installed = 0;
-    if (installed)
-        return;
-
     struct _hook *ptr = &hooks[0];
+    static int counter = -1;
 
     while (ptr->name != NULL)
     {
-        hook_add(ptr->name,ptr->func);
+        if (strcmp(sym, ptr->name) == 0){
+            return ptr->func;
+        }
         ptr++;
     }
-    installed =1;
-}
-
-
-/**
- * used to keep a list of pthread function names
- * so that when we crash, we can do
- *  (gdb) print hybris_missing_symbols[$pc]
- */
-char *hybris_missing_symbols[2048];
-pthread_mutex_t hook_mutex;
-
-void *get_hooked_symbol(char *sym)
-{
-    pthread_mutex_lock(&hook_mutex);
-    static int counter = 0;
-    int i;
-
-    hooks_install();
-
-    for (i=0; use_from_bionic[i]!=NULL; ++i) {
-       if (!strcmp(sym,use_from_bionic[i])) {
-           LOGD("from_bionic:%s",use_from_bionic[i]);
-           pthread_mutex_unlock(&hook_mutex);
+    if (strstr(sym, "pthread") != NULL)
+    {
+        /* safe */
+        if (strcmp(sym, "pthread_sigmask") == 0)
            return NULL;
-       }
+        /* not safe */
+        counter--;
+        LOGD("%s %i\n", sym, counter);
+        return (void *) counter;
     }
-    void *rv = hook_find(sym);
-    if (rv != NULL) {
-        pthread_mutex_unlock(&hook_mutex);
-        return rv;
-    }
-
-    rv = hook_add_from_lib(sym, "libc.so.6");
-    if (rv != NULL) {
-        pthread_mutex_unlock(&hook_mutex);
-        return rv;
-    }
-
-    /*
-     * functions we want to come from bionic
-     * libsc-a3xx.so: fall back into bionic */
-    if (!strcmp(sym, "pthread_sigmask")
-       ) {
-        pthread_mutex_unlock(&hook_mutex);
-        return NULL;
-    }
-
-    /* strstr includes symbols such as __pthread */
-    if (strstr(sym, "pthread_")) {
-        hybris_missing_symbols[counter]=strdup(sym);
-        pthread_mutex_unlock(&hook_mutex);
-        return (void*)counter++;
-    }
-
-    if (rv == NULL) {
-        LOGD("UNABLE TO FIND:%s",sym);
-    }
-    pthread_mutex_unlock(&hook_mutex);
-
-    return rv;
+    return NULL;
 }
 
 void android_linker_init()
