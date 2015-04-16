@@ -42,9 +42,49 @@ extern "C" {
 
 class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
 {
+public:
+    WaylandNativeWindowBuffer() : wlbuffer(0), busy(0), youngest(0), other(0), creation_callback(0) {}
+    WaylandNativeWindowBuffer(ANativeWindowBuffer *other)
+    {
+        ANativeWindowBuffer::width = other->width;
+        ANativeWindowBuffer::height = other->height;
+        ANativeWindowBuffer::format = other->format;
+        ANativeWindowBuffer::usage = other->usage;
+        ANativeWindowBuffer::handle = other->handle;
+        ANativeWindowBuffer::stride = other->stride;
+        this->wlbuffer = NULL;
+        this->creation_callback = NULL;
+        this->busy = 0;
+        this->other = other;
+        this->youngest = 0;
+    }
+
+    struct wl_buffer *wlbuffer;
+    int busy;
+    int youngest;
+    ANativeWindowBuffer *other;
+    struct wl_callback *creation_callback;
+
+    void wlbuffer_from_native_handle(struct android_wlegl *android_wlegl,
+                                     struct wl_display *display,
+                                     struct wl_event_queue *queue);
+
+    virtual void init(struct android_wlegl *android_wlegl,
+                      struct wl_display *display,
+                      struct wl_event_queue *queue) {}
+};
+
+#ifdef HYBRIS_NO_SERVER_SIDE_BUFFERS
+
+class ClientWaylandBuffer : public WaylandNativeWindowBuffer
+{
 friend class WaylandNativeWindow;
 protected:
-    WaylandNativeWindowBuffer(alloc_device_t* alloc_device,
+    ClientWaylandBuffer()
+        : m_alloc(0)
+    {}
+
+    ClientWaylandBuffer(alloc_device_t* alloc_device,
                             unsigned int width,
                             unsigned int height,
                             unsigned int format,
@@ -66,48 +106,54 @@ protected:
                 &this->handle, &this->stride);
         assert(alloc_ok == 0);
         this->youngest = 0;
+        this->common.incRef(&this->common);
     }
+
+    ~ClientWaylandBuffer()
+    {
+        if (this->m_alloc)
+             m_alloc->free(m_alloc, this->handle);
+    }
+
+    void init(struct android_wlegl *android_wlegl,
+                                     struct wl_display *display,
+                                     struct wl_event_queue *queue);
 
 protected:
     void* vaddr;
     alloc_device_t* m_alloc;
 
 public:
-    WaylandNativeWindowBuffer(ANativeWindowBuffer *other)
+
+};
+
+#else
+
+class ServerWaylandBuffer : public WaylandNativeWindowBuffer
+{
+public:
+    ServerWaylandBuffer(unsigned int w, unsigned int h, int format, int usage, gralloc_module_t *gralloc, android_wlegl *android_wlegl);
+    ~ServerWaylandBuffer()
     {
-        ANativeWindowBuffer::width = other->width;
-        ANativeWindowBuffer::height = other->height;
-        ANativeWindowBuffer::format = other->format;
-        ANativeWindowBuffer::usage = other->usage;
-        ANativeWindowBuffer::handle = other->handle;
-        ANativeWindowBuffer::stride = other->stride;
-        this->wlbuffer = NULL;
-        this->creation_callback = NULL;
-        this->busy = 0;
-        this->other = other;
-        this->m_alloc = NULL;
-        this->youngest = 0;
+        wl_array_release(&ints);
+        wl_array_release(&fds);
     }
-    ~WaylandNativeWindowBuffer()
-    {
-        if (this->m_alloc)
-             m_alloc->free(m_alloc, this->handle);
-    }
-    void wlbuffer_from_native_handle(struct android_wlegl *android_wlegl,
+
+    void init(struct android_wlegl *android_wlegl,
                                      struct wl_display *display,
                                      struct wl_event_queue *queue);
 
-    struct wl_buffer *wlbuffer;
-    struct wl_callback *creation_callback;
-    int busy;
-    int youngest;
-    ANativeWindowBuffer *other;
+    struct wl_array ints;
+    struct wl_array fds;
+    gralloc_module_t *m_gralloc;
+    wl_buffer *m_buf;
 };
 
+#endif // HYBRIS_NO_SERVER_SIDE_BUFFERS
 
 class WaylandNativeWindow : public BaseNativeWindow {
 public:
-    WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, alloc_device_t* alloc_device);
+    WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, alloc_device_t* alloc_device, gralloc_module_t *gralloc);
     ~WaylandNativeWindow();
 
     void lock();
@@ -178,6 +224,7 @@ private:
     struct wl_callback *frame_callback;
     int m_swap_interval;
     static int wayland_roundtrip(WaylandNativeWindow *display);
+    gralloc_module_t *m_gralloc;
 };
 
 #endif

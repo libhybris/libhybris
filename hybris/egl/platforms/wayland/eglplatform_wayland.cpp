@@ -189,7 +189,7 @@ extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, _
 	}
 	assert(ret >= 0);
 
-	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy, alloc);
+	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy, alloc, gralloc);
 	window->common.incRef(&window->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }
@@ -217,7 +217,7 @@ extern "C" wl_buffer *waylandws_createWlBuffer(EGLDisplay dpy, EGLImageKHR image
 	}
 	if (img->target == EGL_WAYLAND_BUFFER_WL) {
 		WaylandDisplay *wdpy = (WaylandDisplay *)hybris_egl_display_get_mapping(dpy);
-		server_wlegl_buffer *buf = server_wlegl_buffer_from((wl_buffer *)img->egl_buffer);
+		server_wlegl_buffer *buf = server_wlegl_buffer_from((wl_resource *)img->egl_buffer);
 		WaylandNativeWindowBuffer wnb(buf->buf);
 		// The buffer will be managed by the app, so pass NULL as the queue so that
 		// it will be assigned to the default queue
