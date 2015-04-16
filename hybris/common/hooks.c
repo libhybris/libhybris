@@ -1568,12 +1568,6 @@ void *get_hooked_symbol(char *sym)
         return rv;
     }
 
-    rv = hook_add_from_lib(sym, "librt.so");
-    if (rv != NULL) {
-        pthread_mutex_unlock(&hook_mutex);
-        return rv;
-    }
-
     rv = hook_add_from_lib(sym, "libc.so.6");
     if (rv != NULL) {
         pthread_mutex_unlock(&hook_mutex);
