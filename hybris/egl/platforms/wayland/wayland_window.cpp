@@ -76,6 +76,7 @@ void WaylandNativeWindowBuffer::wlbuffer_from_native_handle(struct android_wlegl
     wlbuffer = android_wlegl_create_buffer(android_wlegl,
             width, height, stride,
             format, usage, wlegl_handle);
+    wl_proxy_set_queue((struct wl_proxy *) wlbuffer, queue);
 
     android_wlegl_handle_destroy(wlegl_handle);
 
@@ -107,6 +108,51 @@ void WaylandNativeWindow::unlock()
     pthread_mutex_unlock(&this->mutex);
 }
 
+void
+WaylandNativeWindow::registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
+        const char *interface, uint32_t version)
+{
+    WaylandNativeWindow *nw = static_cast<WaylandNativeWindow *>(data);
+
+    if (strcmp(interface, "android_wlegl") == 0) {
+        nw->m_android_wlegl = static_cast<struct android_wlegl *>(wl_registry_bind(registry, name, &android_wlegl_interface, std::min(2u, version)));
+    }
+}
+
+static const struct wl_registry_listener registry_listener = {
+    WaylandNativeWindow::registry_handle_global
+};
+
+
+    void
+WaylandNativeWindow::sync_callback(void *data, struct wl_callback *callback, uint32_t serial)
+{
+    int *done = static_cast<int *>(data);
+
+    *done = 1;
+    wl_callback_destroy(callback);
+}
+
+static const struct wl_callback_listener sync_listener = {
+    WaylandNativeWindow::sync_callback
+};
+
+int
+WaylandNativeWindow::wayland_roundtrip(WaylandNativeWindow *display)
+{
+    struct wl_callback *callback;
+    int done = 0, ret = 0;
+    wl_display_dispatch_queue_pending(display->m_display, display->wl_queue);
+
+    callback = wl_display_sync(display->m_display);
+    wl_callback_add_listener(callback, &sync_listener, &done);
+    wl_proxy_set_queue((struct wl_proxy *) callback, display->wl_queue);
+    while (ret >= 0 && !done)
+        ret = wl_display_dispatch_queue(display->m_display, display->wl_queue);
+
+    return ret;
+}
+
 static void check_fatal_error(struct wl_display *display)
 {
     int error = wl_display_get_error(display);
@@ -135,10 +181,10 @@ static const struct wl_callback_listener frame_listener = {
     wayland_frame_callback
 };
 
-WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, wl_event_queue *queue,
-                                         android_wlegl *wlegl, alloc_device_t* alloc_device)
-                   : m_android_wlegl(wlegl)
+WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, alloc_device_t* alloc_device)
 {
+    int wayland_ok;
+
     HYBRIS_TRACE_BEGIN("wayland-platform", "create_window", "");
     this->m_window = window;
     this->m_window->nativewindow = (void *) this;
@@ -149,13 +195,23 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
     this->m_defaultHeight = window->height;
     this->m_window->resize_callback = resize_callback;
     this->m_window->free_callback = free_callback;
-    this->m_format = 1;
     this->frame_callback = NULL;
+    this->wl_queue = wl_display_create_queue(display);
+    this->registry = wl_display_get_registry(display);
+    this->m_android_wlegl = NULL;
+    wl_proxy_set_queue((struct wl_proxy *) this->registry, this->wl_queue);
+    wl_registry_add_listener(this->registry, &registry_listener, this);
+    this->m_format = 1;
+
 	const_cast<int&>(ANativeWindow::minSwapInterval) = 0;
 	const_cast<int&>(ANativeWindow::maxSwapInterval) = 1;
     // This is the default as per the EGL documentation
     this->m_swap_interval = 1;
-    this->wl_queue = queue;
+
+    wayland_ok = wayland_roundtrip(this);
+    assert(wayland_ok >= 0);
+    assert(this->m_android_wlegl != NULL);
+
     this->m_alloc = alloc_device;
 
     m_usage=GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
@@ -176,7 +232,10 @@ WaylandNativeWindow::~WaylandNativeWindow()
     destroyBuffers();
     if (frame_callback)
         wl_callback_destroy(frame_callback);
-    if (m_window) {
+    wl_registry_destroy(registry);
+    wl_event_queue_destroy(wl_queue);
+    android_wlegl_destroy(m_android_wlegl);
+   if (m_window) {
 	    m_window->nativewindow = NULL;
 	    m_window->resize_callback = NULL;
 	    m_window->free_callback = NULL;

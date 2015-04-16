@@ -107,8 +107,7 @@ public:
 
 class WaylandNativeWindow : public BaseNativeWindow {
 public:
-    WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, wl_event_queue *queue,
-                        android_wlegl *wlegl, alloc_device_t* alloc_device);
+    WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, alloc_device_t* alloc_device);
     ~WaylandNativeWindow();
 
     void lock();
@@ -170,6 +169,7 @@ private:
     unsigned int m_usage;
     struct android_wlegl *m_android_wlegl;
     alloc_device_t* m_alloc;
+    struct wl_registry *registry;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     int m_queueReads;
