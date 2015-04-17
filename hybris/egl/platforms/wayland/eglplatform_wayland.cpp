@@ -16,12 +16,12 @@
  ** License version 2.1 as published by the Free Software Foundation
  ** and appearing in the file license.lgpl included in the packaging
  ** of this file.
- ** 
+ **
  ** This library is distributed in the hope that it will be useful,
  ** but WITHOUT ANY WARRANTY; without even the implied warranty of
  ** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  ** Lesser General Public License for more details.
- ** 
+ **
  ****************************************************************************************/
 
 #include <android-config.h>
@@ -113,7 +113,7 @@ static void registry_handle_global(void *data, wl_registry *registry, uint32_t n
 	WaylandDisplay *dpy = (WaylandDisplay *)data;
 
 	if (strcmp(interface, "android_wlegl") == 0) {
-		dpy->wlegl = static_cast<android_wlegl *>(wl_registry_bind(registry, name, &android_wlegl_interface, 1));
+		dpy->wlegl = static_cast<struct android_wlegl *>(wl_registry_bind(registry, name, &android_wlegl_interface, std::min(2u, version)));
 	}
 }
 
@@ -189,8 +189,7 @@ extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, _
 	}
 	assert(ret >= 0);
 
-	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy,
-                                                          wdpy->queue, wdpy->wlegl, alloc);
+	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy, wdpy->wlegl, alloc, gralloc);
 	window->common.incRef(&window->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }
@@ -218,7 +217,7 @@ extern "C" wl_buffer *waylandws_createWlBuffer(EGLDisplay dpy, EGLImageKHR image
 	}
 	if (img->target == EGL_WAYLAND_BUFFER_WL) {
 		WaylandDisplay *wdpy = (WaylandDisplay *)hybris_egl_display_get_mapping(dpy);
-		server_wlegl_buffer *buf = server_wlegl_buffer_from((wl_buffer *)img->egl_buffer);
+		server_wlegl_buffer *buf = server_wlegl_buffer_from((wl_resource *)img->egl_buffer);
 		WaylandNativeWindowBuffer wnb(buf->buf);
 		// The buffer will be managed by the app, so pass NULL as the queue so that
 		// it will be assigned to the default queue
@@ -229,7 +228,7 @@ extern "C" wl_buffer *waylandws_createWlBuffer(EGLDisplay dpy, EGLImageKHR image
 	return NULL;
 }
 
-extern "C" __eglMustCastToProperFunctionPointerType waylandws_eglGetProcAddress(const char *procname) 
+extern "C" __eglMustCastToProperFunctionPointerType waylandws_eglGetProcAddress(const char *procname)
 {
 	if (strcmp(procname, "eglHybrisWaylandPostBuffer") == 0)
 	{

@@ -39,7 +39,7 @@ extern "C" {
 static inline server_wlegl *
 server_wlegl_from(struct wl_resource *resource)
 {
-	return reinterpret_cast<server_wlegl *>(resource->data);
+	return reinterpret_cast<server_wlegl *>(wl_resource_get_user_data(resource));
 }
 
 static void
@@ -97,7 +97,7 @@ server_wlegl_create_buffer(struct wl_client *client,
 		return;
 	}
 
-	buffer = server_wlegl_buffer_create(id, width, height, stride,
+	buffer = server_wlegl_buffer_create(client, id, width, height, stride,
 					    format, usage, native, wlegl);
 	if (!buffer) {
 		native_handle_close((native_handle_t *)native);
@@ -107,13 +107,47 @@ server_wlegl_create_buffer(struct wl_client *client,
 				       "invalid native handle");
 		return;
 	}
+}
 
-	wl_client_add_resource(client, &buffer->base.resource);
+static void
+server_wlegl_get_server_buffer_handle(wl_client *client, wl_resource *res, uint32_t id, int32_t width, int32_t height, int32_t format, int32_t usage)
+{
+	if (width == 0 || height == 0) {
+		wl_resource_post_error(res, 0, "invalid buffer size: %u,%u\n", width, height);
+		return;
+	}
+
+	server_wlegl *wlegl = server_wlegl_from(res);
+
+	wl_resource *resource = wl_resource_create(client, &android_wlegl_server_buffer_handle_interface, wl_resource_get_version(res), id);
+
+	buffer_handle_t _handle;
+	int _stride;
+
+	int ret = wlegl->alloc->alloc(wlegl->alloc, width, height, format, usage, &_handle, &_stride);
+	server_wlegl_buffer *buffer = server_wlegl_buffer_create_server(client, width, height, _stride, format, usage, _handle, wlegl);
+
+	struct wl_array ints;
+	int *ints_data;
+	wl_array_init(&ints);
+	ints_data = (int*) wl_array_add(&ints, _handle->numInts * sizeof(int));
+	memcpy(ints_data, _handle->data + _handle->numFds, _handle->numInts * sizeof(int));
+
+	android_wlegl_server_buffer_handle_send_buffer_ints(resource, &ints);
+	wl_array_release(&ints);
+
+	for (int i = 0; i < _handle->numFds; i++) {
+		android_wlegl_server_buffer_handle_send_buffer_fd(resource, _handle->data[i]);
+	}
+
+	android_wlegl_server_buffer_handle_send_buffer(resource, buffer->resource, format, _stride);
+	wl_resource_destroy(resource);
 }
 
 static const struct android_wlegl_interface server_wlegl_impl = {
 	server_wlegl_create_handle,
 	server_wlegl_create_buffer,
+	server_wlegl_get_server_buffer_handle,
 };
 
 static void
@@ -123,12 +157,12 @@ server_wlegl_bind(struct wl_client *client, void *data,
 	server_wlegl *wlegl = reinterpret_cast<server_wlegl *>(data);
 	struct wl_resource *resource;
 
-	resource = wl_client_add_object(client, &android_wlegl_interface,
-					&server_wlegl_impl, id, wlegl);
+	resource = wl_resource_create(client, &android_wlegl_interface, version, id);
+	wl_resource_set_implementation(resource, &server_wlegl_impl, wlegl, 0);
 }
 
 server_wlegl *
-server_wlegl_create(struct wl_display *display, gralloc_module_t *gralloc)
+server_wlegl_create(struct wl_display *display, gralloc_module_t *gralloc, alloc_device_t *alloc)
 {
 	struct server_wlegl *wlegl;
 	int ret;
@@ -136,10 +170,10 @@ server_wlegl_create(struct wl_display *display, gralloc_module_t *gralloc)
 	wlegl = new server_wlegl;
 
 	wlegl->display = display;
-	wlegl->global = wl_display_add_global(display,
-					      &android_wlegl_interface,
+	wlegl->global = wl_global_create(display, &android_wlegl_interface, 2,
 					      wlegl, server_wlegl_bind);
 	wlegl->gralloc = (const gralloc_module_t *)gralloc;
+	wlegl->alloc = alloc;
 
 	return wlegl;
 }

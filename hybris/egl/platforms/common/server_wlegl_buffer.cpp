@@ -38,27 +38,22 @@ static const struct wl_buffer_interface server_wlegl_buffer_impl = {
 };
 
 server_wlegl_buffer *
-server_wlegl_buffer_from(struct wl_buffer *buffer)
+server_wlegl_buffer_from(struct wl_resource *buffer)
 {
-	if (buffer->resource.object.implementation !=
-	    (void (**)(void)) &server_wlegl_buffer_impl)
-		return NULL;
-
-	return container_of(buffer, server_wlegl_buffer, base);
+	return static_cast<server_wlegl_buffer *>(wl_resource_get_user_data(buffer));
 }
 
 static void
 server_wlegl_buffer_dtor(struct wl_resource *resource)
 {
-	struct wl_buffer *base =
-		reinterpret_cast<struct wl_buffer*>(resource->data);
-	server_wlegl_buffer *buffer = server_wlegl_buffer_from(base);
+	server_wlegl_buffer *buffer = server_wlegl_buffer_from(resource);
 	buffer->buf->common.decRef(&buffer->buf->common);
 	delete buffer;
 }
 
 server_wlegl_buffer *
-server_wlegl_buffer_create(uint32_t id,
+server_wlegl_buffer_create(wl_client *client,
+			   uint32_t id,
 			   int32_t width,
 			   int32_t height,
 			   int32_t stride,
@@ -70,29 +65,42 @@ server_wlegl_buffer_create(uint32_t id,
 	server_wlegl_buffer *buffer = new server_wlegl_buffer;
 	int ret;
 
-	memset(buffer, 0, sizeof(*buffer));
-
 	buffer->wlegl = wlegl;
-
-	buffer->base.resource.object.id = id;
-	buffer->base.resource.object.interface = &wl_buffer_interface;
-	buffer->base.resource.object.implementation =
-		(void (**)(void)) &server_wlegl_buffer_impl;
-
-	buffer->base.resource.data = &buffer->base;
-	buffer->base.resource.destroy = server_wlegl_buffer_dtor;
-
-	buffer->base.width = width;
-	buffer->base.height = height;
+	buffer->resource = wl_resource_create(client, &wl_buffer_interface, 1, id);
+	wl_resource_set_implementation(buffer->resource, &server_wlegl_buffer_impl, buffer, server_wlegl_buffer_dtor);
 
 	ret = wlegl->gralloc->registerBuffer(wlegl->gralloc, handle);
 	if (ret) {
 		delete buffer;
 		return NULL;
 	}
-        
+
 	buffer->buf = new RemoteWindowBuffer(
 	        width, height, stride, format, usage, handle, wlegl->gralloc, NULL);
+	buffer->buf->common.incRef(&buffer->buf->common);
+	return buffer;
+}
+
+server_wlegl_buffer *
+server_wlegl_buffer_create_server(wl_client *client,
+			   int32_t width,
+			   int32_t height,
+			   int32_t stride,
+			   int32_t format,
+			   int32_t usage,
+			   buffer_handle_t handle,
+			   server_wlegl *wlegl)
+{
+	server_wlegl_buffer *buffer = new server_wlegl_buffer;
+	int ret;
+
+	buffer->wlegl = wlegl;
+	buffer->resource = wl_resource_create(client, &wl_buffer_interface, 1, 0);
+	wl_resource_set_implementation(buffer->resource, &server_wlegl_buffer_impl, buffer, server_wlegl_buffer_dtor);
+
+	buffer->buf = new RemoteWindowBuffer(
+	        width, height, stride, format, usage, handle, wlegl->gralloc, wlegl->alloc);
+	buffer->buf->setAllocated(true);
 	buffer->buf->common.incRef(&buffer->buf->common);
 	return buffer;
 }
