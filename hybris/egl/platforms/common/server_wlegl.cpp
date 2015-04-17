@@ -124,6 +124,8 @@ server_wlegl_get_server_buffer_handle(wl_client *client, wl_resource *res, uint3
 	buffer_handle_t _handle;
 	int _stride;
 
+	usage |= GRALLOC_USAGE_HW_COMPOSER;
+
 	int ret = wlegl->alloc->alloc(wlegl->alloc, width, height, format, usage, &_handle, &_stride);
 	server_wlegl_buffer *buffer = server_wlegl_buffer_create_server(client, width, height, _stride, format, usage, _handle, wlegl);
 
