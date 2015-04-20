@@ -136,8 +136,8 @@ struct ws_egl_interface hybris_egl_interface = {
 	egl_helper_get_mapping,
 };
 
-#define EGL_DLSYM(fptr, sym) do { if (_libegl == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libegl, sym); } } while (0) 
-#define GLESv2_DLSYM(fptr, sym) do { if (_libgles == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libgles, sym); } } while (0) 
+#define EGL_DLSYM(fptr, sym) do { if (_libegl == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libegl, sym); } } while (0)
+#define GLESv2_DLSYM(fptr, sym) do { if (_libgles == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libgles, sym); } } while (0)
 
 EGLint eglGetError(void)
 {
@@ -258,7 +258,7 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 	HYBRIS_TRACE_BEGIN("hybris-egl", "eglCreateWindowSurface", "");
 	struct _EGLDisplay *display = hybris_egl_display_get_mapping(dpy);
 	win = ws_CreateWindow(win, display);
-	
+
 	assert(((struct ANativeWindowBuffer *) win)->common.magic == ANDROID_NATIVE_WINDOW_MAGIC);
 
 	HYBRIS_TRACE_BEGIN("native-egl", "eglCreateWindowSurface", "");
@@ -439,13 +439,13 @@ EGLBoolean eglWaitGL(void)
 EGLBoolean eglWaitNative(EGLint engine)
 {
 	EGL_DLSYM(&_eglWaitNative, "eglWaitNative");
-	return (*_eglWaitNative)(engine); 
+	return (*_eglWaitNative)(engine);
 }
 
 EGLBoolean _my_eglSwapBuffersWithDamageEXT(EGLDisplay dpy, EGLSurface surface, EGLint *rects, EGLint n_rects)
 {
 	EGLNativeWindowType win;
-	EGLBoolean ret; 
+	EGLBoolean ret;
 	HYBRIS_TRACE_BEGIN("hybris-egl", "eglSwapBuffersWithDamageEXT", "");
 	EGL_DLSYM(&_eglSwapBuffers, "eglSwapBuffers");
 
@@ -477,6 +477,7 @@ EGLBoolean eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
 	return (*_eglCopyBuffers)(dpy, surface, target);
 }
 
+
 static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list)
 {
 	EGL_DLSYM(&_eglCreateImageKHR, "eglCreateImageKHR");
@@ -493,8 +494,7 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 		return EGL_NO_IMAGE_KHR;
 	}
 
-	struct egl_image *image;
-	image = malloc(sizeof *image);
+	struct egl_image *image = egl_image_create();
 	image->egl_image = eik;
 	image->egl_buffer = buffer;
 	image->target = target;
@@ -506,6 +506,8 @@ static void _my_glEGLImageTargetTexture2DOES(GLenum target, GLeglImageOES image)
 {
 	GLESv2_DLSYM(&_glEGLImageTargetTexture2DOES, "glEGLImageTargetTexture2DOES");
 	struct egl_image *img = image;
+	if (!egl_image_sanitycheck(img))
+		img = 0;
 	(*_glEGLImageTargetTexture2DOES)(target, img ? img->egl_image : NULL);
 }
 
