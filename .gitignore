@@ -28,9 +28,42 @@ stamp-h1
 aclocal-copy
 arm-*-linux-gnueabi-libtool
 
+# Generated .pc, .h and .c files
+hybris/camera/libcamera.pc
+hybris/documentation.list
+hybris/egl/egl.pc
+hybris/egl/platforms/common/hybris-egl-platform.pc
+hybris/egl/platforms/common/wayland-android-client-protocol.h
+hybris/egl/platforms/common/wayland-android-protocol.c
+hybris/egl/platforms/common/wayland-android-server-protocol.h
+hybris/egl/platforms/common/wayland-egl.pc
+hybris/egl/platforms/hwcomposer/hwcomposer-egl.pc
+hybris/glesv1/glesv1_cm.pc
+hybris/glesv2/glesv2.pc
+hybris/hardware/libhardware.pc
+hybris/input/libis.pc
+hybris/libnfc_ndef_nxp/libnfc_ndef_nxp.pc
+hybris/libnfc_nxp/libnfc_nxp.pc
+hybris/libsync/libsync.pc
+hybris/properties/libandroid-properties.pc
+hybris/sf/libsf.pc
+hybris/vibrator/libvibrator.pc
+
+# Util binaries
+hybris/utils/getprop
+hybris/utils/setprop
+
+# Test binaries
+hybris/tests/test_camera
+hybris/tests/test_egl_configs
+hybris/tests/test_gps
+hybris/tests/test_input
+hybris/tests/test_nfc
+hybris/tests/test_sf
 hybris/tests/test_egl
 hybris/tests/test_glesv2
 hybris/tests/test_lights
 hybris/tests/test_offscreen_rendering
 hybris/tests/test_sensors
 hybris/tests/test_ui
+
