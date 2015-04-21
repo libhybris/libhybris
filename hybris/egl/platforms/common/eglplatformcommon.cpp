@@ -141,6 +141,12 @@ extern "C" EGLBoolean eglplatformcommon_eglHybrisAcquireNativeBufferWL(EGLDispla
      if (!buffer)
          return EGL_FALSE;
     server_wlegl_buffer *buf  = server_wlegl_buffer_from(wlBuffer);
+    if (!buf->buf->isAllocated()) {
+        // We only return the handles from buffers which are allocated server side. This is because some
+        // hardware compositors have problems with client-side allocated buffers.
+        buffer = 0;
+        return EGL_FALSE;
+    }
     ANativeWindowBuffer* anwb = (ANativeWindowBuffer *) buf->buf;
     anwb->common.incRef(&anwb->common);
     *buffer = (EGLClientBuffer *) anwb;
