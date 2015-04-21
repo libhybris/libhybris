@@ -55,6 +55,7 @@ class RemoteWindowBuffer : public BaseNativeWindowBuffer
 		~RemoteWindowBuffer();
 
 		void setAllocated(bool allocated) { m_allocated = allocated; }
+		bool isAllocated() const { return m_allocated; }
 
 	private:
 		const gralloc_module_t *m_gralloc;
