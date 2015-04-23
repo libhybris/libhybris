@@ -132,12 +132,7 @@ class ServerWaylandBuffer : public WaylandNativeWindowBuffer
 {
 public:
     ServerWaylandBuffer(unsigned int w, unsigned int h, int format, int usage, gralloc_module_t *gralloc, android_wlegl *android_wlegl, struct wl_event_queue *queue);
-    ~ServerWaylandBuffer()
-    {
-        wl_array_release(&ints);
-        wl_array_release(&fds);
-    }
-
+    ~ServerWaylandBuffer();
     void init(struct android_wlegl *android_wlegl,
                                      struct wl_display *display,
                                      struct wl_event_queue *queue);

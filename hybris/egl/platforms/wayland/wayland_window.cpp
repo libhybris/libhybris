@@ -884,6 +884,15 @@ ServerWaylandBuffer::ServerWaylandBuffer(unsigned int w, unsigned int h, int f, 
     android_wlegl_server_buffer_handle_add_listener(ssb, &server_handle_listener, this);
 }
 
+ServerWaylandBuffer::~ServerWaylandBuffer()
+{
+    m_gralloc->unregisterBuffer(m_gralloc, handle);
+    native_handle_close(handle);
+    native_handle_delete(const_cast<native_handle_t *>(handle));
+    wl_array_release(&ints);
+    wl_array_release(&fds);
+}
+
 void ServerWaylandBuffer::init(android_wlegl *, wl_display *, wl_event_queue *queue)
 {
     wlbuffer = m_buf;
