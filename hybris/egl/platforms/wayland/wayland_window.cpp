@@ -85,12 +85,18 @@ void WaylandNativeWindowBuffer::wlbuffer_from_native_handle(struct android_wlegl
     wl_proxy_set_queue((struct wl_proxy *)creation_callback, queue);
 }
 
+void WaylandNativeWindow::resize(unsigned int width, unsigned int height)
+{
+    lock();
+    this->m_defaultWidth = width;
+    this->m_defaultHeight = height;
+    unlock();
+}
+
 void WaylandNativeWindow::resize_callback(struct wl_egl_window *egl_window, void *)
 {
     TRACE("%dx%d",egl_window->width,egl_window->height);
-    native_window_set_buffers_dimensions(
-        (WaylandNativeWindow*)egl_window->nativewindow,
-        egl_window->width,egl_window->height);
+    ((WaylandNativeWindow *) egl_window->nativewindow)->resize(egl_window->width, egl_window->height);
 }
 
 void WaylandNativeWindow::free_callback(struct wl_egl_window *egl_window, void *)
@@ -788,8 +794,8 @@ int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
     if (m_width != width || m_height != height)
     {
         TRACE("old-size:%ix%i new-size:%ix%i", m_width, m_height, width, height);
-        m_width = m_defaultWidth = width;
-        m_height = m_defaultHeight = height;
+        m_width = width;
+        m_height = height;
         /* Buffers will be re-allocated when dequeued */
     } else {
         TRACE("size:%ix%i", width, height);
