@@ -876,6 +876,7 @@ static const struct android_wlegl_server_buffer_handle_listener server_handle_li
 
 ServerWaylandBuffer::ServerWaylandBuffer(unsigned int w, unsigned int h, int f, int u, gralloc_module_t *gralloc, android_wlegl *android_wlegl, struct wl_event_queue *queue)
                    : WaylandNativeWindowBuffer()
+                   , m_buf(0)
 {
     ANativeWindowBuffer::width = w;
     ANativeWindowBuffer::height = h;
@@ -892,6 +893,9 @@ ServerWaylandBuffer::ServerWaylandBuffer(unsigned int w, unsigned int h, int f, 
 
 ServerWaylandBuffer::~ServerWaylandBuffer()
 {
+    if (m_buf)
+        wl_buffer_destroy(m_buf);
+
     m_gralloc->unregisterBuffer(m_gralloc, handle);
     native_handle_close(handle);
     native_handle_delete(const_cast<native_handle_t *>(handle));
@@ -902,6 +906,7 @@ ServerWaylandBuffer::~ServerWaylandBuffer()
 void ServerWaylandBuffer::init(android_wlegl *, wl_display *, wl_event_queue *queue)
 {
     wlbuffer = m_buf;
+    m_buf = 0;
     wl_proxy_set_queue((struct wl_proxy *) wlbuffer, queue);
 }
 
