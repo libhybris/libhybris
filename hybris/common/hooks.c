@@ -497,7 +497,7 @@ static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned _
         *((int *)__mutex) = (int) realmutex;
     }
 
-    clock_gettime(CLOCK_MONOTONIC_RAW, &tv);
+    clock_gettime(CLOCK_REALTIME, &tv);
     tv.tv_sec += __msecs/1000;
     tv.tv_nsec += (__msecs % 1000) * 1000000;
     if (tv.tv_nsec >= 1000000000) {
@@ -714,7 +714,7 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
     }
 
     struct timespec tv;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &tv);
+    clock_gettime(CLOCK_REALTIME, &tv);
     tv.tv_sec += reltime->tv_sec;
     tv.tv_nsec += reltime->tv_nsec;
     if (tv.tv_nsec >= 1000000000) {
