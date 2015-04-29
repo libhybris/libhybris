@@ -548,6 +548,13 @@ static int my_pthread_cond_init(pthread_cond_t *cond,
             realcond = (pthread_cond_t *)hybris_get_shmpointer(handle);
     }
 
+    pthread_condattr_t localAttr;
+    if (!attr) {
+        pthread_condattr_init(&localAttr);
+        attr = &localAttr;
+    }
+    pthread_condattr_setclock((pthread_condattr_t *) attr, CLOCK_MONOTONIC);
+
     return pthread_cond_init(realcond, attr);
 }
 
@@ -714,7 +721,7 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
     }
 
     struct timespec tv;
-    clock_gettime(CLOCK_MONOTONIC_RAW, &tv);
+    clock_gettime(CLOCK_MONOTONIC, &tv);
     tv.tv_sec += reltime->tv_sec;
     tv.tv_nsec += reltime->tv_nsec;
     if (tv.tv_nsec >= 1000000000) {
