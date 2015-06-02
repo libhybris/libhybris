@@ -2,32 +2,107 @@
 
 ANDROID_ROOT=$1
 HEADERPATH=$2
-MAJOR=$3
-MINOR=$4
+ANDROID_TAG=$3
 
-PATCH=$5
-PATCH2=$6
-PATCH3=$7
+MAJOR=$4
+MINOR=$5
+
+ANDROID_URL=$6
+
+PATCH=$7
+PATCH2=$8
+PATCH3=$9
 
 usage() {
-    echo "Usage: extract-headers.sh <ANDROID_ROOT> <HEADER_PATH> [Android Platform Version]"
+    echo "Usage: extract-headers.sh <ANDROID_ROOT> <HEADER_PATH> <ANDROID_TAG> [ANDROID_URL [Android Platform Version]]"
     echo
-    echo "  ANDROID_ROOT: Directory containing the Android source tree."
+    echo "  ANDROID_ROOT: Directory to locate the Android source tree to."
+    echo "  ANDROID_TAG:  Version string of the Android version to use."
     echo "  HEADER_PATH:  Where the headers will be extracted to."
     echo
-    echo "Android Platform Version:"
+    echo "  ANDROID_URL:"
+    echo "  This field is optional. If not specified \"https://android.googlesource.com\" will be used"
+    echo "  Android Platform Version:"
     echo "  This field is optional. If not specified, automatic extraction is attempted."
     echo
     echo "Ex:"
-    echo "    ./extract-headers.sh  android-aosp/  /tmp/android-headers/  4 2 2"
+    echo "    ./extract-headers.sh  android-aosp/  /tmp/android-headers/  android-4.1.2_r2.1 https://android.googlesource.com 4 1 2"
 
 }
 
-if [ x$ANDROID_ROOT = x -o "x$HEADERPATH" = x ]; then
+cwd=$(pwd)
+
+if [ x$ANDROID_URL = x ]; then
+    ANDROID_URL="https://android.googlesource.com"
+fi
+
+if [ x$ANDROID_TAG = x -o x$ANDROID_ROOT = x -o "x$HEADERPATH" = x ]; then
     usage
     exit 1
 fi
 
+# verify android tag
+if [ ! -d /tmp/manifest ]; then
+    cd /tmp
+    git clone --quiet -b $ANDROID_TAG $ANDROID_URL/platform/manifest
+
+    if [ $? -ne 0 ]; then
+        echo "git clone failed, wrong ANDROID_TAG or ANDROID_URL?"
+        exit 1
+    fi
+
+    rm -rf /tmp/manifest
+else
+    echo "manifest exists already in /tmp!"
+    exit 1
+fi
+
+if [ ! -d $ANDROID_ROOT ]; then
+    mkdir -p $ANDROID_ROOT
+fi
+
+echo "fetching android sources"
+echo "build..."
+if [ ! -d $ANDROID_ROOT/build ]; then
+    cd $ANDROID_ROOT
+    git clone --quiet -b $ANDROID_TAG $ANDROID_URL/platform/build/
+fi
+echo "libhardware..."
+if [ ! -d $ANDROID_ROOT/hardware/libhardware ]; then
+    mkdir $ANDROID_ROOT/hardware
+    cd $ANDROID_ROOT/hardware
+    git clone --quiet -b $ANDROID_TAG $ANDROID_URL/platform/hardware/libhardware
+fi
+echo "libhardware_legacy..."
+if [ ! -d $ANDROID_ROOT/hardware/libhardware_legacy ]; then
+    # no mkdir because hardware should already exist
+    cd $ANDROID_ROOT/hardware
+    git clone --quiet -b $ANDROID_TAG $ANDROID_URL/platform/hardware/libhardware_legacy
+fi
+echo "core..."
+if [ ! -d $ANDROID_ROOT/system/core ]; then
+    mkdir $ANDROID_ROOT/system
+    cd $ANDROID_ROOT/system
+    git clone --quiet -b $ANDROID_TAG $ANDROID_URL/platform/system/core/
+fi
+echo "bionic..."
+if [ ! -d $ANDROID_ROOT/bionic ]; then
+    cd $ANDROID_ROOT
+    git clone --quiet -b $ANDROID_TAG $ANDROID_URL/platform/bionic/
+fi
+echo "libnfc-nxp..."
+if [ ! -d $ANDROID_ROOT/external/libnfc-nxp ]; then
+    mkdir $ANDROID_ROOT/external
+    cd $ANDROID_ROOT/external
+    git clone --quiet -b $ANDROID_TAG $ANDROID_URL/platform/external/libnfc-nxp/
+fi
+echo "kernel-headers..."
+if [ ! -d $ANDROID_ROOT/external/kernel-headers ]; then
+    # no mkdir because external should already exist
+    cd $ANDROID_ROOT/external
+    git clone --quiet -b $ANDROID_TAG $ANDROID_URL/platform/external/kernel-headers/
+fi
+echo "done"
 
 if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
     VERSION_DEFAULTS=$ANDROID_ROOT/build/core/version_defaults.mk
@@ -99,6 +174,7 @@ extract_headers_to() {
 require_sources \
     hardware/libhardware/include/hardware
 
+cd $cwd
 mkdir -p $HEADERPATH
 
 # Default PATCH2,3 to 0
