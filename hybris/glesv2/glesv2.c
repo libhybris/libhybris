@@ -58,6 +58,8 @@ This generates a function that when first called overwrites it's plt entry with 
 typeof(sym) * sym ## _dispatch (void) __asm__ (#sym);\
 typeof(sym) * sym ## _dispatch (void) \
 { \
+	if (!_libglesv2) \
+		_libglesv2 = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("LIBGLESV2") : "libGLESv2.so", RTLD_NOW); \
 	return (void *) android_dlsym(_libglesv2, #sym); \
 } 
 
