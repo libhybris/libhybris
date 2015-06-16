@@ -31,6 +31,7 @@ wl_egl_window_create(struct wl_surface *surface,
 
 	egl_window->surface = surface;
 	egl_window->resize_callback = NULL;
+	egl_window->free_callback = NULL;
 	wl_egl_window_resize(egl_window, width, height, 0, 0);
 	egl_window->attached_width  = 0;
 	egl_window->attached_height = 0;
