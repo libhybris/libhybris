@@ -22,6 +22,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include <egl/ws.h>
 #include <hybris/common/binding.h>
 #include <hybris/common/floating_point_abi.h>
 
@@ -45,6 +46,7 @@ static void         (*_glVertexAttrib1f)(GLuint indx, GLfloat x) FP_ATTRIB = NUL
 static void         (*_glVertexAttrib2f)(GLuint indx, GLfloat x, GLfloat y) FP_ATTRIB = NULL;
 static void         (*_glVertexAttrib3f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z) FP_ATTRIB = NULL;
 static void         (*_glVertexAttrib4f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w) FP_ATTRIB = NULL;
+static void         (*_glEGLImageTargetTexture2DOES)(GLenum target, GLeglImageOES image) = NULL;
 
 
 #define GLES2_LOAD(sym)  { *(&_ ## sym) = (void *) android_dlsym(_libglesv2, #sym);  } 
@@ -81,7 +83,7 @@ static void  __attribute__((constructor)) _init_androidglesv2()  {
 	GLES2_LOAD(glVertexAttrib2f);
 	GLES2_LOAD(glVertexAttrib3f);
 	GLES2_LOAD(glVertexAttrib4f);
-
+	GLES2_LOAD(glEGLImageTargetTexture2DOES);
 }
 
 
@@ -337,7 +339,11 @@ GLES2_IDLOAD(glVertexAttribPointer);
 
 GLES2_IDLOAD(glViewport);
 
-GLES2_IDLOAD(glEGLImageTargetTexture2DOES);
+void glEGLImageTargetTexture2DOES(GLenum target, GLeglImageOES image)
+{
+	struct egl_image *img = image;
+	return (*_glEGLImageTargetTexture2DOES)(target, img ? img->egl_image : NULL);
+}
 
 void glBlendColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
