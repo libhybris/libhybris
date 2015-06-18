@@ -118,26 +118,4 @@ void ws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval
 		ws->setSwapInterval(dpy, win, interval);
 }
 
-#define HYBRIS_MAKE_TOKEN(a, b, c, d) ((((unsigned int) a) << 24) \
-                                      | (((unsigned int) b) << 16) \
-                                      | (((unsigned int) c) << 8) \
-                                      | ((unsigned int) d))
-
-#define HYBRIS_EGL_IMAGE_ID HYBRIS_MAKE_TOKEN('H', 'I', 'M', 'G')
-
-struct egl_image *egl_image_create()
-{
-    struct egl_image *img = (struct egl_image *) malloc(sizeof(struct egl_image));
-    img->__type_token = HYBRIS_EGL_IMAGE_ID;
-    return img;
-}
-
-int egl_image_sanitycheck(struct egl_image *image)
-{
-    if (image && image->__type_token == HYBRIS_EGL_IMAGE_ID)
-        return 1;
-    return 0;
-}
-
-
 // vim:ts=4:sw=4:noexpandtab

@@ -12,21 +12,10 @@ struct ws_egl_interface {
 
 struct egl_image
 {
-    // We experience that some client API's may pass invalid pointers for
-    // EGLImages and the blob survives this, so we have this token to try to
-    // acheive the same.
-    int __type_token;
     EGLImageKHR egl_image;
     EGLClientBuffer egl_buffer;
     EGLenum target;
 };
-
-/* Used to allocate egl_image with the __type_token safeguard initialized. */
-struct egl_image *egl_image_create();
-
-/* Returns 1 if the input image is NULL or a valid pointer with the
-   __internal_id set to the right value */
-int egl_image_sanitycheck(struct egl_image *image);
 
 /* Defined in egl.c */
 extern struct ws_egl_interface hybris_egl_interface;

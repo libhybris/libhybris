@@ -210,7 +210,7 @@ extern "C" int waylandws_post(EGLNativeWindowType win, void *buffer)
 extern "C" wl_buffer *waylandws_createWlBuffer(EGLDisplay dpy, EGLImageKHR image)
 {
 	egl_image *img = reinterpret_cast<egl_image *>(image);
-	if (!img || !egl_image_sanitycheck(img)) {
+	if (!img) {
 	    // The spec says we should send a EGL_BAD_PARAMETER error here, but we don't have the
 	    // means, as of now.
 	    return NULL;
