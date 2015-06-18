@@ -494,7 +494,8 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 		return EGL_NO_IMAGE_KHR;
 	}
 
-	struct egl_image *image = egl_image_create();
+	struct egl_image *image;
+	image = malloc(sizeof *image);
 	image->egl_image = eik;
 	image->egl_buffer = buffer;
 	image->target = target;
@@ -506,8 +507,6 @@ static void _my_glEGLImageTargetTexture2DOES(GLenum target, GLeglImageOES image)
 {
 	GLESv2_DLSYM(&_glEGLImageTargetTexture2DOES, "glEGLImageTargetTexture2DOES");
 	struct egl_image *img = image;
-	if (!egl_image_sanitycheck(img))
-		img = 0;
 	(*_glEGLImageTargetTexture2DOES)(target, img ? img->egl_image : NULL);
 }
 
