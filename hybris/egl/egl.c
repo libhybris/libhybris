@@ -40,6 +40,9 @@
 
 static void *_libegl = NULL;
 static void *_libgles = NULL;
+static void *_hybris_libgles1 = NULL;
+static void *_hybris_libgles2 = NULL;
+static int _egl_context_client_version = 1;
 
 static EGLint  (*_eglGetError)(void) = NULL;
 
@@ -389,6 +392,15 @@ EGLContext eglCreateContext(EGLDisplay dpy, EGLConfig config,
 		const EGLint *attrib_list)
 {
 	EGL_DLSYM(&_eglCreateContext, "eglCreateContext");
+
+	EGLint *p = attrib_list;
+	while (p != NULL && *p != EGL_NONE) {
+		if (*p == EGL_CONTEXT_CLIENT_VERSION) {
+			_egl_context_client_version = p[1];
+		}
+		p += 2;
+	}
+
 	return (*_eglCreateContext)(dpy, config, share_context, attrib_list);
 }
 
@@ -529,14 +541,36 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 	{
 		return _my_glEGLImageTargetTexture2DOES;
 	}
-	__eglMustCastToProperFunctionPointerType ret = ws_eglGetProcAddress(procname);
+
+	__eglMustCastToProperFunctionPointerType ret = NULL;
+
+	switch (_egl_context_client_version) {
+		case 1:  // OpenGL ES 1.x API
+			if (_hybris_libgles1 == NULL) {
+				_hybris_libgles1 = (void *) dlopen(getenv("HYBRIS_LIBGLESV1") ?: "libGLESv1_CM.so.1", RTLD_LAZY);
+			}
+			ret = _hybris_libgles1 ? dlsym(_hybris_libgles1, procname) : NULL;
+			break;
+		case 2:  // OpenGL ES 2.0 API
+			if (_hybris_libgles2 == NULL) {
+				_hybris_libgles2 = (void *) dlopen(getenv("HYBRIS_LIBGLESV2") ?: "libGLESv2.so.2", RTLD_LAZY);
+			}
+			ret = _hybris_libgles2 ? dlsym(_hybris_libgles2, procname) : NULL;
+			break;
+		case 3:  // OpenGL ES 3.x API
+			// TODO: Load from libGLESv3.so once we have OpenGL ES 3.0/3.1 support
+			break;
+		default:
+			HYBRIS_WARN("Unknown EGL context client version: %d", _egl_context_client_version);
+			break;
+	}
 
 	if (ret == NULL) {
-#ifdef RTLD_DEFAULT
-		ret = dlsym(RTLD_DEFAULT, procname);
-		if (ret == NULL)
-#endif
-			ret = (*_eglGetProcAddress)(procname);
+		ret = ws_eglGetProcAddress(procname);
+	}
+
+	if (ret == NULL) {
+		ret = (*_eglGetProcAddress)(procname);
 	}
 
 	return ret;
