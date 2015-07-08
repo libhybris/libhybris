@@ -274,6 +274,7 @@ soinfo libdl_info = {
     strtab: ANDROID_LIBDL_STRTAB,
     symtab: libdl_symtab,
 
+    refcount: 1,
     nbucket: 1,
     nchain: 7,
     bucket: libdl_buckets,
