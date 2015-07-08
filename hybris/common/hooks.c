@@ -1261,6 +1261,7 @@ FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
 }
 
 extern int __cxa_atexit(void (*)(void*), void*, void*);
+extern void __cxa_finalize(void * d);
 
 struct open_redirect {
 	const char *from;
@@ -1571,6 +1572,7 @@ static struct _hook hooks[] = {
     /* grp.h */
     {"getgrgid", getgrgid},
     {"__cxa_atexit", __cxa_atexit},
+    {"__cxa_finalize", __cxa_finalize},
     {NULL, NULL},
 };
 
