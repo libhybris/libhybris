@@ -48,6 +48,8 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <locale.h>
+#include <sys/syscall.h>
+#include <sys/auxv.h>
 
 #include <hybris/properties/properties.h>
 
@@ -181,6 +183,11 @@ static size_t my_strlen(const char *s)
         return -1;
 
     return strlen(s);
+}
+
+static pid_t my_gettid( void )
+{
+        return syscall( __NR_gettid );
 }
 
 /*
@@ -1393,6 +1400,9 @@ static struct _hook hooks[] = {
     {"opendir", opendir},
     {"closedir", closedir},
     /* pthread.h */
+    {"getauxval", getauxval},
+    {"gettid", my_gettid},
+    {"getpid", getpid},
     {"pthread_atfork", pthread_atfork},
     {"pthread_create", my_pthread_create},
     {"pthread_kill", pthread_kill},

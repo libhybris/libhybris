@@ -459,7 +459,7 @@ HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, uint32_t, phFriNfc_Llcp_CyclicFifoAvailabl
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, uint32_t, phFriNfc_Llcp_Buffer2Sequence, uint8_t *, uint32_t, phFriNfc_Llcp_sPacketSequence_t *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION5(libnfc_so, Handle_ConnectionOriented_IncommingFrame, phFriNfc_LlcpTransport_t *, phNfc_sData_t *, uint8_t, uint8_t, uint8_t);
 HYBRIS_IMPLEMENT_VOID_FUNCTION4(libnfc_so, Handle_Connectionless_IncommingFrame, phFriNfc_LlcpTransport_t *, phNfc_sData_t *, uint8_t, uint8_t);
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=3
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=3 || ANDROID_VERSION_MAJOR >= 5
 /* see libnfc-nxp commit 7c4b4fad -- since Android 4.3 */
 HYBRIS_IMPLEMENT_FUNCTION7(libnfc_so, NFCSTATUS, phFriNfc_LlcpTransport_LinkSend, phFriNfc_LlcpTransport_t *, phFriNfc_Llcp_sPacketHeader_t *, phFriNfc_Llcp_sPacketSequence_t *, phNfc_sData_t *, phFriNfc_Llcp_LinkSend_CB_t, uint8_t, void *);
 #else
