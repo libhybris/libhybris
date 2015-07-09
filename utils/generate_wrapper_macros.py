@@ -1,9 +1,9 @@
 #!/usr/bin/python
 #
-# Generate wrapper macros: hybris/include/hybris/internal/binding.h
+# Generate wrapper macros: hybris/include/hybris/common/binding.h
 #
 # Usage:
-# python utils/generate_wrapper_macros.py >hybris/include/hybris/internal/binding.h
+# python utils/generate_wrapper_macros.py >hybris/include/hybris/common/binding.h
 #
 # Copyright (C) 2013 Jolla Ltd.
 # Contact: Thomas Perl <thomas.perl@jollamobile.com>
@@ -43,7 +43,7 @@ AUTO_GENERATED_WARNING = """
  * an updated version of this header file:
  *
  *    python utils/generate_wrapper_macros.py > \\
- *       hybris/include/hybris/internal/binding.h
+ *       hybris/include/hybris/common/binding.h
  *
  * If you need macros with more arguments, just customize the
  * MAX_ARGS variable in generate_wrapper_macros.py.
@@ -84,6 +84,8 @@ void *android_dlsym(void *name, const char *symbol);
 int android_dlclose(void *handle);
 const char *android_dlerror(void);
 int android_dladdr(const void *addr, void *info);
+
+#include <string.h> /* for HYBRIS_LIBRARY_FIND_AND_INITIALIZE */
 """
 
 print AUTO_GENERATED_WARNING
@@ -98,12 +100,39 @@ print """
     }
 
 #define HYBRIS_LIBRARY_INITIALIZE(name, path) \\
-    void *name##_handle; \\
+    void *name##_handle = NULL; \\
     void hybris_##name##_initialize() \\
     { \\
         name##_handle = android_dlopen(path, RTLD_LAZY); \\
     }
 
+#define HYBRIS_LIBRARY_FIND_AND_INITIALIZE(name, pathlist, sep, delim, libname) \\
+    void *name##_handle = NULL; \\
+    int try_load_##name(char *path_begin) \\
+    { \\
+        char path[strlen(path_begin) + strlen(libname) + strlen(sep)]; \\
+        strcpy(path, path_begin); \\
+        strcat(path, sep); \\
+        strcat(path, libname); \\
+        name##_handle = android_dlopen(path, RTLD_LAZY); \\
+        return (##name##_handle != NULL); \\
+    } \\
+    void hybris_##name##_initialize() \\
+    { \\
+        char *lpathlist = strdup(pathlist); \\
+        char *pos = lpathlist; \\
+        char *prev_pos = lpathlist; \\
+        while(pos = strstr(pos, delim)) \\
+        { \\
+            *pos = '\\0'; \\
+            pos++; \\
+            if(try_load_##name(prev_pos)) goto bail; \\
+            prev_pos = pos; \\
+        } \\
+        try_load_##name(prev_pos); \\
+    bail: \\
+        free(lpathlist); \\
+    }
 """
 
 for count in range(MAX_ARGS):
