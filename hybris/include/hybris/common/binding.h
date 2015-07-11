@@ -31,6 +31,7 @@ int android_dlclose(void *handle);
 const char *android_dlerror(void);
 int android_dladdr(const void *addr, void *info);
 
+#include <string.h> /* for HYBRIS_LIBRARY_FIND_AND_INITIALIZE */
 
 
 /**
@@ -59,12 +60,39 @@ int android_dladdr(const void *addr, void *info);
     }
 
 #define HYBRIS_LIBRARY_INITIALIZE(name, path) \
-    void *name##_handle; \
+    void *name##_handle = NULL; \
     void hybris_##name##_initialize() \
     { \
         name##_handle = android_dlopen(path, RTLD_LAZY); \
     }
 
+#define HYBRIS_LIBRARY_FIND_AND_INITIALIZE(name, pathlist, sep, delim, libname) \
+    void *name##_handle = NULL; \
+    int try_load_##name(char *path_begin) \
+    { \
+        char path[strlen(path_begin) + strlen(libname) + strlen(sep)]; \
+        strcpy(path, path_begin); \
+        strcat(path, sep); \
+        strcat(path, libname); \
+        name##_handle = android_dlopen(path, RTLD_LAZY); \
+        return (##name##_handle != NULL); \
+    } \
+    void hybris_##name##_initialize() \
+    { \
+        char *lpathlist = strdup(pathlist); \
+        char *pos = lpathlist; \
+        char *prev_pos = lpathlist; \
+        while(pos = strstr(pos, delim)) \
+        { \
+            *pos = '\0'; \
+            pos++; \
+            if(try_load_##name(prev_pos)) goto bail; \
+            prev_pos = pos; \
+        } \
+        try_load_##name(prev_pos); \
+    bail: \
+        free(lpathlist); \
+    }
 
 
 #define HYBRIS_IMPLEMENT_FUNCTION0(name, return_type, symbol) \
