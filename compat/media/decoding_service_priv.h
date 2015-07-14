@@ -130,7 +130,12 @@ protected:
 
 private:
     static sp<DecodingService> decoding_service;
+#if ANDROID_VERSION_MAJOR==5
+    sp<IGraphicBufferProducer> producer;
+    sp<IGraphicBufferConsumer> consumer;
+#else
     sp<BufferQueue> buffer_queue;
+#endif
     sp<IDecodingServiceSession> session;
     DecodingClientDeathCbHybris client_death_cb;
     void *client_death_context;
