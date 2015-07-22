@@ -186,7 +186,7 @@ int32_t media_format_get_slice_height(MediaFormat format)
     if (mf == NULL)
         return 0;
 
-    return mf->height;
+    return mf->slice_height;
 }
 
 int32_t media_format_get_color_format(MediaFormat format)
