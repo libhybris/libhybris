@@ -22,7 +22,7 @@
 #include <hybris/common/binding.h>
 
 #pragma GCC visibility push(hidden)
-HYBRIS_LIBRARY_INITIALIZE(hardware, "/system/lib/libhardware.so");
+HYBRIS_LIBRARY_INITIALIZE(hardware, "libhardware.so");
 #pragma GCC visibility pop
 
 HYBRIS_IMPLEMENT_FUNCTION2(hardware, int, hw_get_module, const char *, const struct hw_module_t **);
