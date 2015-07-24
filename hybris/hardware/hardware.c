@@ -31,7 +31,7 @@ static int (*_hw_get_module_by_class)(const char *class_id, const char *inst, co
 
 static void _init_lib_hardware()
 {
-	_libhardware = (void *) android_dlopen("/system/lib/libhardware.so", RTLD_LAZY);
+	_libhardware = (void *) android_dlopen("libhardware.so", RTLD_LAZY);
 }
 
 int hw_get_module(const char *id, const struct hw_module_t **module)
