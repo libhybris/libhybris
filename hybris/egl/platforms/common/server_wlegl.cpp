@@ -20,6 +20,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <android-config.h>
 #include <cstring>
 
 #include <EGL/egl.h>
