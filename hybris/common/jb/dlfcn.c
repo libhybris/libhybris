@@ -234,6 +234,7 @@ static Elf_Sym libdl_symtab[] = {
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
+#endif
 };
 
 /* Fake out a hash table with a single bucket.
