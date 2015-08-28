@@ -5,7 +5,8 @@ pkgconfig_DATA = hwcomposer-egl.pc
 
 hwcomposerwindowincludedir = $(includedir)/hybris/hwcomposerwindow
 hwcomposerwindowinclude_HEADERS = \
-        hwcomposer_window.h
+        hwcomposer_window.h \
+        hwcomposer.h
 
 libhybris_hwcomposerwindow_la_SOURCES = \
 	hwcomposer_window.cpp

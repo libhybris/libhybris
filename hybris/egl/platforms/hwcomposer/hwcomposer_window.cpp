@@ -16,6 +16,7 @@
 
 #include <android-config.h>
 #include "hwcomposer_window.h"
+#include "hwcomposer.h"
 #include "logging.h"
 
 #include <errno.h>
@@ -28,6 +29,55 @@ extern "C" {
 #include <sync/sync.h>
 };
  
+
+extern "C" struct ANativeWindow *HWCNativeWindowCreate(unsigned int width, unsigned int height, unsigned int format, HWCPresentCallback present, void *cb_data)
+{
+    class Window : public HWComposerNativeWindow
+    {
+    public:
+        Window(unsigned int w, unsigned int h, unsigned int f, HWCPresentCallback p, void *d)
+            : HWComposerNativeWindow(w, h, f)
+            , cb(p)
+            , cb_data(d)
+        {
+        }
+
+        void present(HWComposerNativeWindowBuffer *b)
+        {
+            cb(cb_data, static_cast<ANativeWindow *>(this), static_cast<ANativeWindowBuffer *>(b));
+        }
+
+        HWCPresentCallback cb;
+        void *cb_data;
+    };
+
+    if (!present)
+        return 0;
+
+    Window *w = new Window(width, height, format, present, cb_data);
+    return w;
+}
+
+extern "C" void HWCNativeWindowDestroy(struct ANativeWindow *window)
+{
+    delete window;
+}
+
+struct _BufferFenceAccessor : public HWComposerNativeWindowBuffer {
+    int get() { return fenceFd; }
+    void set(int fd) { fenceFd = fd; };
+};
+
+extern "C" int HWCNativeBufferGetFence(struct ANativeWindowBuffer *buf)
+{
+    return static_cast<_BufferFenceAccessor *>(buf)->get();
+}
+
+extern "C" void HWCNativeBufferSetFence(struct ANativeWindowBuffer *buf, int fd)
+{
+    static_cast<_BufferFenceAccessor *>(buf)->set(fd);
+}
+
 static pthread_cond_t _cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;
 
