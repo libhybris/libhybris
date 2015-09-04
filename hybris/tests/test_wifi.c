@@ -17,8 +17,8 @@
 
 #include <stdio.h>
 
-#include <android/android-config.h>
-#include <android/hardware_legacy/wifi.h>
+#include <android-config.h>
+#include <hardware_legacy/wifi.h>
 
 #define COMMAND_LOAD_WIFI "1"
 #define COMMAND_UNLOAD_WIFI "0"

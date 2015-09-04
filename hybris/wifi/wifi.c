@@ -20,7 +20,7 @@
 #include <stddef.h>
 
 #include <hybris/common/binding.h>
-#include <android/hardware_legacy/wifi.h>
+#include <hardware_legacy/wifi.h>
 
 #define COMPAT_LIBRARY_PATH "/system/lib/libhardware_legacy.so"
 
