@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 ANDROID_ROOT=$1
 HEADERPATH=$2
@@ -147,7 +147,8 @@ cat > $HEADERPATH/android-config.h << EOF
 #endif
 EOF
 
-cat <<< 'Name: Android header files
+cat > $HEADERPATH/android-headers.pc <<EOF
+Name: Android header files
 Description: Header files needed to write applications for the Android platform
 Version: androidversion
 
@@ -155,7 +156,9 @@ prefix=/usr
 exec_prefix=${prefix}
 includedir=${prefix}/include
 
-Cflags: -I${includedir}/android' > $HEADERPATH/android-headers.pc
+Cflags: -I${includedir}/android
+EOF
+
 sed -i -e s:androidversion:$MAJOR.$MINOR.$PATCH:g $HEADERPATH/android-headers.pc
 
 extract_headers_to hardware \
