@@ -165,27 +165,43 @@ extract_headers_to hardware \
     hardware/libhardware/include/hardware
 
 extract_headers_to hardware_legacy \
-    hardware/libhardware_legacy/include/hardware_legacy/vibrator.h \
-    hardware/libhardware_legacy/include/hardware_legacy/audio_policy_conf.h
+    hardware/libhardware_legacy/include/hardware_legacy/vibrator.h
+if [ $MAJOR -ge 4 -a $MINOR -ge 1 -o $MAJOR -ge 5 ]; then
+    extract_headers_to hardware_legacy \
+        hardware/libhardware_legacy/include/hardware_legacy/audio_policy_conf.h
+fi
 
 extract_headers_to cutils \
     system/core/include/cutils
 
-extract_headers_to log \
-    system/core/include/log
+if [ $MAJOR -eq 4 -a $MINOR -ge 4 -o $MAJOR -ge 5 ]; then
+    extract_headers_to log \
+        system/core/include/log
+fi
 
-extract_headers_to system \
-    system/core/include/system
+if [ $MAJOR -ge 4 ]; then
+    extract_headers_to system \
+        system/core/include/system
+fi
 
 extract_headers_to android \
     system/core/include/android
 
-extract_headers_to linux \
-    bionic/libc/kernel/common/linux/sync.h \
-    bionic/libc/kernel/common/linux/sw_sync.h
+if [ $MAJOR -eq 4 -a $MINOR -ge 1 ]; then
+    extract_headers_to linux \
+        bionic/libc/kernel/common/linux/sync.h \
+        bionic/libc/kernel/common/linux/sw_sync.h
 
-extract_headers_to sync \
-    system/core/include/sync
+    extract_headers_to sync \
+        system/core/include/sync
+elif [ $MAJOR -eq 5 ]; then
+    extract_headers_to linux \
+        bionic/libc/kernel/uapi/linux/sync.h \
+        bionic/libc/kernel/uapi/linux/sw_sync.h
+
+    extract_headers_to sync \
+        system/core/libsync/include/sync
+fi
 
 extract_headers_to libnfc-nxp \
     external/libnfc-nxp/inc \
@@ -194,9 +210,15 @@ extract_headers_to libnfc-nxp \
 extract_headers_to private \
     system/core/include/private/android_filesystem_config.h
 
-extract_headers_to linux \
-    external/kernel-headers/original/linux/android_alarm.h \
-    external/kernel-headers/original/linux/binder.h
+if [ $MAJOR -ge 5 ]; then
+    extract_headers_to linux \
+        bionic/libc/kernel/uapi/linux/android_alarm.h \
+        bionic/libc/kernel/uapi/linux/binder.h
+else
+    extract_headers_to linux \
+        external/kernel-headers/original/linux/android_alarm.h \
+        external/kernel-headers/original/linux/binder.h
+fi
 
 # In order to make it easier to trace back the origins of headers, fetch
 # some repository information from the Git source tree (if available).
