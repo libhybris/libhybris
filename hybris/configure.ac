@@ -208,13 +208,6 @@ AC_CONFIG_FILES([
 	libnfc_ndef_nxp/libnfc_ndef_nxp.pc
 	libsync/Makefile
 	libsync/libsync.pc
-	ui/Makefile
-	sf/Makefile
-	sf/libsf.pc
-	input/Makefile
-	input/libis.pc
-	camera/Makefile
-	camera/libcamera.pc
 	vibrator/Makefile
 	vibrator/libvibrator.pc
 	include/Makefile
