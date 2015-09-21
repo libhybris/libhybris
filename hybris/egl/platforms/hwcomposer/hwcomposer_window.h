@@ -21,7 +21,7 @@
 #include <linux/fb.h>
 #include <hardware/gralloc.h>
 
-#include <list>
+#include <vector>
 
 
 class HWComposerNativeWindowBuffer : public BaseNativeWindowBuffer {
@@ -75,21 +75,24 @@ protected:
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
     virtual void present(HWComposerNativeWindowBuffer *buffer) = 0;
+
 private:
     void destroyBuffers();
+    void allocateBuffers();
 
 private:
     framebuffer_device_t* m_fbDev;
     alloc_device_t* m_alloc;
     unsigned int m_usage;
     unsigned int m_bufFormat;
-    int m_freeBufs;
-    std::list<HWComposerNativeWindowBuffer*> m_bufList;
-    HWComposerNativeWindowBuffer* m_frontBuf;
+    std::vector<HWComposerNativeWindowBuffer*> m_bufList;
+    unsigned int m_bufferCount;
+    unsigned int m_nextBuffer;
 
     int m_width;
     int m_height;
 
+    pthread_mutex_t m_mutex;
 };
 
 #endif
