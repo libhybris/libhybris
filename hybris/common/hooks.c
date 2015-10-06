@@ -1652,6 +1652,9 @@ static struct _hook hooks[] = {
     {"timer_gettime", timer_gettime},
     {"timer_delete", timer_delete},
     {"timer_getoverrun", timer_getoverrun},
+    {"localtime", localtime},
+    {"localtime_r", localtime_r},
+    {"gmtime", gmtime},
     {"abort", abort},
     {"writev", writev},
     /* unistd.h */
