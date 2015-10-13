@@ -3,6 +3,7 @@ usr/lib/*/libhybris-hwcomposerwindow.so.*
 usr/lib/*/libsync.so.*
 usr/lib/*/libui.so.*
 usr/lib/*/libsf.so.*
+usr/lib/*/libvibrator.so.*
 usr/lib/*/libis.so.*
 usr/lib/*/libcamera.so.*
 usr/lib/*/libwifi.so.*
