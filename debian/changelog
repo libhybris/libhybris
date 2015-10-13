@@ -1,10 +1,14 @@
 libhybris (0.1.0+git20150730+6d424c9-0ubuntu1) UNRELEASED; urgency=medium
 
+  [ Ricardo Salveti de Araujo ]
   * New upstream snapshot:
     - Rebasing patches and removing the ones that are already available in
       upstream
 
- -- Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>  Sat, 08 Aug 2015 22:48:50 -0300
+  [ Alex Tu ]
+  * Fix Build error.
+
+ -- Yuan-Chen Cheng <yc.cheng@canonical.com>  Tue, 13 Oct 2015 13:52:21 +0800
 
 libhybris (0.1.0+git20131207+e452e83-0ubuntu39) vivid; urgency=medium
 
