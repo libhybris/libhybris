@@ -28,6 +28,8 @@ endif
 
 LOCAL_MODULE := camera_service
 
+LOCAL_32_BIT_ONLY := true
+
 include $(BUILD_EXECUTABLE)
 
 # -------------------------------------------------
@@ -100,6 +102,8 @@ LOCAL_C_INCLUDES+= \
 	$(TOP)/$(MTK_PATH_SOURCE)/frameworks/av/include
 endif
 
+LOCAL_32_BIT_ONLY := true
+
 include $(BUILD_SHARED_LIBRARY)
 
 # -------------------------------------------------
@@ -134,6 +138,8 @@ LOCAL_SHARED_LIBRARIES := \
 	libgui \
 	libEGL \
 	libGLESv2
+
+LOCAL_32_BIT_ONLY := true
 
 include $(BUILD_EXECUTABLE)
 
@@ -170,5 +176,7 @@ LOCAL_C_INCLUDES:= \
 
 LOCAL_MODULE:= codec
 LOCAL_MODULE_TAGS := optional
+
+LOCAL_32_BIT_ONLY := true
 
 include $(BUILD_EXECUTABLE)
