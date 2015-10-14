@@ -60,6 +60,7 @@ public:
     virtual status_t getMaxAmplitude(int* max);
     virtual status_t start();
     virtual status_t stop();
+    virtual status_t pause();
     virtual status_t reset();
     virtual status_t init();
     virtual status_t close();
