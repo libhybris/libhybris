@@ -27,6 +27,7 @@
 #include <stdio_ext.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <malloc.h>
 #include <string.h>
 #include <strings.h>
@@ -43,6 +44,10 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <fcntl.h>
+
+#include <linux/futex.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
 
 #include <netdb.h>
 #include <unistd.h>
@@ -68,7 +73,11 @@ static int locale_inited = 0;
 
 #define ANDROID_MUTEX_SHARED_MASK      0x2000
 #define ANDROID_COND_SHARED_MASK       0x0001
+#define ANDROID_COND_COUNTER_INCREMENT 0x0002
+#define ANDROID_COND_COUNTER_MASK      (~ANDROID_COND_SHARED_MASK)
 #define ANDROID_RWLOCKATTR_SHARED_MASK 0x0010
+
+#define ANDROID_COND_IS_SHARED(c)  (((c)->value & ANDROID_COND_SHARED_MASK) != 0)
 
 /* For the static initializer types */
 #define ANDROID_PTHREAD_MUTEX_INITIALIZER            0
@@ -90,6 +99,11 @@ struct _hook {
     const char *name;
     void *func;
 };
+
+/* pthread cond struct as done in Android */
+typedef struct {
+    int volatile value;
+} android_cond_t;
 
 /* Helpers */
 static int hybris_check_android_shared_mutex(unsigned int mutex_addr)
@@ -113,7 +127,57 @@ static int hybris_check_android_shared_cond(unsigned int cond_addr)
                     (cond_addr & ANDROID_COND_SHARED_MASK))
         return 1;
 
+    /* In case android is setting up cond_addr with a negative value,
+     * used for error control */
+    if (cond_addr > HYBRIS_SHM_MASK_TOP)
+        return 1;
+
     return 0;
+}
+
+/* Based on Android's Bionic pthread implementation.
+ * This is just needed when we have a shared cond with Android */
+static int __android_pthread_cond_pulse(android_cond_t *cond, int counter)
+{
+    long flags;
+    int fret;
+
+    if (cond == NULL)
+        return EINVAL;
+
+    flags = (cond->value & ~ANDROID_COND_COUNTER_MASK);
+    for (;;) {
+        long oldval = cond->value;
+        long newval = 0;
+        /* In our case all we need to do is make sure the negative value
+         * is under our range, which is the last 0xF from SHM_MASK */
+        if (oldval < -12)
+            newval = ((oldval + ANDROID_COND_COUNTER_INCREMENT) &
+                            ANDROID_COND_COUNTER_MASK) | flags;
+        else
+            newval = ((oldval - ANDROID_COND_COUNTER_INCREMENT) &
+                            ANDROID_COND_COUNTER_MASK) | flags;
+        if (__sync_bool_compare_and_swap(&cond->value, oldval, newval))
+            break;
+    }
+
+    int pshared = cond->value & ANDROID_COND_SHARED_MASK;
+    fret = syscall(SYS_futex , &cond->value,
+                   pshared ? FUTEX_WAKE : FUTEX_WAKE_PRIVATE, counter,
+                   NULL, NULL, NULL);
+    LOGD("futex based pthread_cond_*, value %d, counter %d, ret %d",
+                                            cond->value, counter, fret);
+    return 0;
+}
+
+int android_pthread_cond_broadcast(android_cond_t *cond)
+{
+    return __android_pthread_cond_pulse(cond, INT_MAX);
+}
+
+int android_pthread_cond_signal(android_cond_t *cond)
+{
+    return __android_pthread_cond_pulse(cond, 1);
 }
 
 static void hybris_set_mutex_attr(unsigned int android_value, pthread_mutexattr_t *attr)
@@ -585,8 +649,8 @@ static int my_pthread_cond_broadcast(pthread_cond_t *cond)
 {
     unsigned int value = (*(unsigned int *) cond);
     if (hybris_check_android_shared_cond(value)) {
-        LOGD("shared condition with Android, not broadcasting.");
-        return 0;
+        LOGD("Shared condition with Android, broadcasting with futex.");
+        return android_pthread_cond_broadcast((android_cond_t *) cond);
     }
 
     pthread_cond_t *realcond = (pthread_cond_t *) value;
@@ -606,8 +670,8 @@ static int my_pthread_cond_signal(pthread_cond_t *cond)
     unsigned int value = (*(unsigned int *) cond);
 
     if (hybris_check_android_shared_cond(value)) {
-        LOGD("Shared condition with Android, not signaling.");
-        return 0;
+        LOGD("Shared condition with Android, broadcasting with futex.");
+        return android_pthread_cond_signal((android_cond_t *) cond);
     }
 
     pthread_cond_t *realcond = (pthread_cond_t *) value;
@@ -1267,6 +1331,56 @@ FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
 	return strtod_l(nptr, endptr, hybris_locale);
 }
 
+static int __my_system_property_read(const void *pi, char *name, char *value)
+{
+    return property_get(name, value, NULL);
+}
+
+static int __my_system_property_get(const char *name, char *value)
+{
+    return property_get(name, value, NULL);
+}
+
+static int __my_system_property_foreach(void (*propfn)(const void *pi, void *cookie), void *cookie)
+{
+    return 0;
+}
+
+static const void *__my_system_property_find(const char *name)
+{
+    return NULL;
+}
+
+static unsigned int __my_system_property_serial(const void *pi)
+{
+    return 0;
+}
+
+static int __my_system_property_wait(const void *pi)
+{
+    return 0;
+}
+
+static int __my_system_property_update(void *pi, const char *value, unsigned int len)
+{
+    return 0;
+}
+
+static int __my_system_property_add(const char *name, unsigned int namelen, const char *value, unsigned int valuelen)
+{
+    return 0;
+}
+
+static unsigned int __my_system_property_wait_any(unsigned int serial)
+{
+    return 0;
+}
+
+static const void *__my_system_property_find_nth(unsigned n)
+{
+    return NULL;
+}
+
 extern int __cxa_atexit(void (*)(void*), void*, void*);
 extern void __cxa_finalize(void * d);
 
@@ -1276,10 +1390,10 @@ struct open_redirect {
 };
 
 struct open_redirect open_redirects[] = {
-	{ "/dev/log/main", "/dev/log_main" },
-	{ "/dev/log/radio", "/dev/log_radio" },
-	{ "/dev/log/system", "/dev/log_system" },
-	{ "/dev/log/events", "/dev/log_events" },
+	{ "/dev/log/main", "/dev/alog/main" },
+	{ "/dev/log/radio", "/dev/alog/radio" },
+	{ "/dev/log/system", "/dev/alog/system" },
+	{ "/dev/log/events", "/dev/alog/events" },
 	{ NULL, NULL }
 };
 
@@ -1461,7 +1575,7 @@ static struct _hook hooks[] = {
     {"pthread_attr_setguardsize", my_pthread_attr_setguardsize},
     {"pthread_attr_getguardsize", my_pthread_attr_getguardsize},
     {"pthread_attr_setscope", my_pthread_attr_setscope},
-    {"pthread_attr_setscope", my_pthread_attr_getscope},
+    {"pthread_attr_getscope", my_pthread_attr_getscope},
     {"pthread_getattr_np", my_pthread_getattr_np},
     {"pthread_rwlockattr_init", my_pthread_rwlockattr_init},
     {"pthread_rwlockattr_destroy", my_pthread_rwlockattr_destroy},
@@ -1583,21 +1697,43 @@ static struct _hook hooks[] = {
     {"getgrgid", getgrgid},
     {"__cxa_atexit", __cxa_atexit},
     {"__cxa_finalize", __cxa_finalize},
-    {NULL, NULL},
+    {"__system_property_read", __my_system_property_read},
+    {"__system_property_get", __my_system_property_get},
+    {"__system_property_set", property_set},
+    {"__system_property_foreach", __my_system_property_foreach},
+    {"__system_property_find", __my_system_property_find},
+    {"__system_property_serial", __my_system_property_serial},
+    {"__system_property_wait", __my_system_property_wait},
+    {"__system_property_update", __my_system_property_update},
+    {"__system_property_add", __my_system_property_add},
+    {"__system_property_wait_any", __my_system_property_wait_any},
+    {"__system_property_find_nth", __my_system_property_find_nth},
 };
+
+static int hook_cmp(const void *a, const void *b)
+{
+    return strcmp(((struct _hook*)a)->name, ((struct _hook*)b)->name);
+}
 
 void *get_hooked_symbol(char *sym)
 {
-    struct _hook *ptr = &hooks[0];
     static int counter = -1;
+    static int sorted = 0;
+    const int nhooks = sizeof(hooks) / sizeof(hooks[0]);
+    void *found = NULL;
+    struct _hook key;
 
-    while (ptr->name != NULL)
+    if (!sorted)
     {
-        if (strcmp(sym, ptr->name) == 0){
-            return ptr->func;
-        }
-        ptr++;
+        qsort(hooks, nhooks, sizeof(hooks[0]), hook_cmp);
+        sorted = 1;
     }
+
+    key.name = sym;
+    found = bsearch(&key, hooks, nhooks, sizeof(hooks[0]), hook_cmp);
+    if (found != NULL)
+        return ((struct _hook*)found)->func;
+
     if (strstr(sym, "pthread") != NULL)
     {
         /* safe */

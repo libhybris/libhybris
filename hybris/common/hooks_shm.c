@@ -123,7 +123,9 @@ static void _hybris_shm_init()
         else {
             LOGD("Creating a new shared memory segment.");
 
-            _hybris_shm_fd = shm_open(HYBRIS_SHM_PATH, O_RDWR | O_CREAT, 0660);
+            mode_t pumask = umask(0);
+            _hybris_shm_fd = shm_open(HYBRIS_SHM_PATH, O_RDWR | O_CREAT, 0666);
+            umask(pumask);
             if (_hybris_shm_fd >= 0) {
                 ftruncate( _hybris_shm_fd, size_to_map );
                 /* Map the memory object */
@@ -171,11 +173,12 @@ static void _hybris_shm_extend_region()
 
  /*
   * Determine if the pointer that has been extracted by hybris is
-  * pointing to an address in the shared memory
+  * pointing to an address in the shared memory.
   */
 int hybris_is_pointer_in_shm(void *ptr)
 {
-    if ((unsigned int)ptr >= HYBRIS_SHM_MASK)
+    if (((unsigned int) ptr >= HYBRIS_SHM_MASK) &&
+                    ((unsigned int) ptr <= HYBRIS_SHM_MASK_TOP))
         return 1;
 
     return 0;

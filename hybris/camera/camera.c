@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Canonical Ltd
+ * Copyright (C) 2013 - 2014 Canonical Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,8 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_auto_focus_mode,
 	struct CameraControl*, AutoFocusMode);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_set_picture_size,
 	struct CameraControl*, int, int);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_set_thumbnail_size,
+	struct CameraControl*, int, int);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_set_preview_size,
 	struct CameraControl*, int, int);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_display_orientation,
@@ -70,8 +72,12 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_preview_fps,
 	struct CameraControl*, int);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_rotation,
 	struct CameraControl*, int);
+HYBRIS_IMPLEMENT_VOID_FUNCTION6(camera, android_camera_set_location,
+	struct CameraControl*, const float*, const float*, const float*, int, const char*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_set_video_size,
 	struct CameraControl*, int, int);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_jpeg_quality,
+	struct CameraControl*, int);
 
 // Getters
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_get_effect_mode,
@@ -88,6 +94,8 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_get_max_zoom,
 	struct CameraControl*, int*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_get_picture_size,
 	struct CameraControl*, int*, int*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_get_thumbnail_size,
+	struct CameraControl*, int*, int*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_get_preview_size,
 	struct CameraControl*, int*, int*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_get_preview_fps_range,
@@ -98,14 +106,22 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_get_preview_texture_trans
 	struct CameraControl*, float*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_get_video_size,
 	struct CameraControl*, int*, int*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_get_jpeg_quality,
+	struct CameraControl*, int*);
 
 // Enumerators
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_enumerate_supported_picture_sizes,
+	struct CameraControl*, size_callback, void*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_enumerate_supported_thumbnail_sizes,
 	struct CameraControl*, size_callback, void*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_enumerate_supported_preview_sizes,
 	struct CameraControl*, size_callback, void*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_enumerate_supported_video_sizes,
 	struct CameraControl*, size_callback, void*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_enumerate_supported_scene_modes,
+	struct CameraControl*, scene_mode_callback, void*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_enumerate_supported_flash_modes,
+	struct CameraControl*, flash_mode_callback, void*);
 
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(camera, android_camera_update_preview_texture, struct CameraControl*);
 

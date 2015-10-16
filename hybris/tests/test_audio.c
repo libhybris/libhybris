@@ -25,31 +25,83 @@
 #include <hardware/audio.h>
 #include <hardware/hardware.h>
 
+/* Workaround for MTK */
+#define AUDIO_HARDWARE_MODULE_ID2 "libaudio"
+
 int main(int argc, char **argv)
 {
 	struct hw_module_t *hwmod = 0;
 	struct audio_hw_device *audiohw;
 
+	/* Initializing HAL */
 	hw_get_module_by_class(AUDIO_HARDWARE_MODULE_ID,
 					AUDIO_HARDWARE_MODULE_ID_PRIMARY,
 					(const hw_module_t**) &hwmod);
+	if (!hwmod) {
+		fprintf(stderr, "Failed to get hw module id: %s name: %s, trying alternative.",
+				AUDIO_HARDWARE_MODULE_ID, AUDIO_HARDWARE_MODULE_ID_PRIMARY);
+		hw_get_module_by_class(AUDIO_HARDWARE_MODULE_ID2,
+				AUDIO_HARDWARE_MODULE_ID_PRIMARY,
+				(const hw_module_t**) &hwmod);
+	}
+
 	assert(hwmod != NULL);
 
 	assert(audio_hw_device_open(hwmod, &audiohw) == 0);
 	assert(audiohw->init_check(audiohw) == 0);
-	printf("Audio Hardware Interface initialized.\n");
+	fprintf(stdout, "Audio Hardware Interface initialized.\n");
 
+	/* Check volume function calls */
 	if (audiohw->get_master_volume) {
 		float volume;
 		audiohw->get_master_volume(audiohw, &volume);
-		printf("Master Volume: %f\n", volume);
+		fprintf(stdout, "Master Volume: %f\n", volume);
 	}
 
 	if (audiohw->get_master_mute) {
 		bool mute;
 		audiohw->get_master_mute(audiohw, &mute);
-		printf("Master Mute: %d\n", mute);
+		fprintf(stdout, "Master Mute: %d\n", mute);
 	}
+
+	/* Check output and input streams */
+	struct audio_config config_out = {
+		.sample_rate = 44100,
+		.channel_mask = AUDIO_CHANNEL_OUT_STEREO,
+		.format = AUDIO_FORMAT_PCM_16_BIT
+	};
+	struct audio_stream_out *stream_out = NULL;
+
+	audiohw->open_output_stream(audiohw, 0, AUDIO_DEVICE_OUT_DEFAULT,
+			AUDIO_OUTPUT_FLAG_PRIMARY, &config_out, &stream_out);
+
+	/* Try it again */
+	if (!stream_out)
+		audiohw->open_output_stream(audiohw, 0, AUDIO_DEVICE_OUT_DEFAULT,
+				AUDIO_OUTPUT_FLAG_PRIMARY, &config_out, &stream_out);
+
+	assert(stream_out != NULL);
+
+	fprintf(stdout, "Successfully created audio output stream: sample rate: %u, channel_mask: %u, format: %u\n",
+			config_out.sample_rate, config_out.channel_mask, config_out.format);
+
+	struct audio_config config_in = {
+		.sample_rate = 48000,
+		.channel_mask = AUDIO_CHANNEL_IN_STEREO,
+		.format = AUDIO_FORMAT_PCM_16_BIT
+	};
+	struct audio_stream_in *stream_in = NULL;
+
+	audiohw->open_input_stream(audiohw, 0, AUDIO_DEVICE_IN_DEFAULT,
+			&config_in, &stream_in);
+	assert(stream_in != NULL);
+
+	fprintf(stdout, "Successfully created audio input stream: sample rate: %u, channel_mask: %u, format: %u\n",
+			config_in.sample_rate, config_in.channel_mask, config_in.format);
+
+	/* Close streams and device */
+	audiohw->close_output_stream(audiohw, stream_out);
+	audiohw->close_input_stream(audiohw, stream_in);
 
 	audio_hw_device_close(audiohw);
 

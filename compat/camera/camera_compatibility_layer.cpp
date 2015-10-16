@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2013 Canonical Ltd
+ * Copyright (C) 2013-2014 Canonical Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,8 +14,11 @@
  * limitations under the License.
  *
  * Authored by: Thomas Voß <thomas.voss@canonical.com>
- *              Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>
+ *				Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>
+ *				Jim Hodapp <jim.hodapp@canonical.com>
  */
+
+//#define LOG_NDEBUG 0
 
 #include <hybris/internal/camera_control.h>
 #include <hybris/camera/camera_compatibility_layer.h>
@@ -27,17 +30,29 @@
 #include <binder/ProcessState.h>
 #include <camera/Camera.h>
 #include <camera/CameraParameters.h>
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 #include <gui/SurfaceTexture.h>
+#else
+#include <gui/GLConsumer.h>
+#endif
 #include <ui/GraphicBuffer.h>
+
+#include <GLES2/gl2.h>
+#include <GLES2/gl2ext.h>
 
 #undef LOG_TAG
 #define LOG_TAG "CameraCompatibilityLayer"
 #include <utils/KeyedVector.h>
 #include <utils/Log.h>
+#include <utils/String16.h>
+
+#include <gui/NativeBufferAlloc.h>
+
+#include <cstring>
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__)
 
-// From android::SurfaceTexture::FrameAvailableListener
+// From android::GLConsumer::FrameAvailableListener
 void CameraControl::onFrameAvailable()
 {
 	REPORT_FUNCTION();
@@ -170,7 +185,11 @@ CameraControl* android_camera_connect_to(CameraType camera_type, CameraControlLi
 
 	CameraControl* cc = new CameraControl();
 	cc->listener = listener;
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR>=3
+	cc->camera = android::Camera::connect(camera_id, android::String16("hybris"), android::Camera::USE_CALLING_UID);
+#else
 	cc->camera = android::Camera::connect(camera_id);
+#endif
 
 	if (cc->camera == NULL)
 		return NULL;
@@ -252,6 +271,35 @@ void android_camera_get_flash_mode(CameraControl* control, FlashMode* mode)
 		*mode = FLASH_MODE_OFF;
 }
 
+void android_camera_enumerate_supported_flash_modes(CameraControl* control, flash_mode_callback cb, void* ctx)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	android::String8 raw_modes;
+	raw_modes = android::String8(
+			control->camera_parameters.get(
+				android::CameraParameters::KEY_SUPPORTED_FLASH_MODES));
+
+	const char delimiter[2] = ",";
+	char *token;
+	android::String8 mode;
+	char *raw_modes_mutable = strdup(raw_modes.string());
+
+	token = strtok(raw_modes_mutable, delimiter);
+
+	while (token != NULL) {
+		uint32_t index = flash_modes_lut.indexOfKey(mode);
+
+		mode = android::String8(token);
+		if (flash_modes_lut.indexOfKey(mode) >= 0) {
+			cb(ctx, flash_modes_lut.valueFor(mode));
+		}
+		token = strtok(NULL, delimiter);
+	}
+}
+
 void android_camera_set_white_balance_mode(CameraControl* control, WhiteBalanceMode mode)
 {
 	REPORT_FUNCTION();
@@ -289,6 +337,31 @@ void android_camera_set_scene_mode(CameraControl* control, SceneMode mode)
 			android::CameraParameters::KEY_SCENE_MODE,
 			scene_modes[mode]);
 	control->camera->setParameters(control->camera_parameters.flatten());
+}
+
+void android_camera_enumerate_supported_scene_modes(CameraControl* control, scene_mode_callback cb, void* ctx)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	android::String8 raw_modes;
+	raw_modes = android::String8(
+					control->camera_parameters.get(
+						android::CameraParameters::KEY_SUPPORTED_SCENE_MODES));
+
+	const char delimiter[2] = ",";
+	char *token;
+	android::String8 mode;
+	char *raw_modes_mutable = strdup(raw_modes.string());
+
+	token = strtok(raw_modes_mutable, delimiter);
+
+	while (token != NULL) {
+		mode = android::String8(token);
+		cb(ctx, scene_modes_lut.valueFor(mode));
+		token = strtok(NULL, delimiter);
+	}
 }
 
 void android_camera_get_scene_mode(CameraControl* control, SceneMode* mode)
@@ -445,6 +518,67 @@ void android_camera_get_picture_size(CameraControl* control, int* width, int* he
 	control->camera_parameters.getPictureSize(width, height);
 }
 
+void android_camera_set_thumbnail_size(struct CameraControl* control, int width, int height)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+
+	control->camera_parameters.set(
+			android::CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH,
+			width);
+	control->camera_parameters.set(
+			android::CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT,
+			height);
+	control->camera->setParameters(control->camera_parameters.flatten());
+}
+
+void android_camera_get_thumbnail_size(struct CameraControl* control, int* width, int* height)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+
+	*width = atoi(control->camera_parameters.get(android::CameraParameters::KEY_JPEG_THUMBNAIL_WIDTH));
+	*height = atoi(control->camera_parameters.get(android::CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT));
+}
+
+void android_camera_enumerate_supported_thumbnail_sizes(struct CameraControl* control, size_callback cb, void* ctx)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	// e.g. 800x600,320x240
+	android::String8 sizes = android::String8(
+			control->camera_parameters.get(
+				android::CameraParameters::KEY_SUPPORTED_JPEG_THUMBNAIL_SIZES));
+
+	const char delimiter[2] = ",";
+	const char size_delimiter[2] = "x";
+	char *token, *save_ptr, *save_ptr1;
+	int height = 0, width = 0;
+	char *sizes_mutable = strdup(sizes.string());
+
+	ALOGD("Supported thumbnail sizes: %s", sizes.string());
+	// Get the first <width>x<height to the left of ','
+	token = strtok_r(sizes_mutable, delimiter, &save_ptr);
+
+	while (token != NULL) {
+		// Parse <width>x<height> token
+		char *w = strtok_r(token, size_delimiter, &save_ptr1);
+		char *h = strtok_r(NULL, size_delimiter, &save_ptr1);
+		width = atoi(w);
+		height = atoi(h);
+		if (width > 0 && height > 0)
+			cb(ctx, width, height);
+		// Get the next <width>x<height> pair
+		token = strtok_r(NULL, delimiter, &save_ptr);
+	}
+}
+
 void android_camera_set_picture_size(CameraControl* control, int width, int height)
 {
 	REPORT_FUNCTION();
@@ -511,30 +645,57 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 	assert(control);
 
 	static const bool allow_synchronous_mode = false;
+	static const bool is_controlled_by_app = true;
 
 	android::sp<android::NativeBufferAlloc> native_alloc(
 			new android::NativeBufferAlloc()
 			);
 
 	android::sp<android::BufferQueue> buffer_queue(
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 			new android::BufferQueue(false, NULL, native_alloc)
+#else
+			new android::BufferQueue(NULL)
+#endif
 			);
 
 	if (control->preview_texture == NULL) {
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 		control->preview_texture = android::sp<android::SurfaceTexture>(
 				new android::SurfaceTexture(
+#else
+		control->preview_texture = android::sp<android::GLConsumer>(
+				new android::GLConsumer(
+#endif
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 					texture_id,
 					allow_synchronous_mode,
 					GL_TEXTURE_EXTERNAL_OES,
 					true,
 					buffer_queue));
+#else
+					buffer_queue,
+					texture_id,
+					GL_TEXTURE_EXTERNAL_OES,
+					true,
+					is_controlled_by_app));
+#endif
 	}
 
 	control->preview_texture->setFrameAvailableListener(
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 			android::sp<android::SurfaceTexture::FrameAvailableListener>(control));
+#else
+			android::sp<android::GLConsumer::FrameAvailableListener>(control));
+#endif
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 	control->camera->setPreviewTexture(control->preview_texture->getBufferQueue());
+#else
+	control->camera->setPreviewTarget(buffer_queue);
+#endif
 }
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 void android_camera_set_preview_surface(CameraControl* control, SfSurface* surface)
 {
 	REPORT_FUNCTION();
@@ -544,6 +705,7 @@ void android_camera_set_preview_surface(CameraControl* control, SfSurface* surfa
 	android::Mutex::Autolock al(control->guard);
 	control->camera->setPreviewDisplay(surface->surface);
 }
+#endif
 
 void android_camera_start_preview(CameraControl* control)
 {
@@ -702,6 +864,30 @@ void android_camera_set_rotation(CameraControl* control, int rotation)
 	control->camera->setParameters(control->camera_parameters.flatten());
 }
 
+void android_camera_set_location(CameraControl* control, const float* latitude, const float* longitude, const float* altitude, int timestamp, const char* method)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	control->camera_parameters.setFloat(
+			android::CameraParameters::KEY_GPS_LATITUDE,
+			*latitude);
+	control->camera_parameters.setFloat(
+			android::CameraParameters::KEY_GPS_LONGITUDE,
+			*longitude);
+	control->camera_parameters.setFloat(
+			android::CameraParameters::KEY_GPS_ALTITUDE,
+			*altitude);
+	control->camera_parameters.set(
+			android::CameraParameters::KEY_GPS_TIMESTAMP,
+			timestamp);
+	control->camera_parameters.set(
+			android::CameraParameters::KEY_GPS_PROCESSING_METHOD,
+			method);
+	control->camera->setParameters(control->camera_parameters.flatten());
+}
+
 void android_camera_enumerate_supported_video_sizes(CameraControl* control, size_callback cb, void* ctx)
 {
 	REPORT_FUNCTION();
@@ -736,4 +922,26 @@ void android_camera_set_video_size(CameraControl* control, int width, int height
 
 	control->camera_parameters.setVideoSize(width, height);
 	control->camera->setParameters(control->camera_parameters.flatten());
+}
+
+void android_camera_set_jpeg_quality(CameraControl* control, int quality)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	control->camera_parameters.set(
+			android::CameraParameters::KEY_JPEG_QUALITY,
+			quality);
+	control->camera->setParameters(control->camera_parameters.flatten());
+}
+
+void android_camera_get_jpeg_quality(CameraControl* control, int* quality)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+	*quality = atoi(control->camera_parameters.get(
+            android::CameraParameters::KEY_JPEG_QUALITY));
 }

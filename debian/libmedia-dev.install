@@ -1,0 +1,3 @@
+usr/lib/*/libmedia.so
+usr/lib/*/pkgconfig/libmedia.pc
+usr/include/hybris/media

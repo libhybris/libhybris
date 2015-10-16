@@ -18,6 +18,11 @@ LOCAL_SHARED_LIBRARIES := \
 	libgui \
 	libandroidfw
 
+HAS_LIBINPUTSERVICE := $(shell test $(ANDROID_VERSION_MAJOR) -eq 4 -a $(ANDROID_VERSION_MINOR) -gt 2 && echo true)
+ifeq ($(HAS_LIBINPUTSERVICE),true)
+LOCAL_SHARED_LIBRARIES += libinputservice
+endif
+
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \
 	external/skia/include/core \

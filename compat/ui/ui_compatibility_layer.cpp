@@ -126,6 +126,7 @@ void* graphic_buffer_get_native_buffer(struct graphic_buffer *buffer)
     return buffer->self->getNativeBuffer();
 }
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 void graphic_buffer_set_index(struct graphic_buffer *buffer, int index)
 {
     return buffer->self->setIndex(index);
@@ -135,6 +136,7 @@ int graphic_buffer_get_index(struct graphic_buffer *buffer)
 {
     return buffer->self->getIndex();
 }
+#endif
 
 int graphic_buffer_init_check(struct graphic_buffer *buffer)
 {

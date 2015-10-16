@@ -50,8 +50,10 @@ extern "C" {
 
     void* graphic_buffer_get_native_buffer(struct graphic_buffer *buffer);
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
     void graphic_buffer_set_index(struct graphic_buffer *buffer, int index);
     int graphic_buffer_get_index(struct graphic_buffer *buffer);
+#endif
 
     int graphic_buffer_init_check(struct graphic_buffer *buffer);
 
