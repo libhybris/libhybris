@@ -1336,11 +1336,6 @@ static int __my_system_property_read(const void *pi, char *name, char *value)
     return property_get(name, value, NULL);
 }
 
-static int __my_system_property_get(const char *name, char *value)
-{
-    return property_get(name, value, NULL);
-}
-
 static int __my_system_property_foreach(void (*propfn)(const void *pi, void *cookie), void *cookie)
 {
     return 0;
@@ -1698,7 +1693,6 @@ static struct _hook hooks[] = {
     {"__cxa_atexit", __cxa_atexit},
     {"__cxa_finalize", __cxa_finalize},
     {"__system_property_read", __my_system_property_read},
-    {"__system_property_get", __my_system_property_get},
     {"__system_property_set", property_set},
     {"__system_property_foreach", __my_system_property_foreach},
     {"__system_property_find", __my_system_property_find},
