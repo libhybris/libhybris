@@ -44,6 +44,7 @@ static struct hybris_prop_value prop_array[MAX_PROPS];
 static int max_prop;
 
 /* helpers */
+static void cache_update();
 static int prop_qcmp(const void *a, const void *b);
 static struct hybris_prop_value *cache_find_internal(const char *key);
 static void cache_add_internal(const char *key, const char *value);
@@ -64,6 +65,37 @@ static time_t static_prop_mtime;
  * and must be freed.
  */
 char *hybris_propcache_find(const char *key)
+{
+	char *ret = NULL;
+
+	cache_update();
+
+	/* then look up the key and do a copy if we get a result */
+	struct hybris_prop_value *prop = cache_find_internal(key);
+	if (prop)
+		return prop->value;
+
+out:
+	return ret;
+}
+
+void hybris_propcache_list(hybris_propcache_list_cb cb, void *cookie)
+{
+	int n;
+	struct hybris_prop_value *current;
+
+	if (!cb)
+		return;
+
+	cache_update();
+
+	for (n = 0; n < max_prop; n++) {
+		current = &prop_array[n];
+		cb(current->key, current->value, cookie);
+	}
+}
+
+static void cache_update()
 {
 	struct stat st;
 	FILE *f = fopen("/system/build.prop", "r");
@@ -98,14 +130,8 @@ char *hybris_propcache_find(const char *key)
 		qsort(prop_array, max_prop, sizeof(struct hybris_prop_value), prop_qcmp);
 	}
 
-	/* then look up the key and do a copy if we get a result */
-	struct hybris_prop_value *prop = cache_find_internal(key);
-	if (prop)
-		ret = strdup(prop->value);
-
 out:
 	fclose(f);
-	return ret;
 }
 
 /* private:

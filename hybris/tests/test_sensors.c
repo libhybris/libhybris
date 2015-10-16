@@ -15,10 +15,54 @@
  *
  */
 
+#include <android-config.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <android/hardware/sensors.h>
+#include <hardware/sensors.h>
+
+static void process_event(sensors_event_t *data)
+{
+    switch (data->type) {
+        case SENSOR_TYPE_ACCELEROMETER:
+            printf("Accelerometer: %+08.2f, %+08.2f, %+08.2f", data->acceleration.x,
+                    data->acceleration.y, data->acceleration.z);
+            break;
+        case SENSOR_TYPE_ORIENTATION:
+            printf("Orientation: %+08.2f, %+08.2f, %+08.2f", data->orientation.x,
+                    data->orientation.y, data->orientation.z);
+            break;
+        case SENSOR_TYPE_GYROSCOPE:
+            printf("Gyroscope: %+08.2f, %+08.2f, %+08.2f", data->gyro.x,
+                    data->gyro.y, data->gyro.z);
+            break;
+        case SENSOR_TYPE_LIGHT:
+            printf("Light: %+08.2f", data->light);
+            break;
+        case SENSOR_TYPE_PROXIMITY:
+            printf("Proximity: %+08.2f", data->distance);
+            break;
+        default:
+            printf("Other sensor data (not parsed yet, type=%d)", data->type);
+    }
+}
+
+static void print_sensor_info(int i, struct sensor_t const *s)
+{
+    printf("=== Sensor %d ==\n", i);
+    printf("Name: %s\n", s->name);
+    printf("Vendor: %s\n", s->vendor);
+    printf("Version: 0x%x\n", s->version);
+    printf("Handle: 0x%x\n", s->handle);
+    printf("Type: %d\n", s->type);
+    printf("maxRange: %.f\n", s->maxRange);
+    printf("resolution: %.f\n", s->resolution);
+    printf("power: %.f mA\n", s->power);
+    printf("minDelay: %d\n", s->minDelay);
+    //printf("fifoReservedEventCount: %d\n", s->fifoReservedEventCount);
+    //printf("fifoMaxEventCount: %d\n", s->fifoMaxEventCount);
+    printf("\n\n\n");
+}
 
 int main(int argc, char **argv)
 {
@@ -32,6 +76,71 @@ int main(int argc, char **argv)
 		printf("ERROR: failed to open sensors device\n");
 		exit(1);
 	}
+
+        printf("Hardware module ID: %s\n", hwmod->id);
+        printf("Hardware module Name: %s\n", hwmod->name);
+        printf("Hardware module Author: %s\n", hwmod->author);
+        printf("Hardware module API version: 0x%x\n", hwmod->module_api_version);
+        printf("Hardware HAL API version: 0x%x\n", hwmod->hal_api_version);
+        printf("Poll device version: 0x%x\n", dev->common.version);
+
+        printf("API VERSION 0.1 (legacy): 0x%x\n", HARDWARE_MODULE_API_VERSION(0, 1));
+#ifdef SENSORS_DEVICE_API_VERSION_0_1
+        printf("API VERSION 0.1: 0x%d\n", SENSORS_DEVICE_API_VERSION_0_1);
+#endif
+#ifdef SENSORS_DEVICE_API_VERSION_1_0
+        printf("API VERSION 1.0: 0x%d\n", SENSORS_DEVICE_API_VERSION_1_0);
+#endif
+#ifdef SENSORS_DEVICE_API_VERSION_1_1
+        printf("API VERSION 1.1: 0x%d\n", SENSORS_DEVICE_API_VERSION_1_1);
+#endif
+
+        struct sensors_module_t *smod = (struct sensors_module_t *)(hwmod);
+
+        struct sensor_t const *sensors_list = NULL;
+        int sensors = smod->get_sensors_list(smod, &sensors_list);
+        printf("Got %d sensors\n", sensors);
+
+        int res;
+        int poll_sensor = ((argc == 2) ? atoi(argv[1]) : -1);
+
+        if (poll_sensor != -1 && poll_sensor < sensors) {
+            struct sensor_t const *s = sensors_list + poll_sensor;
+            print_sensor_info(poll_sensor, s);
+
+            res = dev->setDelay(dev, s->handle, s->minDelay);
+            if (res != 0) {
+                printf("Could not set delay: %s\n", strerror(-res));
+            }
+            res = dev->activate(dev, s->handle, 1);
+            if (res != 0) {
+                printf("Could not activate sensor: %s\n", strerror(-res));
+            } else {
+                printf("Reading events\n");
+                while (1) {
+                    sensors_event_t data;
+                    data.sensor = -1;
+                    printf("\rPolling... ");
+                    fflush(stdout);
+                    while (dev->poll(dev, &data, 1) != 1);
+                    printf(" ");
+                    if (data.sensor == poll_sensor) {
+                        process_event(&data);
+                    }
+                    printf("\33[K");
+                    fflush(stdout);
+                }
+                res = dev->activate(dev, s->handle, 0);
+                if (res != 0) {
+                    printf("Could not deactivate sensor: %s\n", strerror(-res));
+                }
+            }
+        } else {
+            int i;
+            for (i=0; i<sensors; i++) {
+                print_sensor_info(i, sensors_list + i);
+            }
+        }
 
 	if (sensors_close(dev) < 0) {
 		printf("ERROR: failed to close sensors device\n");

@@ -78,7 +78,7 @@ const char *android_dlerror(void)
 void *android_dlsym(void *handle, const char *symbol)
 {
     soinfo *found;
-    Elf_Sym *sym;
+    Elf32_Sym *sym;
     unsigned bind;
 
     pthread_mutex_lock(&dl_lock);
@@ -142,7 +142,7 @@ int android_dladdr(const void *addr, Dl_info *info)
         info->dli_fbase = (void*)si->base;
 
         /* Determine if any symbol in the library contains the specified address */
-        Elf_Sym *sym = find_containing_symbol(addr, si);
+        Elf32_Sym *sym = find_containing_symbol(addr, si);
 
         if(sym != NULL) {
             info->dli_sname = si->strtab + sym->st_name;
@@ -171,7 +171,7 @@ int android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, vo
 //                     0000000 00011111 111112 22222222 2333333 333344444444445555555
 //                     0123456 78901234 567890 12345678 9012345 678901234567890123456
 #define ANDROID_LIBDL_STRTAB \
-                      "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_iterate_phdr\0dl_unwind_find_exidx\0"
+                      "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_unwind_find_exidx\0dl_iterate_phdr\0"
 
 _Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
 
@@ -180,7 +180,6 @@ _Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
 //                     0123456 78901234 567890 12345678 9012345 6789012345678901
 #define ANDROID_LIBDL_STRTAB \
                       "dlopen\0dlclose\0dlsym\0dlerror\0dladdr\0dl_iterate_phdr\0"
-
 #elif defined(ANDROID_SH_LINKER)
 //                     0000000 00011111 111112 22222222 2333333 3333444444444455
 //                     0123456 78901234 567890 12345678 9012345 6789012345678901
@@ -192,7 +191,7 @@ _Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
 #endif
 
 
-static Elf_Sym libdl_symtab[] = {
+static Elf32_Sym libdl_symtab[] = {
       // total length of libdl_info.strtab, including trailing 0
       // This is actually the the STH_UNDEF entry. Technically, it's
       // supposed to have st_name == 0, but instead, it points to an index
@@ -200,42 +199,44 @@ static Elf_Sym libdl_symtab[] = {
     { st_name: sizeof(ANDROID_LIBDL_STRTAB) - 1,
     },
     { st_name: 0,   // starting index of the name in libdl_info.strtab
-      st_value: (Elf_Addr) &android_dlopen,
+      st_value: (Elf32_Addr) &android_dlopen,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 7,
-      st_value: (Elf_Addr) &android_dlclose,
+      st_value: (Elf32_Addr) &android_dlclose,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 15,
-      st_value: (Elf_Addr) &android_dlsym,
+      st_value: (Elf32_Addr) &android_dlsym,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 21,
-      st_value: (Elf_Addr) &android_dlerror,
+      st_value: (Elf32_Addr) &android_dlerror,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
     { st_name: 29,
-      st_value: (Elf_Addr) &android_dladdr,
-      st_info: STB_GLOBAL << 4,
-      st_shndx: 1,
-    },
-    { st_name: 36,
-      st_value: (Elf_Addr) &android_dl_iterate_phdr,
+      st_value: (Elf32_Addr) &android_dladdr,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
 #ifdef ANDROID_ARM_LINKER
-    { st_name: 52,
-      st_value: (Elf_Addr) &android_dl_unwind_find_exidx,
+    { st_name: 36,
+      st_value: (Elf32_Addr) &android_dl_unwind_find_exidx,
       st_info: STB_GLOBAL << 4,
       st_shndx: 1,
     },
+    { st_name: 57,
+#else
+    { st_name: 36,
 #endif
+      st_value: (Elf32_Addr) &android_dl_iterate_phdr,
+      st_info: STB_GLOBAL << 4,
+      st_shndx: 1,
+    },
 };
 
 /* Fake out a hash table with a single bucket.
@@ -258,7 +259,7 @@ static Elf_Sym libdl_symtab[] = {
  * stubbing them out in libdl.
  */
 static unsigned libdl_buckets[1] = { 1 };
-#ifdef ANDROID_ARM_LINKER
+#if defined(ANDROID_ARM_LINKER)
 static unsigned libdl_chains[8] = { 0, 2, 3, 4, 5, 6, 7, 0 };
 #else
 static unsigned libdl_chains[7] = { 0, 2, 3, 4, 5, 6, 0 };
@@ -271,8 +272,13 @@ soinfo libdl_info = {
     strtab: ANDROID_LIBDL_STRTAB,
     symtab: libdl_symtab,
 
-    nbucket: sizeof(libdl_buckets)/sizeof(unsigned),
-    nchain: sizeof(libdl_chains)/sizeof(unsigned),
+    refcount: 1,
+    nbucket: 1,
+#if defined(ANDROID_ARM_LINKER)
+    nchain: 8,
+#else
+    nchain: 7,
+#endif
     bucket: libdl_buckets,
     chain: libdl_chains,
 };

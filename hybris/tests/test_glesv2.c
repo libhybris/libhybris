@@ -148,8 +148,17 @@ int main(int argc, char **argv)
 	//glViewport ( 0 , 0 , 800, 600); // commented out so it uses the initial window dimensions
 	glClearColor ( 1. , 1. , 1. , 1.);    // background color
 	float phase = 0;
+	int frames = -1;
+	if(argc == 2) {
+		frames = atoi(argv[1]);
+	}
+	if(frames < 0) {
+	   frames = 30 * 60;
+	}
+
 	int i;
-	for (i=0; i<3*60; ++i) {
+	for (i = 0; i < frames; ++i) {
+        if(i % 60 == 0) printf("frame:%i\n", i);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glUniform1f ( phase_loc , phase );  // write the value of phase to the shaders phase
 		phase  =  fmodf ( phase + 0.5f , 2.f * 3.141f );    // and update the local variable

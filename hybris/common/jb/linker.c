@@ -358,7 +358,6 @@ _Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount)
     return NULL;
 }
 #endif
-
 /* Here, we only have to provide a callback to iterate across all the
  * loaded libraries. gcc_eh does the rest. */
 int
@@ -381,10 +380,10 @@ android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info *info, size_t size, void *
     return rv;
 }
 
-static Elf_Sym *_elf_lookup(soinfo *si, unsigned hash, const char *name)
+static Elf32_Sym *_elf_lookup(soinfo *si, unsigned hash, const char *name)
 {
-    Elf_Sym *s;
-    Elf_Sym *symtab = si->symtab;
+    Elf32_Sym *s;
+    Elf32_Sym *symtab = si->symtab;
     const char *strtab = si->strtab;
     unsigned n;
 
@@ -426,11 +425,11 @@ static unsigned elfhash(const char *_name)
     return h;
 }
 
-static Elf_Sym *
+static Elf32_Sym *
 _do_lookup(soinfo *si, const char *name, unsigned *base)
 {
     unsigned elf_hash = elfhash(name);
-    Elf_Sym *s;
+    Elf32_Sym *s;
     unsigned *d;
     soinfo *lsi = si;
     int i;
@@ -502,17 +501,17 @@ done:
 /* This is used by dl_sym().  It performs symbol lookup only within the
    specified soinfo object and not in any of its dependencies.
  */
-Elf_Sym *lookup_in_library(soinfo *si, const char *name)
+Elf32_Sym *lookup_in_library(soinfo *si, const char *name)
 {
     return _elf_lookup(si, elfhash(name), name);
 }
 
 /* This is used by dl_sym().  It performs a global symbol lookup.
  */
-Elf_Sym *lookup(const char *name, soinfo **found, soinfo *start)
+Elf32_Sym *lookup(const char *name, soinfo **found, soinfo *start)
 {
     unsigned elf_hash = elfhash(name);
-    Elf_Sym *s = NULL;
+    Elf32_Sym *s = NULL;
     soinfo *si;
 
     if(start == NULL) {
@@ -553,7 +552,7 @@ soinfo *find_containing_library(const void *addr)
     return NULL;
 }
 
-Elf_Sym *find_containing_symbol(const void *addr, soinfo *si)
+Elf32_Sym *find_containing_symbol(const void *addr, soinfo *si)
 {
     unsigned int i;
     unsigned soaddr = (unsigned)addr - si->base;
@@ -561,7 +560,7 @@ Elf_Sym *find_containing_symbol(const void *addr, soinfo *si)
     /* Search the library's symbol table for any defined symbol which
      * contains this address */
     for(i=0; i<si->nchain; i++) {
-        Elf_Sym *sym = &si->symtab[i];
+        Elf32_Sym *sym = &si->symtab[i];
 
         if(sym->st_shndx != SHN_UNDEF &&
            soaddr >= sym->st_value &&
@@ -576,7 +575,7 @@ Elf_Sym *find_containing_symbol(const void *addr, soinfo *si)
 #if 0
 static void dump(soinfo *si)
 {
-    Elf_Sym *s = si->symtab;
+    Elf32_Sym *s = si->symtab;
     unsigned n;
 
     for(n = 0; n < si->nchain; n++) {
@@ -705,7 +704,7 @@ is_prelinked(int fd, const char *name)
 static int
 verify_elf_object(void *base, const char *name)
 {
-    Elf_Ehdr *hdr = (Elf_Ehdr *) base;
+    Elf32_Ehdr *hdr = (Elf32_Ehdr *) base;
 
     if (hdr->e_ident[EI_MAG0] != ELFMAG0) return -1;
     if (hdr->e_ident[EI_MAG1] != ELFMAG1) return -1;
@@ -750,8 +749,8 @@ get_lib_extents(int fd, const char *name, void *__hdr, unsigned *total_sz)
     unsigned min_vaddr = 0xffffffff;
     unsigned max_vaddr = 0;
     unsigned char *_hdr = (unsigned char *)__hdr;
-    Elf_Ehdr *ehdr = (Elf_Ehdr *)_hdr;
-    Elf_Phdr *phdr;
+    Elf32_Ehdr *ehdr = (Elf32_Ehdr *)_hdr;
+    Elf32_Phdr *phdr;
     int cnt;
 
     TRACE("[ %5d Computing extents for '%s'. ]\n", pid, name);
@@ -770,7 +769,7 @@ get_lib_extents(int fd, const char *name, void *__hdr, unsigned *total_sz)
         TRACE("[ %5d - Non-prelinked library '%s' found. ]\n", pid, name);
     }
 
-    phdr = (Elf_Phdr *)(_hdr + ehdr->e_phoff);
+    phdr = (Elf32_Phdr *)(_hdr + ehdr->e_phoff);
 
     /* find the min/max p_vaddrs from all the PT_LOAD segments so we can
      * get the range. */
@@ -885,12 +884,12 @@ err:
 static int
 load_segments(int fd, void *header, soinfo *si)
 {
-    Elf_Ehdr *ehdr = (Elf_Ehdr *)header;
-    Elf_Phdr *phdr = (Elf_Phdr *)((unsigned char *)header + ehdr->e_phoff);
-    Elf_Addr base = (Elf_Addr) si->base;
+    Elf32_Ehdr *ehdr = (Elf32_Ehdr *)header;
+    Elf32_Phdr *phdr = (Elf32_Phdr *)((unsigned char *)header + ehdr->e_phoff);
+    Elf32_Addr base = (Elf32_Addr) si->base;
     int cnt;
     unsigned len;
-    Elf_Addr tmp;
+    Elf32_Addr tmp;
     unsigned char *pbase;
     unsigned char *extra_base;
     unsigned extra_len;
@@ -956,7 +955,7 @@ load_segments(int fd, void *header, soinfo *si)
              *                  |                     |
              *                 _+---------------------+  page boundary
              */
-            tmp = (Elf_Addr)(((unsigned)pbase + len + PAGE_SIZE - 1) &
+            tmp = (Elf32_Addr)(((unsigned)pbase + len + PAGE_SIZE - 1) &
                                     (~PAGE_MASK));
             if (tmp < (base + phdr->p_vaddr + phdr->p_memsz)) {
                 extra_len = base + phdr->p_vaddr + phdr->p_memsz - tmp;
@@ -1020,7 +1019,7 @@ load_segments(int fd, void *header, soinfo *si)
                        phdr->p_vaddr, phdr->p_memsz);
                 goto fail;
             }
-            si->gnu_relro_start = (Elf_Addr) (base + phdr->p_vaddr);
+            si->gnu_relro_start = (Elf32_Addr) (base + phdr->p_vaddr);
             si->gnu_relro_len = (unsigned) phdr->p_memsz;
         } else {
 #ifdef ANDROID_ARM_LINKER
@@ -1067,11 +1066,11 @@ fail:
  */
 #if 0
 static unsigned
-get_wr_offset(int fd, const char *name, Elf_Ehdr *ehdr)
+get_wr_offset(int fd, const char *name, Elf32_Ehdr *ehdr)
 {
-    Elf_Shdr *shdr_start;
-    Elf_Shdr *shdr;
-    int shdr_sz = ehdr->e_shnum * sizeof(Elf_Shdr);
+    Elf32_Shdr *shdr_start;
+    Elf32_Shdr *shdr;
+    int shdr_sz = ehdr->e_shnum * sizeof(Elf32_Shdr);
     int cnt;
     unsigned wr_offset = 0xffffffff;
 
@@ -1104,7 +1103,7 @@ load_library(const char *name)
     unsigned req_base;
     const char *bname;
     soinfo *si = NULL;
-    Elf_Ehdr *hdr;
+    Elf32_Ehdr *hdr;
 
     if(fd == -1) {
         DL_ERR("Library '%s' not found", name);
@@ -1161,8 +1160,8 @@ load_library(const char *name)
 
     /* this might not be right. Technically, we don't even need this info
      * once we go through 'load_segments'. */
-    hdr = (Elf_Ehdr *)si->base;
-    si->phdr = (Elf_Phdr *)((unsigned char *)si->base + hdr->e_phoff);
+    hdr = (Elf32_Ehdr *)si->base;
+    si->phdr = (Elf32_Phdr *)((unsigned char *)si->base + hdr->e_phoff);
     si->phnum = hdr->e_phnum;
     /**/
 
@@ -1261,7 +1260,7 @@ unsigned unload_library(soinfo *si)
          * in link_image. This is needed to undo the DT_NEEDED hack below.
          */
         if ((si->gnu_relro_start != 0) && (si->gnu_relro_len != 0)) {
-            Elf_Addr start = (si->gnu_relro_start & ~PAGE_MASK);
+            Elf32_Addr start = (si->gnu_relro_start & ~PAGE_MASK);
             unsigned len = (si->gnu_relro_start - start) + si->gnu_relro_len;
             if (mprotect((void *) start, len, PROT_READ | PROT_WRITE) < 0)
                 DL_ERR("%5d %s: could not undo GNU_RELRO protections. "
@@ -1304,16 +1303,16 @@ unsigned unload_library(soinfo *si)
 }
 
 /* TODO: don't use unsigned for addrs below. It works, but is not
- * ideal. They should probably be either uint32_t, Elf_Addr, or unsigned
+ * ideal. They should probably be either uint32_t, Elf32_Addr, or unsigned
  * long.
  */
-static int reloc_library(soinfo *si, Elf_Rel *rel, unsigned count)
+static int reloc_library(soinfo *si, Elf32_Rel *rel, unsigned count)
 {
-    Elf_Sym *symtab = si->symtab;
+    Elf32_Sym *symtab = si->symtab;
     const char *strtab = si->strtab;
-    Elf_Sym *s;
+    Elf32_Sym *s;
     unsigned base;
-    Elf_Rel *start = rel;
+    Elf32_Rel *start = rel;
     unsigned idx;
 
     for (idx = 0; idx < count; ++idx) {
@@ -1340,7 +1339,7 @@ static int reloc_library(soinfo *si, Elf_Rel *rel, unsigned count)
                 /* We only allow an undefined symbol if this is a weak
                    reference..   */
                 s = &symtab[sym];
-                if (ELF32_ST_BIND(s->st_info) != STB_WEAK) {
+                if (ELF32_ST_BIND(s->st_info) != STB_WEAK && strcmp(si->name, "libdsyscalls.so") != 0) {
                     DL_ERR("%5d cannot locate '%s'...\n", pid, sym_name);
                     return -1;
                 }
@@ -1712,7 +1711,7 @@ static int nullify_closed_stdio (void)
 static int link_image(soinfo *si, unsigned wr_offset)
 {
     unsigned *d;
-    Elf_Phdr *phdr = si->phdr;
+    Elf32_Phdr *phdr = si->phdr;
     int phnum = si->phnum;
 
     INFO("[ %5d linking %s ]\n", pid, si->name);
@@ -1795,7 +1794,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
                            phdr->p_vaddr, phdr->p_memsz);
                     goto fail;
                 }
-                si->gnu_relro_start = (Elf_Addr) (si->base + phdr->p_vaddr);
+                si->gnu_relro_start = (Elf32_Addr) (si->base + phdr->p_vaddr);
                 si->gnu_relro_len = (unsigned) phdr->p_memsz;
             }
         }
@@ -1822,7 +1821,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
             si->strtab = (const char *) (si->base + *d);
             break;
         case DT_SYMTAB:
-            si->symtab = (Elf_Sym *) (si->base + *d);
+            si->symtab = (Elf32_Sym *) (si->base + *d);
             break;
         case DT_PLTREL:
             if(*d != DT_REL) {
@@ -1831,13 +1830,13 @@ static int link_image(soinfo *si, unsigned wr_offset)
             }
             break;
         case DT_JMPREL:
-            si->plt_rel = (Elf_Rel*) (si->base + *d);
+            si->plt_rel = (Elf32_Rel*) (si->base + *d);
             break;
         case DT_PLTRELSZ:
             si->plt_rel_count = *d / 8;
             break;
         case DT_REL:
-            si->rel = (Elf_Rel*) (si->base + *d);
+            si->rel = (Elf32_Rel*) (si->base + *d);
             break;
         case DT_RELSZ:
             si->rel_count = *d / 8;
@@ -1869,7 +1868,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
                   pid, si->name, si->init_array);
             break;
         case DT_INIT_ARRAYSZ:
-            si->init_array_count = ((unsigned)*d) / sizeof(Elf_Addr);
+            si->init_array_count = ((unsigned)*d) / sizeof(Elf32_Addr);
             break;
         case DT_FINI_ARRAY:
             si->fini_array = (unsigned *)(si->base + *d);
@@ -1877,7 +1876,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
                   pid, si->name, si->fini_array);
             break;
         case DT_FINI_ARRAYSZ:
-            si->fini_array_count = ((unsigned)*d) / sizeof(Elf_Addr);
+            si->fini_array_count = ((unsigned)*d) / sizeof(Elf32_Addr);
             break;
         case DT_PREINIT_ARRAY:
             si->preinit_array = (unsigned *)(si->base + *d);
@@ -1885,7 +1884,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
                   pid, si->name, si->preinit_array);
             break;
         case DT_PREINIT_ARRAYSZ:
-            si->preinit_array_count = ((unsigned)*d) / sizeof(Elf_Addr);
+            si->preinit_array_count = ((unsigned)*d) / sizeof(Elf32_Addr);
             break;
         case DT_TEXTREL:
             /* TODO: make use of this. */
@@ -1987,7 +1986,7 @@ static int link_image(soinfo *si, unsigned wr_offset)
 #endif
 
     if (si->gnu_relro_start != 0 && si->gnu_relro_len != 0) {
-        Elf_Addr start = (si->gnu_relro_start & ~PAGE_MASK);
+        Elf32_Addr start = (si->gnu_relro_start & ~PAGE_MASK);
         unsigned len = (si->gnu_relro_start - start) + si->gnu_relro_len;
         if (mprotect((void *) start, len, PROT_READ) < 0) {
             DL_ERR("%5d GNU_RELRO mprotect of library '%s' failed: %d (%s)\n",
@@ -2170,7 +2169,7 @@ sanitize:
     while(vecs[0] != 0){
         switch(vecs[0]){
         case AT_PHDR:
-            si->phdr = (Elf_Phdr*) vecs[1];
+            si->phdr = (Elf32_Phdr*) vecs[1];
             break;
         case AT_PHNUM:
             si->phnum = (int) vecs[1];
@@ -2190,7 +2189,7 @@ sanitize:
     si->base = 0;
     for ( nn = 0; nn < si->phnum; nn++ ) {
         if (si->phdr[nn].p_type == PT_PHDR) {
-            si->base = (Elf_Addr) si->phdr - si->phdr[nn].p_vaddr;
+            si->base = (Elf32_Addr) si->phdr - si->phdr[nn].p_vaddr;
             break;
         }
     }
@@ -2303,9 +2302,9 @@ static unsigned find_linker_base(unsigned **elfdata) {
  */
 unsigned __linker_init(unsigned **elfdata) {
     unsigned linker_addr = find_linker_base(elfdata);
-    Elf_Ehdr *elf_hdr = (Elf_Ehdr *) linker_addr;
-    Elf_Phdr *phdr =
-        (Elf_Phdr *)((unsigned char *) linker_addr + elf_hdr->e_phoff);
+    Elf32_Ehdr *elf_hdr = (Elf32_Ehdr *) linker_addr;
+    Elf32_Phdr *phdr =
+        (Elf32_Phdr *)((unsigned char *) linker_addr + elf_hdr->e_phoff);
 
     soinfo linker_so;
     memset(&linker_so, 0, sizeof(soinfo));

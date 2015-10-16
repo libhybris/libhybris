@@ -32,7 +32,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 
 HYBRIS_LIBRARY_INITIALIZE(libnfc_ndef_so, "/system/lib/libnfc_ndef.so");
 

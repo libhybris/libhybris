@@ -1,8 +1,9 @@
+#include <android-config.h>
 #include <ws.h>
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <string.h>
-#include <android/hardware/gralloc.h>
+#include <hardware/gralloc.h>
 #include <stdio.h>
 #include <assert.h>
 #include "config.h"
@@ -21,13 +22,30 @@
 
 #include "windowbuffer.h"
 
+static struct ws_egl_interface *my_egl_interface;
 static gralloc_module_t *my_gralloc = 0;
 static alloc_device_t *my_alloc = 0;
 
-extern "C" void eglplatformcommon_init(gralloc_module_t *gralloc, alloc_device_t *allocdevice)
+extern "C" void eglplatformcommon_init(struct ws_egl_interface *egl_iface, gralloc_module_t *gralloc, alloc_device_t *allocdevice)
 {
+	my_egl_interface = egl_iface;
 	my_gralloc = gralloc;
 	my_alloc = allocdevice;
+}
+
+extern "C" void *hybris_android_egl_dlsym(const char *symbol)
+{
+	return (*my_egl_interface->android_egl_dlsym)(symbol);
+}
+
+extern "C" int hybris_egl_has_mapping(EGLSurface surface)
+{
+	return (*my_egl_interface->has_mapping)(surface);
+}
+
+EGLNativeWindowType hybris_egl_get_mapping(EGLSurface surface)
+{
+	return (*my_egl_interface->get_mapping)(surface);
 }
 
 extern "C" int hybris_register_buffer_handle(buffer_handle_t handle)
@@ -64,6 +82,8 @@ extern "C" void hybris_dump_buffer_to_file(ANativeWindowBuffer *buf)
 	snprintf(b, 1020, "vaddr.%p.%p.%i.%is%ix%ix%i", buf, vaddr, cnt, buf->width, buf->stride, buf->height, bytes_pp);
 	cnt++;
 	int fd = ::open(b, O_WRONLY|O_CREAT, S_IRWXU);
+	if(fd < 0)
+		return;
 
 	::write(fd, vaddr, buf->stride * buf->height * bytes_pp);
 	::close(fd);
@@ -75,7 +95,7 @@ extern "C" void hybris_dump_buffer_to_file(ANativeWindowBuffer *buf)
 extern "C" EGLBoolean eglplatformcommon_eglBindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
 {
 	assert(my_gralloc != NULL);
-	server_wlegl_create(display, my_gralloc);
+	server_wlegl_create(display, my_gralloc, my_alloc);
 	return EGL_TRUE;
 }
 
@@ -85,7 +105,7 @@ extern "C" EGLBoolean eglplatformcommon_eglUnbindWaylandDisplayWL(EGLDisplay dpy
 }
 
 extern "C" EGLBoolean eglplatformcommon_eglQueryWaylandBufferWL(EGLDisplay dpy,
-	struct wl_buffer *buffer, EGLint attribute, EGLint *value)
+	struct wl_resource *buffer, EGLint attribute, EGLint *value)
 {
 	server_wlegl_buffer *buf  = server_wlegl_buffer_from(buffer);
 	ANativeWindowBuffer* anwb = (ANativeWindowBuffer *) buf->buf;
@@ -114,7 +134,72 @@ extern "C" EGLBoolean eglplatformcommon_eglQueryWaylandBufferWL(EGLDisplay dpy,
 	return EGL_FALSE ;
 }
 
+// Added as part of EGL_HYBRIS_WL_acquire_native_buffer. Buffers are released
+// and decRef'ed using eglHybrisReleaseNativeBuffer
+extern "C" EGLBoolean eglplatformcommon_eglHybrisAcquireNativeBufferWL(EGLDisplay dpy, struct wl_resource *wlBuffer, EGLClientBuffer *buffer)
+ {
+     if (!buffer)
+         return EGL_FALSE;
+    server_wlegl_buffer *buf  = server_wlegl_buffer_from(wlBuffer);
+    if (!buf->buf->isAllocated()) {
+        // We only return the handles from buffers which are allocated server side. This is because some
+        // hardware compositors have problems with client-side allocated buffers.
+        buffer = 0;
+        return EGL_FALSE;
+    }
+    ANativeWindowBuffer* anwb = (ANativeWindowBuffer *) buf->buf;
+    anwb->common.incRef(&anwb->common);
+    *buffer = (EGLClientBuffer *) anwb;
+    return EGL_TRUE;
+}
+
 #endif
+
+// Added as part of EGL_HYBRIS_native_buffer2
+extern "C" EGLBoolean eglplatformcommon_eglHybrisNativeBufferHandle(EGLDisplay dpy, EGLClientBuffer buffer, void **handle)
+{
+	if (!buffer || !handle)
+		return EGL_FALSE;
+	ANativeWindowBuffer *anwb = (ANativeWindowBuffer *) buffer;
+	*handle = (void *) anwb->handle;
+	return EGL_TRUE;
+}
+
+extern "C" void eglplatformcommon_eglHybrisGetNativeBufferInfo(EGLClientBuffer buffer, int *num_ints, int *num_fds)
+{
+	RemoteWindowBuffer *buf = static_cast<RemoteWindowBuffer *>((ANativeWindowBuffer *) buffer);
+	*num_ints = buf->handle->numInts;
+	*num_fds = buf->handle->numFds;
+}
+
+extern "C" void eglplatformcommon_eglHybrisSerializeNativeBuffer(EGLClientBuffer buffer, int *ints, int *fds)
+{
+	RemoteWindowBuffer *buf = static_cast<RemoteWindowBuffer *>((ANativeWindowBuffer *) buffer);
+	memcpy(ints, buf->handle->data + buf->handle->numFds, buf->handle->numInts * sizeof(int));
+	memcpy(fds, buf->handle->data, buf->handle->numFds * sizeof(int));
+}
+
+extern "C" EGLBoolean eglplatformcommon_eglHybrisCreateRemoteBuffer(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint stride,
+                                                                    int num_ints, int *ints, int num_fds, int *fds, EGLClientBuffer *buffer)
+{
+	assert(my_gralloc != NULL);
+
+	native_handle_t *native = native_handle_create(num_fds, num_ints);
+	memcpy(&native->data[0], fds, num_fds * sizeof(int));
+	memcpy(&native->data[num_fds], ints, num_ints * sizeof(int));
+
+	int ret = my_gralloc->registerBuffer(my_gralloc, (buffer_handle_t)native);
+
+	if (ret == 0)
+	{
+	        RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, stride, format, usage, (buffer_handle_t)native, my_gralloc, my_alloc);
+		buf->common.incRef(&buf->common);
+		*buffer = (EGLClientBuffer) static_cast<ANativeWindowBuffer *>(buf);
+		return EGL_TRUE;
+	}
+	else
+		return EGL_FALSE;
+}
 
 extern "C" EGLBoolean eglplatformcommon_eglHybrisCreateNativeBuffer(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint *stride, EGLClientBuffer *buffer)
 {
@@ -129,8 +214,9 @@ extern "C" EGLBoolean eglplatformcommon_eglHybrisCreateNativeBuffer(EGLint width
 
 	if (ret == 0)
 	{
-		RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, _stride, format, usage, _handle, my_gralloc);
+	        RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, _stride, format, usage, _handle, my_gralloc, my_alloc);
 		buf->common.incRef(&buf->common);
+		buf->setAllocated(true);
 		*buffer = (EGLClientBuffer) static_cast<ANativeWindowBuffer *>(buf);
 		*stride = _stride;
 		return EGL_TRUE;
@@ -185,9 +271,9 @@ eglplatformcommon_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EGLClien
 	static int debugenvchecked = 0;
 	if (*target == EGL_WAYLAND_BUFFER_WL)
 	{
-		server_wlegl_buffer *buf = server_wlegl_buffer_from((struct wl_buffer *)*buffer);
-		HYBRIS_TRACE_BEGIN("eglplatformcommon", "Wayland_eglImageKHR", "-resource@%i", ((struct wl_buffer *)*buffer)->resource.object.id);
-		HYBRIS_TRACE_END("eglplatformcommon", "Wayland_eglImageKHR", "-resource@%i", ((struct wl_buffer *)*buffer)->resource.object.id);
+		server_wlegl_buffer *buf = server_wlegl_buffer_from((struct wl_resource *)*buffer);
+		HYBRIS_TRACE_BEGIN("eglplatformcommon", "Wayland_eglImageKHR", "-resource@%i", wl_resource_get_id((struct wl_resource *)*buffer));
+		HYBRIS_TRACE_END("eglplatformcommon", "Wayland_eglImageKHR", "-resource@%i", wl_resource_get_id((struct wl_resource *)*buffer));
 		if (debugenvchecked == 0)
 		{
 			if (getenv("HYBRIS_WAYLAND_KHR_DUMP_BUFFERS") != NULL)
@@ -223,6 +309,11 @@ extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProc
 		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglQueryWaylandBufferWL;
 	}
 	else
+    if (strcmp(procname, "eglHybrisAcquireNativeBufferWL") == 0)
+    {
+        return (__eglMustCastToProperFunctionPointerType) eglplatformcommon_eglHybrisAcquireNativeBufferWL;
+    }
+    else
 #endif
 	if (strcmp(procname, "eglHybrisCreateNativeBuffer") == 0)
 	{
@@ -243,6 +334,26 @@ extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProc
 	{
 		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisReleaseNativeBuffer;
 	}
+	else
+	if (strcmp(procname, "eglHybrisGetNativeBufferInfo") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisGetNativeBufferInfo;
+	}
+	else
+	if (strcmp(procname, "eglHybrisSerializeNativeBuffer") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisSerializeNativeBuffer;
+	}
+	else
+	if (strcmp(procname, "eglHybrisCreateRemoteBuffer") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisCreateRemoteBuffer;
+	}
+	else
+	if (strcmp(procname, "eglHybrisNativeBufferHandle") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglHybrisNativeBufferHandle;
+	}
 	return NULL;
 }
 
@@ -253,8 +364,7 @@ extern "C" const char *eglplatformcommon_eglQueryString(EGLDisplay dpy, EGLint n
 	{
 		const char *ret = (*real_eglQueryString)(dpy, name);
 		static char eglextensionsbuf[512];
-		assert(ret != NULL);
-		snprintf(eglextensionsbuf, 510, "%sEGL_HYBRIS_native_buffer %s", ret,
+		snprintf(eglextensionsbuf, 510, "%sEGL_HYBRIS_native_buffer2 EGL_HYBRIS_WL_acquire_native_buffer %s", ret ? ret : "",
 #ifdef WANT_WAYLAND
 			"EGL_WL_bind_wayland_display "
 #else

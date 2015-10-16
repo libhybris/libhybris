@@ -38,26 +38,6 @@
 #define PAGE_SIZE 4096
 #define PAGE_MASK 4095
 
-#if defined(__x86_64__)
-typedef Elf64_Ehdr Elf_Ehdr;
-typedef Elf64_Shdr Elf_Shdr;
-typedef Elf64_Sym  Elf_Sym;
-typedef Elf64_Addr Elf_Addr;
-typedef Elf64_Phdr Elf_Phdr;
-typedef Elf64_Half Elf_Half;
-typedef Elf64_Rel  Elf_Rel;
-typedef Elf64_Rela Elf_Rela;
-#else
-typedef Elf32_Ehdr Elf_Ehdr;
-typedef Elf32_Shdr Elf_Shdr;
-typedef Elf32_Sym  Elf_Sym;
-typedef Elf32_Addr Elf_Addr;
-typedef Elf32_Phdr Elf_Phdr;
-typedef Elf32_Half Elf_Half;
-typedef Elf32_Rel  Elf_Rel;
-typedef Elf32_Rela Elf_Rela;
-#endif
-
 void debugger_init();
 const char *addr_to_name(unsigned addr);
 
@@ -75,10 +55,10 @@ struct link_map
 /* needed for dl_iterate_phdr to be passed to the callbacks provided */
 struct dl_phdr_info
 {
-    Elf_Addr dlpi_addr;
+    Elf32_Addr dlpi_addr;
     const char *dlpi_name;
-    const Elf_Phdr *dlpi_phdr;
-    Elf_Half dlpi_phnum;
+    const Elf32_Phdr *dlpi_phdr;
+    Elf32_Half dlpi_phnum;
 };
 
 
@@ -110,7 +90,7 @@ typedef struct soinfo soinfo;
 struct soinfo
 {
     const char name[SOINFO_NAME_LEN];
-    Elf_Phdr *phdr;
+    Elf32_Phdr *phdr;
     int phnum;
     unsigned entry;
     unsigned base;
@@ -127,7 +107,7 @@ struct soinfo
     unsigned flags;
 
     const char *strtab;
-    Elf_Sym *symtab;
+    Elf32_Sym *symtab;
 
     unsigned nbucket;
     unsigned nchain;
@@ -136,10 +116,10 @@ struct soinfo
 
     unsigned *plt_got;
 
-    Elf_Rel *plt_rel;
+    Elf32_Rel *plt_rel;
     unsigned plt_rel_count;
 
-    Elf_Rel *rel;
+    Elf32_Rel *rel;
     unsigned rel_count;
 
     unsigned *preinit_array;
@@ -164,7 +144,7 @@ struct soinfo
 
     int constructors_called;
 
-    Elf_Addr gnu_relro_start;
+    Elf32_Addr gnu_relro_start;
     unsigned gnu_relro_len;
 
 };
@@ -222,17 +202,18 @@ extern soinfo libdl_info;
 
 soinfo *find_library(const char *name);
 unsigned unload_library(soinfo *si);
-Elf_Sym *lookup_in_library(soinfo *si, const char *name);
-Elf_Sym *lookup(const char *name, soinfo **found, soinfo *start);
+Elf32_Sym *lookup_in_library(soinfo *si, const char *name);
+Elf32_Sym *lookup(const char *name, soinfo **found, soinfo *start);
 soinfo *find_containing_library(const void *addr);
-Elf_Sym *find_containing_symbol(const void *addr, soinfo *si);
+Elf32_Sym *find_containing_symbol(const void *addr, soinfo *si);
 const char *linker_get_error(void);
 void call_constructors_recursive(soinfo *si);
 
-int dl_iterate_phdr(int (*cb)(struct dl_phdr_info *, size_t, void *), void *);
 #ifdef ANDROID_ARM_LINKER 
 typedef long unsigned int *_Unwind_Ptr;
 _Unwind_Ptr dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
+#elif defined(ANDROID_X86_LINKER)
+int dl_iterate_phdr(int (*cb)(struct dl_phdr_info *, size_t, void *), void *);
 #endif
 
 #endif

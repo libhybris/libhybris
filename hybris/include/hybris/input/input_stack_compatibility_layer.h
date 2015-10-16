@@ -109,7 +109,6 @@ extern "C" {
         int input_area_height;
     };
 
-    int android_input_check_availability();
     void android_input_stack_initialize(
         struct AndroidEventListener* listener,
         struct InputStackConfiguration* input_stack_configuration);

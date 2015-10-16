@@ -18,10 +18,10 @@
 #ifndef EGL_HYBRIS_H_
 #define EGL_HYBRIS_H_
 
-#include <android/hardware/gralloc.h>
+#include <hardware/gralloc.h>
 /* Needed for ICS window.h */
 #include <string.h>
-#include <android/system/window.h>
+#include <system/window.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,6 +30,12 @@ extern "C" {
 int hybris_register_buffer_handle(buffer_handle_t handle);
 int hybris_unregister_buffer_handle(buffer_handle_t handle);
 void hybris_dump_buffer_to_file(struct ANativeWindowBuffer *buf);
+
+void *hybris_android_egl_dlsym(const char *symbol);
+int hybris_egl_has_mapping(EGLSurface surface);
+EGLNativeWindowType hybris_egl_get_mapping(EGLSurface surface);
+
+struct _EGLDisplay *hybris_egl_display_get_mapping(EGLDisplay dpy);
 
 #ifdef __cplusplus
 }

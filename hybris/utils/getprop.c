@@ -33,7 +33,7 @@ static void record_prop(const char* key, const char* name, void* opaque)
 
 	char temp[PROP_VALUE_MAX + PROP_NAME_MAX + 16];
 	snprintf(temp, sizeof(temp), "[%s]: [%s]", key, name);
-	list->items = realloc(list->items, (list->count + 1) * sizeof(char **));
+	list->items = realloc(list->items, (list->count + 1) * sizeof(char *));
 	list->items[list->count++] = strdup(temp);
 }
 

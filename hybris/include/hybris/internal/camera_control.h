@@ -19,11 +19,7 @@
 
 #include <camera/Camera.h>
 #include <camera/CameraParameters.h>
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 #include <gui/SurfaceTexture.h>
-#else
-#include <gui/GLConsumer.h>
-#endif
 
 #include <stdint.h>
 #include <unistd.h>
@@ -35,22 +31,15 @@ extern "C" {
 struct CameraControlListener;
 
 struct CameraControl : public android::CameraListener,
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     public android::SurfaceTexture::FrameAvailableListener
-#else
-    public android::GLConsumer::FrameAvailableListener
-#endif
 {
     android::Mutex guard;
     CameraControlListener* listener;
     android::sp<android::Camera> camera;
     android::CameraParameters camera_parameters;
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     android::sp<android::SurfaceTexture> preview_texture;
-#else
-    android::sp<android::GLConsumer> preview_texture;
-#endif
-    // From android::SurfaceTexture/GLConsumer::FrameAvailableListener
+
+    // From android::SurfaceTexture::FrameAvailableListener
     void onFrameAvailable();
 
     // From android::CameraListener

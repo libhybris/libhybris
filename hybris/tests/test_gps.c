@@ -16,6 +16,7 @@
  *
 */
 
+#include <android-config.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -25,7 +26,7 @@
 #include <getopt.h>
 #include <string.h>
 
-#include <android/hardware/gps.h>
+#include <hardware/gps.h>
 
 const GpsInterface* Gps = NULL;
 const AGpsInterface* AGps = NULL;
@@ -37,6 +38,7 @@ const UlpNetworkInterface *UlpNetwork = NULL;
 const UlpPhoneContextInterface *UlpPhoneContext = NULL;
 #endif /* HAVE_ULP */
 char *apn = 0;
+char *agps_server = 0;
 
 static const GpsInterface* get_gps_interface()
 {
@@ -286,7 +288,7 @@ static void agps_handle_status_callback(AGpsStatus *status)
   {
     case GPS_REQUEST_AGPS_DATA_CONN:
         fprintf(stdout, "*** data_conn_open\n");
-#ifndef HAS_ANDROID_4_2_0
+#if ! defined(HAS_ANDROID_4_2_0) && ! defined(HAS_ANDROID_5_0_0)
         AGps->data_conn_open(AGPS_TYPE_SUPL, apn, AGPS_APN_BEARER_IPV4);
 #else
 	AGps->data_conn_open(apn);
@@ -294,7 +296,7 @@ static void agps_handle_status_callback(AGpsStatus *status)
         break;
     case GPS_RELEASE_AGPS_DATA_CONN:
         fprintf(stdout, "*** data_conn_closed\n");
-#ifndef HAS_ANDROID_4_2_0
+#if ! defined(HAS_ANDROID_4_2_0) && ! defined(HAS_ANDROID_5_0_0)
 	AGps->data_conn_closed(AGPS_TYPE_SUPL);
 #else
         AGps->data_conn_closed();
@@ -412,7 +414,7 @@ void sigint_handler(int signum)
   fprintf(stdout, "*** cleanup\n");
   if(AGps)
   {
-#ifndef HAS_ANDROID_4_2_0
+#if ! defined(HAS_ANDROID_4_2_0) && ! defined(HAS_ANDROID_5_0_0)
         AGps->data_conn_closed(AGPS_TYPE_SUPL);
 #else
         AGps->data_conn_closed();
@@ -435,7 +437,7 @@ int main(int argc, char *argv[])
   char *location = 0, *longitude, *latitude;
   float accuracy = 100; /* Use 100m as location accuracy by default */
 
-  while ((opt = getopt(argc, argv, "acl:p:rtux")) != -1)
+  while ((opt = getopt(argc, argv, "acl:p:s:rtux")) != -1)
   {
 	switch (opt) {
 		case 'a':
@@ -462,6 +464,9 @@ int main(int argc, char *argv[])
 		case 'p':
 		   apn = optarg;
 		   break;
+		case 's':
+		   agps_server = optarg;
+		   break;
 		case 'u':
 		   ulp = 1;
 		   break;
@@ -474,6 +479,7 @@ int main(int argc, char *argv[])
 			   \t-a for agps,\n \
 			   \t-c for coldstarting the gps,\n \
 			   \t-p <apn name> to specify an apn name,\n \
+			   \t-s <agps_server:port> to specify a different supls server.\n \
 		           \t-r for agpsril,\n \
 			   \t-t to inject time,\n \
 			   \t-u to use ULP (if available,\n \
@@ -513,7 +519,19 @@ int main(int argc, char *argv[])
 	fprintf(stdout, "*** set up agps interface\n");
 	AGps->init(&callbacks2);
 	fprintf(stdout, "*** set up agps server\n");
-	AGps->set_server(AGPS_TYPE_SUPL, "supl.google.com", 7276);
+	if(agps_server)
+	{
+		char *server,*port = 0;
+
+		server =  strdup(agps_server);
+		strtok_r (server, ":", &port);
+
+		fprintf(stdout, "SUPL server: %s at port number: %s\n", server, port);
+		AGps->set_server(AGPS_TYPE_SUPL, server, atoi(port));
+		free(server);
+	}
+	else
+		AGps->set_server(AGPS_TYPE_SUPL, "supl.google.com", 7276);
     }
 
     if(agpsril)

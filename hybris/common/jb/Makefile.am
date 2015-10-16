@@ -16,6 +16,7 @@ libandroid_linker_la_SOURCES = \
 	rt.c
 libandroid_linker_la_CFLAGS = \
 	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common \
 	-D_GNU_SOURCE \
 	-DLINKER_TEXT_BASE=0xB0000100 \

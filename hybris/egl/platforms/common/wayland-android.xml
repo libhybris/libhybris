@@ -26,7 +26,7 @@
     THIS SOFTWARE.
   </copyright>
 
-  <interface name="android_wlegl" version="1">
+  <interface name="android_wlegl" version="2">
     <description summary="Android EGL graphics buffer support">
       Interface used in the Android wrapper libEGL to share
       graphics buffers between the server and the client.
@@ -67,6 +67,15 @@
       <arg name="native_handle" type="object" interface="android_wlegl_handle" />
     </request>
 
+
+    <request name="get_server_buffer_handle" since="2">
+        <arg name="id" type="new_id" interface="android_wlegl_server_buffer_handle"/>
+        <arg name="width" type="int"/>
+        <arg name="height" type="int"/>
+        <arg name="format" type="int"/>
+        <arg name="usage" type="int"/>
+    </request>
+
   </interface>
 
   <interface name="android_wlegl_handle" version="1">
@@ -89,6 +98,30 @@
 
     <request name="destroy" type="destructor" />
 
+  </interface>
+
+
+  <interface name="android_wlegl_server_buffer_handle" version="1">
+      <description summary="a server allocated buffer">
+          On creation a server_side_buffer object will immediately send
+          the "buffer_fd" and "buffer_ints" events needed by the client to
+          reference the gralloc buffer, followed by the "buffer" event carrying
+          the wl_buffer object.
+      </description>
+      <event name="buffer_fd">
+          <arg name="fd" type="fd"/>
+      </event>
+      <event name="buffer_ints">
+          <arg name="ints" type="array"/>
+      </event>
+      <event name="buffer">
+          <description summary="the wl_buffer">
+              This event will be sent after the ints and all the fds have been sent
+          </description>
+          <arg name="buffer" type="new_id" interface="wl_buffer"/>
+          <arg name="format" type="int"/>
+          <arg name="stride" type="int"/>
+      </event>
   </interface>
 
 </protocol>

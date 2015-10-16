@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013 Intel Corporation
+ * Copyright (C) 2014 Jolla Ltd.
+ * Contact: Simonas Leleiva <simonas.leleiva@jollamobile.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +16,14 @@
  *
  */
 
-#include <../include/hybris/dlfcn/dlfcn.h>
-#include <../include/hybris/common/binding.h>
+#include <dlfcn.h>
+#include <stddef.h>
+#include <stdbool.h>
 
-void *hybris_dlopen(const char *filename, int flag)
-{
-    return android_dlopen(filename,flag);
-}
+#include <hybris/common/binding.h>
 
+HYBRIS_LIBRARY_INITIALIZE(vibrator, "/system/lib/libhardware_legacy.so");
 
-void *hybris_dlsym(void *handle, const char *symbol)
-{
-    return android_dlsym(handle,symbol);
-}
-
-
-int   hybris_dlclose(void *handle)
-{
-    return android_dlclose(handle);
-}
-
-
-char *hybris_dlerror(void)
-{
-    return android_dlerror();
-}
-
-// vim: noai:ts=4:sw=4:ss=4:expandtab
+HYBRIS_IMPLEMENT_FUNCTION0(vibrator, int, vibrator_exists);
+HYBRIS_IMPLEMENT_FUNCTION1(vibrator, int, vibrator_on, int);
+HYBRIS_IMPLEMENT_FUNCTION1(vibrator, int, vibrator_off, int);

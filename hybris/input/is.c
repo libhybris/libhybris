@@ -21,20 +21,12 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 #include <hybris/input/input_stack_compatibility_layer.h>
 
 #define COMPAT_LIBRARY_PATH "/system/lib/libis_compat_layer.so"
 
 HYBRIS_LIBRARY_INITIALIZE(is, COMPAT_LIBRARY_PATH);
-
-int android_input_check_availability()
-{
-	/* Both are defined via HYBRIS_LIBRARY_INITIALIZE */
-	if (!is_handle)
-		hybris_is_initialize();
-	return is_handle ? 1 : 0;
-}
 
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(is, android_input_stack_initialize,
 	struct AndroidEventListener*, struct InputStackConfiguration*);

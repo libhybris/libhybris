@@ -67,6 +67,11 @@ AC_ARG_ENABLE(wayland,
   [wayland="no"])
 AM_CONDITIONAL( [WANT_WAYLAND], [test x"$wayland" = x"yes"])
 
+AC_ARG_ENABLE(wayland_serverside_buffers,
+  [  --enable-wayland_serverside_buffers            Enable serverside buffer allocation for wayland (default=enabled)],
+  [wayland_serverside_buffers=$enableval],
+  [wayland_serverside_buffers=yes])
+AM_CONDITIONAL( [WANT_WL_SERVERSIDE_BUFFERS], [test x"$wayland_serverside_buffers" = x"yes"])
 
 AC_ARG_ENABLE(arch,
   [  --enable-arch[=arch]     Compile specific CPU target(default=arm)
@@ -102,50 +107,76 @@ AC_ARG_WITH(default-hybris-ld-library-path,
   [ ])
 AC_SUBST(DEFAULT_HYBRIS_LD_LIBRARY_PATH)
 
-
-android_headers_path=""
 AC_ARG_WITH(android-headers,
   [  --with-android-headers=DIR     Use android headers available in DIR. See utils/extract-headers.sh ],
   [
-      if [ ! test -e $withval/android-version.h ]; then
-	echo "Error! missing android-version.h in android header path"
-	exit 1
-      fi 
-      rm -f include/android
-      ln -sf $withval include/android   	
-      android_headers_path="$withval"      
-
-      # According to http://en.wikipedia.org/wiki/Android_version_history#Version_history_by_API_level
-      android_headers_major=`grep -E "define ANDROID_VERSION_MAJOR " $android_headers_path/android-version.h | sed "s|^\#define ANDROID_VERSION_MAJOR \(.*\)$|\1|g"`
-
-      android_headers_minor=`grep -E "define ANDROID_VERSION_MINOR " $android_headers_path/android-version.h | sed "s|^\#define ANDROID_VERSION_MINOR \(.*\)$|\1|g"`
-
-      android_headers_patch=`grep -E "define ANDROID_VERSION_PATCH " $android_headers_path/android-version.h | sed "s|^\#define ANDROID_VERSION_PATCH \(.*\)$|\1|g"`
-  
-      if [ test "x$android_headers_major" = x ]; then
-	  echo "Error! Was unable to locate define ANDROID_VERSION_MAJOR in $android_headers_path/android-version.h"
-      fi
-
-      AC_SUBST(ANDROID_VERSION_MAJOR, [$android_headers_major])
-      AC_SUBST(ANDROID_VERSION_MINOR, [$android_headers_minor])
-      AC_SUBST(ANDROID_VERSION_PATCH, [$android_headers_patch])
-
-      echo "Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch"
+    AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test -f $withval/libnfc-nxp/phLibNfc.h])
+    AS_IF([test -f $withval/libnfc-nxp/phLibNfc.h], [ANDROID_HEADERS_CFLAGS="-I$withval -I$withval/libnfc-nxp"],[ANDROID_HEADERS_CFLAGS="-I$withval"])
+    AC_SUBST([ANDROID_HEADERS_CFLAGS])
   ],
-  [
-      echo "Error! need to provide path to Android headers --with-android-headers=DIR. See utils/extract-headers.sh"
-      exit 1
-  ]
-  )
+  [ PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit) ]
+)
+CPPFLAGS="$CPPFLAGS $ANDROID_HEADERS_CFLAGS"
+
+AC_CHECK_HEADERS(android-config.h,,AC_MSG_ERROR(required header file is missing))
+AC_CHECK_HEADERS(android-version.h,,AC_MSG_ERROR(required header file is missing))
+
+# AC_AWK_CPP
+AC_DEFUN([AC_AWK_CPP],
+[AC_LANG_PREPROC_REQUIRE()dnl
+AC_REQUIRE([AC_PROG_AWK])dnl
+AC_LANG_CONFTEST([AC_LANG_SOURCE([[$2]])])
+
+ac_awk_cpp_out="`$CPP $CPPFLAGS conftest.$ac_ext|$AWK '$1'`"
+AS_IF([test "x$ac_awk_cpp_out" = x], [$4], [$3])
+rm -f conftest*
+])# AC_AWK_CPP
+
+
+# According to http://en.wikipedia.org/wiki/Android_version_history#Version_history_by_API_level
+###########################
+AC_AWK_CPP([/has_ANDROID_VERSION_MAJOR/ {print \$2;}],
+[
+#include <android-version.h>
+has_ANDROID_VERSION_MAJOR ANDROID_VERSION_MAJOR
+],
+[android_headers_major=$ac_awk_cpp_out],
+[AC_MSG_ERROR(required 'major' version is missing)])
+
+
+###########################
+AC_AWK_CPP([/has_ANDROID_VERSION_MINOR/ {print \$2;}],
+[
+#include <android-version.h>
+has_ANDROID_VERSION_MINOR ANDROID_VERSION_MINOR
+],
+[android_headers_minor=$ac_awk_cpp_out],
+[AC_MSG_ERROR(required 'minor' version is missing)])
+
+###########################
+AC_AWK_CPP([/has_ANDROID_VERSION_PATCH/ {print \$2;}],
+[
+#include <android-version.h>
+has_ANDROID_VERSION_PATCH ANDROID_VERSION_PATCH
+],
+[android_headers_patch=$ac_awk_cpp_out],
+[AC_MSG_ERROR(require 'patch' version is missing)])
+
+AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch.$ac_awk_cpp_out")
+###########################
+AC_SUBST(ANDROID_VERSION_MAJOR, [$android_headers_major])
+AC_SUBST(ANDROID_VERSION_MINOR, [$android_headers_minor])
+AC_SUBST(ANDROID_VERSION_PATCH, [$android_headers_patch])
+
+AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch")
 
 # Add automake tests for version/API needs here that you need in code, including test .am's
-
+AM_CONDITIONAL([HAS_ANDROID_5_0_0], [test $android_headers_major -ge 5 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_4_2_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 2 ])
 AM_CONDITIONAL([HAS_ANDROID_4_1_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 1 ])
 AM_CONDITIONAL([HAS_ANDROID_4_0_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_2_3_0], [test $android_headers_major -ge 2 -a $android_headers_minor -ge 3 ])
 
-AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test -f ${android_headers_path}/libnfc-nxp/phLibNfc.h])
 
 AC_CONFIG_FILES([
 	Makefile
@@ -184,10 +215,8 @@ AC_CONFIG_FILES([
 	input/libis.pc
 	camera/Makefile
 	camera/libcamera.pc
-	media/Makefile
-	media/libmedia.pc
-	wifi/Makefile
-	wifi/libwifi.pc
+	vibrator/Makefile
+	vibrator/libvibrator.pc
 	include/Makefile
 	utils/Makefile
 	tests/Makefile
@@ -220,4 +249,3 @@ echo
 echo "------------------------------------------------------------------------"
 echo
 echo "Now type 'make' to compile and 'make install' to install this package."
-
