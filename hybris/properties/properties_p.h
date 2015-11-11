@@ -23,4 +23,18 @@ typedef void (*hybris_propcache_list_cb)(const char *key, const char *value, voi
 void hybris_propcache_list(hybris_propcache_list_cb cb, void *cookie);
 char *hybris_propcache_find(const char *key);
 
+#ifndef NO_RUNTIME_PROPERTY_CACHE
+void runtime_cache_lock();
+void runtime_cache_unlock();
+int  runtime_cache_get(const char *key, char *value);
+void runtime_cache_insert(const char *key, char *value);
+void runtime_cache_remove(const char *key);
+#else
+#define runtime_cache_lock()
+#define runtime_cache_unlock()
+#define runtime_cache_get(K,V) (-1)
+#define runtime_cache_insert(K,V)
+#define runtime_cache_remove(K)
+#endif
+
 #endif
