@@ -73,6 +73,13 @@ AC_ARG_ENABLE(wayland_serverside_buffers,
   [wayland_serverside_buffers=yes])
 AM_CONDITIONAL( [WANT_WL_SERVERSIDE_BUFFERS], [test x"$wayland_serverside_buffers" = x"yes"])
 
+AC_ARG_ENABLE(property_cache,
+  [  --enable-property-cache      Enable runtime android property cache (default=disabled)],
+  [property_cache=$enableval],
+  [property_cache=no])
+AM_CONDITIONAL( [WANT_RUNTIME_PROPERTY_CACHE], [test x"$property_cache" = x"yes"])
+
+
 AC_ARG_ENABLE(arch,
   [  --enable-arch[=arch]     Compile specific CPU target(default=arm)
                               arm: compile for ARM
