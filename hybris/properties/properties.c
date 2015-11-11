@@ -167,8 +167,23 @@ int property_get(const char *key, char *value, const char *default_value)
 	if ((key) && (strlen(key) >= PROP_NAME_MAX -1)) return -1;
 	if (value == NULL) return -1;
 
-	if (property_get_socket(key, value, default_value) == 0)
-		return strlen(value);
+
+	// Runtime cache will serialize property lookups within the process.
+	// This will increase latency if multiple threads are doing many
+	// parallel lookups to new properties, but the overhead should
+	// be offset with the caching eventually.
+	runtime_cache_lock();
+	if (runtime_cache_get(key, value) == 0) {
+		ret = value;
+	} else if (property_get_socket(key, value, default_value) == 0) {
+		runtime_cache_insert(key, value);
+		ret = value;
+	}
+	runtime_cache_unlock();
+
+	if (ret)
+		return strlen(ret);
+
 
 	/* In case the socket is not available, search the property file cache by hand */
 	ret = hybris_propcache_find(key);
@@ -195,6 +210,10 @@ int property_set(const char *key, const char *value)
 	if (value == 0) value = "";
 	if (strlen(key) >= PROP_NAME_MAX -1) return -1;
 	if (strlen(value) >= PROP_VALUE_MAX -1) return -1;
+
+	runtime_cache_lock();
+	runtime_cache_remove(key);
+	runtime_cache_unlock();
 
 	memset(&msg, 0, sizeof(msg));
 	msg.cmd = PROP_MSG_SETPROP;
