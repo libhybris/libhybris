@@ -579,6 +579,29 @@ static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned _
     return pthread_mutex_timedlock(realmutex, &tv);
 }
 
+static int my_pthread_mutex_timedlock(pthread_mutex_t *__mutex,
+                                      const struct timespec *__abs_timeout)
+{
+    if (!__mutex) {
+        LOGD("Null mutex lock, not unlocking.");
+        return 0;
+    }
+
+    unsigned int value = (*(unsigned int *) __mutex);
+    if (hybris_check_android_shared_mutex(value)) {
+        LOGD("Shared mutex with Android, not lock timeout np.");
+        return 0;
+    }
+
+    pthread_mutex_t *realmutex = (pthread_mutex_t *) value;
+    if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
+        realmutex = hybris_alloc_init_mutex(value);
+        *((int *)__mutex) = (int) realmutex;
+    }
+
+    return pthread_mutex_timedlock(realmutex, __abs_timeout);
+}
+
 static int my_pthread_mutexattr_setpshared(pthread_mutexattr_t *__attr,
                                            int pshared)
 {
@@ -1528,6 +1551,7 @@ static struct _hook hooks[] = {
     {"pthread_mutex_unlock", my_pthread_mutex_unlock},
     {"pthread_mutex_trylock", my_pthread_mutex_trylock},
     {"pthread_mutex_lock_timeout_np", my_pthread_mutex_lock_timeout_np},
+    {"pthread_mutex_timedlock", my_pthread_mutex_timedlock},
     {"pthread_mutexattr_init", pthread_mutexattr_init},
     {"pthread_mutexattr_destroy", pthread_mutexattr_destroy},
     {"pthread_mutexattr_gettype", pthread_mutexattr_gettype},
