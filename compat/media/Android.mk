@@ -79,6 +79,7 @@ LOCAL_C_INCLUDES := \
 	frameworks/base/include/media/stagefright \
 	frameworks/base/include/media \
 	frameworks/av/media \
+	frameworks/av/media/libstagefright/include \
 	frameworks/av/include \
 	frameworks/native/include \
 	system/media/audio_utils/include \
