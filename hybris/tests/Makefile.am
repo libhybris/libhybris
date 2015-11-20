@@ -19,11 +19,7 @@ if HAS_LIBNFC_NXP_HEADERS
 bin_PROGRAMS += test_nfc
 endif
 
-# Please re-enable your test programs according to android
-# if HAS_ANDROID_X_Y_Z
-# bin_PROGRAMS += test_audio 
-# endif
-
+bin_PROGRAMS += test_audio
 test_audio_SOURCES = test_audio.c
 test_audio_CFLAGS = \
 	-I$(top_srcdir)/include
