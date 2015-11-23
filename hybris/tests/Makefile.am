@@ -1,10 +1,15 @@
 bin_PROGRAMS = \
 	test_egl \
 	test_egl_configs \
-	test_glesv2 \
+	test_glesv2
+
+if !WANT_CORE_ONLY
+bin_PROGRAMS += \
 	test_sensors \
 	test_vibrator \
-	test_gps
+	test_gps \
+	test_audio
+endif
 
 if HAS_ANDROID_4_2_0
 bin_PROGRAMS += test_hwcomposer
@@ -31,7 +36,6 @@ endif
 endif
 endif
 
-bin_PROGRAMS += test_audio
 test_audio_SOURCES = test_audio.c
 test_audio_CFLAGS = \
 	-I$(top_srcdir)/include

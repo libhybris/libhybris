@@ -1,5 +1,9 @@
+SUBDIRS = common null
 
-SUBDIRS = common null fbdev
+if !WANT_CORE_ONLY
+SUBDIRS += fbdev
+endif
+
 if HAS_ANDROID_4_2_0
 SUBDIRS += hwcomposer
 endif
@@ -10,5 +14,3 @@ endif
 if WANT_WAYLAND
 SUBDIRS += wayland
 endif
-
-

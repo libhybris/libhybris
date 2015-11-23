@@ -1,4 +1,13 @@
-SUBDIRS = include properties common hardware
+SUBDIRS = \
+	include \
+	properties \
+	common \
+	hardware \
+	egl \
+	glesv1 \
+	glesv2 \
+	utils \
+	tests
 
 if HAS_ANDROID_4_2_0
 SUBDIRS += libsync
@@ -6,13 +15,14 @@ endif
 if HAS_ANDROID_5_0_0
 SUBDIRS += libsync
 endif
-SUBDIRS += egl glesv1 glesv2 vibrator
 
 if HAS_LIBNFC_NXP_HEADERS
 SUBDIRS += libnfc_nxp libnfc_ndef_nxp
 endif
-SUBDIRS += utils tests
 
+if !WANT_CORE_ONLY
+SUBDIRS += vibrator
+endif
 
 MAINTAINERCLEANFILES = \
 	aclocal.m4 compile config.guess config.sub \

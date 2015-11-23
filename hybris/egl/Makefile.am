@@ -1,4 +1,6 @@
+if !WANT_CORE_ONLY
 SUBDIRS = platforms
+endif
 
 lib_LTLIBRARIES = \
 	libEGL.la
@@ -21,6 +23,9 @@ endif
 if WANT_DEBUG
 libEGL_la_CFLAGS += -ggdb -O0
 endif
+if WANT_CORE_ONLY
+libEGL_la_CFLAGS += -DWANT_CORE_ONLY
+endif
 
 libEGL_la_CXXFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS) -I$(top_srcdir)/common -DPKGLIBDIR="\"$(pkglibdir)/\""
 if WANT_MESA
@@ -35,7 +40,6 @@ endif
 libEGL_la_LDFLAGS = \
 	-ldl \
 	$(top_builddir)/common/libhybris-common.la \
-	$(top_builddir)/hardware/libhardware.la \
 	-version-info "1":"0":"0"
 
 eglincludedir = $(includedir)/EGL
