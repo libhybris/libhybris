@@ -34,6 +34,7 @@ struct server_wlegl {
 	struct wl_global *global;
 
 	const gralloc_module_t *gralloc;
+        alloc_device_t *alloc;
 };
 
 #endif /* SERVER_WLEGL_PRIVATE_H */

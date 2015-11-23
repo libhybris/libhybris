@@ -15,14 +15,15 @@
  *
  */
 
+#include <android-config.h>
 #include <memory.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <android/hardware/audio.h>
-#include <android/hardware/hardware.h>
+#include <hardware/audio.h>
+#include <hardware/hardware.h>
 
 /* Workaround for MTK */
 #define AUDIO_HARDWARE_MODULE_ID2 "libaudio"

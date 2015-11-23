@@ -1,3 +1,4 @@
+#include <android-config.h>
 #include <ws.h>
 #include "hwcomposer_window.h"
 #include <malloc.h>
@@ -13,37 +14,46 @@ extern "C" {
 
 #include "logging.h"
 
-static int inited = 0;
 static gralloc_module_t *gralloc = 0;
 static alloc_device_t *alloc = 0;
 static HWComposerNativeWindow *_nativewindow = NULL;
 
-extern "C" int hwcomposerws_IsValidDisplay(EGLNativeDisplayType display)
+extern "C" void hwcomposerws_init_module(struct ws_egl_interface *egl_iface)
 {
-	if (__sync_fetch_and_add(&inited,1)==0)
-	{
-		int err;
-		err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
-		if (gralloc==NULL) {
-			fprintf(stderr, "failed to get gralloc module: (%s)\n",strerror(-err));
-			assert(0);
-		}
-
-		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-		if (err) {
-			fprintf(stderr, "ERROR: failed to open gralloc: (%s)\n",strerror(-err));
-			assert(0);
-		}
-		TRACE("** gralloc_open %p status=%s", gralloc, strerror(-err));
-		eglplatformcommon_init(gralloc, alloc);
+	int err;
+	err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
+	if (gralloc==NULL) {
+		fprintf(stderr, "failed to get gralloc module: (%s)\n",strerror(-err));
+		assert(0);
 	}
 
-	return display == EGL_DEFAULT_DISPLAY;
+	err = gralloc_open((const hw_module_t *) gralloc, &alloc);
+	if (err) {
+		fprintf(stderr, "ERROR: failed to open gralloc: (%s)\n",strerror(-err));
+		assert(0);
+	}
+	TRACE("** gralloc_open %p status=%s", gralloc, strerror(-err));
+	eglplatformcommon_init(egl_iface, gralloc, alloc);
 }
 
-extern "C" EGLNativeWindowType hwcomposerws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
+extern "C" _EGLDisplay *hwcomposerws_GetDisplay(EGLNativeDisplayType display)
 {
-	assert (inited >= 1);
+	assert (gralloc != NULL);
+	_EGLDisplay *dpy = 0;
+	if (display == EGL_DEFAULT_DISPLAY) {
+		dpy = new _EGLDisplay;
+	}
+	return dpy;
+}
+
+extern "C" void hwcomposerws_Terminate(_EGLDisplay *dpy)
+{
+	delete dpy;
+}
+
+extern "C" EGLNativeWindowType hwcomposerws_CreateWindow(EGLNativeWindowType win, _EGLDisplay *display)
+{
+	assert (gralloc != NULL);
 	assert (_nativewindow == NULL);
 
 	HWComposerNativeWindow *window = static_cast<HWComposerNativeWindow *>((ANativeWindow *) win);
@@ -74,7 +84,9 @@ extern "C" void hwcomposerws_passthroughImageKHR(EGLContext *ctx, EGLenum *targe
 }
 
 struct ws_module ws_module_info = {
-	hwcomposerws_IsValidDisplay,
+	hwcomposerws_init_module,
+	hwcomposerws_GetDisplay,
+	hwcomposerws_Terminate,
 	hwcomposerws_CreateWindow,
 	hwcomposerws_DestroyWindow,
 	hwcomposerws_eglGetProcAddress,

@@ -1,3 +1,4 @@
+#include <android-config.h>
 #include <stdlib.h>
 
 #include <wayland-client.h>
@@ -30,6 +31,7 @@ wl_egl_window_create(struct wl_surface *surface,
 
 	egl_window->surface = surface;
 	egl_window->resize_callback = NULL;
+	egl_window->free_callback = NULL;
 	wl_egl_window_resize(egl_window, width, height, 0, 0);
 	egl_window->attached_width  = 0;
 	egl_window->attached_height = 0;
@@ -42,6 +44,8 @@ wl_egl_window_create(struct wl_surface *surface,
 WL_EGL_EXPORT void
 wl_egl_window_destroy(struct wl_egl_window *egl_window)
 {
+	if (egl_window->free_callback)
+		egl_window->free_callback(egl_window, NULL);
 	free(egl_window);
 }
 

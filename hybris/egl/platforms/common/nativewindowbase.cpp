@@ -1,16 +1,24 @@
+#include <android-config.h>
 #include <string.h>
-#include <android/system/window.h>
-#include <android/hardware/gralloc.h>
+#include <system/window.h>
+#include <hardware/gralloc.h>
 #include "support.h"
 #include <stdarg.h>
+
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
+extern "C" {
+#include <sync/sync.h>
+}
+#endif
+
 
 #include "nativewindowbase.h"
 
 #include "logging.h"
 
-#include <android/android-version.h>
-
 #define TRACE(message, ...) HYBRIS_DEBUG_LOG(EGL, message, ##__VA_ARGS__)
+
+
 
 BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 {
@@ -91,7 +99,7 @@ BaseNativeWindow::BaseNativeWindow()
 
 	ANativeWindow::setSwapInterval = _setSwapInterval;
 
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
 	ANativeWindow::lockBuffer_DEPRECATED = &_lockBuffer_DEPRECATED;
 	ANativeWindow::dequeueBuffer_DEPRECATED = &_dequeueBuffer_DEPRECATED;
 	ANativeWindow::queueBuffer_DEPRECATED = &_queueBuffer_DEPRECATED;
@@ -153,7 +161,17 @@ int BaseNativeWindow::_dequeueBuffer_DEPRECATED(ANativeWindow* window, ANativeWi
 	BaseNativeWindowBuffer* temp = static_cast<BaseNativeWindowBuffer*>(*buffer);
 	int fenceFd = -1;
 	int ret = static_cast<BaseNativeWindow*>(window)->dequeueBuffer(&temp, &fenceFd);
+
 	*buffer = static_cast<ANativeWindowBuffer*>(temp);
+
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
+	if (fenceFd >= 0)
+	{
+		sync_wait(fenceFd, -1);
+		close(fenceFd);
+	}
+#endif
+
 	return ret;
 }
 
@@ -239,7 +257,7 @@ const char *BaseNativeWindow::_native_query_operation(int what)
 		case NATIVE_WINDOW_DEFAULT_WIDTH: return "NATIVE_WINDOW_DEFAULT_WIDTH";
 		case NATIVE_WINDOW_DEFAULT_HEIGHT: return "NATIVE_WINDOW_DEFAULT_HEIGHT";
 		case NATIVE_WINDOW_TRANSFORM_HINT: return "NATIVE_WINDOW_TRANSFORM_HINT";
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=1
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=1 || ANDROID_VERSION_MAJOR>=5
 		case NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND: return "NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND";
 #endif
 		default: return "NATIVE_UNKNOWN_QUERY";
@@ -353,7 +371,7 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 	case NATIVE_WINDOW_API_DISCONNECT            : // 14,   /* private */
 		TRACE("api disconnect");
 		break;
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=1
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=1 || ANDROID_VERSION_MAJOR>=5
 	case NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS : // 15, /* private */
 		TRACE("set buffers user dimensions");
 		break;

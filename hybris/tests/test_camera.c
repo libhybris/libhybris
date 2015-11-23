@@ -120,6 +120,8 @@ void jpeg_data_cb(void* data, uint32_t data_size, void* context)
 	char fn[256];
 	sprintf(fn, "/tmp/shot_%d.jpeg", shot_counter);
 	int fd = open(fn, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+	if(fd < 0)
+	    return;
 	ssize_t ret = write(fd, data, data_size);
 	close(fd);
 	shot_counter++;

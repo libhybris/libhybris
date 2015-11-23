@@ -17,7 +17,7 @@
 #include <dlfcn.h>
 #include <stddef.h>
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 #include <hybris/ui/ui_compatibility_layer.h>
 
 #define COMPAT_LIBRARY_PATH		"/system/lib/libui_compat_layer.so"

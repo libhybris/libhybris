@@ -1,3 +1,4 @@
+#include <android-config.h>
 #include <ws.h>
 #include "fbdev_window.h"
 #include <malloc.h>
@@ -13,48 +14,58 @@ extern "C" {
 
 #include "logging.h"
 
-static int inited = 0;
 static gralloc_module_t *gralloc = 0;
 static framebuffer_device_t *framebuffer = 0;
 static alloc_device_t *alloc = 0;
 static FbDevNativeWindow *_nativewindow = NULL;
 
-extern "C" int fbdevws_IsValidDisplay(EGLNativeDisplayType display)
+extern "C" void fbdevws_init_module(struct ws_egl_interface *egl_iface)
 {
-	if (__sync_fetch_and_add(&inited,1)==0)
-	{
-		int err;
-		err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
-		if (gralloc==NULL) {
-			fprintf(stderr, "failed to get gralloc module: (%s)\n",strerror(-err));
-			assert(0);
-		}
-
-		err = framebuffer_open((hw_module_t *) gralloc, &framebuffer);
-		if (err) {
-			fprintf(stderr, "ERROR: failed to open framebuffer: (%s)\n",strerror(-err));
-			assert(0);
-		}
-		TRACE("** framebuffer_open: status=(%s) format=x%x", strerror(-err), framebuffer->format);
-
-		err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-		if (err) {
-			fprintf(stderr, "ERROR: failed to open gralloc: (%s)\n",strerror(-err));
-			assert(0);
-		}
-		TRACE("** gralloc_open %p status=%s", gralloc, strerror(-err));
-		eglplatformcommon_init(gralloc, alloc);
+	int err;
+	err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
+	if (gralloc==NULL) {
+		fprintf(stderr, "failed to get gralloc module: (%s)\n",strerror(-err));
+		assert(0);
 	}
 
-	return display == EGL_DEFAULT_DISPLAY;
+	err = framebuffer_open((hw_module_t *) gralloc, &framebuffer);
+	if (err) {
+		fprintf(stderr, "ERROR: failed to open framebuffer: (%s)\n",strerror(-err));
+		assert(0);
+	}
+	TRACE("** framebuffer_open: status=(%s) format=x%x", strerror(-err), framebuffer->format);
+
+	err = gralloc_open((const hw_module_t *) gralloc, &alloc);
+	if (err) {
+		fprintf(stderr, "ERROR: failed to open gralloc: (%s)\n",strerror(-err));
+		assert(0);
+	}
+	TRACE("** gralloc_open %p status=%s", gralloc, strerror(-err));
+	eglplatformcommon_init(egl_iface, gralloc, alloc);
 }
 
-extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
+extern "C" _EGLDisplay *fbdevws_GetDisplay(EGLNativeDisplayType display)
 {
-	assert (inited >= 1);
+	assert (gralloc != NULL);
+
+	_EGLDisplay *dpy = 0;
+	if (display == EGL_DEFAULT_DISPLAY) {
+		dpy = new _EGLDisplay;
+	}
+	return dpy;
+}
+
+extern "C" void fbdevws_Terminate(_EGLDisplay *dpy)
+{
+	delete dpy;
+}
+
+extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, _EGLDisplay *display)
+{
+	assert (gralloc != NULL);
 	assert (_nativewindow == NULL);
 
-	_nativewindow = new FbDevNativeWindow(gralloc, alloc, framebuffer);
+	_nativewindow = new FbDevNativeWindow(alloc, framebuffer);
 	_nativewindow->common.incRef(&_nativewindow->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(_nativewindow);
 }
@@ -79,13 +90,24 @@ extern "C" void fbdevws_passthroughImageKHR(EGLContext *ctx, EGLenum *target, EG
 	eglplatformcommon_passthroughImageKHR(ctx, target, buffer, attrib_list);
 }
 
+extern "C" void fbdevws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval)
+{
+	FbDevNativeWindow *window = static_cast<FbDevNativeWindow *>((struct ANativeWindow *)win);
+	window->setSwapInterval(interval);
+}
+
 struct ws_module ws_module_info = {
-	fbdevws_IsValidDisplay,
+	fbdevws_init_module,
+	fbdevws_GetDisplay,
+	fbdevws_Terminate,
 	fbdevws_CreateWindow,
 	fbdevws_DestroyWindow,
 	fbdevws_eglGetProcAddress,
 	fbdevws_passthroughImageKHR,
-	eglplatformcommon_eglQueryString
+	eglplatformcommon_eglQueryString,
+	NULL,
+	NULL,
+	fbdevws_setSwapInterval,
 };
 
 // vim:ts=4:sw=4:noexpandtab

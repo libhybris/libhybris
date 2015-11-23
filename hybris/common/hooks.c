@@ -17,7 +17,7 @@
  *
  */
 
-#include <hybris/internal/floating_point_abi.h>
+#include <hybris/common/binding.h>
 
 #include "hooks_shm.h"
 
@@ -33,15 +33,17 @@
 #include <strings.h>
 #include <dlfcn.h>
 #include <pthread.h>
+#include <sys/xattr.h>
+#include <grp.h>
 #include <signal.h>
 #include <errno.h>
 #include <dirent.h>
 #include <sys/types.h>
-#include <sys/xattr.h>
-#include <grp.h>
+#include <stdarg.h>
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <fcntl.h>
 
 #include <linux/futex.h>
 #include <sys/syscall.h>
@@ -51,6 +53,8 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <locale.h>
+#include <sys/syscall.h>
+#include <sys/auxv.h>
 
 #include <hybris/properties/properties.h>
 
@@ -243,6 +247,11 @@ static size_t my_strlen(const char *s)
         return -1;
 
     return strlen(s);
+}
+
+static pid_t my_gettid( void )
+{
+        return syscall( __NR_gettid );
 }
 
 /*
@@ -559,7 +568,6 @@ static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned _
         *((int *)__mutex) = (int) realmutex;
     }
 
-    /* TODO: Android uses CLOCK_MONOTONIC here but I am not sure which one to use */
     clock_gettime(CLOCK_REALTIME, &tv);
     tv.tv_sec += __msecs/1000;
     tv.tv_nsec += (__msecs % 1000) * 1000000;
@@ -776,7 +784,6 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
         *((unsigned int *) mutex) = (unsigned int) realmutex;
     }
 
-    /* TODO: Android uses CLOCK_MONOTONIC here but I am not sure which one to use */
     struct timespec tv;
     clock_gettime(CLOCK_REALTIME, &tv);
     tv.tv_sec += reltime->tv_sec;
@@ -1239,39 +1246,77 @@ static int my_setlinebuf(FILE *fp)
     return 0;
 }
 
-static inline void swap(void **a, void **b)
-{
-    void *tmp = *a;
-    *a = *b;
-    *b = tmp;
-}
+/* "struct dirent" from bionic/libc/include/dirent.h */
+struct bionic_dirent {
+    uint64_t         d_ino;
+    int64_t          d_off;
+    unsigned short   d_reclen;
+    unsigned char    d_type;
+    char             d_name[256];
+};
 
-static int my_getaddrinfo(const char *hostname, const char *servname,
-    const struct addrinfo *hints, struct addrinfo **res)
+static struct bionic_dirent *my_readdir(DIR *dirp)
 {
-    // make a local copy of hints
-    struct addrinfo *fixed_hints = (struct addrinfo*)malloc(sizeof(struct addrinfo));
-    memcpy(fixed_hints, hints, sizeof(struct addrinfo));
-    // fix bionic -> glibc missmatch
-    swap((void**)&(fixed_hints->ai_canonname), (void**)&(fixed_hints->ai_addr));
-    // do glibc getaddrinfo
-    int result = getaddrinfo(hostname, servname, fixed_hints, res);
-    // release the copy of hints
-    free(fixed_hints);
-    // fix bionic <- glibc missmatch
-    struct addrinfo *it = *res;
-    while(NULL != it)
-    {
-        swap((void**)&(it->ai_canonname), (void**)&(it->ai_addr));
-        it = it->ai_next;
+    /**
+     * readdir(3) manpage says:
+     *  The data returned by readdir() may be overwritten by subsequent calls
+     *  to readdir() for the same directory stream.
+     *
+     * XXX: At the moment, for us, the data will be overwritten even by
+     * subsequent calls to /different/ directory streams. Eventually fix that
+     * (e.g. by storing per-DIR * bionic_dirent structs, and removing them on
+     * closedir, requires hooking of all funcs returning/taking DIR *) and
+     * handling the additional data attachment there)
+     **/
+
+    static struct bionic_dirent result;
+
+    struct dirent *real_result = readdir(dirp);
+    if (!real_result) {
+        return NULL;
     }
-    return result;
+
+    result.d_ino = real_result->d_ino;
+    result.d_off = real_result->d_off;
+    result.d_reclen = real_result->d_reclen;
+    result.d_type = real_result->d_type;
+    memcpy(result.d_name, real_result->d_name, sizeof(result.d_name));
+
+    // Make sure the string is zero-terminated, even if cut off (which
+    // shouldn't happen, as both bionic and glibc have d_name defined
+    // as fixed array of 256 chars)
+    result.d_name[sizeof(result.d_name)-1] = '\0';
+    return &result;
 }
 
-static void my_freeaddrinfo(struct addrinfo *__ai)
+static int my_readdir_r(DIR *dir, struct bionic_dirent *entry,
+        struct bionic_dirent **result)
 {
-    swap((void**)&(__ai->ai_canonname), (void**)&(__ai->ai_addr));
-    freeaddrinfo(__ai);
+    struct dirent entry_r;
+    struct dirent *result_r;
+
+    int res = readdir_r(dir, &entry_r, &result_r);
+
+    if (res == 0) {
+        if (result_r != NULL) {
+            *result = entry;
+
+            entry->d_ino = entry_r.d_ino;
+            entry->d_off = entry_r.d_off;
+            entry->d_reclen = entry_r.d_reclen;
+            entry->d_type = entry_r.d_type;
+            memcpy(entry->d_name, entry_r.d_name, sizeof(entry->d_name));
+
+            // Make sure the string is zero-terminated, even if cut off (which
+            // shouldn't happen, as both bionic and glibc have d_name defined
+            // as fixed array of 256 chars)
+            entry->d_name[sizeof(entry->d_name) - 1] = '\0';
+        } else {
+            *result = NULL;
+        }
+    }
+
+    return res;
 }
 
 extern long my_sysconf(int name);
@@ -1287,11 +1332,6 @@ FP_ATTRIB static double my_strtod(const char *nptr, char **endptr)
 }
 
 static int __my_system_property_read(const void *pi, char *name, char *value)
-{
-    return property_get(name, value, NULL);
-}
-
-static int __my_system_property_get(const char *name, char *value)
 {
     return property_get(name, value, NULL);
 }
@@ -1337,10 +1377,71 @@ static const void *__my_system_property_find_nth(unsigned n)
 }
 
 extern int __cxa_atexit(void (*)(void*), void*, void*);
+extern void __cxa_finalize(void * d);
+
+struct open_redirect {
+	const char *from;
+	const char *to;
+};
+
+struct open_redirect open_redirects[] = {
+	{ "/dev/log/main", "/dev/alog/main" },
+	{ "/dev/log/radio", "/dev/alog/radio" },
+	{ "/dev/log/system", "/dev/alog/system" },
+	{ "/dev/log/events", "/dev/alog/events" },
+	{ NULL, NULL }
+};
+
+int my_open(const char *pathname, int flags, ...)
+{
+	va_list ap;
+	mode_t mode = 0;
+	const char *target_path = pathname;
+
+	if (pathname != NULL) {
+		struct open_redirect *entry = &open_redirects[0];
+		while (entry->from != NULL) {
+			if (strcmp(pathname, entry->from) == 0) {
+				target_path = entry->to;
+				break;
+			}
+			entry++;
+		}
+	}
+
+	if (flags & O_CREAT) {
+		va_start(ap, flags);
+		mode = va_arg(ap, mode_t);
+		va_end(ap);
+	}
+
+	return open(target_path, flags, mode);
+}
+
+/**
+ * NOTE: Normally we don't have to wrap __system_property_get (libc.so) as it is only used
+ * through the property_get (libcutils.so) function. However when property_get is used
+ * internally in libcutils.so we don't have any chance to hook our replacement in.
+ * Therefore we have to hook __system_property_get too and just replace it with the
+ * implementation of our internal property handling
+ */
+
+int my_system_property_get(const char *name, const char *value)
+{
+	return property_get(name, value, NULL);
+}
+
+static __thread void *tls_hooks[16];
+
+void *__get_tls_hooks()
+{
+  return tls_hooks;
+}
 
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
+    {"__system_property_get", my_system_property_get },
     {"getenv", getenv },
     {"printf", printf },
     {"malloc", my_malloc },
@@ -1408,6 +1509,9 @@ static struct _hook hooks[] = {
     {"opendir", opendir},
     {"closedir", closedir},
     /* pthread.h */
+    {"getauxval", getauxval},
+    {"gettid", my_gettid},
+    {"getpid", getpid},
     {"pthread_atfork", pthread_atfork},
     {"pthread_create", my_pthread_create},
     {"pthread_kill", pthread_kill},
@@ -1541,14 +1645,32 @@ static struct _hook hooks[] = {
     {"__errno", __errno_location},
     {"__set_errno", my_set_errno},
     /* net specifics, to avoid __res_get_state */
-    {"getaddrinfo", my_getaddrinfo},
-    {"freeaddrinfo", my_freeaddrinfo},
+    {"getaddrinfo", getaddrinfo},
     {"gethostbyaddr", gethostbyaddr},
     {"gethostbyname", gethostbyname},
     {"gethostbyname2", gethostbyname2},
     {"gethostent", gethostent},
     {"strftime", strftime},
     {"sysconf", my_sysconf},
+    {"dlopen", android_dlopen},
+    {"dlerror", android_dlerror},
+    {"dlsym", android_dlsym},
+    {"dladdr", android_dladdr},
+    {"dlclose", android_dlclose},
+    /* dirent.h */
+    {"opendir", opendir},
+    {"fdopendir", fdopendir},
+    {"closedir", closedir},
+    {"readdir", my_readdir},
+    {"readdir_r", my_readdir_r},
+    {"rewinddir", rewinddir},
+    {"seekdir", seekdir},
+    {"telldir", telldir},
+    {"dirfd", dirfd},
+    /* fcntl.h */
+    {"open", my_open},
+    // TODO: scandir, scandirat, alphasort, versionsort
+    {"__get_tls_hooks", __get_tls_hooks},
     {"sscanf", sscanf},
     {"scanf", scanf},
     {"vscanf", vscanf},
@@ -1569,8 +1691,8 @@ static struct _hook hooks[] = {
     /* grp.h */
     {"getgrgid", getgrgid},
     {"__cxa_atexit", __cxa_atexit},
+    {"__cxa_finalize", __cxa_finalize},
     {"__system_property_read", __my_system_property_read},
-    {"__system_property_get", __my_system_property_get},
     {"__system_property_set", property_set},
     {"__system_property_foreach", __my_system_property_foreach},
     {"__system_property_find", __my_system_property_find},

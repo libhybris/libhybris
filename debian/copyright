@@ -10,7 +10,7 @@ Files: compat/ui/* hybris/egl/eglhybris.h hybris/hardware/hardware.c hybris/incl
 Copyright: 2012-2013 Simon Busch <morphis@gravedo.de>
 License: Apache 2.0
 
-Files: hybris/include/hybris/internal/binding.h
+Files: hybris/include/hybris/common/binding.h
 Copyright: 2013 Simon Busch <morphis@gravedo.de>
            2012 Canonical Ltd
 License: Apache 2.0

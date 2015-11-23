@@ -19,7 +19,7 @@
 #include <dlfcn.h>
 #include <stddef.h>
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 #include <android/hardware_legacy/wifi.h>
 
 #define COMPAT_LIBRARY_PATH "/system/lib/libhardware_legacy.so"
@@ -28,9 +28,9 @@ HYBRIS_LIBRARY_INITIALIZE(wifi, COMPAT_LIBRARY_PATH);
 
 int wifi_compat_check_availability()
 {
-	/* Both are defined via HYBRIS_LIBRARY_INITIALIZE */
-	hybris_wifi_initialize();
-	return wifi_handle ? 1 : 0;
+    /* Both are defined via HYBRIS_LIBRARY_INITIALIZE */
+    hybris_wifi_initialize();
+    return wifi_handle ? 1 : 0;
 }
 
 HYBRIS_IMPLEMENT_FUNCTION0(wifi, int, wifi_load_driver);

@@ -29,7 +29,7 @@
  * It doesn't hurt to have it added for non-floating point arguments and
  * return types, even though it does not really have any effect.
  *
- * If you use the convenience macros in hybris/internal/binding.h, your
+ * If you use the convenience macros in hybris/common/binding.h, your
  * wrapper functions will automatically make use of this attribute.
  **/
 

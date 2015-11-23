@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 
+#include <android/android-config.h>
 #include <android/hardware_legacy/wifi.h>
 
 #define COMMAND_LOAD_WIFI "1"

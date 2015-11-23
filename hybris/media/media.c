@@ -22,7 +22,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include <hybris/internal/binding.h>
+#include <hybris/common/binding.h>
 #include <hybris/media/decoding_service.h>
 #include <hybris/media/media_compatibility_layer.h>
 #include <hybris/media/media_codec_layer.h>

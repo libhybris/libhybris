@@ -50,17 +50,24 @@ static void _init_ws()
 		}
 		ws = dlsym(wsmod, "ws_module_info");
 		assert(ws != NULL);
+		ws->init_module(&hybris_egl_interface);
 	}
 }
 
 
-int ws_IsValidDisplay(EGLNativeDisplayType display)
+struct _EGLDisplay *ws_GetDisplay(EGLNativeDisplayType display)
 {
 	_init_ws();
-	return ws->IsValidDisplay(display);
+	return ws->GetDisplay(display);
 }
 
-EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, EGLNativeDisplayType display)
+void ws_Terminate(struct _EGLDisplay *dpy)
+{
+	_init_ws();
+	ws->Terminate(dpy);
+}
+
+EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, struct _EGLDisplay *display)
 {
 	_init_ws();
 	return ws->CreateWindow(win, display);
@@ -88,6 +95,27 @@ const char *ws_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eg
 {
 	_init_ws();
 	return ws->eglQueryString(dpy, name, real_eglQueryString);
+}
+
+void ws_prepareSwap(EGLDisplay dpy, EGLNativeWindowType win, EGLint *damage_rects, EGLint damage_n_rects)
+{
+	_init_ws();
+	if (ws->prepareSwap)
+		ws->prepareSwap(dpy, win, damage_rects, damage_n_rects);
+}
+
+void ws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win)
+{
+	_init_ws();
+	if (ws->finishSwap)
+		ws->finishSwap(dpy, win);
+}
+
+void ws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval)
+{
+	_init_ws();
+	if (ws->setSwapInterval)
+		ws->setSwapInterval(dpy, win, interval);
 }
 
 // vim:ts=4:sw=4:noexpandtab

@@ -15,7 +15,7 @@ libhybris_hwcomposerwindow_la_CXXFLAGS = \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/egl \
 	-I$(top_srcdir)/egl/platforms/common \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 
 if WANT_TRACE
 libhybris_hwcomposerwindow_la_CXXFLAGS += -DDEBUG
@@ -32,7 +32,9 @@ libhybris_hwcomposerwindow_la_LDFLAGS = \
 if HAS_ANDROID_4_2_0
 libhybris_hwcomposerwindow_la_LDFLAGS += $(top_builddir)/libsync/libsync.la
 endif
-
+if HAS_ANDROID_5_0_0
+libhybris_hwcomposerwindow_la_LDFLAGS += $(top_builddir)/libsync/libsync.la
+endif
 pkglib_LTLIBRARIES = eglplatform_hwcomposer.la
 
 eglplatform_hwcomposer_la_SOURCES = \
@@ -43,7 +45,7 @@ eglplatform_hwcomposer_la_CXXFLAGS = \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/egl \
 	-I$(top_srcdir)/egl/platforms/common \
-	-I$(top_srcdir)/include/android
+	$(ANDROID_HEADERS_CFLAGS)
 
 if WANT_TRACE
 eglplatform_hwcomposer_la_CXXFLAGS += -DDEBUG

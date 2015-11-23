@@ -15,10 +15,11 @@
  *
  */
 
+#include <android-config.h>
 #include <memory.h>
 #include <assert.h>
 #include <stdio.h>
-#include <android/hardware/lights.h>
+#include <hardware/lights.h>
 
 int main(int argc, char **argv)
 {

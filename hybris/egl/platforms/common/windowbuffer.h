@@ -38,7 +38,8 @@ class RemoteWindowBuffer : public BaseNativeWindowBuffer
 				unsigned int format,
 				unsigned int usage,
 				buffer_handle_t handle,
-				const gralloc_module_t *gralloc	
+				const gralloc_module_t *gralloc,
+				const alloc_device_t *alloc = NULL
 				) {
 			// Base members
 			ANativeWindowBuffer::width = width;
@@ -48,9 +49,17 @@ class RemoteWindowBuffer : public BaseNativeWindowBuffer
 			ANativeWindowBuffer::stride = stride;
 			ANativeWindowBuffer::handle = handle;
 			this->m_gralloc = gralloc;
+			this->m_alloc = alloc;
+			this->m_allocated = false;
 		};
 		~RemoteWindowBuffer();
+
+		void setAllocated(bool allocated) { m_allocated = allocated; }
+		bool isAllocated() const { return m_allocated; }
+
 	private:
 		const gralloc_module_t *m_gralloc;
+		const alloc_device_t *m_alloc;
+                bool m_allocated;
 };
 #endif /* WINDOWBUFFER_H */
