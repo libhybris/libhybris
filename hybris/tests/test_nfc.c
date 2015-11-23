@@ -227,7 +227,9 @@ void testNfc(int readNdefMessages)
 
         phLibNfc_sADD_Cfg_t discoveryConfig;
         discoveryConfig.NfcIP_Mode = phNfc_eP2P_ALL;
+#if (ANDROID_VERSION_MAJOR == 4 && ANDROID_VERSION_MINOR >= 1) || (ANDROID_VERSION_MAJOR >= 5)
         discoveryConfig.NfcIP_Target_Mode = 0x0E;
+#endif
         discoveryConfig.Duration = 300000;
         discoveryConfig.NfcIP_Tgt_Disable = 0;
         discoveryConfig.PollDevInfo.PollCfgInfo.EnableIso14443A = 1;
