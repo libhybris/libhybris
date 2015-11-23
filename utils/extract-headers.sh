@@ -203,9 +203,11 @@ elif [ $MAJOR -eq 5 ]; then
         system/core/libsync/include/sync
 fi
 
-extract_headers_to libnfc-nxp \
-    external/libnfc-nxp/inc \
-    external/libnfc-nxp/src
+if [ $MAJOR -eq 2 -a $MINOR -ge 3 -o $MAJOR -ge 3 ]; then
+    extract_headers_to libnfc-nxp \
+        external/libnfc-nxp/inc \
+        external/libnfc-nxp/src
+fi
 
 extract_headers_to private \
     system/core/include/private/android_filesystem_config.h
@@ -214,10 +216,14 @@ if [ $MAJOR -ge 5 ]; then
     extract_headers_to linux \
         bionic/libc/kernel/uapi/linux/android_alarm.h \
         bionic/libc/kernel/uapi/linux/binder.h
-else
+elif [ $MAJOR -eq 2 -a $MINOR -ge 2 -o $MAJOR -ge 3 ]; then
     extract_headers_to linux \
         external/kernel-headers/original/linux/android_alarm.h \
         external/kernel-headers/original/linux/binder.h
+else
+    extract_headers_to linux \
+        bionic/libc/kernel/common/linux/android_alarm.h \
+        bionic/libc/kernel/common/linux/binder.h
 fi
 
 # In order to make it easier to trace back the origins of headers, fetch
