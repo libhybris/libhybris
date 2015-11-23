@@ -1,5 +1,6 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/../Android.common.mk
 
 HYBRIS_PATH := $(LOCAL_PATH)/../../hybris
 
@@ -18,15 +19,26 @@ LOCAL_SHARED_LIBRARIES := \
 	libgui \
 	libandroidfw
 
+LOCAL_C_INCLUDES := \
+	$(HYBRIS_PATH)/include \
+	external/skia/include/core
+
 HAS_LIBINPUTSERVICE := $(shell test $(ANDROID_VERSION_MAJOR) -eq 4 -a $(ANDROID_VERSION_MINOR) -gt 2 && echo true)
 ifeq ($(HAS_LIBINPUTSERVICE),true)
 LOCAL_SHARED_LIBRARIES += libinputservice
+LOCAL_C_INCLUDES += frameworks/base/services/input
 endif
 
-LOCAL_C_INCLUDES := \
-	$(HYBRIS_PATH)/include \
-	external/skia/include/core \
-	frameworks/base/services/input
+HAS_LIBINPUTFLINGER := $(shell test $(ANDROID_VERSION_MAJOR) -eq 5 && echo true)
+ifeq ($(HAS_LIBINPUTFLINGER),true)
+LOCAL_SHARED_LIBRARIES += libinputflinger libinputservice
+LOCAL_C_INCLUDES += \
+	frameworks/base/libs/input \
+	frameworks/native/services
+endif
+
+
+
 
 include $(BUILD_SHARED_LIBRARY)
 

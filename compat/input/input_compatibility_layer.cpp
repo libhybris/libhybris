@@ -19,8 +19,14 @@
 
 #include <hybris/input/input_stack_compatibility_layer.h>
 
-#include "InputListener.h"
-#include "InputReader.h"
+#if ANDROID_VERSION_MAJOR<=4
+  #include "InputListener.h"
+  #include "InputReader.h"
+#elif ANDROID_VERSION_MAJOR==5
+  #include "inputflinger/InputListener.h"
+  #include "inputflinger/InputReader.h"
+#endif
+
 #include "PointerController.h"
 #include "SpriteController.h"
 #include <gui/ISurfaceComposer.h>
@@ -48,10 +54,20 @@ public:
 
 	DefaultPointerControllerPolicy()
 	{
+#if ANDROID_VERSION_MAJOR<=4
 		bitmap.setConfig(
 				SkBitmap::kARGB_8888_Config,
 				bitmap_width,
 				bitmap_height);
+#elif ANDROID_VERSION_MAJOR==5
+		SkColorType ct = SkBitmapConfigToColorType(SkBitmap::kARGB_8888_Config);
+		bitmap.setInfo(
+				SkImageInfo::Make(bitmap_width,
+					bitmap_height,
+					ct,
+					SkAlphaType::kPremul_SkAlphaType),
+				0);
+#endif
 		bitmap.allocPixels();
 
 		// Icon for spot touches
@@ -142,13 +158,23 @@ public:
 		mInputDevices = inputDevices;
 	}
 
+#if ANDROID_VERSION_MAJOR<=4
 	virtual android::sp<android::KeyCharacterMap> getKeyboardLayoutOverlay(const android::String8& inputDeviceDescriptor) {
+#elif ANDROID_VERSION_MAJOR==5
+	virtual android::sp<android::KeyCharacterMap> getKeyboardLayoutOverlay(const android::InputDeviceIdentifier& identifier) {
+#endif
 		return NULL;
 	}
 
 	virtual android::String8 getDeviceAlias(const android::InputDeviceIdentifier& identifier) {
 		return android::String8::empty();
 	}
+
+#if ANDROID_VERSION_MAJOR==5
+	virtual android::TouchAffineTransformation getTouchAffineTransformation(const android::String8& inputDeviceDescriptor, int32_t surfaceRotation) {
+		return android::TouchAffineTransformation();
+	}
+#endif
 
 private:
 	android::sp<android::Looper> looper;

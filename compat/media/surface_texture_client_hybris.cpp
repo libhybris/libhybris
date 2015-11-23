@@ -68,7 +68,15 @@ _SurfaceTextureClientHybris::_SurfaceTextureClientHybris()
 }
 #endif
 
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR>=4
+#if ANDROID_VERSION_MAJOR==5
+_SurfaceTextureClientHybris::_SurfaceTextureClientHybris(const sp<IGraphicBufferProducer> &st)
+    : Surface::Surface(st, true),
+      refcount(1),
+      ready(false)
+{
+    REPORT_FUNCTION()
+}
+#elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR>=4
 _SurfaceTextureClientHybris::_SurfaceTextureClientHybris(const sp<BufferQueue> &bq)
     : Surface::Surface(bq, true),
       refcount(1),
@@ -210,8 +218,13 @@ SurfaceTextureClientHybris surface_texture_client_create_by_id(unsigned int text
         ALOGE("Cannot create new SurfaceTextureClientHybris, texture id must be > 0.");
         return NULL;
     }
+#if ANDROID_VERSION_MAJOR==5
+    sp<IGraphicBufferProducer> producer;
+    sp<IGraphicBufferConsumer> consumer;
+    BufferQueue::createBufferQueue(&producer, &consumer);
 
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
+    _SurfaceTextureClientHybris *stch(new _SurfaceTextureClientHybris(producer));
+#elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
     // Use a new native buffer allocator vs the default one, which means it'll use the proper one
     // that will allow rendering to work with Mir
     sp<NativeBufferAlloc> native_alloc(new NativeBufferAlloc());
@@ -229,7 +242,9 @@ SurfaceTextureClientHybris surface_texture_client_create_by_id(unsigned int text
       stch->surface_texture.clear();
 
     const bool allow_synchronous_mode = true;
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
+#if ANDROID_VERSION_MAJOR==5
+    stch->surface_texture = new GLConsumer(consumer, texture_id, GL_TEXTURE_EXTERNAL_OES, true, true);
+#elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     stch->surface_texture = new SurfaceTexture(texture_id, allow_synchronous_mode, GL_TEXTURE_EXTERNAL_OES, true, buffer_queue);
     set_surface(stch, stch->surface_texture);
 #else

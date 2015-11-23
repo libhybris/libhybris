@@ -87,7 +87,11 @@ struct FrameAvailableListener : public android::GLConsumer::FrameAvailableListen
 		}
 
 		// From android::GLConsumer/SurfaceTexture::FrameAvailableListener
-		void onFrameAvailable()
+#if ANDROID_VERSION_MAJOR==5 && ANDROID_VERSION_MINOR>=1
+		virtual void onFrameAvailable(const android::BufferItem& item)
+#else
+		virtual void onFrameAvailable()
+#endif
 		{
 			if (set_video_texture_needs_update_cb != NULL)
 				set_video_texture_needs_update_cb(video_texture_needs_update_context);
@@ -238,7 +242,9 @@ struct MediaPlayerWrapper : public android::MediaPlayer
 			source_fd = -1;
 		}
 
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
+#if  ANDROID_VERSION_MAJOR==5
+		android::status_t setVideoSurfaceTexture(android::sp<android::IGraphicBufferProducer> bq, const android::sp<android::GLConsumer> &surfaceTexture)
+#elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 		android::status_t setVideoSurfaceTexture(const android::sp<android::SurfaceTexture> &surfaceTexture)
 #else
 		android::status_t setVideoSurfaceTexture(android::sp<android::BufferQueue> bq, const android::sp<android::GLConsumer> &surfaceTexture)
@@ -443,7 +449,13 @@ int android_media_set_data_source(MediaPlayerWrapper *mp, const char* url)
 	String16 src(url);
 	if (src.startsWith(String16("http://")) == true) {
 		ALOGD("HTTP source URL detected");
+#if 0 // remarked for future debugging - chunsang
+#if ANDROID_VERSION_MAJOR==5
+		mp->setDataSource(NULL,url, NULL);
+#else
 		mp->setDataSource(url, NULL);
+#endif
+#endif
 	} else {
 		ALOGD("File source URL detected");
 		int fd = open(url, O_RDONLY);
@@ -480,6 +492,11 @@ int android_media_set_preview_texture(MediaPlayerWrapper *mp, int texture_id)
 			new android::NativeBufferAlloc()
 			);
 
+#if ANDROID_VERSION_MAJOR==5
+	android::sp<IGraphicBufferProducer> producer;
+	android::sp<IGraphicBufferConsumer> consumer;
+	BufferQueue::createBufferQueue(&producer, &consumer);
+#else
 	android::sp<android::BufferQueue> buffer_queue(
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 			new android::BufferQueue(false, NULL, native_alloc)
@@ -487,17 +504,28 @@ int android_media_set_preview_texture(MediaPlayerWrapper *mp, int texture_id)
 			new android::BufferQueue(NULL)
 #endif
 			);
+#endif
 
 	static const bool allow_synchronous_mode = true;
 	// Create a new GLConsumer/SurfaceTexture from the texture_id in synchronous mode (don't wait on all data in the buffer)
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
+#if ANDROID_VERSION_MAJOR==5
+	mp->setVideoSurfaceTexture(producer, android::sp<android::GLConsumer>(
+				new android::GLConsumer(
+#elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 	mp->setVideoSurfaceTexture(android::sp<android::SurfaceTexture>(
 				new android::SurfaceTexture(
 #else
 	mp->setVideoSurfaceTexture(buffer_queue, android::sp<android::GLConsumer>(
 				new android::GLConsumer(
 #endif
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
+#if ANDROID_VERSION_MAJOR==5
+					consumer,
+					texture_id,
+					GL_TEXTURE_EXTERNAL_OES,
+					true,
+					false)));
+
+#elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 					texture_id,
 					allow_synchronous_mode,
 					GL_TEXTURE_EXTERNAL_OES,

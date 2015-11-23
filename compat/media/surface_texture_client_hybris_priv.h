@@ -89,7 +89,11 @@ class _GLConsumerHybris : public GLConsumer
         {
         }
 
+#if ANDROID_VERSION_MAJOR==5 && ANDROID_VERSION_MINOR>=1
+		virtual void onFrameAvailable(const android::BufferItem& item)
+#else
         virtual void onFrameAvailable()
+#endif
         {
             if (frame_available_cb != NULL)
                 frame_available_cb(glc_wrapper, context);

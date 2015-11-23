@@ -254,6 +254,18 @@ status_t MediaRecorderClient::stop()
     return recorder->stop();
 }
 
+status_t MediaRecorderClient::pause()
+{
+    REPORT_FUNCTION();
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder == NULL) {
+        ALOGE("recorder must not be NULL");
+        return NO_INIT;
+    }
+    return recorder->pause();
+
+}
+
 status_t MediaRecorderClient::reset()
 {
     REPORT_FUNCTION();

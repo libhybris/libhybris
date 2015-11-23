@@ -195,7 +195,11 @@ status_t DecodingService::getIGraphicBufferConsumer(sp<IGraphicBufferConsumer>* 
     pid_t pid = IPCThreadState::self()->getCallingPid();
     ALOGD("Calling Pid: %d", pid);
 
+#if ANDROID_VERSION_MAJOR==5
+    *gbc = consumer;
+#else
     *gbc = buffer_queue;
+#endif
 
     return OK;
 }
@@ -205,7 +209,11 @@ status_t DecodingService::getIGraphicBufferProducer(sp<IGraphicBufferProducer>* 
     pid_t pid = IPCThreadState::self()->getCallingPid();
     ALOGD("Calling Pid: %d", pid);
 
+#if ANDROID_VERSION_MAJOR==5
+    *gbp = producer;
+#else
     *gbp = buffer_queue;
+#endif
     ALOGD("producer(gbp): %p", (void*)gbp->get());
     return OK;
 }
@@ -235,7 +243,12 @@ status_t DecodingService::unregisterSession()
         session.clear();
         // Reset the BufferQueue instance so that the next created client plays
         // video correctly
+#if ANDROID_VERSION_MAJOR==5
+        producer.clear();
+        consumer.clear();
+#else
         buffer_queue.clear();
+#endif
     }
 
     return OK;
@@ -248,14 +261,20 @@ void DecodingService::createBufferQueue()
     sp<IGraphicBufferAlloc> g_buffer_alloc(new GraphicBufferAlloc());
 
     // This BuferQueue is shared between the client and the service
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
+#if ANDROID_VERSION_MAJOR==5
+    BufferQueue::createBufferQueue(&producer, &consumer);
+#elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
     sp<NativeBufferAlloc> native_alloc(new NativeBufferAlloc());
     buffer_queue = new BufferQueue(false, NULL, native_alloc);
 #else
     buffer_queue = new BufferQueue(NULL);
-#endif
     ALOGD("buffer_queue: %p", (void*)buffer_queue.get());
+#endif
+#if ANDROID_VERSION_MAJOR==5
+    producer->setBufferCount(5);
+#else
     buffer_queue->setBufferCount(5);
+#endif
 }
 
 void DecodingService::binderDied(const wp<IBinder>& who)

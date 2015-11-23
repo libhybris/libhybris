@@ -1,5 +1,6 @@
 LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
+include $(LOCAL_PATH)/../Android.common.mk
 
 LOCAL_SRC_FILES := \
 	camera_service.cpp
@@ -20,7 +21,14 @@ LOCAL_C_INCLUDES := \
     frameworks/av/services/medialog \
     frameworks/av/services/camera/libcameraservice
 
+IS_ANDROID_5 := $(shell test $(ANDROID_VERSION_MAJOR) -eq 5 && echo true)
+ifeq ($(IS_ANDROID_5),true)
+LOCAL_C_INCLUDES += system/media/camera/include
+endif
+
 LOCAL_MODULE := camera_service
+
+LOCAL_32_BIT_ONLY := true
 
 include $(BUILD_EXECUTABLE)
 
@@ -76,6 +84,11 @@ LOCAL_C_INCLUDES := \
 	system/media/audio_utils/include \
 	frameworks/av/services/camera/libcameraservice
 
+IS_ANDROID_5 := $(shell test $(ANDROID_VERSION_MAJOR) -eq 5 && echo true)
+ifeq ($(IS_ANDROID_5),true)
+LOCAL_C_INCLUDES += frameworks/native/include/media/openmax
+endif
+
 ifeq ($(strip $(MTK_CAMERA_BSP_SUPPORT)),yes)
 LOCAL_C_INCLUDES += $(TOP)/mediatek/kernel/include/linux/vcodec
 LOCAL_SHARED_LIBRARIES += \
@@ -88,6 +101,8 @@ LOCAL_C_INCLUDES+= \
 	$(TOP)/$(MTK_PATH_PLATFORM)/frameworks/libmtkplayer \
 	$(TOP)/$(MTK_PATH_SOURCE)/frameworks/av/include
 endif
+
+LOCAL_32_BIT_ONLY := true
 
 include $(BUILD_SHARED_LIBRARY)
 
@@ -124,6 +139,8 @@ LOCAL_SHARED_LIBRARIES := \
 	libEGL \
 	libGLESv2
 
+LOCAL_32_BIT_ONLY := true
+
 include $(BUILD_EXECUTABLE)
 
 include $(CLEAR_VARS)
@@ -159,5 +176,7 @@ LOCAL_C_INCLUDES:= \
 
 LOCAL_MODULE:= codec
 LOCAL_MODULE_TAGS := optional
+
+LOCAL_32_BIT_ONLY := true
 
 include $(BUILD_EXECUTABLE)
