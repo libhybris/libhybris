@@ -184,6 +184,10 @@ AM_CONDITIONAL([HAS_ANDROID_4_1_0], [test $android_headers_major -ge 4 -a $andro
 AM_CONDITIONAL([HAS_ANDROID_4_0_3], [test $android_headers_major -ge 4 -a $android_headers_patch -ge 3 ])
 AM_CONDITIONAL([HAS_ANDROID_4_0_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_2_3_0], [test $android_headers_major -ge 2 -a $android_headers_minor -ge 3 ])
+# As we now ship hardware.h directly with libhardware an external one
+# isn't supported anymore.
+AC_CHECK_HEADERS([android/hardware/hardware.h],
+    AC_MSG_ERROR(Found external hardware.h which is not supported. Please remove it.),)
 
 
 AC_CONFIG_FILES([
