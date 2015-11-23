@@ -16,14 +16,22 @@ endif
 
 
 if HAS_LIBNFC_NXP_HEADERS
+# test_nfc depends on NFC hardware HAL interface, which is only
+# available until Android API level 15 (v4.0.3, v4.0.4).
+if HAS_ANDROID_4_0_3
+bin_PROGRAMS += test_nfc
+else
+if HAS_ANDROID_4_1_0
+bin_PROGRAMS += test_nfc
+else
+if HAS_ANDROID_5_0_0
 bin_PROGRAMS += test_nfc
 endif
+endif
+endif
+endif
 
-# Please re-enable your test programs according to android
-# if HAS_ANDROID_X_Y_Z
-# bin_PROGRAMS += test_audio 
-# endif
-
+bin_PROGRAMS += test_audio
 test_audio_SOURCES = test_audio.c
 test_audio_CFLAGS = \
 	-I$(top_srcdir)/include
@@ -108,13 +116,6 @@ test_gps_SOURCES = test_gps.c
 test_gps_CFLAGS = -pthread \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS)
-
-if HAS_ANDROID_4_2_0
-test_gps_CFLAGS += -DHAS_ANDROID_4_2_0
-endif
-if HAS_ANDROID_5_0_0
-test_gps_CFLAGS += -DHAS_ANDROID_5_0_0
-endif
 test_gps_LDFLAGS = -pthread
 test_gps_LDADD =  \
 	$(top_builddir)/common/libhybris-common.la \

@@ -80,11 +80,19 @@ int main(int argc, char **argv)
         printf("Hardware module ID: %s\n", hwmod->id);
         printf("Hardware module Name: %s\n", hwmod->name);
         printf("Hardware module Author: %s\n", hwmod->author);
+#ifdef HARDWARE_HAL_API_VERSION
         printf("Hardware module API version: 0x%x\n", hwmod->module_api_version);
         printf("Hardware HAL API version: 0x%x\n", hwmod->hal_api_version);
+#else
+        printf("Hardware module API version: 0x%x\n", hwmod->version_major);
+        printf("Hardware HAL API version: 0x%x\n", hwmod->version_minor);
+#endif
         printf("Poll device version: 0x%x\n", dev->common.version);
 
-        printf("API VERSION 0.1 (legacy): 0x%x\n", HARDWARE_MODULE_API_VERSION(0, 1));
+#ifndef SENSORS_MODULE_API_VERSION_0_1
+#define SENSORS_MODULE_API_VERSION_0_1 0x0001
+#endif
+        printf("API VERSION 0.1 (legacy): 0x%x\n", SENSORS_MODULE_API_VERSION_0_1);
 #ifdef SENSORS_DEVICE_API_VERSION_0_1
         printf("API VERSION 0.1: 0x%d\n", SENSORS_DEVICE_API_VERSION_0_1);
 #endif
@@ -93,6 +101,15 @@ int main(int argc, char **argv)
 #endif
 #ifdef SENSORS_DEVICE_API_VERSION_1_1
         printf("API VERSION 1.1: 0x%d\n", SENSORS_DEVICE_API_VERSION_1_1);
+#endif
+#ifdef SENSORS_DEVICE_API_VERSION_1_2
+        printf("API VERSION 1.2: 0x%d\n", SENSORS_DEVICE_API_VERSION_1_2);
+#endif
+#ifdef SENSORS_DEVICE_API_VERSION_1_3
+        printf("API VERSION 1.3: 0x%d\n", SENSORS_DEVICE_API_VERSION_1_3);
+#endif
+#ifdef SENSORS_DEVICE_API_VERSION_1_4
+        printf("API VERSION 1.4: 0x%d\n", SENSORS_DEVICE_API_VERSION_1_4);
 #endif
 
         struct sensors_module_t *smod = (struct sensors_module_t *)(hwmod);
