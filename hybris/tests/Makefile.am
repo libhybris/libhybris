@@ -104,13 +104,6 @@ test_gps_SOURCES = test_gps.c
 test_gps_CFLAGS = -pthread \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS)
-
-if HAS_ANDROID_4_2_0
-test_gps_CFLAGS += -DHAS_ANDROID_4_2_0
-endif
-if HAS_ANDROID_5_0_0
-test_gps_CFLAGS += -DHAS_ANDROID_5_0_0
-endif
 test_gps_LDFLAGS = -pthread
 test_gps_LDADD =  \
 	$(top_builddir)/common/libhybris-common.la \
