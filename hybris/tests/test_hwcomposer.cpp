@@ -119,7 +119,7 @@ void HWComposer::present(HWComposerNativeWindowBuffer *buffer)
 	assert(err == 0);
 
 	err = hwcdevice->set(hwcdevice, HWC_NUM_DISPLAY_TYPES, mlist);
-	//assert(err == 0);
+	// in android surfaceflinger ignores the return value as not all display types may be supported
 	setFenceBufferFd(buffer, fblayer->releaseFenceFd);
 
 	if (oldretire != -1)
