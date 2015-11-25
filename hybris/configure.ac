@@ -173,21 +173,27 @@ has_ANDROID_VERSION_PATCH ANDROID_VERSION_PATCH
 [android_headers_patch=$ac_awk_cpp_out],
 [AC_MSG_ERROR(require 'patch' version is missing)])
 
-AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch.$ac_awk_cpp_out")
+###########################
+AC_AWK_CPP([/has_ANDROID_API_LEVEL/ {print \$2;}],
+[
+#include <android-version.h>
+has_ANDROID_API_LEVEL ANDROID_API_LEVEL
+],
+[android_api_level=$ac_awk_cpp_out],
+[AC_MSG_ERROR(require api level is missing)])
+
 ###########################
 AC_SUBST(ANDROID_VERSION_MAJOR, [$android_headers_major])
 AC_SUBST(ANDROID_VERSION_MINOR, [$android_headers_minor])
 AC_SUBST(ANDROID_VERSION_PATCH, [$android_headers_patch])
+AC_SUBST(ANDROID_API_LEVEL, [$android_api_level])
 
 AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch")
+AC_MSG_NOTICE("Android API level is $android_api_level")
 
 # Add automake tests for version/API needs here that you need in code, including test .am's
-AM_CONDITIONAL([HAS_ANDROID_5_0_0], [test $android_headers_major -ge 5 -a $android_headers_minor -ge 0 ])
-AM_CONDITIONAL([HAS_ANDROID_4_2_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 2 ])
-AM_CONDITIONAL([HAS_ANDROID_4_1_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 1 ])
-AM_CONDITIONAL([HAS_ANDROID_4_0_3], [test $android_headers_major -ge 4 -a $android_headers_patch -ge 3 ])
-AM_CONDITIONAL([HAS_ANDROID_4_0_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 0 ])
-AM_CONDITIONAL([HAS_ANDROID_2_3_0], [test $android_headers_major -ge 2 -a $android_headers_minor -ge 3 ])
+AM_CONDITIONAL([HAS_ANDROID_9_OR_NEWER], [test $android_api_level -ge 9])
+AM_CONDITIONAL([HAS_ANDROID_14_OR_NEWER], [test $android_api_level -ge 14])
 
 AC_CHECK_HEADER([hardware/nfc.h hardware/hwcomposer.h sync/sync.h])
 AM_CONDITIONAL([HAS_ANDROID_HAL_NFC], [test x"$ac_cv_header_hardware_nfc_h" = xyes])
