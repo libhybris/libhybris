@@ -30,10 +30,7 @@ libhybris_hwcomposerwindow_la_LDFLAGS = \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/hardware/libhardware.la
 
-if HAS_ANDROID_4_2_0
-libhybris_hwcomposerwindow_la_LDFLAGS += $(top_builddir)/libsync/libsync.la
-endif
-if HAS_ANDROID_5_0_0
+if HAS_ANDROID_LIBSYNC
 libhybris_hwcomposerwindow_la_LDFLAGS += $(top_builddir)/libsync/libsync.la
 endif
 pkglib_LTLIBRARIES = eglplatform_hwcomposer.la

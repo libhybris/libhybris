@@ -1,9 +1,6 @@
 
 SUBDIRS = common null fbdev
-if HAS_ANDROID_4_2_0
-SUBDIRS += hwcomposer
-endif
-if HAS_ANDROID_5_0_0
+if HAS_ANDROID_HAL_HWCOMPOSER
 SUBDIRS += hwcomposer
 endif
 

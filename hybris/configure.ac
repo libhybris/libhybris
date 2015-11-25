@@ -117,8 +117,12 @@ AC_SUBST(DEFAULT_HYBRIS_LD_LIBRARY_PATH)
 AC_ARG_WITH(android-headers,
   [  --with-android-headers=DIR     Use android headers available in DIR. See utils/extract-headers.sh ],
   [
-    AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test -f $withval/libnfc-nxp/phLibNfc.h])
-    AS_IF([test -f $withval/libnfc-nxp/phLibNfc.h], [ANDROID_HEADERS_CFLAGS="-I$withval -I$withval/libnfc-nxp"],[ANDROID_HEADERS_CFLAGS="-I$withval"])
+    CPPFLAGS_saved="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS -I$withval -I$withval/libnfc-nxp"
+    AC_CHECK_HEADER([phLibNfc.h], [ANDROID_HEADERS_CFLAGS="-I$withval -I$withval/libnfc-nxp"], [ANDROID_HEADERS_CFLAGS="-I$withval"])
+    CPPFLAGS="$CPPFLAGS_saved"
+
+    AM_CONDITIONAL([HAS_ANDROID_LIBNFC_NXP], [test -n "$ac_cv_header_phLibNfc_h"])
     AC_SUBST([ANDROID_HEADERS_CFLAGS])
   ],
   [ PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit) ]
@@ -184,6 +188,11 @@ AM_CONDITIONAL([HAS_ANDROID_4_1_0], [test $android_headers_major -ge 4 -a $andro
 AM_CONDITIONAL([HAS_ANDROID_4_0_3], [test $android_headers_major -ge 4 -a $android_headers_patch -ge 3 ])
 AM_CONDITIONAL([HAS_ANDROID_4_0_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_2_3_0], [test $android_headers_major -ge 2 -a $android_headers_minor -ge 3 ])
+
+AC_CHECK_HEADER([hardware/nfc.h hardware/hwcomposer.h sync/sync.h])
+AM_CONDITIONAL([HAS_ANDROID_HAL_NFC], [test x"$ac_cv_header_hardware_nfc_h" = xyes])
+AM_CONDITIONAL([HAS_ANDROID_LIBSYNC], [test x"$ac_cv_header_sync_sync_h" = xyes])
+AM_CONDITIONAL([HAS_ANDROID_HAL_HWCOMPOSER], [test x"$ac_cv_header_hardware_hwcomposer_h" = xyes -a x"$ac_cv_header_sync_sync_h" = xyes])
 
 
 AC_CONFIG_FILES([
