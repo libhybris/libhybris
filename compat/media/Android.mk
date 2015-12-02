@@ -63,6 +63,7 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_MODULE:= libmedia_compat_layer
 LOCAL_MODULE_TAGS := optional
+LOCAL_32_BIT_ONLY := true
 
 LOCAL_SHARED_LIBRARIES := \
 	libcutils \
@@ -124,6 +125,7 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_MODULE:= direct_media_test
 LOCAL_MODULE_TAGS := optional
+LOCAL_32_BIT_ONLY := true
 
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \

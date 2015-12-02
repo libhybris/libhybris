@@ -9,6 +9,7 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_MODULE:= libui_compat_layer
 LOCAL_MODULE_TAGS := optional
+LOCAL_32_BIT_ONLY := true
 
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \
