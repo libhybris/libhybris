@@ -114,7 +114,10 @@ AC_ARG_WITH(android-headers,
     AS_IF([test -f $withval/libnfc-nxp/phLibNfc.h], [ANDROID_HEADERS_CFLAGS="-I$withval -I$withval/libnfc-nxp"],[ANDROID_HEADERS_CFLAGS="-I$withval"])
     AC_SUBST([ANDROID_HEADERS_CFLAGS])
   ],
-  [ PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit) ]
+  [
+    PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit)
+    AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [false])
+  ]
 )
 CPPFLAGS="$CPPFLAGS $ANDROID_HEADERS_CFLAGS"
 
