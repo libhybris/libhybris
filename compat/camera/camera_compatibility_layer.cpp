@@ -117,6 +117,9 @@ void CameraControl::postData(
 		if (listener->on_data_compressed_image_cb)
 			listener->on_data_compressed_image_cb(data->pointer(), data->size(), listener->context);
 		break;
+	case CAMERA_MSG_PREVIEW_FRAME:
+		if (listener->on_preview_frame_cb)
+			listener->on_preview_frame_cb(data->pointer(), data->size(), listener->context);
 	default:
 		break;
 	}
@@ -808,6 +811,18 @@ void android_camera_take_snapshot(CameraControl* control)
 	assert(control);
 	android::Mutex::Autolock al(control->guard);
 	control->camera->takePicture(CAMERA_MSG_SHUTTER | CAMERA_MSG_COMPRESSED_IMAGE);
+}
+
+void android_camera_set_preview_callback_mode(CameraControl* control, PreviewCallbackMode mode)
+{
+	REPORT_FUNCTION();
+	assert(control);
+
+	android::Mutex::Autolock al(control->guard);
+
+	control->camera->setPreviewCallbackFlags(
+		mode == PREVIEW_CALLBACK_ENABLED ?
+			CAMERA_FRAME_CALLBACK_FLAG_CAMCORDER : CAMERA_FRAME_CALLBACK_FLAG_NOOP);
 }
 
 void android_camera_set_preview_format(CameraControl* control, CameraPixelFormat pf)
