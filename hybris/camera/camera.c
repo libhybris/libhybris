@@ -52,6 +52,8 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_scene_mode,
 	struct CameraControl*, SceneMode);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_auto_focus_mode,
 	struct CameraControl*, AutoFocusMode);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_preview_format,
+    struct CameraControl*, CameraPixelFormat);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_set_picture_size,
 	struct CameraControl*, int, int);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_set_thumbnail_size,
