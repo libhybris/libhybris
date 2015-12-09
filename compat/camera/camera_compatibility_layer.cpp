@@ -159,13 +159,6 @@ sp<GraphicBuffer> NativeBufferAlloc::createGraphicBuffer(uint32_t w, uint32_t h,
 }
 }
 
-namespace
-{
-
-android::sp<CameraControl> camera_control_instance;
-
-}
-
 int android_camera_get_number_of_devices()
 {
 	REPORT_FUNCTION();
@@ -190,7 +183,7 @@ CameraControl* android_camera_connect_to(CameraType camera_type, CameraControlLi
 	if (camera_id == camera_count)
 		return NULL;
 
-	CameraControl* cc = new CameraControl();
+	android::sp<CameraControl> cc = new CameraControl();
 	cc->listener = listener;
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR>=3 || ANDROID_VERSION_MAJOR==5
 	cc->camera = android::Camera::connect(camera_id, android::String16("hybris"), android::Camera::USE_CALLING_UID);
@@ -203,14 +196,15 @@ CameraControl* android_camera_connect_to(CameraType camera_type, CameraControlLi
 
 	cc->camera_parameters = android::CameraParameters(cc->camera->getParameters());
 
-	camera_control_instance = cc;
-	cc->camera->setListener(camera_control_instance);
+    // android::Camera holds a strong reference to the listener, keeping
+    // |cc| alive
+	cc->camera->setListener(cc);
 	cc->camera->lock();
 
 	// TODO: Move this to a more generic component
 	android::ProcessState::self()->startThreadPool();
 
-	return cc;
+	return cc.get();
 }
 
 void android_camera_disconnect(CameraControl* control)
@@ -241,7 +235,9 @@ int android_camera_unlock(CameraControl* control)
 
 void android_camera_delete(CameraControl* control)
 {
-	delete control;
+	android::sp<android::Camera> camera = control->camera;
+	control->camera.clear();
+	camera.clear();
 }
 
 void android_camera_dump_parameters(CameraControl* control)
