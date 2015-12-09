@@ -45,6 +45,7 @@
 
 #undef LOG_TAG
 #define LOG_TAG "CameraCompatibilityLayer"
+#include <utils/Debug.h>
 #include <utils/KeyedVector.h>
 #include <utils/Log.h>
 #include <utils/String16.h>
@@ -54,6 +55,8 @@
 #include <cstring>
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__)
+
+using android::CompileTimeAssert; // So COMPILE_TIME_ASSERT works
 
 // From android::GLConsumer::FrameAvailableListener
 #if ANDROID_VERSION_MAJOR==5 && ANDROID_VERSION_MINOR>=1
@@ -168,22 +171,44 @@ int android_camera_get_number_of_devices()
 	return android::Camera::getNumberOfCameras();
 }
 
+void android_camera_get_device_info(int32_t camera_id, int* facing, int* orientation)
+{
+	REPORT_FUNCTION();
+	assert(id);
+	assert(orientation);
+
+	COMPILE_TIME_ASSERT_FUNCTION_SCOPE(CAMERA_FACING_BACK == static_cast<int>(BACK_FACING_CAMERA_TYPE));
+	COMPILE_TIME_ASSERT_FUNCTION_SCOPE(CAMERA_FACING_FRONT == static_cast<int>(FRONT_FACING_CAMERA_TYPE));
+
+	android::CameraInfo ci;
+	android::Camera::getCameraInfo(camera_id, &ci);
+
+	*facing = ci.facing;
+	*orientation = ci.orientation;
+}
+
 CameraControl* android_camera_connect_to(CameraType camera_type, CameraControlListener* listener)
 {
 	REPORT_FUNCTION();
 
-	int32_t camera_id;
-	int32_t camera_count = camera_id = android::Camera::getNumberOfCameras();
+	int32_t camera_count = android::Camera::getNumberOfCameras();
 
-	for (camera_id = 0; camera_id < camera_count; camera_id++) {
+	for (int32_t camera_id = 0; camera_id < camera_count; camera_id++) {
 		android::CameraInfo ci;
 		android::Camera::getCameraInfo(camera_id, &ci);
 
-		if (ci.facing == camera_type)
-			break;
+		if (ci.facing != camera_type)
+			continue;
+
+		return android_camera_connect_by_id(camera_id, listener);
 	}
 
-	if (camera_id == camera_count)
+	return NULL;
+}
+
+CameraControl* android_camera_connect_by_id(int32_t camera_id, struct CameraControlListener* listener)
+{
+	if (camera_id < 0 || camera_id >= android::Camera::getNumberOfCameras())
 		return NULL;
 
 	android::sp<CameraControl> cc = new CameraControl();

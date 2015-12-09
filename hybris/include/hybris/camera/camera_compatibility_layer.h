@@ -87,6 +87,7 @@ extern "C" {
 
     // Initializes a connection to the camera, returns NULL on error.
     struct CameraControl* android_camera_connect_to(CameraType camera_type, struct CameraControlListener* listener);
+    struct CameraControl* android_camera_connect_by_id(int32_t camera_id, struct CameraControlListener* listener);
 
     // Disconnects the camera and deletes the pointer
     void android_camera_disconnect(struct CameraControl* control);

@@ -31,8 +31,11 @@
 HYBRIS_LIBRARY_INITIALIZE(camera, COMPAT_LIBRARY_PATH);
 
 HYBRIS_IMPLEMENT_FUNCTION0(camera, int, android_camera_get_number_of_devices);
+HYBRIS_IMPLEMENT_FUNCTION3(camera, void, android_camera_get_device_info, int32_t, int*, int*);
 HYBRIS_IMPLEMENT_FUNCTION2(camera, struct CameraControl*, android_camera_connect_to,
 	CameraType, struct CameraControlListener*);
+HYBRIS_IMPLEMENT_FUNCTION2(camera, struct CameraControl*, android_camera_connect_by_id,
+	int32_t, struct CameraControlListener*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(camera, android_camera_disconnect,
 	struct CameraControl*);
 HYBRIS_IMPLEMENT_FUNCTION1(camera, int, android_camera_lock, struct CameraControl*);
