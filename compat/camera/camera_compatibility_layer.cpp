@@ -224,8 +224,8 @@ CameraControl* android_camera_connect_by_id(int32_t camera_id, struct CameraCont
 
 	cc->camera_parameters = android::CameraParameters(cc->camera->getParameters());
 
-    // android::Camera holds a strong reference to the listener, keeping
-    // |cc| alive
+	// android::Camera holds a strong reference to the listener, keeping
+	// |cc| alive
 	cc->camera->setListener(cc);
 	cc->camera->lock();
 
