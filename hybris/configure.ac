@@ -42,6 +42,12 @@ AC_ARG_ENABLE(debug,
   [debug="no"])
 AM_CONDITIONAL( [WANT_DEBUG], [test x"$debug" = x"yes"])
 
+AC_ARG_ENABLE(experimental,
+  [  --enable-experimental     Enable experimental features (default=disabled)],
+  [experimental=$enableval],
+  [experimental="no"])
+AM_CONDITIONAL( [WANT_EXPERIMENTAL], [test x"$experimental" = x"yes"])
+
 AC_ARG_ENABLE(trace,
   [  --enable-trace            Enable TRACE statements (default=disabled)],
   [trace=$enableval],
