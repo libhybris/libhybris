@@ -1850,7 +1850,7 @@ static int hook_cmp(const void *a, const void *b)
     return strcmp(((struct _hook*)a)->name, ((struct _hook*)b)->name);
 }
 
-void *get_hooked_symbol(char *sym)
+void* __hybris_get_hooked_symbol(const char *sym)
 {
     static int counter = -1;
     static int sorted = 0;
