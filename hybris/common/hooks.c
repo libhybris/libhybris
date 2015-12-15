@@ -251,7 +251,7 @@ static size_t my_strlen(const char *s)
 
 static pid_t my_gettid( void )
 {
-        return syscall( __NR_gettid );
+    return syscall(__NR_gettid);
 }
 
 /*
@@ -962,6 +962,18 @@ static int my_pthread_rwlock_unlock(pthread_rwlock_t *__rwlock)
     return pthread_rwlock_unlock(realrwlock);
 }
 
+#define min(X,Y) (((X) < (Y)) ? (X) : (Y))
+
+static pid_t my_pthread_gettid(pthread_t t)
+{
+    // glibc doesn't offer us a way to retrieve the thread id for a
+    // specific thread. However pthread_t is defined as unsigned
+    // long int and is the thread id so we can just copy it over
+    // into a pid_t.
+    pid_t tid;
+    memcpy(&tid, &t, min(sizeof(tid), sizeof(t)));
+    return tid;
+}
 
 static int my_set_errno(int oi_errno)
 {
@@ -1538,6 +1550,7 @@ static struct _hook hooks[] = {
     {"pthread_condattr_getpshared", pthread_condattr_getpshared},
     {"pthread_condattr_setpshared", pthread_condattr_setpshared},
     {"pthread_condattr_destroy", pthread_condattr_destroy},
+    {"pthread_condattr_getclock", pthread_condattr_getclock},
     {"pthread_cond_init", my_pthread_cond_init},
     {"pthread_cond_destroy", my_pthread_cond_destroy},
     {"pthread_cond_broadcast", my_pthread_cond_broadcast},
@@ -1585,6 +1598,9 @@ static struct _hook hooks[] = {
     {"pthread_rwlock_trywrlock", my_pthread_rwlock_trywrlock},
     {"pthread_rwlock_timedrdlock", my_pthread_rwlock_timedrdlock},
     {"pthread_rwlock_timedwrlock", my_pthread_rwlock_timedwrlock},
+    /* bionic-only pthread */
+    {"__pthread_gettid", my_pthread_gettid},
+    {"pthread_gettid_np", my_pthread_gettid},
     /* stdio.h */
     {"__isthreaded", &__my_isthreaded},
     {"__sF", &my_sF},
