@@ -43,7 +43,7 @@ int main(int argc, char **argv)
 	assert(audiohw->init_check(audiohw) == 0);
 	printf("Audio Hardware Interface initialized.\n");
 
-#if (ANDROID_VERSION_MAJOR == 4 && ANDROID_VERSION_MINOR >= 1) || (ANDROID_VERSION_MAJOR >= 5)
+#if (ANDROID_API_LEVEL >= 16)
 	if (audiohw->get_master_volume) {
 		float volume;
 		audiohw->get_master_volume(audiohw, &volume);
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 	}
 #endif
 
-#if (ANDROID_VERSION_MAJOR == 4 && ANDROID_VERSION_MINOR >= 2) || (ANDROID_VERSION_MAJOR >= 5)
+#if (ANDROID_API_LEVEL >= 17)
 	if (audiohw->get_master_mute) {
 		bool mute;
 		audiohw->get_master_mute(audiohw, &mute);
