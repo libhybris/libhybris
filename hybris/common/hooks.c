@@ -1475,6 +1475,7 @@ static struct _hook hooks[] = {
     {"memmove",memmove},
     {"memset",memset},
     {"memmem",memmem},
+    {"getlogin", getlogin},
     //  {"memswap",memswap},
     {"index",index},
     {"rindex",rindex},
@@ -1516,6 +1517,8 @@ static struct _hook hooks[] = {
     {"index",index},
     {"rindex",rindex},
     {"strcasecmp",strcasecmp},
+    {"__sprintf_chk", __sprintf_chk},
+    {"__snprintf_chk", __snprintf_chk},
     {"strncasecmp",strncasecmp},
     /* dirent.h */
     {"opendir", opendir},
