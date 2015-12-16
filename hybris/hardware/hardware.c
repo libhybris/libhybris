@@ -15,11 +15,11 @@
  *
  */
 
-#include <android-config.h>
 #include <dlfcn.h>
 #include <stddef.h>
-#include <hardware/hardware.h>
 #include <hybris/common/binding.h>
+
+#include "hybris/hardware/hardware.h"
 
 static void *_libhardware = NULL;
 

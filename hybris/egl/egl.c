@@ -35,7 +35,10 @@
 #include <hybris/common/binding.h>
 #include <string.h>
 
+#ifndef WANT_CORE_ONLY
 #include <system/window.h>
+#endif
+
 #include "logging.h"
 
 static void *_libegl = NULL;
@@ -262,7 +265,9 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 	struct _EGLDisplay *display = hybris_egl_display_get_mapping(dpy);
 	win = ws_CreateWindow(win, display);
 
+#ifndef WANT_CORE_ONLY
 	assert(((struct ANativeWindowBuffer *) win)->common.magic == ANDROID_NATIVE_WINDOW_MAGIC);
+#endif
 
 	HYBRIS_TRACE_BEGIN("native-egl", "eglCreateWindowSurface", "");
 	EGLSurface result = (*_eglCreateWindowSurface)(dpy, config, win, attrib_list);

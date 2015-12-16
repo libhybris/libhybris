@@ -163,6 +163,7 @@ sed -i -e s:androidversion:$MAJOR.$MINOR.$PATCH:g $HEADERPATH/android-headers.pc
 
 extract_headers_to hardware \
     hardware/libhardware/include/hardware
+rm $HEADERPATH/hardware/hardware.h
 
 extract_headers_to hardware_legacy \
     hardware/libhardware_legacy/include/hardware_legacy/vibrator.h

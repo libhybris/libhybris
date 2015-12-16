@@ -69,6 +69,10 @@ dlfcnincludedir = $(includedir)/hybris/dlfcn
 dlfcninclude_HEADERS = \
 	hybris/dlfcn/dlfcn.h
 
+hardwareincludedir = $(includedir)/hybris/hardware
+hardwareinclude_HEADERS = \
+	hybris/hardware/hardware.h
+
 commonincludedir = $(includedir)/hybris/common
 commoninclude_HEADERS = \
 	hybris/common/binding.h \

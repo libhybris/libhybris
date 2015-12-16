@@ -36,6 +36,12 @@ AC_SUBST([LT_AGE])
 AC_CHECK_LIB(dl, dlopen, dummy=yes, AC_MSG_ERROR(dynamic linking loader is required))
 AC_CHECK_LIB(rt, clock_gettime, dummy=yes, AC_MSG_ERROR(librt is required))
 
+AC_ARG_ENABLE(core-only,
+  [  --enable-core-only        Enable a build with only the libhybris core (default=disabled)],
+  [core_only=$enableval],
+  [core_only="no"])
+AM_CONDITIONAL([WANT_CORE_ONLY], [test x"$core_only" = x"yes"])
+
 AC_ARG_ENABLE(debug,
   [  --enable-debug            Enable debug build (default=disabled)],
   [debug=$enableval],
@@ -114,77 +120,105 @@ AC_ARG_WITH(default-hybris-ld-library-path,
   [ ])
 AC_SUBST(DEFAULT_HYBRIS_LD_LIBRARY_PATH)
 
+ANDROID_LINKER=none
+AC_ARG_WITH(android-linker,
+  [  --with-android-linker=NAME     Specify the name of the Android linker to use. Valid ones are gb and jb.],
+  [ AS_IF([test "x$core_only" = "xyes"], [ANDROID_LINKER=$withval], [ echo "Specifying a linker is only allowed together with --enable-core-only" && exit]) ],
+  [ AS_IF([test "x$core_only" = "xyes"], [echo "You have to specifiy a linker name when using --enable-core-only" && exit], []) ]
+)
+AM_CONDITIONAL([WANT_ANDROID_LINKER_GB], [test x$ANDROID_LINKER = xgb])
+AM_CONDITIONAL([WANT_ANDROID_LINKER_JB], [test x$ANDROID_LINKER = xjb])
+
+
+ANDROID_HEADERS_DIR=none
 AC_ARG_WITH(android-headers,
   [  --with-android-headers=DIR     Use android headers available in DIR. See utils/extract-headers.sh ],
   [
-    AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test -f $withval/libnfc-nxp/phLibNfc.h])
-    AS_IF([test -f $withval/libnfc-nxp/phLibNfc.h], [ANDROID_HEADERS_CFLAGS="-I$withval -I$withval/libnfc-nxp"],[ANDROID_HEADERS_CFLAGS="-I$withval"])
+    ANDROID_HEADERS_DIR=$withval
+    ANDROID_HEADERS_CFLAGS="-I$withval"
     AC_SUBST([ANDROID_HEADERS_CFLAGS])
   ],
-  [ PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit) ]
+  [ AS_IF([test "x$core_only" = "xno"], [PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, echo "No android headers found" && exit)], []) ]
 )
 CPPFLAGS="$CPPFLAGS $ANDROID_HEADERS_CFLAGS"
 
-AC_CHECK_HEADERS(android-config.h,,AC_MSG_ERROR(required header file is missing))
-AC_CHECK_HEADERS(android-version.h,,AC_MSG_ERROR(required header file is missing))
+# As we now ship hardware.h directly with libhardware an external one
+# isn't supported anymore.
+AC_CHECK_HEADERS([android/hardware/hardware.h],
+    AC_MSG_ERROR(Found external hardware.h which is not supported. Please remove it.),)
 
-# AC_AWK_CPP
-AC_DEFUN([AC_AWK_CPP],
-[AC_LANG_PREPROC_REQUIRE()dnl
-AC_REQUIRE([AC_PROG_AWK])dnl
-AC_LANG_CONFTEST([AC_LANG_SOURCE([[$2]])])
+if test "x$core_only" = "xno" ; then
+    AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test -f $ANDROID_HEADERS_DIR/libnfc-nxp/phLibNfc.h])
+    AS_IF([test -f $ANDROID_HEADERS_DIR/libnfc-nxp/phLibNfc.h], [ANDROID_HEADERS_CFLAGS="-I$ANDROID_HEADERS_DIR -I$ANDROID_HEADERS_DIR/libnfc-nxp"],[ANDROID_HEADERS_CFLAGS="-I$ANDROID_HEADERS_DIR"])
 
-ac_awk_cpp_out="`$CPP $CPPFLAGS conftest.$ac_ext|$AWK '$1'`"
-AS_IF([test "x$ac_awk_cpp_out" = x], [$4], [$3])
-rm -f conftest*
-])# AC_AWK_CPP
+    AC_CHECK_HEADERS(android-config.h,,AC_MSG_ERROR(required header file 'android-config.h' is missing))
+    AC_CHECK_HEADERS(android-version.h,,AC_MSG_ERROR(required header file 'android-version.h' is missing))
 
+    # AC_AWK_CPP
+    AC_DEFUN([AC_AWK_CPP],
+    [AC_LANG_PREPROC_REQUIRE()dnl
+    AC_REQUIRE([AC_PROG_AWK])dnl
+    AC_LANG_CONFTEST([AC_LANG_SOURCE([[$2]])])
 
-# According to http://en.wikipedia.org/wiki/Android_version_history#Version_history_by_API_level
-###########################
-AC_AWK_CPP([/has_ANDROID_VERSION_MAJOR/ {print \$2;}],
-[
-#include <android-version.h>
-has_ANDROID_VERSION_MAJOR ANDROID_VERSION_MAJOR
-],
-[android_headers_major=$ac_awk_cpp_out],
-[AC_MSG_ERROR(required 'major' version is missing)])
+    ac_awk_cpp_out="`$CPP $CPPFLAGS conftest.$ac_ext|$AWK '$1'`"
+    AS_IF([test "x$ac_awk_cpp_out" = x], [$4], [$3])
+    rm -f conftest*
+    ])# AC_AWK_CPP
 
 
-###########################
-AC_AWK_CPP([/has_ANDROID_VERSION_MINOR/ {print \$2;}],
-[
-#include <android-version.h>
-has_ANDROID_VERSION_MINOR ANDROID_VERSION_MINOR
-],
-[android_headers_minor=$ac_awk_cpp_out],
-[AC_MSG_ERROR(required 'minor' version is missing)])
+    # According to http://en.wikipedia.org/wiki/Android_version_history#Version_history_by_API_level
+    ###########################
+    AC_AWK_CPP([/has_ANDROID_VERSION_MAJOR/ {print \$2;}],
+    [
+    #include <android-version.h>
+    has_ANDROID_VERSION_MAJOR ANDROID_VERSION_MAJOR
+    ],
+    [android_headers_major=$ac_awk_cpp_out],
+    [AC_MSG_ERROR(required 'major' version is missing)])
 
-###########################
-AC_AWK_CPP([/has_ANDROID_VERSION_PATCH/ {print \$2;}],
-[
-#include <android-version.h>
-has_ANDROID_VERSION_PATCH ANDROID_VERSION_PATCH
-],
-[android_headers_patch=$ac_awk_cpp_out],
-[AC_MSG_ERROR(require 'patch' version is missing)])
 
-AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch.$ac_awk_cpp_out")
-###########################
-AC_SUBST(ANDROID_VERSION_MAJOR, [$android_headers_major])
-AC_SUBST(ANDROID_VERSION_MINOR, [$android_headers_minor])
-AC_SUBST(ANDROID_VERSION_PATCH, [$android_headers_patch])
+    ###########################
+    AC_AWK_CPP([/has_ANDROID_VERSION_MINOR/ {print \$2;}],
+    [
+    #include <android-version.h>
+    has_ANDROID_VERSION_MINOR ANDROID_VERSION_MINOR
+    ],
+    [android_headers_minor=$ac_awk_cpp_out],
+    [AC_MSG_ERROR(required 'minor' version is missing)])
 
-AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch")
+    ###########################
+    AC_AWK_CPP([/has_ANDROID_VERSION_PATCH/ {print \$2;}],
+    [
+    #include <android-version.h>
+    has_ANDROID_VERSION_PATCH ANDROID_VERSION_PATCH
+    ],
+    [android_headers_patch=$ac_awk_cpp_out],
+    [AC_MSG_ERROR(require 'patch' version is missing)])
 
-# Add automake tests for version/API needs here that you need in code, including test .am's
-AM_CONDITIONAL([HAS_ANDROID_5_0_0], [test $android_headers_major -ge 5 -a $android_headers_minor -ge 0 ])
-AM_CONDITIONAL([HAS_ANDROID_4_2_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 2 ])
-AM_CONDITIONAL([HAS_ANDROID_4_1_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 1 ])
-AM_CONDITIONAL([HAS_ANDROID_4_0_3], [test $android_headers_major -ge 4 -a $android_headers_patch -ge 3 ])
-AM_CONDITIONAL([HAS_ANDROID_4_0_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 0 ])
-AM_CONDITIONAL([HAS_ANDROID_2_3_0], [test $android_headers_major -ge 2 -a $android_headers_minor -ge 3 ])
+    AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch.$ac_awk_cpp_out")
+    ###########################
+    AC_SUBST(ANDROID_VERSION_MAJOR, [$android_headers_major])
+    AC_SUBST(ANDROID_VERSION_MINOR, [$android_headers_minor])
+    AC_SUBST(ANDROID_VERSION_PATCH, [$android_headers_patch])
 
+    AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch")
+
+    # Add automake tests for version/API needs here that you need in code, including test .am's
+    AM_CONDITIONAL([HAS_ANDROID_5_0_0], [test $android_headers_major -ge 5 -a $android_headers_minor -ge 0 ])
+    AM_CONDITIONAL([HAS_ANDROID_4_2_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 2 ])
+    AM_CONDITIONAL([HAS_ANDROID_4_1_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 1 ])
+    AM_CONDITIONAL([HAS_ANDROID_4_0_3], [test $android_headers_major -ge 4 -a $android_headers_patch -ge 3 ])
+    AM_CONDITIONAL([HAS_ANDROID_4_0_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 0 ])
+    AM_CONDITIONAL([HAS_ANDROID_2_3_0], [test $android_headers_major -ge 2 -a $android_headers_minor -ge 3 ])
+else
+    AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [false])
+    AM_CONDITIONAL([HAS_ANDROID_5_0_0], [false])
+    AM_CONDITIONAL([HAS_ANDROID_4_2_0], [false])
+    AM_CONDITIONAL([HAS_ANDROID_4_1_0], [false])
+    AM_CONDITIONAL([HAS_ANDROID_4_0_3], [false])
+    AM_CONDITIONAL([HAS_ANDROID_4_0_0], [false])
+    AM_CONDITIONAL([HAS_ANDROID_2_3_0], [false])
+fi
 
 AC_CONFIG_FILES([
 	Makefile
@@ -233,6 +267,10 @@ echo "------------------------------------------------------------------------"
 echo
 echo "Configuration Options:"
 echo
+echo "  Core only...............: $core_only"
+echo
+echo "  Android linker..........: $ANDROID_LINKER"
+echo
 echo "  debug build.............: $debug"
 echo
 echo "  trace...................: $trace"
@@ -241,11 +279,11 @@ echo "  prefix..................: $prefix"
 echo
 echo "  arch  ..................: $arch"
 echo
-echo "  headers path ...........: $android_headers_path"
+echo "  Android headers path ...: $ANDROID_HEADERS_DIR"
 echo
-echo "  default egl platform ...: $DEFAULT_EGL_PLATFORM"
+echo "  Default EGL platform ...: $DEFAULT_EGL_PLATFORM"
 echo
-echo "  default ld_library_path.: $DEFAULT_HYBRIS_LD_LIBRARY_PATH"
+echo "  Default LD_LIBRARY_PATH.: $DEFAULT_HYBRIS_LD_LIBRARY_PATH"
 echo
 echo "------------------------------------------------------------------------"
 echo
