@@ -1745,7 +1745,10 @@ void *get_hooked_symbol(char *sym)
     key.name = sym;
     found = bsearch(&key, hooks, nhooks, sizeof(hooks[0]), hook_cmp);
     if (found != NULL)
+    {
+        LOGD("Found hook for symbol %s", sym);
         return ((struct _hook*)found)->func;
+    }
 
     if (strstr(sym, "pthread") != NULL)
     {
@@ -1754,9 +1757,15 @@ void *get_hooked_symbol(char *sym)
            return NULL;
         /* not safe */
         counter--;
-        LOGD("%s %i\n", sym, counter);
+        // If you're experiencing a crash later on check the address of the
+        // function pointer being call. If it matches the printed counter
+        // value here then you can easily find out which symbol is missing.
+        LOGD("Missing hook for pthread symbol %s (counter %i)\n", sym, counter);
         return (void *) counter;
     }
+
+    LOGD("Could not find a hook for symbol %s", sym);
+
     return NULL;
 }
 
