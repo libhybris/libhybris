@@ -18,6 +18,7 @@
 
 #include <dlfcn.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #include <hybris/common/binding.h>
 
