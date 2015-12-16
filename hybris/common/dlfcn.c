@@ -15,8 +15,8 @@
  *
  */
 
-#include <../include/hybris/dlfcn/dlfcn.h>
-#include <../include/hybris/common/binding.h>
+#include <hybris/dlfcn/dlfcn.h>
+#include <hybris/common/binding.h>
 
 void *hybris_dlopen(const char *filename, int flag)
 {
@@ -36,7 +36,7 @@ int   hybris_dlclose(void *handle)
 }
 
 
-char *hybris_dlerror(void)
+const char *hybris_dlerror(void)
 {
     return android_dlerror();
 }
