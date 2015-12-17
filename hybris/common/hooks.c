@@ -242,7 +242,6 @@ static void *my_memcpy(void *dst, const void *src, size_t len)
 
 static size_t my_strlen(const char *s)
 {
-
     if (s == NULL)
         return -1;
 
