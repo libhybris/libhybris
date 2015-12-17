@@ -55,6 +55,7 @@
 #include <locale.h>
 #include <sys/syscall.h>
 #include <sys/auxv.h>
+#include <sys/prctl.h>
 
 #include <hybris/properties/properties.h>
 
@@ -85,6 +86,8 @@ static int locale_inited = 0;
 #define ANDROID_PTHREAD_ERRORCHECK_MUTEX_INITIALIZER 0x8000
 #define ANDROID_PTHREAD_COND_INITIALIZER             0
 #define ANDROID_PTHREAD_RWLOCK_INITIALIZER           0
+
+#define MALI_HIST_DUMP_THREAD_NAME "mali-hist-dump"
 
 /* Debug */
 #include "logging.h"
@@ -799,11 +802,13 @@ int my_pthread_setname_np(pthread_t thread, const char *name)
     HOOK_TRACE("name %s", name);
 
     if (getenv("HYBRIS_MALI_HIST_DUMP_WORKAROUND") &&
-        strcmp(name, "mali-hist-dump") == 0) {
+        strcmp(name, MALI_HIST_DUMP_THREAD_NAME) == 0) {
 
-        HYBRIS_DEBUG_LOG(HOOKS, "Found mali-hist-dump, sleeping forever now ...");
+        HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump, sleeping forever now ...",
+                         __FUNCTION__);
         if (thread != pthread_self()) {
-            HYBRIS_DEBUG_LOG(HOOKS, "-> Failed, as calling thread is not mali-hist-dump itself");
+            HYBRIS_DEBUG_LOG(HOOKS, "%s: -> Failed, as calling thread is not mali-hist-dump itself",
+                             __FUNCTION__);
             return;
         }
 
@@ -1471,6 +1476,33 @@ void *__get_tls_hooks()
   return tls_hooks;
 }
 
+int my_prctl(int option, unsigned long arg2, unsigned long arg3,
+             unsigned long arg4, unsigned long arg5)
+{
+    HOOK_TRACE("option %d arg2 %lu arg3 %lu arg4 %lu arg5 %lu",
+               option, arg2, arg3, arg4, arg5);
+
+    if (option == PR_SET_NAME) {
+        char *name = (char*) arg2;
+
+        if (getenv("HYBRIS_MALI_HIST_DUMP_WORKAROUND") &&
+            strcmp(name, MALI_HIST_DUMP_THREAD_NAME) == 0) {
+
+            // This can only work because prctl with PR_SET_NAME
+            // can be only called for the current thread and not
+            // for another thread so we can safely pause things.
+
+            HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump, sleeping forever now ...",
+                             __FUNCTION__);
+
+            // Sleep forever ...
+            for (;;) pause();
+        }
+    }
+
+    return prctl(option, arg2, arg3, arg4, arg5);
+}
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -1745,6 +1777,8 @@ static struct _hook hooks[] = {
     {"__system_property_add", __my_system_property_add},
     {"__system_property_wait_any", __my_system_property_wait_any},
     {"__system_property_find_nth", __my_system_property_find_nth},
+    /* sys/prctl.h */
+    {"prctl", my_prctl},
 };
 
 static int hook_cmp(const void *a, const void *b)
