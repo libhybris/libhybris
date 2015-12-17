@@ -1485,6 +1485,8 @@ int my_prctl(int option, unsigned long arg2, unsigned long arg3,
     if (option == PR_SET_NAME) {
         char *name = (char*) arg2;
 
+        HOOK_TRACE("with PR_SET_NAME: name %s", name);
+
         if (getenv("HYBRIS_MALI_HIST_DUMP_WORKAROUND") &&
             strcmp(name, MALI_HIST_DUMP_THREAD_NAME) == 0) {
 
