@@ -794,6 +794,28 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
     return pthread_cond_timedwait(realcond, realmutex, &tv);
 }
 
+int my_pthread_setname_np(pthread_t thread, const char *name)
+{
+    HOOK_TRACE("name %s", name);
+
+    if (getenv("HYBRIS_MALI_HIST_DUMP_WORKAROUND") &&
+        strcmp(name, "mali-hist-dump") == 0) {
+
+        HYBRIS_DEBUG_LOG(HOOKS, "Found mali-hist-dump, sleeping forever now ...");
+        if (thread != pthread_self()) {
+            HYBRIS_DEBUG_LOG(HOOKS, "-> Failed, as calling thread is not mali-hist-dump itself");
+            return;
+        }
+
+        // Sleep forever ...
+        for (;;) pause();
+
+        return;
+    }
+
+    return pthread_setname_np(thread, name);
+}
+
 /*
  * pthread_rwlockattr_* functions
  *
@@ -1563,7 +1585,7 @@ static struct _hook hooks[] = {
     {"pthread_cond_timedwait_monotonic_np", my_pthread_cond_timedwait},
     {"pthread_cond_timedwait_relative_np", my_pthread_cond_timedwait_relative_np},
     {"pthread_key_delete", pthread_key_delete},
-    {"pthread_setname_np", pthread_setname_np},
+    {"pthread_setname_np", my_pthread_setname_np},
     {"pthread_once", pthread_once},
     {"pthread_key_create", pthread_key_create},
     {"pthread_setspecific", pthread_setspecific},
