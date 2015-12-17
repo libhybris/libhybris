@@ -1487,7 +1487,9 @@ int my_prctl(int option, unsigned long arg2, unsigned long arg3,
 
         HOOK_TRACE("with PR_SET_NAME: name %s", name);
 
-        if (getenv("HYBRIS_MALI_HIST_DUMP_WORKAROUND") &&
+        char *workaround = getenv("HYBRIS_MALI_HIST_DUMP_WORKAROUND");
+
+        if (workaround &&
             strcmp(name, MALI_HIST_DUMP_THREAD_NAME) == 0) {
 
             // This can only work because prctl with PR_SET_NAME
@@ -1497,8 +1499,12 @@ int my_prctl(int option, unsigned long arg2, unsigned long arg3,
             HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump, sleeping forever now ...",
                              __FUNCTION__);
 
-            // Sleep forever ...
-            for (;;) pause();
+            if (strcmp(workaround, "exit") == 0)
+                pthread_exit(NULL);
+            else {
+                // Sleep forever ...
+                for (;;) pause();
+            }
         }
     }
 
