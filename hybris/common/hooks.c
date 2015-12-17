@@ -1496,12 +1496,14 @@ int my_prctl(int option, unsigned long arg2, unsigned long arg3,
             // can be only called for the current thread and not
             // for another thread so we can safely pause things.
 
-            HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump, sleeping forever now ...",
-                             __FUNCTION__);
-
-            if (strcmp(workaround, "exit") == 0)
+            if (strcmp(workaround, "exit") == 0) {
+                HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump, exiting thread ...",
+                                 __FUNCTION__);
                 pthread_exit(NULL);
+            }
             else {
+                HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump, sleeping forever now ...",
+                                 __FUNCTION__);
                 // Sleep forever ...
                 for (;;) pause();
             }
