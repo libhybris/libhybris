@@ -102,5 +102,8 @@ override_dh_install:
 override_dh_autoreconf:
 	NOCONFIGURE=1 dh_autoreconf ./hybris/autogen.sh
 
+override_dh_strip:
+	dh_strip --dbg-package=libhybris-dbg
+
 %:
 	dh $@ --with quilt,autoreconf --sourcedirectory=hybris
