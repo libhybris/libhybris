@@ -38,8 +38,8 @@
 #include <system/window.h>
 #include "logging.h"
 
-static void *_libegl = NULL;
-static void *_libgles = NULL;
+static void *egl_handle = NULL;
+static void *glesv2_handle = NULL;
 static void *_hybris_libgles1 = NULL;
 static void *_hybris_libgles2 = NULL;
 static int _egl_context_client_version = 1;
@@ -121,16 +121,26 @@ static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char
 
 static void _init_androidegl()
 {
-	_libegl = (void *) android_dlopen(getenv("LIBEGL") ? getenv("LIBEGL") : "libEGL.so", RTLD_LAZY);
-	_libgles = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("LIBGLESV2") : "libGLESv2.so", RTLD_LAZY);
+	egl_handle = (void *) android_dlopen(getenv("LIBEGL") ? getenv("LIBEGL") : "libEGL.so", RTLD_LAZY);
+	glesv2_handle = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("LIBGLESV2") : "libGLESv2.so", RTLD_LAZY);
+}
+
+static inline void hybris_egl_initialize()
+{
+	_init_androidegl();
+}
+
+static inline void hybris_glesv2_initialize()
+{
+	_init_androidegl();
 }
 
 static void * _android_egl_dlsym(const char *symbol)
 {
-	if (_libegl == NULL)
+	if (egl_handle == NULL)
 		_init_androidegl();
 
-	return android_dlsym(_libegl, symbol);
+	return android_dlsym(egl_handle, symbol);
 }
 
 struct ws_egl_interface hybris_egl_interface = {
@@ -139,14 +149,7 @@ struct ws_egl_interface hybris_egl_interface = {
 	egl_helper_get_mapping,
 };
 
-#define EGL_DLSYM(fptr, sym) do { if (_libegl == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libegl, sym); } } while (0)
-#define GLESv2_DLSYM(fptr, sym) do { if (_libgles == NULL) { _init_androidegl(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libgles, sym); } } while (0)
-
-EGLint eglGetError(void)
-{
-	EGL_DLSYM(&_eglGetError, "eglGetError");
-	return (*_eglGetError)();
-}
+HYBRIS_IMPLEMENT_FUNCTION0(egl, EGLint, eglGetError);
 
 #define _EGL_MAX_DISPLAYS 100
 
@@ -184,7 +187,7 @@ struct _EGLDisplay *hybris_egl_display_get_mapping(EGLDisplay display)
 
 EGLDisplay eglGetDisplay(EGLNativeDisplayType display_id)
 {
-	EGL_DLSYM(&_eglGetDisplay, "eglGetDisplay");
+	HYBRIS_DLSYSM(egl, &_eglGetDisplay, "eglGetDisplay");
 	EGLNativeDisplayType real_display;
 
 	real_display = (*_eglGetDisplay)(EGL_DEFAULT_DISPLAY);
@@ -206,15 +209,11 @@ EGLDisplay eglGetDisplay(EGLNativeDisplayType display_id)
 	return real_display;
 }
 
-EGLBoolean eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
-{
-	EGL_DLSYM(&_eglInitialize, "eglInitialize");
-	return (*_eglInitialize)(dpy, major, minor);
-}
+HYBRIS_IMPLEMENT_FUNCTION3(egl, EGLBoolean, eglInitialize, EGLDisplay, EGLint *, EGLint *);
 
 EGLBoolean eglTerminate(EGLDisplay dpy)
 {
-	EGL_DLSYM(&_eglTerminate, "eglTerminate");
+	HYBRIS_DLSYSM(egl, &_eglTerminate, "eglTerminate");
 
 	struct _EGLDisplay *display = hybris_egl_display_get_mapping(dpy);
 	ws_Terminate(display);
@@ -223,40 +222,19 @@ EGLBoolean eglTerminate(EGLDisplay dpy)
 
 const char * eglQueryString(EGLDisplay dpy, EGLint name)
 {
-	EGL_DLSYM(&_eglQueryString, "eglQueryString");
+	HYBRIS_DLSYSM(egl, &_eglQueryString, "eglQueryString");
 	return ws_eglQueryString(dpy, name, _eglQueryString);
 }
 
-EGLBoolean eglGetConfigs(EGLDisplay dpy, EGLConfig *configs,
-		EGLint config_size, EGLint *num_config)
-{
-	EGL_DLSYM(&_eglGetConfigs, "eglGetConfigs");
-	return (*_eglGetConfigs)(dpy, configs, config_size, num_config);
-}
-
-EGLBoolean eglChooseConfig(EGLDisplay dpy, const EGLint *attrib_list,
-		EGLConfig *configs, EGLint config_size,
-		EGLint *num_config)
-{
-	EGL_DLSYM(&_eglChooseConfig, "eglChooseConfig");
-	return (*_eglChooseConfig)(dpy, attrib_list,
-			configs, config_size,
-			num_config);
-}
-
-EGLBoolean eglGetConfigAttrib(EGLDisplay dpy, EGLConfig config,
-		EGLint attribute, EGLint *value)
-{
-	EGL_DLSYM(&_eglGetConfigAttrib, "eglGetConfigAttrib");
-	return (*_eglGetConfigAttrib)(dpy, config,
-			attribute, value);
-}
+HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLBoolean, eglGetConfigs, EGLDisplay, EGLConfig *, EGLint, EGLint *);
+HYBRIS_IMPLEMENT_FUNCTION5(egl, EGLBoolean, eglChooseConfig, EGLDisplay, const EGLint *, EGLConfig *, EGLint, EGLint *);
+HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLBoolean, eglGetConfigAttrib, EGLDisplay, EGLConfig, EGLint, EGLint *);
 
 EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 		EGLNativeWindowType win,
 		const EGLint *attrib_list)
 {
-	EGL_DLSYM(&_eglCreateWindowSurface, "eglCreateWindowSurface");
+	HYBRIS_DLSYSM(egl, &_eglCreateWindowSurface, "eglCreateWindowSurface");
 
 	HYBRIS_TRACE_BEGIN("hybris-egl", "eglCreateWindowSurface", "");
 	struct _EGLDisplay *display = hybris_egl_display_get_mapping(dpy);
@@ -273,24 +251,12 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 	return result;
 }
 
-EGLSurface eglCreatePbufferSurface(EGLDisplay dpy, EGLConfig config,
-		const EGLint *attrib_list)
-{
-	EGL_DLSYM(&_eglCreatePbufferSurface, "eglCreatePbufferSurface");
-	return (*_eglCreatePbufferSurface)(dpy, config, attrib_list);
-}
-
-EGLSurface eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
-		EGLNativePixmapType pixmap,
-		const EGLint *attrib_list)
-{
-	EGL_DLSYM(&_eglCreatePixmapSurface, "eglCreatePixmapSurface");
-	return (*_eglCreatePixmapSurface)(dpy, config, pixmap, attrib_list);
-}
+HYBRIS_IMPLEMENT_FUNCTION3(egl, EGLSurface, eglCreatePbufferSurface, EGLDisplay, EGLConfig, const EGLint *);
+HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLSurface, eglCreatePixmapSurface, EGLDisplay, EGLConfig, EGLNativePixmapType, const EGLint *);
 
 EGLBoolean eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 {
-	EGL_DLSYM(&_eglDestroySurface, "eglDestroySurface");
+	HYBRIS_DLSYSM(egl, &_eglDestroySurface, "eglDestroySurface");
 	EGLBoolean result = (*_eglDestroySurface)(dpy, surface);
 
 	/**
@@ -304,64 +270,15 @@ EGLBoolean eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 	return result;
 }
 
-EGLBoolean eglQuerySurface(EGLDisplay dpy, EGLSurface surface,
-		EGLint attribute, EGLint *value)
-{
-	EGL_DLSYM(&_eglQuerySurface, "eglQuerySurface");
-	return (*_eglQuerySurface)(dpy, surface, attribute, value);
-}
-
-
-EGLBoolean eglBindAPI(EGLenum api)
-{
-	EGL_DLSYM(&_eglBindAPI, "eglBindAPI");
-	return (*_eglBindAPI)(api);
-}
-
-EGLenum eglQueryAPI(void)
-{
-	EGL_DLSYM(&_eglQueryAPI, "eglQueryAPI");
-	return (*_eglQueryAPI)();
-}
-
-EGLBoolean eglWaitClient(void)
-{
-	EGL_DLSYM(&_eglWaitClient, "eglWaitClient");
-	return (*_eglWaitClient)();
-}
-
-EGLBoolean eglReleaseThread(void)
-{
-	EGL_DLSYM(&_eglReleaseThread, "eglReleaseThread");
-	return (*_eglReleaseThread)();
-}
-
-EGLSurface eglCreatePbufferFromClientBuffer(
-		EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer,
-		EGLConfig config, const EGLint *attrib_list)
-{
-	EGL_DLSYM(&_eglCreatePbufferFromClientBuffer, "eglCreatePbufferFromClientBuffer");
-	return (*_eglCreatePbufferFromClientBuffer)(dpy, buftype, buffer, config, attrib_list);
-}
-
-EGLBoolean eglSurfaceAttrib(EGLDisplay dpy, EGLSurface surface,
-		EGLint attribute, EGLint value)
-{
-	EGL_DLSYM(&_eglSurfaceAttrib, "eglSurfaceAttrib");
-	return (*_eglSurfaceAttrib)(dpy, surface, attribute, value);
-}
-
-EGLBoolean eglBindTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer)
-{
-	EGL_DLSYM(&_eglBindTexImage, "eglBindTexImage");
-	return (*_eglBindTexImage)(dpy, surface, buffer);
-}
-
-EGLBoolean eglReleaseTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer)
-{
-	EGL_DLSYM(&_eglReleaseTexImage, "eglReleaseTexImage");
-	return (*_eglReleaseTexImage)(dpy, surface, buffer);
-}
+HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLBoolean, eglQuerySurface, EGLDisplay, EGLSurface, EGLint, EGLint *);
+HYBRIS_IMPLEMENT_FUNCTION1(egl, EGLBoolean, eglBindAPI, EGLenum);
+HYBRIS_IMPLEMENT_FUNCTION0(egl, EGLenum, eglQueryAPI);
+HYBRIS_IMPLEMENT_FUNCTION0(egl, EGLBoolean, eglWaitClient);
+HYBRIS_IMPLEMENT_FUNCTION0(egl, EGLBoolean, eglReleaseThread);
+HYBRIS_IMPLEMENT_FUNCTION5(egl, EGLSurface, eglCreatePbufferFromClientBuffer, EGLDisplay, EGLenum, EGLClientBuffer, EGLConfig, const EGLint *);
+HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLBoolean, eglSurfaceAttrib, EGLDisplay, EGLSurface, EGLint, EGLint);
+HYBRIS_IMPLEMENT_FUNCTION3(egl, EGLBoolean, eglBindTexImage, EGLDisplay, EGLSurface, EGLint);
+HYBRIS_IMPLEMENT_FUNCTION3(egl, EGLBoolean, eglReleaseTexImage, EGLDisplay, EGLSurface, EGLint);
 
 EGLBoolean eglSwapInterval(EGLDisplay dpy, EGLint interval)
 {
@@ -374,13 +291,13 @@ EGLBoolean eglSwapInterval(EGLDisplay dpy, EGLint interval)
 	 * call.  Since we may support various swap intervals internally, we'll
 	 * call it anyway and then give the wrapped egl implementation a chance
 	 * to chage it. */
-	EGL_DLSYM(&_eglGetCurrentSurface, "eglGetCurrentSurface");
+	HYBRIS_DLSYSM(egl, &_eglGetCurrentSurface, "eglGetCurrentSurface");
 	surface = (*_eglGetCurrentSurface)(EGL_DRAW);
 	if (egl_helper_has_mapping(surface))
 	    ws_setSwapInterval(dpy, egl_helper_get_mapping(surface), interval);
 
 	HYBRIS_TRACE_BEGIN("native-egl", "eglSwapInterval", "=%d", interval);
-	EGL_DLSYM(&_eglSwapInterval, "eglSwapInterval");
+	HYBRIS_DLSYSM(egl, &_eglSwapInterval, "eglSwapInterval");
 	ret = (*_eglSwapInterval)(dpy, interval);
 	HYBRIS_TRACE_END("native-egl", "eglSwapInterval", "");
 	HYBRIS_TRACE_END("hybris-egl", "eglSwapInterval", "");
@@ -391,7 +308,7 @@ EGLContext eglCreateContext(EGLDisplay dpy, EGLConfig config,
 		EGLContext share_context,
 		const EGLint *attrib_list)
 {
-	EGL_DLSYM(&_eglCreateContext, "eglCreateContext");
+	HYBRIS_DLSYSM(egl, &_eglCreateContext, "eglCreateContext");
 
 	EGLint *p = attrib_list;
 	while (p != NULL && *p != EGL_NONE) {
@@ -404,62 +321,21 @@ EGLContext eglCreateContext(EGLDisplay dpy, EGLConfig config,
 	return (*_eglCreateContext)(dpy, config, share_context, attrib_list);
 }
 
-EGLBoolean eglDestroyContext(EGLDisplay dpy, EGLContext ctx)
-{
-	EGL_DLSYM(&_eglDestroyContext, "eglDestroyContext");
-	return (*_eglDestroyContext)(dpy, ctx);
-}
-
-EGLBoolean eglMakeCurrent(EGLDisplay dpy, EGLSurface draw,
-		EGLSurface read, EGLContext ctx)
-{
-	EGL_DLSYM(&_eglMakeCurrent, "eglMakeCurrent");
-	return (*_eglMakeCurrent)(dpy, draw, read, ctx);
-}
-
-EGLContext eglGetCurrentContext(void)
-{
-	EGL_DLSYM(&_eglGetCurrentContext, "eglGetCurrentContext");
-	return (*_eglGetCurrentContext)();
-}
-
-EGLSurface eglGetCurrentSurface(EGLint readdraw)
-{
-	EGL_DLSYM(&_eglGetCurrentSurface, "eglGetCurrentSurface");
-	return (*_eglGetCurrentSurface)(readdraw);
-}
-
-EGLDisplay eglGetCurrentDisplay(void)
-{
-	EGL_DLSYM(&_eglGetCurrentDisplay, "eglGetCurrentDisplay");
-	return (*_eglGetCurrentDisplay)();
-}
-
-EGLBoolean eglQueryContext(EGLDisplay dpy, EGLContext ctx,
-		EGLint attribute, EGLint *value)
-{
-	EGL_DLSYM(&_eglQueryContext, "eglQueryContext");
-	return (*_eglQueryContext)(dpy, ctx, attribute, value);
-}
-
-EGLBoolean eglWaitGL(void)
-{
-	EGL_DLSYM(&_eglWaitGL, "eglWaitGL");
-	return (*_eglWaitGL)();
-}
-
-EGLBoolean eglWaitNative(EGLint engine)
-{
-	EGL_DLSYM(&_eglWaitNative, "eglWaitNative");
-	return (*_eglWaitNative)(engine);
-}
+HYBRIS_IMPLEMENT_FUNCTION2(egl, EGLBoolean, eglDestroyContext, EGLDisplay, EGLContext);
+HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLBoolean, eglMakeCurrent, EGLDisplay, EGLSurface, EGLSurface, EGLContext);
+HYBRIS_IMPLEMENT_FUNCTION0(egl, EGLContext, eglGetCurrentContext);
+HYBRIS_IMPLEMENT_FUNCTION1(egl, EGLSurface, eglGetCurrentSurface, EGLint);
+HYBRIS_IMPLEMENT_FUNCTION0(egl, EGLDisplay, eglGetCurrentDisplay);
+HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLBoolean, eglQueryContext, EGLDisplay, EGLContext, EGLint, EGLint *);
+HYBRIS_IMPLEMENT_FUNCTION0(egl, EGLBoolean, eglWaitGL);
+HYBRIS_IMPLEMENT_FUNCTION1(egl, EGLBoolean, eglWaitNative, EGLint);
 
 EGLBoolean _my_eglSwapBuffersWithDamageEXT(EGLDisplay dpy, EGLSurface surface, EGLint *rects, EGLint n_rects)
 {
 	EGLNativeWindowType win;
 	EGLBoolean ret;
 	HYBRIS_TRACE_BEGIN("hybris-egl", "eglSwapBuffersWithDamageEXT", "");
-	EGL_DLSYM(&_eglSwapBuffers, "eglSwapBuffers");
+	HYBRIS_DLSYSM(egl, &_eglSwapBuffers, "eglSwapBuffers");
 
 	if (egl_helper_has_mapping(surface)) {
 		win = egl_helper_get_mapping(surface);
@@ -482,17 +358,12 @@ EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 	return ret;
 }
 
-EGLBoolean eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
-		EGLNativePixmapType target)
-{
-	EGL_DLSYM(&_eglCopyBuffers, "eglCopyBuffers");
-	return (*_eglCopyBuffers)(dpy, surface, target);
-}
+HYBRIS_IMPLEMENT_FUNCTION3(egl, EGLBoolean, eglCopyBuffers, EGLDisplay, EGLSurface, EGLNativePixmapType);
 
 
 static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list)
 {
-	EGL_DLSYM(&_eglCreateImageKHR, "eglCreateImageKHR");
+	HYBRIS_DLSYSM(egl, &_eglCreateImageKHR, "eglCreateImageKHR");
 	EGLContext newctx = ctx;
 	EGLenum newtarget = target;
 	EGLClientBuffer newbuffer = buffer;
@@ -517,14 +388,14 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 
 static void _my_glEGLImageTargetTexture2DOES(GLenum target, GLeglImageOES image)
 {
-	GLESv2_DLSYM(&_glEGLImageTargetTexture2DOES, "glEGLImageTargetTexture2DOES");
+	HYBRIS_DLSYSM(glesv2, &_glEGLImageTargetTexture2DOES, "glEGLImageTargetTexture2DOES");
 	struct egl_image *img = image;
 	(*_glEGLImageTargetTexture2DOES)(target, img ? img->egl_image : NULL);
 }
 
 __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 {
-	EGL_DLSYM(&_eglGetProcAddress, "eglGetProcAddress");
+	HYBRIS_DLSYSM(egl, &_eglGetProcAddress, "eglGetProcAddress");
 	if (strcmp(procname, "eglCreateImageKHR") == 0)
 	{
 		return _my_eglCreateImageKHR;
@@ -578,7 +449,7 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 
 EGLBoolean eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 {
-	EGL_DLSYM(&_eglDestroyImageKHR, "eglDestroyImageKHR");
+	HYBRIS_DLSYSM(egl, &_eglDestroyImageKHR, "eglDestroyImageKHR");
 	struct egl_image *img = image;
 	EGLBoolean ret = (*_eglDestroyImageKHR)(dpy, img ? img->egl_image : NULL);
 	if (ret == EGL_TRUE) {
