@@ -799,24 +799,22 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
 
 int my_pthread_setname_np(pthread_t thread, const char *name)
 {
-    HOOK_TRACE("name %s", name);
-
-    if (getenv("HYBRIS_MALI_HIST_DUMP_WORKAROUND") &&
-        strcmp(name, MALI_HIST_DUMP_THREAD_NAME) == 0) {
-
-        HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump, sleeping forever now ...",
+#ifdef MALI_QUIRKS
+    if (strcmp(name, MALI_HIST_DUMP_THREAD_NAME) == 0) {
+        HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump thread, killing it ...",
                          __FUNCTION__);
+
         if (thread != pthread_self()) {
             HYBRIS_DEBUG_LOG(HOOKS, "%s: -> Failed, as calling thread is not mali-hist-dump itself",
                              __FUNCTION__);
             return;
         }
 
-        // Sleep forever ...
-        for (;;) pause();
+        pthread_exit(thread);
 
         return;
     }
+#endif
 
     return pthread_setname_np(thread, name);
 }
@@ -1479,36 +1477,23 @@ void *__get_tls_hooks()
 int my_prctl(int option, unsigned long arg2, unsigned long arg3,
              unsigned long arg4, unsigned long arg5)
 {
-    HOOK_TRACE("option %d arg2 %lu arg3 %lu arg4 %lu arg5 %lu",
-               option, arg2, arg3, arg4, arg5);
-
+#ifdef MALI_QUIRKS
     if (option == PR_SET_NAME) {
         char *name = (char*) arg2;
 
-        HOOK_TRACE("with PR_SET_NAME: name %s", name);
-
-        char *workaround = getenv("HYBRIS_MALI_HIST_DUMP_WORKAROUND");
-
-        if (workaround &&
-            strcmp(name, MALI_HIST_DUMP_THREAD_NAME) == 0) {
+        if (strcmp(name, MALI_HIST_DUMP_THREAD_NAME) == 0) {
 
             // This can only work because prctl with PR_SET_NAME
             // can be only called for the current thread and not
             // for another thread so we can safely pause things.
 
-            if (strcmp(workaround, "exit") == 0) {
-                HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump, exiting thread ...",
-                                 __FUNCTION__);
-                pthread_exit(NULL);
-            }
-            else {
-                HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump, sleeping forever now ...",
-                                 __FUNCTION__);
-                // Sleep forever ...
-                for (;;) pause();
-            }
+            HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump, killing thread ...",
+                             __FUNCTION__);
+
+            pthread_exit(NULL);
         }
     }
+#endif
 
     return prctl(option, arg2, arg3, arg4, arg5);
 }
