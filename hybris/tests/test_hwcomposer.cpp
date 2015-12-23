@@ -119,7 +119,7 @@ void HWComposer::present(HWComposerNativeWindowBuffer *buffer)
 	assert(err == 0);
 
 	err = hwcdevice->set(hwcdevice, HWC_NUM_DISPLAY_TYPES, mlist);
-	assert(err == 0);
+	// in android surfaceflinger ignores the return value as not all display types may be supported
 	setFenceBufferFd(buffer, fblayer->releaseFenceFd);
 
 	if (oldretire != -1)
@@ -150,6 +150,13 @@ int main(int argc, char **argv)
 	EGLBoolean rv;
 
 	int err;	
+
+        hw_module_t const* module = NULL;
+        err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &module);
+        assert(err == 0);
+        framebuffer_device_t* fbDev = NULL;
+        framebuffer_open(module, &fbDev);
+
 	hw_module_t *hwcModule = 0;
 	hwc_composer_device_1_t *hwcDevicePtr = 0;
 
