@@ -1591,6 +1591,7 @@ static struct _hook hooks[] = {
     {"pthread_condattr_setpshared", pthread_condattr_setpshared},
     {"pthread_condattr_destroy", pthread_condattr_destroy},
     {"pthread_condattr_getclock", pthread_condattr_getclock},
+    {"pthread_condattr_setclock", pthread_condattr_setclock},
     {"pthread_cond_init", my_pthread_cond_init},
     {"pthread_cond_destroy", my_pthread_cond_destroy},
     {"pthread_cond_broadcast", my_pthread_cond_broadcast},
