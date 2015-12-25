@@ -1750,7 +1750,8 @@ void *get_hooked_symbol(char *sym)
         return ((struct _hook*)found)->func;
     }
 
-    if (strstr(sym, "pthread") != NULL)
+    if ((0 == strncmp(sym, "pthread", 7)) ||
+                    (0 == strncmp(sym, "__pthread", 9)))
     {
         /* safe */
         if (strcmp(sym, "pthread_sigmask") == 0)
