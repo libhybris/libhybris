@@ -46,6 +46,7 @@
 #undef LOG_TAG
 #define LOG_TAG "CameraCompatibilityLayer"
 #include <utils/Debug.h>
+#include <utils/Errors.h>
 #include <utils/KeyedVector.h>
 #include <utils/Log.h>
 #include <utils/String16.h>
@@ -171,27 +172,33 @@ int android_camera_get_number_of_devices()
 	return android::Camera::getNumberOfCameras();
 }
 
-void android_camera_get_device_info(int32_t camera_id, int* facing, int* orientation)
+int android_camera_get_device_info(int32_t camera_id, int* facing, int* orientation)
 {
 	REPORT_FUNCTION();
-	assert(id);
-	assert(orientation);
+
+	if (!facing || !orientation)
+		return android::BAD_VALUE;
 
 	COMPILE_TIME_ASSERT_FUNCTION_SCOPE(CAMERA_FACING_BACK == static_cast<int>(BACK_FACING_CAMERA_TYPE));
 	COMPILE_TIME_ASSERT_FUNCTION_SCOPE(CAMERA_FACING_FRONT == static_cast<int>(FRONT_FACING_CAMERA_TYPE));
 
 	android::CameraInfo ci;
-	android::Camera::getCameraInfo(camera_id, &ci);
+
+	int rv = android::Camera::getCameraInfo(camera_id, &ci);
+	if (rv != android::OK)
+		return rv;
 
 	*facing = ci.facing;
 	*orientation = ci.orientation;
+
+	return android::OK;
 }
 
 CameraControl* android_camera_connect_to(CameraType camera_type, CameraControlListener* listener)
 {
 	REPORT_FUNCTION();
 
-	int32_t camera_count = android::Camera::getNumberOfCameras();
+	const int32_t camera_count = android::Camera::getNumberOfCameras();
 
 	for (int32_t camera_id = 0; camera_id < camera_count; camera_id++) {
 		android::CameraInfo ci;
@@ -838,16 +845,20 @@ void android_camera_take_snapshot(CameraControl* control)
 	control->camera->takePicture(CAMERA_MSG_SHUTTER | CAMERA_MSG_COMPRESSED_IMAGE);
 }
 
-void android_camera_set_preview_callback_mode(CameraControl* control, PreviewCallbackMode mode)
+int android_camera_set_preview_callback_mode(CameraControl* control, PreviewCallbackMode mode)
 {
 	REPORT_FUNCTION();
-	assert(control);
+
+	if (!control)
+		return android::BAD_VALUE;
 
 	android::Mutex::Autolock al(control->guard);
 
 	control->camera->setPreviewCallbackFlags(
 		mode == PREVIEW_CALLBACK_ENABLED ?
 			CAMERA_FRAME_CALLBACK_FLAG_CAMCORDER : CAMERA_FRAME_CALLBACK_FLAG_NOOP);
+
+	return android::OK;
 }
 
 void android_camera_set_preview_format(CameraControl* control, CameraPixelFormat pf)

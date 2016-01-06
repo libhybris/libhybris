@@ -105,7 +105,7 @@ extern "C" {
 
     // Query camera parameters
     int android_camera_get_number_of_devices();
-    void android_camera_get_device_info(int32_t camera_id, int* facing, int* orientation);
+    int android_camera_get_device_info(int32_t camera_id, int* facing, int* orientation);
     void android_camera_enumerate_supported_preview_sizes(struct CameraControl* control, size_callback cb, void* ctx);
     void android_camera_get_preview_fps_range(struct CameraControl* control, int* min, int* max);
     void android_camera_get_preview_fps(struct CameraControl* control, int* fps);

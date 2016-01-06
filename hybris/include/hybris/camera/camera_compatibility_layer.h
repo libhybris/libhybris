@@ -147,7 +147,7 @@ extern "C" {
     void android_camera_take_snapshot(struct CameraControl* control);
 
     // Enable or disable the preview callback for clients that want software frames
-    void android_camera_set_preview_callback_mode(struct CameraControl* control, PreviewCallbackMode mode);
+    int android_camera_set_preview_callback_mode(struct CameraControl* control, PreviewCallbackMode mode);
 
 #ifdef __cplusplus
 }
