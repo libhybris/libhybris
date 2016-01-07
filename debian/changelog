@@ -1,3 +1,13 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu3~missinghooks1) vivid; urgency=medium
+
+  * Hook missing pthread functions, localtime, gmtime, getlogin,
+    __sprintf_chk, __snprintf_chk
+  * Add quirk for Mali GLES driver
+  * debian/rules:
+    - Enable Mali quirks
+
+ -- Simon Fels <simon.fels@canonical.com>  Thu, 07 Jan 2016 11:03:31 +0100
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu2) vivid; urgency=medium
 
   * Various fixes to allow camera access to work in the web browser
