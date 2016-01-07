@@ -31,8 +31,11 @@
 HYBRIS_LIBRARY_INITIALIZE(camera, COMPAT_LIBRARY_PATH);
 
 HYBRIS_IMPLEMENT_FUNCTION0(camera, int, android_camera_get_number_of_devices);
+HYBRIS_IMPLEMENT_FUNCTION3(camera, int, android_camera_get_device_info, int32_t, int*, int*);
 HYBRIS_IMPLEMENT_FUNCTION2(camera, struct CameraControl*, android_camera_connect_to,
 	CameraType, struct CameraControlListener*);
+HYBRIS_IMPLEMENT_FUNCTION2(camera, struct CameraControl*, android_camera_connect_by_id,
+	int32_t, struct CameraControlListener*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(camera, android_camera_disconnect,
 	struct CameraControl*);
 HYBRIS_IMPLEMENT_FUNCTION1(camera, int, android_camera_lock, struct CameraControl*);
@@ -52,6 +55,8 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_scene_mode,
 	struct CameraControl*, SceneMode);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_auto_focus_mode,
 	struct CameraControl*, AutoFocusMode);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_preview_format,
+	struct CameraControl*, CameraPixelFormat);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_set_picture_size,
 	struct CameraControl*, int, int);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(camera, android_camera_set_thumbnail_size,
@@ -134,3 +139,6 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_start_zoom, struct Camera
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_zoom, struct CameraControl*, int32_t);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(camera, android_camera_stop_zoom, struct CameraControl*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(camera, android_camera_take_snapshot, struct CameraControl*);
+
+HYBRIS_IMPLEMENT_FUNCTION2(camera, int, android_camera_set_preview_callback_mode,
+	struct CameraControl*, PreviewCallbackMode);
