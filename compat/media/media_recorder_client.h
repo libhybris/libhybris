@@ -63,6 +63,9 @@ public:
 #ifdef BOARD_HAS_MEDIA_RECORDER_PAUSE
     virtual status_t pause();
 #endif
+#ifdef BOARD_HAS_MEDIA_RECORDER_RESUME
+    virtual status_t resume();
+#endif
     virtual status_t reset();
     virtual status_t init();
     virtual status_t close();
