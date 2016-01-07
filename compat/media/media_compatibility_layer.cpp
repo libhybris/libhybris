@@ -587,9 +587,12 @@ int android_media_pause(MediaPlayerWrapper *mp)
 		return BAD_VALUE;
 	}
 
+#ifdef BOARD_HAS_MEDIA_PLAYER_PAUSE
 	mp->pause();
-
 	return OK;
+#else
+	return BAD_VALUE;
+#endif
 }
 
 int android_media_stop(MediaPlayerWrapper *mp)
