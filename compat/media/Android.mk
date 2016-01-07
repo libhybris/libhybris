@@ -41,6 +41,10 @@ HYBRIS_PATH := $(LOCAL_PATH)/../../hybris
 
 LOCAL_CFLAGS += -std=gnu++0x
 
+ifeq ($(BOARD_HAS_MEDIA_PLAYER_PAUSE),true)
+LOCAL_CFLAGS += -DBOARD_HAS_MEDIA_PLAYER_PAUSE
+endif
+
 LOCAL_SRC_FILES:= \
 	media_compatibility_layer.cpp \
 	media_codec_layer.cpp \
