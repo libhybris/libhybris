@@ -254,7 +254,7 @@ status_t MediaRecorderClient::stop()
     return recorder->stop();
 }
 
-#ifdef BOARD_HAS_MEDIA_PLAYER_PAUSE
+#ifdef BOARD_HAS_MEDIA_RECORDER_PAUSE
 status_t MediaRecorderClient::pause()
 {
     REPORT_FUNCTION();

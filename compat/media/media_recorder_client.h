@@ -60,7 +60,7 @@ public:
     virtual status_t getMaxAmplitude(int* max);
     virtual status_t start();
     virtual status_t stop();
-#ifdef BOARD_HAS_MEDIA_PLAYER_PAUSE
+#ifdef BOARD_HAS_MEDIA_RECORDER_PAUSE
     virtual status_t pause();
 #endif
     virtual status_t reset();
