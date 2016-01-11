@@ -174,12 +174,3 @@ Description: Allows to run bionic-based HW adaptations in glibc systems - tests
  .
  Hybris is a solution that allows the use of bionic-based HW adaptations in
  glibc systems.
-
-Package: libhybris-dbg
-Section: devel
-Architecture: armhf i386 amd64
-Description: Allows to run bionic-based HW adaptations in glibc systems
- Contains debug symbols.
- .
- Hybris is a solution that allows the use of bionic-based HW adaptations in
- glibc systems.
