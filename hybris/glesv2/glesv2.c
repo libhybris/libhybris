@@ -299,6 +299,7 @@ static void  __attribute__((constructor)) _init_androidglesv2()  {
 	GLES2_LOAD(glIsTexture);
 	GLES2_LOAD(glLinkProgram);
 	GLES2_LOAD(glPixelStorei);
+	GLES2_LOAD(glReadPixels);
 	GLES2_LOAD(glReleaseShaderCompiler);
 	GLES2_LOAD(glRenderbufferStorage);
 	GLES2_LOAD(glScissor);
