@@ -248,6 +248,14 @@ static void *my_pthread_getspecific(pthread_key_t key)
     return pthread_getspecific(key);
 }
 
+static int my_pthread_kill(pthread_t thread, int sig)
+{
+    if (thread == 0)
+        return ESRCH;
+
+    return pthread_kill(thread, sig);
+}
+
 /*
  * pthread_attr_* functions
  *
@@ -1563,7 +1571,7 @@ static struct _hook hooks[] = {
     {"getpid", getpid},
     {"pthread_atfork", pthread_atfork},
     {"pthread_create", my_pthread_create},
-    {"pthread_kill", pthread_kill},
+    {"pthread_kill", my_pthread_kill},
     {"pthread_exit", pthread_exit},
     {"pthread_join", pthread_join},
     {"pthread_detach", pthread_detach},
