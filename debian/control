@@ -13,8 +13,8 @@ Build-Depends: debhelper (>= 9.0.0),
                libwayland-dev
 Standards-Version: 3.9.5
 Section: libs
-Vcs-Git: git://phablet.ubuntu.com/ubuntu/libhybris.git
-Vcs-Browser: http://phablet.ubuntu.com/gitweb?p=ubuntu/libhybris.git;a=summary
+Vcs-Git: https://git.launchpad.net/~libhybris-maintainers/libhybris/+git/libhybris
+Vcs-Browser: https://git.launchpad.net/~libhybris-maintainers/libhybris/+git/libhybris/
 
 Package: libandroid-properties1
 Architecture: armhf i386 amd64
