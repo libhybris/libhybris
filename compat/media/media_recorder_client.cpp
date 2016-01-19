@@ -254,7 +254,7 @@ status_t MediaRecorderClient::stop()
     return recorder->stop();
 }
 
-#ifdef BOARD_HAS_MEDIA_PLAYER_PAUSE
+#ifdef BOARD_HAS_MEDIA_RECORDER_PAUSE
 status_t MediaRecorderClient::pause()
 {
     REPORT_FUNCTION();
@@ -265,6 +265,19 @@ status_t MediaRecorderClient::pause()
     }
     return recorder->pause();
 
+}
+#endif
+
+#ifdef BOARD_HAS_MEDIA_RECORDER_RESUME
+status_t MediaRecorderClient::resume()
+{
+    REPORT_FUNCTION();
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder == NULL) {
+        ALOGE("recorder must not be NULL");
+        return NO_INIT;
+    }
+    return recorder->resume();
 }
 #endif
 
