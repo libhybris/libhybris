@@ -94,7 +94,7 @@ extern "C" {
         int bottom;
         int right;
         int weight;
-    } FocusRegion;
+    } FocusRegion, MeteringRegion;
 
     typedef void (*size_callback)(void* ctx, int width, int height);
     typedef void (*scene_mode_callback)(void* ctx, SceneMode mode);
@@ -143,6 +143,9 @@ extern "C" {
 
     void android_camera_set_focus_region(struct CameraControl* control, FocusRegion* region);
     void android_camera_reset_focus_region(struct CameraControl* control);
+
+    void android_camera_set_metering_region(struct CameraControl* control, MeteringRegion* region);
+    void android_camera_reset_metering_region(struct CameraControl* control);
 
     // Set photo metadata
     void android_camera_set_rotation(struct CameraControl* control, int rotation);

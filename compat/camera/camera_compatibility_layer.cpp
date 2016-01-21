@@ -921,6 +921,39 @@ void android_camera_reset_focus_region(CameraControl* control)
 	android_camera_set_focus_region(control, &region);
 }
 
+void android_camera_set_metering_region(
+                CameraControl* control,
+                MeteringRegion* region)
+{
+        REPORT_FUNCTION();
+        assert(control);
+
+        android::Mutex::Autolock al(control->guard);
+        static const char* metering_region_pattern = "(%d,%d,%d,%d,%d)";
+        static char metering_region[256];
+        snprintf(metering_region,
+                        sizeof(metering_region),
+                        metering_region_pattern,
+                        region->left,
+                        region->top,
+                        region->right,
+                        region->bottom,
+                        region->weight);
+
+        control->camera_parameters.set(
+                        android::CameraParameters::KEY_METERING_AREAS,
+                        metering_region);
+
+        control->camera->setParameters(control->camera_parameters.flatten());
+}
+
+void android_camera_reset_metering_region(CameraControl* control)
+{
+        static FocusRegion region = { 0, 0, 0, 0, 0 };
+
+        android_camera_set_metering_region(control, &region);
+}
+
 void android_camera_set_rotation(CameraControl* control, int rotation)
 {
 	REPORT_FUNCTION();

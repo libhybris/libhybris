@@ -73,6 +73,10 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_focus_region,
 	struct CameraControl*, FocusRegion*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(camera, android_camera_reset_focus_region,
 	struct CameraControl*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_metering_region,
+        struct CameraControl*, MeteringRegion*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(camera, android_camera_reset_metering_region,
+        struct CameraControl*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_preview_fps,
 	struct CameraControl*, int);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(camera, android_camera_set_rotation,
