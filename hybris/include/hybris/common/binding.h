@@ -67,7 +67,7 @@ int android_dladdr(const void *addr, void *info);
 #define HYBRIS_LIRBARY_CHECK_SYMBOL(name) \
     bool hybris_##name##_check_for_symbol(const char *sym) \
     { \
-        return android_dlsym(name##_handle, sym) != NULL;
+        return android_dlsym(name##_handle, sym) != NULL; \
     }
 
 
