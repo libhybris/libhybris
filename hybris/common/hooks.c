@@ -55,6 +55,7 @@
 #include <locale.h>
 #include <sys/syscall.h>
 #include <sys/auxv.h>
+#include <sys/prctl.h>
 
 #include <hybris/properties/properties.h>
 
@@ -85,6 +86,8 @@ static int locale_inited = 0;
 #define ANDROID_PTHREAD_ERRORCHECK_MUTEX_INITIALIZER 0x8000
 #define ANDROID_PTHREAD_COND_INITIALIZER             0
 #define ANDROID_PTHREAD_RWLOCK_INITIALIZER           0
+
+#define MALI_HIST_DUMP_THREAD_NAME "mali-hist-dump"
 
 /* Debug */
 #include "logging.h"
@@ -242,7 +245,6 @@ static void *my_memcpy(void *dst, const void *src, size_t len)
 
 static size_t my_strlen(const char *s)
 {
-
     if (s == NULL)
         return -1;
 
@@ -251,7 +253,7 @@ static size_t my_strlen(const char *s)
 
 static pid_t my_gettid( void )
 {
-        return syscall( __NR_gettid );
+    return syscall(__NR_gettid);
 }
 
 /*
@@ -271,6 +273,14 @@ static int my_pthread_create(pthread_t *thread, const pthread_attr_t *__attr,
         realattr = (pthread_attr_t *) *(unsigned int *) __attr;
 
     return pthread_create(thread, realattr, start_routine, arg);
+}
+
+static int my_pthread_kill(pthread_t thread, int sig)
+{
+    if (thread == 0)
+        return ESRCH;
+
+    return pthread_kill(thread, sig);
 }
 
 /*
@@ -579,6 +589,29 @@ static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned _
     return pthread_mutex_timedlock(realmutex, &tv);
 }
 
+static int my_pthread_mutex_timedlock(pthread_mutex_t *__mutex,
+                                      const struct timespec *__abs_timeout)
+{
+    if (!__mutex) {
+        LOGD("Null mutex lock, not unlocking.");
+        return 0;
+    }
+
+    unsigned int value = (*(unsigned int *) __mutex);
+    if (hybris_check_android_shared_mutex(value)) {
+        LOGD("Shared mutex with Android, not lock timeout np.");
+        return 0;
+    }
+
+    pthread_mutex_t *realmutex = (pthread_mutex_t *) value;
+    if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
+        realmutex = hybris_alloc_init_mutex(value);
+        *((int *)__mutex) = (int) realmutex;
+    }
+
+    return pthread_mutex_timedlock(realmutex, __abs_timeout);
+}
+
 static int my_pthread_mutexattr_setpshared(pthread_mutexattr_t *__attr,
                                            int pshared)
 {
@@ -795,6 +828,28 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
     return pthread_cond_timedwait(realcond, realmutex, &tv);
 }
 
+int my_pthread_setname_np(pthread_t thread, const char *name)
+{
+#ifdef MALI_QUIRKS
+    if (strcmp(name, MALI_HIST_DUMP_THREAD_NAME) == 0) {
+        HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump thread, killing it ...",
+                         __FUNCTION__);
+
+        if (thread != pthread_self()) {
+            HYBRIS_DEBUG_LOG(HOOKS, "%s: -> Failed, as calling thread is not mali-hist-dump itself",
+                             __FUNCTION__);
+            return;
+        }
+
+        pthread_exit(thread);
+
+        return;
+    }
+#endif
+
+    return pthread_setname_np(thread, name);
+}
+
 /*
  * pthread_rwlockattr_* functions
  *
@@ -962,6 +1017,18 @@ static int my_pthread_rwlock_unlock(pthread_rwlock_t *__rwlock)
     return pthread_rwlock_unlock(realrwlock);
 }
 
+#define min(X,Y) (((X) < (Y)) ? (X) : (Y))
+
+static pid_t my_pthread_gettid(pthread_t t)
+{
+    // glibc doesn't offer us a way to retrieve the thread id for a
+    // specific thread. However pthread_t is defined as unsigned
+    // long int and is the thread id so we can just copy it over
+    // into a pid_t.
+    pid_t tid;
+    memcpy(&tid, &t, min(sizeof(tid), sizeof(t)));
+    return tid;
+}
 
 static int my_set_errno(int oi_errno)
 {
@@ -1438,6 +1505,30 @@ void *__get_tls_hooks()
   return tls_hooks;
 }
 
+int my_prctl(int option, unsigned long arg2, unsigned long arg3,
+             unsigned long arg4, unsigned long arg5)
+{
+#ifdef MALI_QUIRKS
+    if (option == PR_SET_NAME) {
+        char *name = (char*) arg2;
+
+        if (strcmp(name, MALI_HIST_DUMP_THREAD_NAME) == 0) {
+
+            // This can only work because prctl with PR_SET_NAME
+            // can be only called for the current thread and not
+            // for another thread so we can safely pause things.
+
+            HYBRIS_DEBUG_LOG(HOOKS, "%s: Found mali-hist-dump, killing thread ...",
+                             __FUNCTION__);
+
+            pthread_exit(NULL);
+        }
+    }
+#endif
+
+    return prctl(option, arg2, arg3, arg4, arg5);
+}
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -1463,6 +1554,7 @@ static struct _hook hooks[] = {
     {"memmove",memmove},
     {"memset",memset},
     {"memmem",memmem},
+    {"getlogin", getlogin},
     //  {"memswap",memswap},
     {"index",index},
     {"rindex",rindex},
@@ -1504,6 +1596,8 @@ static struct _hook hooks[] = {
     {"index",index},
     {"rindex",rindex},
     {"strcasecmp",strcasecmp},
+    {"__sprintf_chk", __sprintf_chk},
+    {"__snprintf_chk", __snprintf_chk},
     {"strncasecmp",strncasecmp},
     /* dirent.h */
     {"opendir", opendir},
@@ -1514,7 +1608,7 @@ static struct _hook hooks[] = {
     {"getpid", getpid},
     {"pthread_atfork", pthread_atfork},
     {"pthread_create", my_pthread_create},
-    {"pthread_kill", pthread_kill},
+    {"pthread_kill", my_pthread_kill},
     {"pthread_exit", pthread_exit},
     {"pthread_join", pthread_join},
     {"pthread_detach", pthread_detach},
@@ -1528,6 +1622,7 @@ static struct _hook hooks[] = {
     {"pthread_mutex_unlock", my_pthread_mutex_unlock},
     {"pthread_mutex_trylock", my_pthread_mutex_trylock},
     {"pthread_mutex_lock_timeout_np", my_pthread_mutex_lock_timeout_np},
+    {"pthread_mutex_timedlock", my_pthread_mutex_timedlock},
     {"pthread_mutexattr_init", pthread_mutexattr_init},
     {"pthread_mutexattr_destroy", pthread_mutexattr_destroy},
     {"pthread_mutexattr_gettype", pthread_mutexattr_gettype},
@@ -1538,6 +1633,8 @@ static struct _hook hooks[] = {
     {"pthread_condattr_getpshared", pthread_condattr_getpshared},
     {"pthread_condattr_setpshared", pthread_condattr_setpshared},
     {"pthread_condattr_destroy", pthread_condattr_destroy},
+    {"pthread_condattr_getclock", pthread_condattr_getclock},
+    {"pthread_condattr_setclock", pthread_condattr_setclock},
     {"pthread_cond_init", my_pthread_cond_init},
     {"pthread_cond_destroy", my_pthread_cond_destroy},
     {"pthread_cond_broadcast", my_pthread_cond_broadcast},
@@ -1548,7 +1645,7 @@ static struct _hook hooks[] = {
     {"pthread_cond_timedwait_monotonic_np", my_pthread_cond_timedwait},
     {"pthread_cond_timedwait_relative_np", my_pthread_cond_timedwait_relative_np},
     {"pthread_key_delete", pthread_key_delete},
-    {"pthread_setname_np", pthread_setname_np},
+    {"pthread_setname_np", my_pthread_setname_np},
     {"pthread_once", pthread_once},
     {"pthread_key_create", pthread_key_create},
     {"pthread_setspecific", pthread_setspecific},
@@ -1585,6 +1682,9 @@ static struct _hook hooks[] = {
     {"pthread_rwlock_trywrlock", my_pthread_rwlock_trywrlock},
     {"pthread_rwlock_timedrdlock", my_pthread_rwlock_timedrdlock},
     {"pthread_rwlock_timedwrlock", my_pthread_rwlock_timedwrlock},
+    /* bionic-only pthread */
+    {"__pthread_gettid", my_pthread_gettid},
+    {"pthread_gettid_np", my_pthread_gettid},
     /* stdio.h */
     {"__isthreaded", &__my_isthreaded},
     {"__sF", &my_sF},
@@ -1684,6 +1784,9 @@ static struct _hook hooks[] = {
     {"timer_gettime", timer_gettime},
     {"timer_delete", timer_delete},
     {"timer_getoverrun", timer_getoverrun},
+    {"localtime", localtime},
+    {"localtime_r", localtime_r},
+    {"gmtime", gmtime},
     {"abort", abort},
     {"writev", writev},
     /* unistd.h */
@@ -1702,6 +1805,8 @@ static struct _hook hooks[] = {
     {"__system_property_add", __my_system_property_add},
     {"__system_property_wait_any", __my_system_property_wait_any},
     {"__system_property_find_nth", __my_system_property_find_nth},
+    /* sys/prctl.h */
+    {"prctl", my_prctl},
 };
 
 static int hook_cmp(const void *a, const void *b)
@@ -1726,18 +1831,28 @@ void *get_hooked_symbol(char *sym)
     key.name = sym;
     found = bsearch(&key, hooks, nhooks, sizeof(hooks[0]), hook_cmp);
     if (found != NULL)
+    {
+        LOGD("Found hook for symbol %s", sym);
         return ((struct _hook*)found)->func;
+    }
 
-    if (strstr(sym, "pthread") != NULL)
+    if (strncmp(sym, "pthread", 7) == 0 ||
+        strncmp(sym, "__pthread", 9) == 0)
     {
         /* safe */
         if (strcmp(sym, "pthread_sigmask") == 0)
            return NULL;
         /* not safe */
         counter--;
-        LOGD("%s %i\n", sym, counter);
+        // If you're experiencing a crash later on check the address of the
+        // function pointer being call. If it matches the printed counter
+        // value here then you can easily find out which symbol is missing.
+        LOGD("Missing hook for pthread symbol %s (counter %i)\n", sym, counter);
         return (void *) counter;
     }
+
+    LOGD("Could not find a hook for symbol %s", sym);
+
     return NULL;
 }
 

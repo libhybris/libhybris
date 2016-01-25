@@ -73,6 +73,13 @@ AC_ARG_ENABLE(wayland_serverside_buffers,
   [wayland_serverside_buffers=yes])
 AM_CONDITIONAL( [WANT_WL_SERVERSIDE_BUFFERS], [test x"$wayland_serverside_buffers" = x"yes"])
 
+AC_ARG_ENABLE(property_cache,
+  [  --enable-property-cache      Enable runtime android property cache (default=disabled)],
+  [property_cache=$enableval],
+  [property_cache=no])
+AM_CONDITIONAL( [WANT_RUNTIME_PROPERTY_CACHE], [test x"$property_cache" = x"yes"])
+
+
 AC_ARG_ENABLE(arch,
   [  --enable-arch[=arch]     Compile specific CPU target(default=arm)
                               arm: compile for ARM
@@ -180,6 +187,11 @@ AM_CONDITIONAL([HAS_ANDROID_4_1_0], [test $android_headers_major -ge 4 -a $andro
 AM_CONDITIONAL([HAS_ANDROID_4_0_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_2_3_0], [test $android_headers_major -ge 2 -a $android_headers_minor -ge 3 ])
 
+AC_ARG_ENABLE(mali-quirks,
+  [  --enable-mali-quirks            Enable Mali GPU driver quirks (default=disabled)],
+  [mali_quirks=$enableval],
+  [mali_quirks="no"])
+AM_CONDITIONAL([WANT_MALI_QUIRKS], [test x"$mali_quirks" = x"yes"])
 
 AC_CONFIG_FILES([
 	Makefile

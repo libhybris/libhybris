@@ -48,6 +48,25 @@ int main(int argc, char **argv)
 	assert(hwmod != NULL);
 
 	assert(audio_hw_device_open(hwmod, &audiohw) == 0);
+	do {
+#if defined(AUDIO_DEVICE_API_VERSION_MIN)
+		if (audiohw->common.version < AUDIO_DEVICE_API_VERSION_MIN) {
+			fprintf(stderr, "Audio device API version %04x failed to meet minimum requirement %0x4.",
+					audiohw->common.version, AUDIO_DEVICE_API_VERSION_MIN);
+		} else
+#endif
+		if (audiohw->common.version != AUDIO_DEVICE_API_VERSION_CURRENT) {
+			fprintf(stderr, "Audio device API version %04x doesn't match platform current %0x4.",
+					audiohw->common.version, AUDIO_DEVICE_API_VERSION_CURRENT);
+		} else
+			break;
+
+#if defined(AUDIO_DEVICE_API_VERSION_MIN)
+		assert(audiohw->common.version >= AUDIO_DEVICE_API_VERSION_MIN);
+#endif
+		assert(audiohw->common.version == AUDIO_DEVICE_API_VERSION_CURRENT);
+	} while(0);
+
 	assert(audiohw->init_check(audiohw) == 0);
 	fprintf(stdout, "Audio Hardware Interface initialized.\n");
 
@@ -73,12 +92,20 @@ int main(int argc, char **argv)
 	struct audio_stream_out *stream_out = NULL;
 
 	audiohw->open_output_stream(audiohw, 0, AUDIO_DEVICE_OUT_DEFAULT,
-			AUDIO_OUTPUT_FLAG_PRIMARY, &config_out, &stream_out);
+			AUDIO_OUTPUT_FLAG_PRIMARY, &config_out, &stream_out
+#if ANDROID_VERSION_MAJOR >= 5
+			, NULL
+#endif
+			);
 
 	/* Try it again */
 	if (!stream_out)
 		audiohw->open_output_stream(audiohw, 0, AUDIO_DEVICE_OUT_DEFAULT,
-				AUDIO_OUTPUT_FLAG_PRIMARY, &config_out, &stream_out);
+				AUDIO_OUTPUT_FLAG_PRIMARY, &config_out, &stream_out
+#if ANDROID_VERSION_MAJOR >= 5
+				, NULL
+#endif
+				);
 
 	assert(stream_out != NULL);
 
@@ -93,7 +120,11 @@ int main(int argc, char **argv)
 	struct audio_stream_in *stream_in = NULL;
 
 	audiohw->open_input_stream(audiohw, 0, AUDIO_DEVICE_IN_DEFAULT,
-			&config_in, &stream_in);
+			&config_in, &stream_in
+#if ANDROID_VERSION_MAJOR >= 5
+			, AUDIO_INPUT_FLAG_NONE, NULL, AUDIO_SOURCE_DEFAULT
+#endif
+			);
 	assert(stream_in != NULL);
 
 	fprintf(stdout, "Successfully created audio input stream: sample rate: %u, channel_mask: %u, format: %u\n",
