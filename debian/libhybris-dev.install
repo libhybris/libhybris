@@ -6,6 +6,7 @@ usr/lib/*/libsf.so
 usr/lib/*/libis.so
 usr/lib/*/libcamera.so
 usr/lib/*/libwifi.so
+usr/lib/*/libnfc_nxp.so
 usr/lib/*/libvibrator.so
 usr/lib/*/pkgconfig/hwcomposer-egl.pc
 usr/lib/*/pkgconfig/hybris-egl-platform.pc
@@ -13,6 +14,7 @@ usr/lib/*/pkgconfig/libis.pc
 usr/lib/*/pkgconfig/libcamera.pc
 usr/lib/*/pkgconfig/libwifi.pc
 usr/lib/*/pkgconfig/libvibrator.pc
+usr/lib/*/pkgconfig/libnfc_nxp.pc
 usr/lib/*/pkgconfig/libsf.pc
 usr/lib/*/pkgconfig/libsync.pc
 usr/include/hybris/input
