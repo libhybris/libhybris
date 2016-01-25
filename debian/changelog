@@ -1,17 +1,9 @@
-libhybris (0.1.0+git20151016+6d424c9-0ubuntu4) UNRELEASED; urgency=medium
-
-  * Hook missing pthread functions, localtime, gmtime, getlogin,
-    __sprintf_chk, __snprintf_chk, pthread_mutex_timedlock
-  * Add quirk for Mali GLES driver
-  * debian/rules:
-    - Enable Mali quirks
-  * Fix audio test case to work on Android 5.x
-
- -- Simon Fels <simon.fels@canonical.com>  Thu, 07 Jan 2016 11:03:31 +0100
-
-libhybris (0.1.0+git20151016+6d424c9-0ubuntu2) vivid; urgency=medium
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu3) vivid; urgency=medium
 
   * Various fixes to allow camera access to work in the web browser
+  * Fix compat layer compilation when API functions are missing on
+    certain devices in the media player implementation.
+  * Add initial support for Android 5.x
 
  -- Simon Fels <simon.fels@canonical.com>  Thu, 07 Jan 2016 08:07:11 +0100
 
