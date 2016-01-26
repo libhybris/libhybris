@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20151016+6d424c9-0ubuntu4) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu4) xenial; urgency=medium
 
   [ You-Sheng Yang ]
   * wifi: fix hardware_legacy/wifi.h not found
@@ -55,7 +55,7 @@ libhybris (0.1.0+git20151016+6d424c9-0ubuntu4) UNRELEASED; urgency=medium
   * debian: enable property cache for x86 and armhf
   * debian: rules: cleanup formatting for autoconf options
 
- -- Simon Fels <simon.fels@canonical.com> Tue, 26 Jan 2016 11:02:52 +0100
+ -- Simon Fels <simon.fels@canonical.com>  Tue, 26 Jan 2016 11:05:14 +0100
 
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu3) vivid; urgency=medium
 
