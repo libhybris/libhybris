@@ -1,3 +1,62 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu4) UNRELEASED; urgency=medium
+
+  [ You-Sheng Yang ]
+  * wifi: fix hardware_legacy/wifi.h not found
+  * tests: fix test_audio compilation on Android 5 or above
+
+  [ Carsten Munk ]
+  * Hook getlogin, __sprintf_chk, __snprintf_chk
+
+  [ Simon Fels ]
+  * hybris: common: dump mutex address
+  * hybris: common: add ugly workaround for malit-hist-dump thread
+  * hybris: common: also hook prctl to workaround mali-hist-dump
+  * hybris: common: also log name when prctl called with PR_SET_NAME
+  * hybris: common: add exit workaround for mali-hist-dump thread
+  * hybris: common: be more precise on prctl log messages
+  * hybris: add configuration option to enable mali related quirks
+  * hybris: common: hook localtime, gmtime and friends
+  * debian: enable mali quirks
+  * hybris: common: hook missing pthread functions
+  * hybris: common: add further debug statements for symbol hooking
+  * debian: update changelog
+
+  [ You-Sheng Yang ]
+  * compat: media: remove wrong BOARD_HAS_MEDIA_PLAYER_PAUSE guard
+  * compat: media: implement android::IMediaRecorder::resume
+
+  [ Simon Fels ]
+  * debian: drop files listed twice in .install files
+  * debian: drop -dbg package as we generate them automatically
+
+  [ You-Sheng Yang ]
+  * hooks: add pthread_mutex_timedlock
+
+  [ Thomas Voß ]
+  * Hook pthread_kill such that pthread_t values of 0 do not lead to segfaults.
+
+  [ Simon Fels ]
+  * debian: update changelog
+  * debian: correct vcs reference to point to launchpad
+
+  [ You-Sheng Yang ]
+  * hook: add pthread_condattr_setclock
+  * hook: skip only symbol names prefixed with "pthread" or "__pthread"
+
+  [ Mikko Harju ]
+  * [libhybris] Add cache for socket based property lookups.
+
+  [ Simon Fels ]
+  * hybris: common: add simple macro to check for existing symbols
+  * debian: drop stripping of not existing package
+  * Revert "debian: don't package NFC stuff anymore"
+  * utils: fix binding wrapper macro generator script
+  * debian: sync changelog up with what is released
+  * debian: enable property cache for x86 and armhf
+  * debian: rules: cleanup formatting for autoconf options
+
+ -- Simon Fels <simon.fels@canonical.com> Tue, 26 Jan 2016 11:02:52 +0100
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu3) vivid; urgency=medium
 
   * Various fixes to allow camera access to work in the web browser
