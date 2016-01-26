@@ -61,9 +61,9 @@ get-packaged-orig-source:
 
 override_dh_auto_configure:
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
-	dh_auto_configure --sourcedirectory=hybris -- --enable-wayland --enable-arch=arm --with-android-headers=/usr/include/android --enable-mali-quirks
+	dh_auto_configure --sourcedirectory=hybris -- --enable-wayland --enable-arch=arm --with-android-headers=/usr/include/android --enable-mali-quirks --enable-property-cache
 else
-	dh_auto_configure --sourcedirectory=hybris -- --enable-wayland --enable-arch=x86 --with-android-headers=/usr/include/android
+	dh_auto_configure --sourcedirectory=hybris -- --enable-wayland --enable-arch=x86 --with-android-headers=/usr/include/android --enable-property-cache
 endif
 
 override_dh_install:
