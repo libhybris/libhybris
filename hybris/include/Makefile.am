@@ -73,7 +73,11 @@ mediainclude_HEADERS = \
 	hybris/media/media_format_layer.h \
 	hybris/media/media_recorder_layer.h \
 	hybris/media/surface_texture_client_hybris.h \
-	hybris/media/recorder_compatibility_layer.h
+	hybris/media/recorder_compatibility_layer.h \
+	hybris/media/media_codec_source_layer.h \
+	hybris/media/media_message_layer.h \
+	hybris/media/media_buffer_layer.h \
+	hybris/media/media_meta_data_layer.h
 
 dlfcnincludedir = $(includedir)/hybris/dlfcn
 dlfcninclude_HEADERS = \

@@ -26,10 +26,6 @@
 #include <hybris/media/media_compatibility_layer.h>
 #include <hybris/media/media_format_layer.h>
 
-#include "media_format_layer_priv.h"
-#include "surface_texture_client_hybris_priv.h"
-#include "decoding_service_priv.h"
-
 #include <binder/IPCThreadState.h>
 #include <binder/ProcessState.h>
 
@@ -55,6 +51,12 @@
 #include <utils/Log.h>
 #include <utils/RefBase.h>
 #include <utils/Mutex.h>
+
+#include "media_format_layer_priv.h"
+#include "surface_texture_client_hybris_priv.h"
+#include "decoding_service_priv.h"
+#include "media_message_priv.h"
+#include "media_buffer_priv.h"
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__);
 
@@ -555,6 +557,33 @@ uint8_t *media_codec_get_nth_input_buffer(MediaCodecDelegate delegate, size_t n)
     return d->input_buffers.itemAt(n).get()->data();
 }
 
+MediaABufferWrapper* media_codec_get_nth_input_buffer_as_abuffer(MediaCodecDelegate delegate, size_t n)
+{
+    REPORT_FUNCTION()
+
+    _MediaCodecDelegate *d = get_internal_delegate(delegate);
+    if (d == NULL)
+        return NULL;
+
+    if (d->input_buffers.size() == 0)
+    {
+        status_t ret = d->media_codec->getInputBuffers(&d->input_buffers);
+        if (ret != OK)
+        {
+            ALOGE("Failed to get input buffers");
+            return NULL;
+        }
+    }
+
+    if (n > d->input_buffers.size())
+    {
+      ALOGE("Failed to get %uth input buffer, n > total buffer size", n);
+      return NULL;
+    }
+
+    return new MediaABufferPrivate(d->input_buffers.itemAt(n).get());
+}
+
 size_t media_codec_get_nth_input_buffer_capacity(MediaCodecDelegate delegate, size_t n)
 {
     REPORT_FUNCTION()
@@ -621,6 +650,33 @@ uint8_t *media_codec_get_nth_output_buffer(MediaCodecDelegate delegate, size_t n
     }
 
     return d->output_buffers.itemAt(n).get()->data();
+}
+
+MediaABufferWrapper* media_codec_get_nth_output_buffer_as_abuffer(MediaCodecDelegate delegate, size_t n)
+{
+    REPORT_FUNCTION()
+
+    _MediaCodecDelegate *d = get_internal_delegate(delegate);
+    if (d == NULL)
+        return NULL;
+
+    if (d->output_buffers.size() == 0)
+    {
+        status_t ret = d->media_codec->getOutputBuffers(&d->output_buffers);
+        if (ret != OK)
+        {
+            ALOGE("Failed to get output buffers");
+            return NULL;
+        }
+    }
+
+    if (n > d->output_buffers.size())
+    {
+      ALOGE("Failed to get %uth output buffer, n > total buffer size", n);
+      return NULL;
+    }
+
+    return new MediaABufferPrivate(d->output_buffers.itemAt(n).get());
 }
 
 size_t media_codec_get_nth_output_buffer_capacity(MediaCodecDelegate delegate, size_t n)
