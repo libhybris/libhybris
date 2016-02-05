@@ -1,3 +1,13 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu6) xenial; urgency=medium
+
+  [ Simon Fels ]
+  * Revert "debian: drop requirement of gcc 4.7"
+
+  [ Franz-Josef ]
+  * hybris: add hook for freeaddrinfo and getaddrinfo
+
+ -- Simon Fels <simon.fels@canonical.com>  Fri, 05 Feb 2016 15:23:26 +0100
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu5) xenial; urgency=medium
 
   * debian: drop requirement of gcc 4.7
