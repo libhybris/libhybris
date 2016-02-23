@@ -49,3 +49,5 @@ HYBRIS_IMPLEMENT_FUNCTION0(wifi, const char *, get_dhcp_error_string);
 HYBRIS_IMPLEMENT_FUNCTION1(wifi, const char *, wifi_get_fw_path, int);
 HYBRIS_IMPLEMENT_FUNCTION1(wifi, int, wifi_change_fw_path, const char *);
 HYBRIS_IMPLEMENT_FUNCTION0(wifi, int, ensure_entropy_file_exists);
+HYBRIS_IMPLEMENT_FUNCTION4(wifi, int, wifi_send_driver_command,
+				char*, char*, char*, size_t);
