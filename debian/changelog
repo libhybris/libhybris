@@ -1,3 +1,21 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu7) UNRELEASED; urgency=medium
+
+  [ Ugo Riboni ]
+  * Allow setting/clearning the camera metering region
+
+  [ Alex Tu ]
+  * compat: force modules to be build for 32bit only
+
+  [ Simon Fels ]
+  * debian: adjust our build depends depending which distro we build for
+    - With this we select now gcc 4.7 for vivid builds and take what
+      ever else is default on all other distributions. We need to switch
+      soon or later away from gcc 4.7 but before we can do that we need
+      to overcome the still existing ABI issues we get when we build
+      with something else than gcc 4.7.
+
+ -- Simon Fels <simon.fels@canonical.com>  Mon, 07 Mar 2016 10:41:54 +0100
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu6) xenial; urgency=medium
 
   [ Simon Fels ]
