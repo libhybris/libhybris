@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20151016+6d424c9-0ubuntu7) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu7) xenial; urgency=medium
 
   [ Ugo Riboni ]
   * Allow setting/clearning the camera metering region
