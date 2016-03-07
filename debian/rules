@@ -9,6 +9,7 @@ PKG_driver_dev  := libhybris-dev
 PKG_driver_dbg  := libhybris-dbg
 PKG_version     := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
 PKG_source      := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
+PKG_distro      := $(shell dpkg-parsechangelog | sed -n 's/^Distribution: //p')
 UPS_version     := $(shell echo '$(PKG_version)' | sed 's/.*://; s/-[^-]*$$//')
 GIT_rev         := $(shell echo '$(UPS_version)' | sed 's/.*+//')
 
@@ -17,9 +18,13 @@ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 
-# Compiler
+ifeq ($(PKG_distro),vivid)
+# For vivid we still depend on GCC 4.7 as this seems to be still
+# required to workaround ABI issues.
 export CC=gcc-4.7
 export CXX=g++-4.7
+EXTRA_BUILD_DEPENDS = gcc-4.7, g++-4.7,
+endif
 
 # Strong needs at least gcc 4.9
 export DEB_BUILD_MAINT_OPTIONS=hardening=-stackprotectorstrong
@@ -46,6 +51,19 @@ ld_so_conf_file         := ld.so.conf
 alt_ld_so_conf_file     := alt_ld.so.conf
 ld_so_conf_path         := $(ld_so_conf_dir)/$(ld_so_conf_file)
 alt_ld_so_conf_path     := $(ld_so_conf_dir)/$(alt_ld_so_conf_file)
+
+.PHONY: debian/control
+debian/control: debian/control.in
+	if [ "$(EXTRA_BUILD_DEPENDS)" = "" ] ; then \
+		sed -e '/@EXTRA_BUILD_DEPENDS@/,+0d' \
+			debian/control.in > debian/control ; \
+	else \
+		sed -e "s/@EXTRA_BUILD_DEPENDS@/$(EXTRA_BUILD_DEPENDS)/" \
+			debian/control.in > debian/control ; \
+	fi
+
+override_dh_auto_clean: debian/control
+	dh_auto_clean
 
 # --remote doesn't work with github so this needs to be run from a local checkout
 get-packaged-orig-source:
