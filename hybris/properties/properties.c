@@ -151,7 +151,7 @@ static int property_get_socket(const char *key, char *value, const char *default
 
 	/* In case it's null, just use the default */
 	if ((strlen(msg.value) == 0) && (default_value)) {
-		if (strlen(default_value) >= PROP_VALUE_MAX -1)	return -1;
+		if (strlen(default_value) > PROP_VALUE_MAX -1)	return -1;
 		strcpy(msg.value, default_value);
 	}
 
@@ -164,7 +164,7 @@ int property_get(const char *key, char *value, const char *default_value)
 {
 	char *ret = NULL;
 
-	if ((key) && (strlen(key) >= PROP_NAME_MAX -1)) return -1;
+	if ((key) && (strlen(key) > PROP_NAME_MAX -1)) return -1;
 	if (value == NULL) return -1;
 
 
@@ -208,8 +208,8 @@ int property_set(const char *key, const char *value)
 
 	if (key == 0) return -1;
 	if (value == 0) value = "";
-	if (strlen(key) >= PROP_NAME_MAX -1) return -1;
-	if (strlen(value) >= PROP_VALUE_MAX -1) return -1;
+	if (strlen(key) > PROP_NAME_MAX -1) return -1;
+	if (strlen(value) > PROP_VALUE_MAX -1) return -1;
 
 	runtime_cache_lock();
 	runtime_cache_remove(key);
