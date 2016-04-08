@@ -32,6 +32,8 @@ extern "C" {
     // Common compat calls
     int media_compat_check_availability();
 
+    unsigned int hybris_media_get_version();
+
     // Callback types
     typedef void (*on_msg_set_video_size)(int height, int width, void *context);
     typedef void (*on_video_texture_needs_update)(void *context);

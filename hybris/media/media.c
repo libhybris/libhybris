@@ -50,6 +50,20 @@ int media_compat_check_availability()
 	return media_handle ? 1 : 0;
 }
 
+unsigned int hybris_media_get_version()
+{
+	static unsigned int (*f)() FP_ATTRIB = NULL;
+	HYBRIS_DLSYSM(media, &f, "hybris_media_get_version");
+
+	/* When the method is not available we return zero here
+	 * rather than crashing to indicate the client the
+	 * Android side implementation is not versioned yet. */
+	if (!f)
+		return 0;
+
+	return f();
+}
+
 HYBRIS_IMPLEMENT_FUNCTION0(media, struct MediaPlayerWrapper*,
 	android_media_new_player);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, android_media_update_surface_texture,
