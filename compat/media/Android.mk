@@ -21,8 +21,9 @@ LOCAL_C_INCLUDES := \
     frameworks/av/services/medialog \
     frameworks/av/services/camera/libcameraservice
 
-IS_ANDROID_5 := $(shell test $(ANDROID_VERSION_MAJOR) -eq 5 && echo true)
-ifeq ($(IS_ANDROID_5),true)
+HAS_ANDROID_5 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 5 && echo true)
+
+ifeq ($(HAS_ANDROID_5),true)
 LOCAL_C_INCLUDES += system/media/camera/include
 endif
 
@@ -60,10 +61,15 @@ LOCAL_SRC_FILES:= \
 	media_recorder_client.cpp \
 	media_recorder_factory.cpp \
 	media_recorder_observer.cpp \
-	media_codec_source_layer.cpp \
 	media_buffer_layer.cpp \
 	media_message_layer.cpp \
 	media_meta_data_layer.cpp
+
+ifeq ($(HAS_ANDROID_5),true)
+# MediaCodecSource support is only available starting with
+# Android 5.x so we have to limit support for it.
+LOCAL_SRC_FILES += media_codec_source_layer.cpp
+endif
 
 LOCAL_MODULE:= libmedia_compat_layer
 LOCAL_MODULE_TAGS := optional
