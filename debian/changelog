@@ -1,3 +1,10 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu8) UNRELEASED; urgency=medium
+
+  * No change rebuild to cover a new android-headers release which
+    floating point ABI problems.
+
+ -- Simon Fels <simon.fels@canonical.com>  Mon, 11 Apr 2016 10:51:55 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu7) xenial; urgency=medium
 
   [ Ugo Riboni ]
