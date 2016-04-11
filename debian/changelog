@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20151016+6d424c9-0ubuntu8) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu8) xenial; urgency=medium
 
   * No change rebuild to cover a new android-headers release which
     floating point ABI problems.
