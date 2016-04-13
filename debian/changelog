@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20151016+6d424c9-0ubuntu9) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu9) xenial; urgency=medium
 
   * hybris/compat: media: wrap android media codec source implementation
   * compat: media: only build media codec source support for Android 5.x
