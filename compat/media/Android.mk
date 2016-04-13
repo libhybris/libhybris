@@ -25,6 +25,11 @@ HAS_ANDROID_5 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 5 && echo true)
 
 ifeq ($(HAS_ANDROID_5),true)
 LOCAL_C_INCLUDES += system/media/camera/include
+
+# All devices having Android 5.x also have MediaCodecSource
+# available so we don't have to put a switch for this into
+# any BoardConfig.mk
+BOARD_HAS_MEDIA_CODEC_SOURCE := true
 endif
 
 LOCAL_MODULE := camera_service
@@ -65,7 +70,7 @@ LOCAL_SRC_FILES:= \
 	media_message_layer.cpp \
 	media_meta_data_layer.cpp
 
-ifeq ($(HAS_ANDROID_5),true)
+ifeq ($(BOARD_HAS_MEDIA_CODEC_SOURCE),true)
 # MediaCodecSource support is only available starting with
 # Android 5.x so we have to limit support for it.
 LOCAL_SRC_FILES += media_codec_source_layer.cpp
