@@ -1,3 +1,12 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu9) UNRELEASED; urgency=medium
+
+  * hybris/compat: media: wrap android media codec source implementation
+  * compat: media: only build media codec source support for Android 5.x
+  * compat: media: introduce API version number
+  * compat: media: don't put Android 5.x as a requirement for MediaCodecSource
+
+ -- Simon Fels <simon.fels@canonical.com>  Wed, 13 Apr 2016 11:58:56 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu8) xenial; urgency=medium
 
   * No change rebuild to cover a new android-headers release which
