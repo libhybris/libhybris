@@ -21,9 +21,15 @@ LOCAL_C_INCLUDES := \
     frameworks/av/services/medialog \
     frameworks/av/services/camera/libcameraservice
 
-IS_ANDROID_5 := $(shell test $(ANDROID_VERSION_MAJOR) -eq 5 && echo true)
-ifeq ($(IS_ANDROID_5),true)
+HAS_ANDROID_5 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 5 && echo true)
+
+ifeq ($(HAS_ANDROID_5),true)
 LOCAL_C_INCLUDES += system/media/camera/include
+
+# All devices having Android 5.x also have MediaCodecSource
+# available so we don't have to put a switch for this into
+# any BoardConfig.mk
+BOARD_HAS_MEDIA_CODEC_SOURCE := true
 endif
 
 LOCAL_MODULE := camera_service
@@ -59,7 +65,16 @@ LOCAL_SRC_FILES:= \
 	media_recorder.cpp \
 	media_recorder_client.cpp \
 	media_recorder_factory.cpp \
-	media_recorder_observer.cpp
+	media_recorder_observer.cpp \
+	media_buffer_layer.cpp \
+	media_message_layer.cpp \
+	media_meta_data_layer.cpp
+
+ifeq ($(BOARD_HAS_MEDIA_CODEC_SOURCE),true)
+# MediaCodecSource support is only available starting with
+# Android 5.x so we have to limit support for it.
+LOCAL_SRC_FILES += media_codec_source_layer.cpp
+endif
 
 LOCAL_MODULE:= libmedia_compat_layer
 LOCAL_MODULE_TAGS := optional
@@ -148,44 +163,6 @@ LOCAL_SHARED_LIBRARIES := \
 	libgui \
 	libEGL \
 	libGLESv2
-
-LOCAL_32_BIT_ONLY := true
-
-include $(BUILD_EXECUTABLE)
-
-include $(CLEAR_VARS)
-include $(LOCAL_PATH)/../Android.common.mk
-
-LOCAL_CFLAGS += -Wno-multichar -D SIMPLE_PLAYER -std=gnu++0x
-
-LOCAL_SRC_FILES:= \
-	media_codec_layer.cpp \
-	media_codec_list.cpp \
-	media_format_layer.cpp \
-	codec.cpp \
-	SimplePlayer.cpp
-
-LOCAL_SHARED_LIBRARIES := \
-	libstagefright \
-	libstagefright_foundation \
-	liblog \
-	libutils \
-	libbinder \
-	libmedia \
-	libgui \
-	libcutils \
-	libui
-
-LOCAL_C_INCLUDES:= \
-	$(HYBRIS_PATH)/include \
-	frameworks/av/media/libstagefright \
-	frameworks/native/include/media/openmax \
-	frameworks/base/media/libstagefright/include \
-	frameworks/base/include/media/stagefright \
-	frameworks/base/include/media
-
-LOCAL_MODULE:= codec
-LOCAL_MODULE_TAGS := optional
 
 LOCAL_32_BIT_ONLY := true
 

@@ -30,6 +30,8 @@
 #include <hybris/media/media_format_layer.h>
 #include <hybris/media/media_recorder_layer.h>
 #include <hybris/media/surface_texture_client_hybris.h>
+#include <hybris/media/media_codec_source_layer.h>
+#include <hybris/media/media_buffer_layer.h>
 
 #define COMPAT_LIBRARY_PATH "/system/lib/libmedia_compat_layer.so"
 
@@ -46,6 +48,20 @@ int media_compat_check_availability()
 	/* Both are defined via HYBRIS_LIBRARY_INITIALIZE */
 	hybris_media_initialize();
 	return media_handle ? 1 : 0;
+}
+
+unsigned int hybris_media_get_version()
+{
+	static unsigned int (*f)() FP_ATTRIB = NULL;
+	HYBRIS_DLSYSM(media, &f, "hybris_media_get_version");
+
+	/* When the method is not available we return zero here
+	 * rather than crashing to indicate the client the
+	 * Android side implementation is not versioned yet. */
+	if (!f)
+		return 0;
+
+	return f();
 }
 
 HYBRIS_IMPLEMENT_FUNCTION0(media, struct MediaPlayerWrapper*,
@@ -300,3 +316,127 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_recorder_set_error_cb,
 	struct MediaRecorderWrapper*, on_recorder_msg_error, void*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, android_recorder_set_audio_read_cb,
 	struct MediaRecorderWrapper*, on_recorder_read_audio, void*);
+
+// Media Message
+HYBRIS_IMPLEMENT_FUNCTION0(media, MediaMessageWrapper*, media_message_create);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_message_release, MediaMessageWrapper*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_message_clear, MediaMessageWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, const char*, media_message_dump, MediaMessageWrapper*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, media_message_set_int32, MediaMessageWrapper*,
+	const char*, int32_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, media_message_set_int64, MediaMessageWrapper*,
+	const char*, int64_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, media_message_set_size, MediaMessageWrapper*,
+	const char*, size_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, media_message_set_float, MediaMessageWrapper*,
+	const char*, float);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, media_message_set_double, MediaMessageWrapper*,
+	const char*, double);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(media, media_message_set_string, MediaMessageWrapper*,
+	const char*, const char*, ssize_t);
+HYBRIS_IMPLEMENT_FUNCTION2(media, bool, media_message_contains, MediaMessageWrapper*,
+	const char*);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_message_find_int32, MediaMessageWrapper*,
+	const char*, int32_t*);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_message_find_int64, MediaMessageWrapper*,
+	const char*, int64_t*);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_message_find_size, MediaMessageWrapper*,
+	const char*, size_t*);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_message_find_float, MediaMessageWrapper*,
+	const char*, float*);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_message_find_double, MediaMessageWrapper*,
+	const char*, double*);
+
+// Media Meta Data
+HYBRIS_IMPLEMENT_FUNCTION1(media, uint32_t, media_meta_data_get_key_id, int);
+HYBRIS_IMPLEMENT_FUNCTION0(media, MediaMetaDataWrapper*, media_meta_data_create);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_meta_data_release, MediaMetaDataWrapper*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_meta_data_clear, MediaMetaDataWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION2(media, bool, media_meta_data_remove, MediaMetaDataWrapper*,
+	uint32_t);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_meta_data_set_cstring, MediaMetaDataWrapper*,
+	uint32_t, const char*);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_meta_data_set_int32, MediaMetaDataWrapper*,
+	uint32_t, int32_t);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_meta_data_set_int64, MediaMetaDataWrapper*,
+	uint32_t, int64_t);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_meta_data_set_float, MediaMetaDataWrapper*,
+	uint32_t, float);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_meta_data_set_pointer, MediaMetaDataWrapper*,
+	uint32_t, void*);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_meta_data_find_cstring, MediaMetaDataWrapper*,
+	uint32_t, const char**);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_meta_data_find_int32, MediaMetaDataWrapper*,
+	uint32_t, int32_t*);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_meta_data_find_int64, MediaMetaDataWrapper*,
+	uint32_t, int64_t*);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_meta_data_find_float, MediaMetaDataWrapper*,
+	uint32_t, float*);
+HYBRIS_IMPLEMENT_FUNCTION3(media, bool, media_meta_data_find_pointer, MediaMetaDataWrapper*,
+	uint32_t, void**);
+
+// Media Buffer
+HYBRIS_IMPLEMENT_FUNCTION1(media, MediaBufferWrapper*, media_buffer_create, size_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_buffer_destroy, MediaBufferWrapper*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_buffer_release, MediaBufferWrapper*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_buffer_ref, MediaBufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, int, media_buffer_get_refcount, MediaBufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, void*, media_buffer_get_data, MediaBufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, size_t, media_buffer_get_size, MediaBufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, size_t, media_buffer_get_range_offset, MediaBufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, size_t, media_buffer_get_range_length, MediaBufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, MediaMetaDataWrapper*, media_buffer_get_meta_data, MediaBufferWrapper*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, media_buffer_set_return_callback, MediaBufferWrapper*,
+	MediaBufferReturnCallback, void*);
+
+// Media ABuffer
+HYBRIS_IMPLEMENT_FUNCTION1(media, MediaABufferWrapper*, media_abuffer_create,
+	size_t);
+HYBRIS_IMPLEMENT_FUNCTION2(media, MediaABufferWrapper*, media_abuffer_create_with_data,
+	uint8_t*, size_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, media_abuffer_set_range,
+	MediaABufferWrapper*, size_t, size_t);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(media, media_abuffer_set_media_buffer_base,
+	MediaABufferWrapper*, MediaBufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, MediaBufferWrapper*, media_abuffer_get_media_buffer_base,
+	MediaABufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, void*, media_abuffer_get_data,
+	MediaABufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, size_t, media_abuffer_get_size,
+	MediaABufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, size_t, media_abuffer_get_range_offset,
+	MediaABufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, size_t, media_abuffer_get_capacity,
+	MediaABufferWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, MediaMessageWrapper*, media_abuffer_get_meta,
+	MediaABufferWrapper*);
+
+// Media Codec Source
+HYBRIS_IMPLEMENT_FUNCTION3(media, MediaCodecSourceWrapper*, media_codec_source_create,
+	MediaMessageWrapper*, MediaSourceWrapper*, int);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_codec_source_release, MediaCodecSourceWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, void*, media_codec_source_get_native_window_handle,
+	MediaCodecSourceWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, MediaMetaDataWrapper*, media_codec_source_get_format,
+	MediaCodecSourceWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, bool, media_codec_source_start, MediaCodecSourceWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, bool, media_codec_source_stop, MediaCodecSourceWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION1(media, bool, media_codec_source_pause, MediaCodecSourceWrapper*);
+HYBRIS_IMPLEMENT_FUNCTION2(media, bool, media_codec_source_read, MediaCodecSourceWrapper*,
+	MediaBufferWrapper**);
+HYBRIS_IMPLEMENT_FUNCTION1(media, bool, media_codec_source_request_idr_frame,
+	MediaCodecSourceWrapper*);
+
+// Media Source
+HYBRIS_IMPLEMENT_FUNCTION0(media, MediaSourceWrapper*, media_source_create);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(media, media_source_release, MediaSourceWrapper*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(media, media_source_set_format, MediaSourceWrapper*,
+	MediaMetaDataWrapper*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, media_source_set_start_callback,
+	MediaSourceWrapper*, MediaSourceStartCallback, void*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, media_source_set_stop_callback,
+	MediaSourceWrapper*, MediaSourceStopCallback, void*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, media_source_set_read_callback,
+	MediaSourceWrapper*, MediaSourceReadCallback, void*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(media, media_source_set_pause_callback,
+	MediaSourceWrapper*, MediaSourcePauseCallback, void*);

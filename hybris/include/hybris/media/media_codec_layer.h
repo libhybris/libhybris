@@ -26,6 +26,8 @@
 #include <media/stagefright/MediaCodec.h>
 #endif
 
+#include <hybris/media/media_message_layer.h>
+#include <hybris/media/media_buffer_layer.h>
 #include <hybris/media/media_format_layer.h>
 #include <hybris/media/surface_texture_client_hybris.h>
 
@@ -70,8 +72,11 @@ extern "C" {
     int media_codec_stop(MediaCodecDelegate delegate);
     int media_codec_release(MediaCodecDelegate delegate);
     int media_codec_flush(MediaCodecDelegate delegate);
+
     size_t media_codec_get_input_buffers_size(MediaCodecDelegate delegate);
     uint8_t *media_codec_get_nth_input_buffer(MediaCodecDelegate delegate, size_t n);
+    MediaABufferWrapper* media_codec_get_nth_input_buffer_as_abuffer(MediaCodecDelegate delegate, size_t n);
+
     size_t media_codec_get_nth_input_buffer_capacity(MediaCodecDelegate delegate, size_t n);
     size_t media_codec_get_output_buffers_size(MediaCodecDelegate delegate);
     uint8_t *media_codec_get_nth_output_buffer(MediaCodecDelegate delegate, size_t n);
