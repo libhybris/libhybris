@@ -30,7 +30,7 @@ LOCAL_SHARED_LIBRARIES += libinputservice
 LOCAL_C_INCLUDES += frameworks/base/services/input
 endif
 
-HAS_LIBINPUTFLINGER := $(shell test $(ANDROID_VERSION_MAJOR) -eq 5 && echo true)
+HAS_LIBINPUTFLINGER := $(shell test $(ANDROID_VERSION_MAJOR) -ge 5 && echo true)
 ifeq ($(HAS_LIBINPUTFLINGER),true)
 LOCAL_SHARED_LIBRARIES += libinputflinger libinputservice
 LOCAL_C_INCLUDES += \

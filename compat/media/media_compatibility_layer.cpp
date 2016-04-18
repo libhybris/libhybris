@@ -87,7 +87,7 @@ struct FrameAvailableListener : public android::GLConsumer::FrameAvailableListen
 		}
 
 		// From android::GLConsumer/SurfaceTexture::FrameAvailableListener
-#if ANDROID_VERSION_MAJOR==5 && ANDROID_VERSION_MINOR>=1
+#if ANDROID_VERSION_MAJOR==5 && ANDROID_VERSION_MINOR>=1 || ANDROID_VERSION_MAJOR>=6
 		virtual void onFrameAvailable(const android::BufferItem& item)
 #else
 		virtual void onFrameAvailable()
@@ -242,7 +242,7 @@ struct MediaPlayerWrapper : public android::MediaPlayer
 			source_fd = -1;
 		}
 
-#if  ANDROID_VERSION_MAJOR==5
+#if  ANDROID_VERSION_MAJOR>=5
 		android::status_t setVideoSurfaceTexture(android::sp<android::IGraphicBufferProducer> bq, const android::sp<android::GLConsumer> &surfaceTexture)
 #elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 		android::status_t setVideoSurfaceTexture(const android::sp<android::SurfaceTexture> &surfaceTexture)
@@ -492,7 +492,7 @@ int android_media_set_preview_texture(MediaPlayerWrapper *mp, int texture_id)
 			new android::NativeBufferAlloc()
 			);
 
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
 	android::sp<IGraphicBufferProducer> producer;
 	android::sp<IGraphicBufferConsumer> consumer;
 	BufferQueue::createBufferQueue(&producer, &consumer);
@@ -508,7 +508,7 @@ int android_media_set_preview_texture(MediaPlayerWrapper *mp, int texture_id)
 
 	static const bool allow_synchronous_mode = true;
 	// Create a new GLConsumer/SurfaceTexture from the texture_id in synchronous mode (don't wait on all data in the buffer)
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
 	mp->setVideoSurfaceTexture(producer, android::sp<android::GLConsumer>(
 				new android::GLConsumer(
 #elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
@@ -518,7 +518,7 @@ int android_media_set_preview_texture(MediaPlayerWrapper *mp, int texture_id)
 	mp->setVideoSurfaceTexture(buffer_queue, android::sp<android::GLConsumer>(
 				new android::GLConsumer(
 #endif
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
 					consumer,
 					texture_id,
 					GL_TEXTURE_EXTERNAL_OES,

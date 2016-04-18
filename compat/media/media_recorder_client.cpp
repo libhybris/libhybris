@@ -38,7 +38,13 @@ MediaRecorderClient::MediaRecorderClient()
 
     media_recorder_observer = new BpMediaRecorderObserver(service);
 
+#if ANDROID_VERSION_MAJOR>=6
+    // TODO: do we need to get valid package here?
+    const String16 opPackageName("ubuntu");
+    recorder = new android::StagefrightRecorder(opPackageName);
+#else
     recorder = new android::StagefrightRecorder;
+#endif
 }
 
 MediaRecorderClient::~MediaRecorderClient()
@@ -125,6 +131,7 @@ status_t MediaRecorderClient::setAudioEncoder(int ae)
     return recorder->setAudioEncoder((android::audio_encoder)ae);
 }
 
+#if ANDROID_VERSION_MAJOR<=5
 status_t MediaRecorderClient::setOutputFile(const char* path)
 {
     REPORT_FUNCTION();
@@ -135,6 +142,18 @@ status_t MediaRecorderClient::setOutputFile(const char* path)
     }
     return recorder->setOutputFile(path);
 }
+#else
+status_t MediaRecorderClient::setInputSurface(const sp<IGraphicBufferConsumer>& surface)
+{
+    REPORT_FUNCTION();
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder == NULL) {
+        ALOGE("recorder must not be NULL");
+        return NO_INIT;
+    }
+    return recorder->setInputSurface(surface);
+}
+#endif
 
 status_t MediaRecorderClient::setOutputFile(int fd, int64_t offset, int64_t length)
 {

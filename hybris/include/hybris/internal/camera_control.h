@@ -51,7 +51,7 @@ struct CameraControl : public android::CameraListener,
     android::sp<android::GLConsumer> preview_texture;
 #endif
     // From android::SurfaceTexture/GLConsumer::FrameAvailableListener
-#if ANDROID_VERSION_MAJOR==5 && ANDROID_VERSION_MINOR>=1
+#if ANDROID_VERSION_MAJOR==5 && ANDROID_VERSION_MINOR>=1 || ANDROID_VERSION_MAJOR>=6
     void onFrameAvailable(const android::BufferItem& item);
 #else
     void onFrameAvailable();

@@ -63,8 +63,11 @@ status_t BnDecodingService::onTransact(
             CHECK_INTERFACE(IDecodingService, data, reply);
             sp<IGraphicBufferConsumer> gbc;
             status_t res = getIGraphicBufferConsumer(&gbc);
-
+#if ANDROID_VERSION_MAJOR>=6
+            reply->writeStrongBinder(IInterface::asBinder(gbc));
+#else
             reply->writeStrongBinder(gbc->asBinder());
+#endif
             reply->writeInt32(res);
 
             return NO_ERROR;
@@ -74,7 +77,11 @@ status_t BnDecodingService::onTransact(
             sp<IGraphicBufferProducer> gbp;
             status_t res = getIGraphicBufferProducer(&gbp);
 
+#if ANDROID_VERSION_MAJOR>=6
+            reply->writeStrongBinder(IInterface::asBinder(gbp));
+#else
             reply->writeStrongBinder(gbp->asBinder());
+#endif
             reply->writeInt32(res);
 
             return NO_ERROR;
@@ -124,7 +131,11 @@ status_t BpDecodingService::registerSession(const sp<IDecodingServiceSession>& s
     ALOGD("Entering %s", __PRETTY_FUNCTION__);
     Parcel data, reply;
     data.writeInterfaceToken(IDecodingService::getInterfaceDescriptor());
+#if ANDROID_VERSION_MAJOR>=6
+    data.writeStrongBinder(IInterface::asBinder(session));
+#else
     data.writeStrongBinder(session->asBinder());
+#endif
     data.writeInt32(handle);
     remote()->transact(REGISTER_SESSION, data, &reply);
     return NO_ERROR;
@@ -195,7 +206,7 @@ status_t DecodingService::getIGraphicBufferConsumer(sp<IGraphicBufferConsumer>* 
     pid_t pid = IPCThreadState::self()->getCallingPid();
     ALOGD("Calling Pid: %d", pid);
 
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
     *gbc = consumer;
 #else
     *gbc = buffer_queue;
@@ -209,7 +220,7 @@ status_t DecodingService::getIGraphicBufferProducer(sp<IGraphicBufferProducer>* 
     pid_t pid = IPCThreadState::self()->getCallingPid();
     ALOGD("Calling Pid: %d", pid);
 
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
     *gbp = producer;
 #else
     *gbp = buffer_queue;
@@ -223,8 +234,13 @@ status_t DecodingService::registerSession(const sp<IDecodingServiceSession>& ses
     ALOGD("Entering %s", __PRETTY_FUNCTION__);
 
     // Add session/handle to running clients map and connect death observer
+#if ANDROID_VERSION_MAJOR>=6
+    status_t ret = IInterface::asBinder(session)->linkToDeath(sp<IBinder::DeathRecipient>(this));
+    clientCbs.add(IInterface::asBinder(session), clients.valueFor(handle));
+#else
     status_t ret = session->asBinder()->linkToDeath(sp<IBinder::DeathRecipient>(this));
     clientCbs.add(session->asBinder(), clients.valueFor(handle));
+#endif
     clients.removeItem(handle);
 
     // Create a new BufferQueue instance so that the next created client plays
@@ -239,11 +255,15 @@ status_t DecodingService::unregisterSession()
     ALOGD("Entering %s", __PRETTY_FUNCTION__);
     if (session != NULL)
     {
+#if ANDROID_VERSION_MAJOR>=6
+        IInterface::asBinder(session)->unlinkToDeath(this);
+#else
         session->asBinder()->unlinkToDeath(this);
+#endif
         session.clear();
         // Reset the BufferQueue instance so that the next created client plays
         // video correctly
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
         producer.clear();
         consumer.clear();
 #else
@@ -261,7 +281,7 @@ void DecodingService::createBufferQueue()
     sp<IGraphicBufferAlloc> g_buffer_alloc(new GraphicBufferAlloc());
 
     // This BuferQueue is shared between the client and the service
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
     BufferQueue::createBufferQueue(&producer, &consumer);
 #elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
     sp<NativeBufferAlloc> native_alloc(new NativeBufferAlloc());
@@ -270,7 +290,7 @@ void DecodingService::createBufferQueue()
     buffer_queue = new BufferQueue(NULL);
     ALOGD("buffer_queue: %p", (void*)buffer_queue.get());
 #endif
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
     producer->setBufferCount(5);
 #else
     buffer_queue->setBufferCount(5);

@@ -69,7 +69,12 @@ status_t BnMediaRecorderFactory::onTransact(
         case CREATE_MEDIA_RECORDER: {
             CHECK_INTERFACE(IMediaRecorderFactory, data, reply);
             sp<IMediaRecorder> recorder = createMediaRecorder();
+#if ANDROID_VERSION_MAJOR>=6
+            reply->writeStrongBinder(IInterface::asBinder(recorder));
+#else
             reply->writeStrongBinder(recorder->asBinder());
+#endif
+
             return NO_ERROR;
         } break;
         default:
