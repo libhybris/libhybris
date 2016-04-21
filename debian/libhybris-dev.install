@@ -25,3 +25,4 @@ usr/include/hybris/ui
 usr/include/hybris/eglplatformcommon
 usr/include/hybris/hwcomposerwindow
 usr/include/hybris/dlfcn
+usr/include/hybris/common
