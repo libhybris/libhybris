@@ -1,4 +1,4 @@
-libhybris (0.1.0+git20151016+6d424c9-0ubuntu10) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu10) xenial; urgency=medium
 
   * debian: add missing hybris/common include directory
 
