@@ -57,9 +57,6 @@
 #include "linker_phdr.h"
 #include "linker_relocs.h"
 #include "linker_reloc_iterators.h"
-#if 0
-#include "ziparchive/zip_archive.h"
-#endif
 
 #include "hybris_compat.h"
 
@@ -1082,65 +1079,6 @@ ElfW(Sym)* soinfo::elf_addr_lookup(const void* addr) {
   return nullptr;
 }
 
-#if 0
-static int open_library_in_zipfile(const char* const path,
-                                   off64_t* file_offset) {
-  TRACE("Trying zip file open from path '%s'", path);
-
-  // Treat an '!/' separator inside a path as the separator between the name
-  // of the zip file on disk and the subdirectory to search within it.
-  // For example, if path is "foo.zip!/bar/bas/x.so", then we search for
-  // "bar/bas/x.so" within "foo.zip".
-  const char* separator = strstr(path, "!/");
-  if (separator == nullptr) {
-    return -1;
-  }
-
-  char buf[512];
-  if (strlcpy(buf, path, sizeof(buf)) >= sizeof(buf)) {
-    PRINT("Warning: ignoring very long library path: %s", path);
-    return -1;
-  }
-
-  buf[separator - path] = '\0';
-
-  const char* zip_path = buf;
-  const char* file_path = &buf[separator - path + 2];
-  int fd = TEMP_FAILURE_RETRY(open(zip_path, O_RDONLY | O_CLOEXEC));
-  if (fd == -1) {
-    return -1;
-  }
-
-  ZipArchiveHandle handle;
-  if (OpenArchiveFd(fd, "", &handle, false) != 0) {
-    // invalid zip-file (?)
-    close(fd);
-    return -1;
-  }
-
-  auto archive_guard = make_scope_guard([&]() {
-    CloseArchive(handle);
-  });
-
-  ZipEntry entry;
-
-  if (FindEntry(handle, ZipEntryName(file_path), &entry) != 0) {
-    // Entry was not found.
-    close(fd);
-    return -1;
-  }
-
-  // Check if it is properly stored
-  if (entry.method != kCompressStored || (entry.offset % PAGE_SIZE) != 0) {
-    close(fd);
-    return -1;
-  }
-
-  *file_offset = entry.offset;
-  return fd;
-}
-#endif
-
 static bool format_path(char* buf, size_t buf_size, const char* path, const char* name) {
   int n = __libc_format_buffer(buf, buf_size, "%s/%s", path, name);
   if (n < 0 || n >= static_cast<int>(buf_size)) {
@@ -1177,13 +1115,6 @@ static int open_library_on_ld_library_path(const char* name, off64_t* file_offse
     }
 
     int fd = -1;
-
-#if 0
-    if (strchr(buf, '!') != nullptr) {
-      fd = open_library_in_zipfile(buf, file_offset);
-    }
-#endif
-
     if (fd == -1) {
       fd = TEMP_FAILURE_RETRY(open(buf, O_RDONLY | O_CLOEXEC));
       if (fd != -1) {
@@ -1204,15 +1135,6 @@ static int open_library(const char* name, off64_t* file_offset) {
 
   // If the name contains a slash, we should attempt to open it directly and not search the paths.
   if (strchr(name, '/') != nullptr) {
-#if 0
-    if (strchr(name, '!') != nullptr) {
-      int fd = open_library_in_zipfile(name, file_offset);
-      if (fd != -1) {
-        return fd;
-      }
-    }
-#endif
-
     int fd = TEMP_FAILURE_RETRY(open(name, O_RDONLY | O_CLOEXEC));
     if (fd != -1) {
       *file_offset = 0;
