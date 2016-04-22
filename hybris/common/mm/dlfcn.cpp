@@ -54,7 +54,7 @@ static void __bionic_format_dlerror(const char* msg, const char* detail) {
   __bionic_set_dlerror(buffer);
 }
 
-const char* android_dlerror() {
+extern "C" const char* android_dlerror() {
   const char* old_value = __bionic_set_dlerror(nullptr);
   return old_value;
 }
@@ -79,15 +79,15 @@ static void* dlopen_ext(const char* filename, int flags, const android_dlextinfo
   return result;
 }
 
-void* android_dlopen_ext(const char* filename, int flags, const android_dlextinfo* extinfo) {
+extern "C" void* android_dlopen_ext(const char* filename, int flags, const android_dlextinfo* extinfo) {
   return dlopen_ext(filename, flags, extinfo);
 }
 
-void* android_dlopen(const char* filename, int flags) {
+extern "C" void* android_dlopen(const char* filename, int flags) {
   return dlopen_ext(filename, flags, nullptr);
 }
 
-void* android_dlsym(void* handle, const char* symbol) {
+extern "C" void* android_dlsym(void* handle, const char* symbol) {
   ScopedPthreadMutexLocker locker(&g_dl_mutex);
 
 #if !defined(__LP64__)
@@ -128,7 +128,7 @@ void* android_dlsym(void* handle, const char* symbol) {
   }
 }
 
-int dladdr(const void* addr, Dl_info* info) {
+extern "C" int android_dladdr(const void* addr, Dl_info* info) {
   ScopedPthreadMutexLocker locker(&g_dl_mutex);
 
   // Determine if this address can be found in any library currently mapped.
@@ -153,7 +153,7 @@ int dladdr(const void* addr, Dl_info* info) {
   return 1;
 }
 
-int dlclose(void* handle) {
+extern "C" int android_dlclose(void* handle) {
   ScopedPthreadMutexLocker locker(&g_dl_mutex);
   do_dlclose(reinterpret_cast<soinfo*>(handle));
   // dlclose has no defined errors.
