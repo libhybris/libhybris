@@ -3331,7 +3331,9 @@ extern "C" ElfW(Addr) __linker_init(void* raw_args) {
     _exit(EXIT_FAILURE);
   }
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   __libc_init_tls(args);
+#endif
 
   // Initialize the linker's own global variables
   linker_so.call_constructors();
