@@ -274,6 +274,8 @@ echo "  arch  ..................: $arch"
 echo
 echo "  headers path ...........: $android_headers_path"
 echo
+echo "  Android version.........: $android_headers_major.$android_headers_minor.$android_headers_patch"
+echo
 echo "  default egl platform ...: $DEFAULT_EGL_PLATFORM"
 echo
 echo "  default ld_library_path.: $DEFAULT_HYBRIS_LD_LIBRARY_PATH"
