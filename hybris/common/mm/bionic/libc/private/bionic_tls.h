@@ -30,7 +30,7 @@
 #define __BIONIC_PRIVATE_BIONIC_TLS_H_
 
 #include <sys/cdefs.h>
-#include <sys/limits.h>
+#include <limits.h>
 #include "bionic_macros.h"
 #include "__get_tls.h"
 

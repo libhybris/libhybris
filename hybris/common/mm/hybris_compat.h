@@ -23,7 +23,4 @@ size_t strlcat(char *dst, const char *src, size_t size);
 #define DT_ANDROID_RELA (DT_LOOS + 4)
 #define DT_ANDROID_RELASZ (DT_LOOS + 5)
 
-/* From bionic/libc/include/sys/limits.h */
-#define CHAR_BIT 8 /* number of bits in a char */
-
 #endif
