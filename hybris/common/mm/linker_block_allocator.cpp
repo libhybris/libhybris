@@ -22,6 +22,8 @@
 
 #include "private/bionic_prctl.h"
 
+#include "hybris_compat.h"
+
 struct LinkerBlockAllocatorPage {
   LinkerBlockAllocatorPage* next;
   uint8_t bytes[PAGE_SIZE-sizeof(LinkerBlockAllocatorPage*)];

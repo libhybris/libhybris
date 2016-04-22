@@ -57,7 +57,11 @@
 #include "linker_phdr.h"
 #include "linker_relocs.h"
 #include "linker_reloc_iterators.h"
+#if 0
 #include "ziparchive/zip_archive.h"
+#endif
+
+#include "hybris_compat.h"
 
 extern void __libc_init_AT_SECURE(KernelArgumentBlock&);
 
@@ -93,9 +97,9 @@ static std::vector<std::string> g_ld_preload_names;
 
 static std::vector<soinfo*> g_ld_preloads;
 
-__LIBC_HIDDEN__ int g_ld_debug_verbosity;
+int g_ld_debug_verbosity;
 
-__LIBC_HIDDEN__ abort_msg_t* g_abort_message = nullptr; // For debuggerd.
+abort_msg_t* g_abort_message = nullptr; // For debuggerd.
 
 #if STATS
 struct linker_stats_t {
@@ -1078,6 +1082,7 @@ ElfW(Sym)* soinfo::elf_addr_lookup(const void* addr) {
   return nullptr;
 }
 
+#if 0
 static int open_library_in_zipfile(const char* const path,
                                    off64_t* file_offset) {
   TRACE("Trying zip file open from path '%s'", path);
@@ -1134,6 +1139,7 @@ static int open_library_in_zipfile(const char* const path,
   *file_offset = entry.offset;
   return fd;
 }
+#endif
 
 static bool format_path(char* buf, size_t buf_size, const char* path, const char* name) {
   int n = __libc_format_buffer(buf, buf_size, "%s/%s", path, name);
@@ -1171,9 +1177,12 @@ static int open_library_on_ld_library_path(const char* name, off64_t* file_offse
     }
 
     int fd = -1;
+
+#if 0
     if (strchr(buf, '!') != nullptr) {
       fd = open_library_in_zipfile(buf, file_offset);
     }
+#endif
 
     if (fd == -1) {
       fd = TEMP_FAILURE_RETRY(open(buf, O_RDONLY | O_CLOEXEC));
@@ -1195,12 +1204,14 @@ static int open_library(const char* name, off64_t* file_offset) {
 
   // If the name contains a slash, we should attempt to open it directly and not search the paths.
   if (strchr(name, '/') != nullptr) {
+#if 0
     if (strchr(name, '!') != nullptr) {
       int fd = open_library_in_zipfile(name, file_offset);
       if (fd != -1) {
         return fd;
       }
     }
+#endif
 
     int fd = TEMP_FAILURE_RETRY(open(name, O_RDONLY | O_CLOEXEC));
     if (fd != -1) {
@@ -1217,7 +1228,8 @@ static int open_library(const char* name, off64_t* file_offset) {
   return fd;
 }
 
-static const char* fix_dt_needed(const char* dt_needed, const char* sopath __unused) {
+static const char* fix_dt_needed(const char* dt_needed, const char* sopath) {
+  (void) sopath;
 #if !defined(__LP64__)
   // Work around incorrect DT_NEEDED entries for old apps: http://b/21364029
   if (get_application_target_sdk_version() <= 22) {
@@ -1815,7 +1827,7 @@ bool soinfo::lookup_version_info(const VersionTracker& version_tracker, ElfW(Wor
 
 #if !defined(__mips__)
 #if defined(USE_RELA)
-static ElfW(Addr) get_addend(ElfW(Rela)* rela, ElfW(Addr) reloc_addr __unused) {
+static ElfW(Addr) get_addend(ElfW(Rela)* rela, ElfW(Addr) reloc_addr ) {
   return rela->r_addend;
 }
 #else
@@ -2196,7 +2208,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
 }
 #endif  // !defined(__mips__)
 
-void soinfo::call_array(const char* array_name __unused, linker_function_t* functions,
+void soinfo::call_array(const char* array_name , linker_function_t* functions,
                         size_t count, bool reverse) {
   if (functions == nullptr) {
     return;
@@ -2216,7 +2228,7 @@ void soinfo::call_array(const char* array_name __unused, linker_function_t* func
   TRACE("[ Done calling %s for '%s' ]", array_name, get_realpath());
 }
 
-void soinfo::call_function(const char* function_name __unused, linker_function_t function) {
+void soinfo::call_function(const char* function_name , linker_function_t function) {
   if (function == nullptr || reinterpret_cast<uintptr_t>(function) == static_cast<uintptr_t>(-1)) {
     return;
   }
@@ -3063,7 +3075,7 @@ bool soinfo::link_image(const soinfo_list_t& global_group, const soinfo_list_t& 
  * It helps to stack unwinding through signal handlers.
  * Also, it makes bionic more like glibc.
  */
-static void add_vdso(KernelArgumentBlock& args __unused) {
+static void add_vdso(KernelArgumentBlock& args) {
 #if defined(AT_SYSINFO_EHDR)
   ElfW(Ehdr)* ehdr_vdso = reinterpret_cast<ElfW(Ehdr)*>(args.getauxval(AT_SYSINFO_EHDR));
   if (ehdr_vdso == nullptr) {

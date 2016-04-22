@@ -29,6 +29,8 @@
 #include "private/ScopedPthreadMutexLocker.h"
 #include "private/ThreadLocalBuffer.h"
 
+#include "hybris_compat.h"
+
 /* This file hijacks the symbols stubbed out in libdl.so. */
 
 static pthread_mutex_t g_dl_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
@@ -52,7 +54,7 @@ static void __bionic_format_dlerror(const char* msg, const char* detail) {
   __bionic_set_dlerror(buffer);
 }
 
-const char* dlerror() {
+const char* android_dlerror() {
   const char* old_value = __bionic_set_dlerror(nullptr);
   return old_value;
 }
@@ -81,11 +83,11 @@ void* android_dlopen_ext(const char* filename, int flags, const android_dlextinf
   return dlopen_ext(filename, flags, extinfo);
 }
 
-void* dlopen(const char* filename, int flags) {
+void* android_dlopen(const char* filename, int flags) {
   return dlopen_ext(filename, flags, nullptr);
 }
 
-void* dlsym(void* handle, const char* symbol) {
+void* android_dlsym(void* handle, const char* symbol) {
   ScopedPthreadMutexLocker locker(&g_dl_mutex);
 
 #if !defined(__LP64__)

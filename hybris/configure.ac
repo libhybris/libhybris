@@ -94,6 +94,8 @@ AC_ARG_ENABLE(arch,
       arch="arm"
    elif test "x$enableval" = "xx86" ; then
       arch="x86"
+   elif test "x$enableval" = "xx86-64" ; then
+      arch="x86-64"
    else
       echo
       echo "Error!"
@@ -105,6 +107,7 @@ AC_ARG_ENABLE(arch,
   )
 AM_CONDITIONAL([WANT_ARCH_ARM], [test x$arch = xarm])
 AM_CONDITIONAL([WANT_ARCH_X86], [test x$arch = xx86])
+AM_CONDITIONAL([WANT_ARCH_X86_64], [test x$arch = xx86-64])
 
 DEFAULT_EGL_PLATFORM="null"
 AC_ARG_WITH(default-egl-platform,
@@ -214,6 +217,7 @@ AC_CONFIG_FILES([
 	common/ics/Makefile
 	common/jb/Makefile
 	common/stub/Makefile
+	common/mm/Makefile
 	egl/egl.pc
 	egl/Makefile
 	egl/platforms/Makefile

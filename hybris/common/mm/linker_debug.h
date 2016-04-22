@@ -56,7 +56,7 @@
 
 #include "private/libc_logging.h"
 
-__LIBC_HIDDEN__ extern int g_ld_debug_verbosity;
+extern int g_ld_debug_verbosity;
 
 #if LINKER_DEBUG_TO_LOG
 #define _PRINTVF(v, x...) \
