@@ -3076,7 +3076,9 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   // Initialize system properties
   __system_properties_init(); // may use 'environ'
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   debuggerd_init();
+#endif
 
   // Get a few environment variables.
   const char* LD_DEBUG = getenv("LD_DEBUG");
