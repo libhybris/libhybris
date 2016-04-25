@@ -58,17 +58,10 @@
 
 extern int g_ld_debug_verbosity;
 
-#if LINKER_DEBUG_TO_LOG
 #define _PRINTVF(v, x...) \
     do { \
-      if (g_ld_debug_verbosity > (v)) __libc_format_log(5-(v), "linker", x); \
+      if (g_ld_debug_verbosity > (v)) { fprintf(stderr, x); } \
     } while (0)
-#else /* !LINKER_DEBUG_TO_LOG */
-#define _PRINTVF(v, x...) \
-    do { \
-      if (g_ld_debug_verbosity > (v)) { __libc_format_fd(1, x); write(1, "\n", 1); } \
-    } while (0)
-#endif /* !LINKER_DEBUG_TO_LOG */
 
 #define PRINT(x...)          _PRINTVF(-1, x)
 #define INFO(x...)           _PRINTVF(0, x)

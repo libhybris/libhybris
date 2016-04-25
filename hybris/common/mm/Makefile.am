@@ -33,6 +33,7 @@ AM_CPPFLAGS = \
 noinst_LTLIBRARIES = \
 	libandroid-linker.la
 libandroid_linker_la_SOURCES = \
+	hybris_compat.cpp \
 	dlfcn.cpp \
 	linker_allocator.cpp \
 	linker_block_allocator.cpp \

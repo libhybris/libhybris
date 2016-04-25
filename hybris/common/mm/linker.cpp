@@ -1080,7 +1080,7 @@ ElfW(Sym)* soinfo::elf_addr_lookup(const void* addr) {
 }
 
 static bool format_path(char* buf, size_t buf_size, const char* path, const char* name) {
-  int n = __libc_format_buffer(buf, buf_size, "%s/%s", path, name);
+  int n = snprintf(buf, buf_size, "%s/%s", path, name);
   if (n < 0 || n >= static_cast<int>(buf_size)) {
     PRINT("Warning: ignoring very long library path: %s/%s", path, name);
     return false;
@@ -1762,7 +1762,7 @@ static ElfW(Addr) get_addend(ElfW(Rel)* rel, ElfW(Addr) reloc_addr) {
 }
 #endif
 
-extern void* __hybris_get_hooked_symbol(const char *sym);
+extern "C" void* __hybris_get_hooked_symbol(const char *sym);
 
 template<typename ElfRelIteratorT>
 bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& rel_iterator,
@@ -3079,11 +3079,13 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   gettimeofday(&t0, 0);
 #endif
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   // Sanitize the environment.
   __libc_init_AT_SECURE(args);
 
   // Initialize system properties
   __system_properties_init(); // may use 'environ'
+#endif
 
 #ifdef DISABLED_FOR_HYBRIS_SUPPORT
   debuggerd_init();
@@ -3148,7 +3150,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
 
   ElfW(Ehdr)* elf_hdr = reinterpret_cast<ElfW(Ehdr)*>(si->base);
   if (elf_hdr->e_type != ET_DYN) {
-    __libc_format_fd(2, "error: only position independent executables (PIE) are supported.\n");
+    fprintf(stderr, "error: only position independent executables (PIE) are supported.\n");
     exit(EXIT_FAILURE);
   }
 
@@ -3159,7 +3161,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   somain = si;
 
   if (!si->prelink_image()) {
-    __libc_format_fd(2, "CANNOT LINK EXECUTABLE: %s\n", linker_get_error_buffer());
+    fprintf(stderr, "CANNOT LINK EXECUTABLE: %s\n", linker_get_error_buffer());
     exit(EXIT_FAILURE);
   }
 
@@ -3190,11 +3192,11 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   if (needed_libraries_count > 0 &&
       !find_libraries(si, needed_library_names, needed_libraries_count, nullptr,
           &g_ld_preloads, ld_preloads_count, RTLD_GLOBAL, nullptr)) {
-    __libc_format_fd(2, "CANNOT LINK EXECUTABLE: %s\n", linker_get_error_buffer());
+    fprintf(stderr, "CANNOT LINK EXECUTABLE: %s\n", linker_get_error_buffer());
     exit(EXIT_FAILURE);
   } else if (needed_libraries_count == 0) {
     if (!si->link_image(g_empty_list, soinfo::soinfo_list_t::make_list(si), nullptr)) {
-      __libc_format_fd(2, "CANNOT LINK EXECUTABLE: %s\n", linker_get_error_buffer());
+      fprintf(stderr, "CANNOT LINK EXECUTABLE: %s\n", linker_get_error_buffer());
       exit(EXIT_FAILURE);
     }
     si->increment_ref_count();
@@ -3336,9 +3338,10 @@ extern "C" ElfW(Addr) __linker_init(void* raw_args) {
     // call write() (because it involves a GOT reference). We may as
     // well try though...
     const char* msg = "CANNOT LINK EXECUTABLE: ";
-    write(2, msg, strlen(msg));
-    write(2, __linker_dl_err_buf, strlen(__linker_dl_err_buf));
-    write(2, "\n", 1);
+    int unused __attribute__((unused));
+    unused = write(2, msg, strlen(msg));
+    unused = write(2, __linker_dl_err_buf, strlen(__linker_dl_err_buf));
+    unused = write(2, "\n", 1);
     _exit(EXIT_FAILURE);
   }
 

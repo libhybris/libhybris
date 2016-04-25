@@ -44,17 +44,15 @@
 
 #define DL_ERR(fmt, x...) \
     do { \
-      __libc_format_buffer(linker_get_error_buffer(), linker_get_error_buffer_size(), fmt, ##x); \
+      fprintf(stderr, fmt, ##x); \
       /* If LD_DEBUG is set high enough, log every dlerror(3) message. */ \
       DEBUG("%s\n", linker_get_error_buffer()); \
     } while (false)
 
 #define DL_WARN(fmt, x...) \
     do { \
-      __libc_format_log(ANDROID_LOG_WARN, "linker", fmt, ##x); \
-      __libc_format_fd(2, "WARNING: linker: "); \
-      __libc_format_fd(2, fmt, ##x); \
-      __libc_format_fd(2, "\n"); \
+      fprintf(stderr, "WARNING: linker " fmt, ##x); \
+      fprintf(stderr, "\n"); \
     } while (false)
 
 #if defined(__LP64__)
