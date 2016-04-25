@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 
+#if DISABLED_FOR_HYBRIS_SUPPORT
 static LinkerMemoryAllocator g_linker_allocator;
 
 void* malloc(size_t byte_count) {
@@ -35,4 +36,5 @@ void* realloc(void* p, size_t byte_count) {
 void free(void* ptr) {
   g_linker_allocator.free(ptr);
 }
+#endif
 
