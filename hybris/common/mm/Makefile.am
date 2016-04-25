@@ -59,7 +59,9 @@ libandroid_linker_la_LDFLAGS = \
 	-lsupc++
 
 if WANT_DEBUG
-libandroid_linker_la_CPPFLAGS += -DLINKER_DEBUG=1
+libandroid_linker_la_CPPFLAGS += \
+	-DTRACE_DEBUG=1
 else
-libandroid_linker_la_CPPFLAGS += -DLINKER_DEBUG=0
+libandroid_linker_la_CPPFLAGS += \
+	-DTRACE_DEBUG=1
 endif
