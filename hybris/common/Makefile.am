@@ -37,18 +37,18 @@ libhybris_common_la_SOURCES = \
 	dlfcn.c \
 	logging.c \
 	sysconf.c
-libhybris_common_la_CFLAGS = \
+libhybris_common_la_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common
 if WANT_TRACE
-libhybris_common_la_CFLAGS += -DDEBUG
+libhybris_common_la_CPPFLAGS += -DDEBUG
 endif
 if WANT_DEBUG
-libhybris_common_la_CFLAGS += -ggdb -O0
+libhybris_common_la_CPPFLAGS += -ggdb -O0
 endif
 if WANT_MALI_QUIRKS
-libhybris_common_la_CFLAGS += -DMALI_QUIRKS
+libhybris_common_la_CPPFLAGS += -DMALI_QUIRKS
 endif
 libhybris_common_la_LDFLAGS = \
 	-ldl \
