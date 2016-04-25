@@ -37,7 +37,7 @@
 // By default, traces are sent to logcat, with the "linker" tag. You can
 // change this to go to stdout instead by setting the definition of
 // LINKER_DEBUG_TO_LOG to 0.
-#define LINKER_DEBUG_TO_LOG  1
+#define LINKER_DEBUG_TO_LOG  0
 
 #define TRACE_DEBUG          1
 #define DO_TRACE_LOOKUP      1
