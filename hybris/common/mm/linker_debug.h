@@ -60,7 +60,7 @@ extern int g_ld_debug_verbosity;
 
 #define _PRINTVF(v, x...) \
     do { \
-      if (g_ld_debug_verbosity > (v)) { fprintf(stderr, x); } \
+      if (g_ld_debug_verbosity > (v)) { fprintf(stderr, x); fprintf(stderr, "\n"); } \
     } while (0)
 
 #define PRINT(x...)          _PRINTVF(-1, x)

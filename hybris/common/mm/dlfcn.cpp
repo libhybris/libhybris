@@ -33,18 +33,32 @@
 
 /* This file hijacks the symbols stubbed out in libdl.so. */
 
-static pthread_mutex_t g_dl_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+static pthread_mutex_t g_dl_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static char dl_err_buf[1024];
+static const char *dl_err_str;
 
 static const char* __bionic_set_dlerror(char* new_value) {
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   char** dlerror_slot = &reinterpret_cast<char**>(__get_tls())[TLS_SLOT_DLERROR];
 
   const char* old_value = *dlerror_slot;
   *dlerror_slot = new_value;
   return old_value;
+#else
+  char *dlerror_slot = dl_err_buf;
+  const char *old_value = dlerror_slot;
+  dlerror_slot = new_value;
+  return old_value;
+#endif
 }
 
 static void __bionic_format_dlerror(const char* msg, const char* detail) {
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   char* buffer = __get_thread()->dlerror_buffer;
+#else
+  char* buffer = dl_err_buf;
+#endif
   strlcpy(buffer, msg, __BIONIC_DLERROR_BUFFER_SIZE);
   if (detail != nullptr) {
     strlcat(buffer, ": ", __BIONIC_DLERROR_BUFFER_SIZE);
@@ -194,6 +208,8 @@ uint32_t android_get_application_target_sdk_version() {
       /* st_size */ 0, \
     }
 
+_Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
+
 static const char ANDROID_LIBDL_STRTAB[] =
   // 0000000 00011111 111112 22222222 2333333 3333444444444455555555556666666 6667777777777888888888899999 99999
   // 0123456 78901234 567890 12345678 9012345 6789012345678901234567890123456 7890123456789012345678901234 56789
@@ -216,11 +232,11 @@ static ElfW(Sym) g_libdl_symtab[] = {
   // supposed to have st_name == 0, but instead, it points to an index
   // in the strtab with a \0 to make iterating through the symtab easier.
   ELFW(SYM_INITIALIZER)(sizeof(ANDROID_LIBDL_STRTAB) - 1, nullptr, 0),
-  ELFW(SYM_INITIALIZER)(  0, &dlopen, 1),
-  ELFW(SYM_INITIALIZER)(  7, &dlclose, 1),
-  ELFW(SYM_INITIALIZER)( 15, &dlsym, 1),
-  ELFW(SYM_INITIALIZER)( 21, &dlerror, 1),
-  ELFW(SYM_INITIALIZER)( 29, &dladdr, 1),
+  ELFW(SYM_INITIALIZER)(  0, &android_dlopen, 1),
+  ELFW(SYM_INITIALIZER)(  7, &android_dlclose, 1),
+  ELFW(SYM_INITIALIZER)( 15, &android_dlsym, 1),
+  ELFW(SYM_INITIALIZER)( 21, &android_dlerror, 1),
+  ELFW(SYM_INITIALIZER)( 29, &android_dladdr, 1),
   ELFW(SYM_INITIALIZER)( 36, &android_update_LD_LIBRARY_PATH, 1),
   ELFW(SYM_INITIALIZER)( 67, &android_get_LD_LIBRARY_PATH, 1),
   ELFW(SYM_INITIALIZER)( 95, &dl_iterate_phdr, 1),

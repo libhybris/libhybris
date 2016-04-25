@@ -71,8 +71,8 @@ static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf);
 static LinkerTypeAllocator<soinfo> g_soinfo_allocator;
 static LinkerTypeAllocator<LinkedListEntry<soinfo>> g_soinfo_links_allocator;
 
-static soinfo* solist;
-static soinfo* sonext;
+static soinfo* solist = get_libdl_info();
+static soinfo* sonext = get_libdl_info();
 static soinfo* somain; // main process, always the one after libdl_info
 
 static const char* const kDefaultLdPaths[] = {
@@ -94,7 +94,7 @@ static std::vector<std::string> g_ld_preload_names;
 
 static std::vector<soinfo*> g_ld_preloads;
 
-int g_ld_debug_verbosity;
+int g_ld_debug_verbosity = 1;
 
 abort_msg_t* g_abort_message = nullptr; // For debuggerd.
 
@@ -1864,7 +1864,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
             DL_ERR("unknown weak reloc type %d @ %p (%zu)", type, rel, idx);
             return false;
         }
-      } else { // We got a definition.
+      } else if (sym_addr == 0) { // We got a definition.
 #if !defined(__LP64__)
         // When relocating dso with text_relocation .text segment is
         // not executable. We need to restore elf flags before resolving
@@ -2177,6 +2177,11 @@ void soinfo::call_pre_init_constructors() {
 
 void soinfo::call_constructors() {
   if (constructors_called) {
+    return;
+  }
+
+  if (strcmp(soname_, "libc.so") == 0) {
+    fprintf(stderr, "HYBRIS: =============> Skipping libc.so\n");
     return;
   }
 
