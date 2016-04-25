@@ -1762,6 +1762,8 @@ static ElfW(Addr) get_addend(ElfW(Rel)* rel, ElfW(Addr) reloc_addr) {
 }
 #endif
 
+extern void* __hybris_get_hooked_symbol(const char *sym);
+
 template<typename ElfRelIteratorT>
 bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& rel_iterator,
                       const soinfo_list_t& global_group, const soinfo_list_t& local_group) {
@@ -1791,15 +1793,22 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       sym_name = get_string(symtab_[sym].st_name);
       const version_info* vi = nullptr;
 
-      if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
-        return false;
+      INFO("HYBRIS: '%s' checking hooks for sym '%s'", get_realpath(), sym_name);
+
+      sym_addr = reinterpret_cast<ElfW(Addr)>(__hybris_get_hooked_symbol(sym_name));
+      if (sym_addr != 0) {
+        INFO("HYBRIS: '%s' hooked symbol '%s' to %x", get_realpath(), sym_name, sym_addr);
+      } else {
+        if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
+          return false;
+        }
+
+        if (!soinfo_do_lookup(this, sym_name, vi, &lsi, global_group, local_group, &s)) {
+          return false;
+        }
       }
 
-      if (!soinfo_do_lookup(this, sym_name, vi, &lsi, global_group, local_group, &s)) {
-        return false;
-      }
-
-      if (s == nullptr) {
+      if (sym_addr == 0 && s == nullptr) {
         // We only allow an undefined symbol if this is a weak reference...
         s = &symtab_[sym];
         if (ELF_ST_BIND(s->st_info) != STB_WEAK) {
