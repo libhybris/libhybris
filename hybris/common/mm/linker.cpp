@@ -635,7 +635,6 @@ bool soinfo::elf_lookup(SymbolName& symbol_name,
 
 soinfo::soinfo(const char* realpath, const struct stat* file_stat,
                off64_t file_offset, int rtld_flags) {
-  memset(this, 0, sizeof(*this));
 
   if (realpath != nullptr) {
     realpath_ = realpath;
