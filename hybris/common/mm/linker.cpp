@@ -3106,8 +3106,8 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   const char* ldpath_env = nullptr;
   const char* ldpreload_env = nullptr;
   if (!getauxval(AT_SECURE)) {
-    ldpath_env = getenv("LD_LIBRARY_PATH");
-    ldpreload_env = getenv("LD_PRELOAD");
+    ldpath_env = getenv("HYBRIS_LD_LIBRARY_PATH");
+    ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
   }
 
   INFO("[ android linker & debugger ]");
@@ -3159,7 +3159,10 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   }
 
   // Use LD_LIBRARY_PATH and LD_PRELOAD (but only if we aren't setuid/setgid).
-  parse_LD_LIBRARY_PATH(ldpath_env);
+  if (DEFAULT_HYBRIS_LD_LIBRARY_PATH)
+    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
+  else
+    parse_LD_LIBRARY_PATH(ldpath_env);
   parse_LD_PRELOAD(ldpreload_env);
 
   somain = si;
