@@ -272,6 +272,8 @@ echo "  debug build.............: $debug"
 echo
 echo "  trace...................: $trace"
 echo
+echo "  experimental features...: $experimental"
+echo
 echo "  prefix..................: $prefix"
 echo
 echo "  arch  ..................: $arch"
