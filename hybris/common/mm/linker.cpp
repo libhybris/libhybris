@@ -3090,7 +3090,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
 #endif
 
   // Get a few environment variables.
-  const char* LD_DEBUG = getenv("LD_DEBUG");
+  const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
   if (LD_DEBUG != nullptr) {
     g_ld_debug_verbosity = atoi(LD_DEBUG);
   }
