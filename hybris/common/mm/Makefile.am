@@ -1,20 +1,7 @@
 bionic = $(top_srcdir)/common/mm/bionic
 bionic_libc = $(bionic)/libc
-bionic_libstdcpp = $(bionic)/libstdc++
 
 ARCH_FLAGS =
-
-if WANT_ARCH_ARM
-ARCH_NAME = arm
-endif
-
-if  WANT_ARCH_X86
-ARCH_NAME = x86
-endif
-
-if WANT_ARCH_X86_64
-ARCH_NAME = x86_64
-endif
 
 AM_CFLAGS = \
 	-std=gnu99
@@ -43,8 +30,6 @@ libandroid_linker_la_CPPFLAGS = \
 	-I$(top_srcdir)/common \
 	-I$(bionic_libc)/ \
 	-I$(bionic_libc)/include \
-	-I$(bionic_libc)/arch-${ARCH_NAME}/include \
-	-I$(bionic_libstdcpp)/include \
 	-DLINKER_TEXT_BASE=0xB0000100 \
 	-DLINKER_AREA_SIZE=0x01000000 \
 	-DDEFAULT_HYBRIS_LD_LIBRARY_PATH="\"@DEFAULT_HYBRIS_LD_LIBRARY_PATH@\"" \
