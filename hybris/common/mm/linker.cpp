@@ -96,7 +96,7 @@ static std::vector<std::string> g_ld_preload_names;
 
 static std::vector<soinfo*> g_ld_preloads;
 
-int g_ld_debug_verbosity = 1;
+int g_ld_debug_verbosity = 0;
 
 abort_msg_t* g_abort_message = nullptr; // For debuggerd.
 
@@ -1794,12 +1794,8 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       sym_name = get_string(symtab_[sym].st_name);
       const version_info* vi = nullptr;
 
-      INFO("HYBRIS: '%s' checking hooks for sym '%s'", get_realpath(), sym_name);
-
       sym_addr = reinterpret_cast<ElfW(Addr)>(__hybris_get_hooked_symbol(sym_name));
-      if (sym_addr != 0) {
-        INFO("HYBRIS: '%s' hooked symbol '%s' to %x", get_realpath(), sym_name, sym_addr);
-      } else {
+      if (!sym_addr) {
         if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
           return false;
         }
@@ -3294,6 +3290,14 @@ static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf) {
     }
   }
   return 0;
+}
+
+extern "C" void android_linker_init() {
+  // Get a few environment variables.
+  const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
+  if (LD_DEBUG != nullptr) {
+    g_ld_debug_verbosity = atoi(LD_DEBUG);
+  }
 }
 
 #ifdef DISABLED_FOR_HYBRIS_SUPPORT

@@ -1892,6 +1892,11 @@ void* __hybris_get_hooked_symbol(const char *sym)
     return NULL;
 }
 
-void android_linker_init()
+extern void android_linker_init();
+
+__attribute__((constructor))
+static void hybris_linker_init()
 {
+    LOGD("Linker initialization");
+    android_linker_init();
 }

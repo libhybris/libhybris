@@ -2333,3 +2333,6 @@ unsigned __linker_init(unsigned **elfdata) {
     // the main part of the linker now.
     return __linker_init_post_relocation(elfdata);
 }
+
+void android_linker_init() {
+}
