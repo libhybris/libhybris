@@ -2180,7 +2180,7 @@ void soinfo::call_constructors() {
   }
 
   if (strcmp(soname_, "libc.so") == 0) {
-    fprintf(stderr, "HYBRIS: =============> Skipping libc.so\n");
+    DEBUG("HYBRIS: =============> Skipping libc.so\n");
     return;
   }
 
