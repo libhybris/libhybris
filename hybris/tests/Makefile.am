@@ -192,6 +192,7 @@ test_nfc_CFLAGS = \
 
 test_nfc_LDFLAGS =
 test_nfc_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/libnfc_nxp/libnfc_nxp.la \
 	$(top_builddir)/hardware/libhardware.la
 
