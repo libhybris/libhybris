@@ -189,12 +189,11 @@ test_nfc_SOURCES = test_nfc.c
 test_nfc_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS)
-
-test_nfc_LDFLAGS =
 test_nfc_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/libnfc_nxp/libnfc_nxp.la \
-	$(top_builddir)/hardware/libhardware.la
+	$(top_builddir)/hardware/libhardware.la \
+	-lpthread
 
 test_vibrator_SOURCES = test_vibrator.c
 test_vibrator_CFLAGS = \
