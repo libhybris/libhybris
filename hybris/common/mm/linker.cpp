@@ -60,7 +60,9 @@
 
 #include "hybris_compat.h"
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
 extern void __libc_init_AT_SECURE(KernelArgumentBlock&);
+#endif
 
 // Override macros to use C++ style casts.
 #undef ELF_ST_TYPE
@@ -3294,6 +3296,7 @@ static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf) {
   return 0;
 }
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
 extern "C" void _start();
 
 /*
@@ -3375,3 +3378,5 @@ extern "C" ElfW(Addr) __linker_init(void* raw_args) {
   // Return the address that the calling assembly stub should jump to.
   return start_address;
 }
+
+#endif
