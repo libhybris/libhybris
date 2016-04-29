@@ -45,6 +45,7 @@
 #define DL_ERR(fmt, x...) \
     do { \
       fprintf(stderr, fmt, ##x); \
+      fprintf(stderr, "\n"); \
       /* If LD_DEBUG is set high enough, log every dlerror(3) message. */ \
       DEBUG("%s\n", linker_get_error_buffer()); \
     } while (false)
