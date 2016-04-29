@@ -208,7 +208,9 @@ uint32_t android_get_application_target_sdk_version() {
       /* st_size */ 0, \
     }
 
+#if defined(__arm__)
 _Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
+#endif
 
 static const char ANDROID_LIBDL_STRTAB[] =
   // 0000000 00011111 111112 22222222 2333333 3333444444444455555555556666666 6667777777777888888888899999 99999
