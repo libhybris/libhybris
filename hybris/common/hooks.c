@@ -58,9 +58,12 @@
 #include <sys/prctl.h>
 
 #include <hybris/properties/properties.h>
+#include <hybris/common/hooks.h>
 
 static locale_t hybris_locale;
 static int locale_inited = 0;
+static hybris_hook_cb hook_callback = NULL;
+
 /* TODO:
 *  - Check if the int arguments at attr_set/get match the ones at Android
 *  - Check how to deal with memory leaks (specially with static initializers)
@@ -1850,6 +1853,11 @@ static int hook_cmp(const void *a, const void *b)
     return strcmp(((struct _hook*)a)->name, ((struct _hook*)b)->name);
 }
 
+void hybris_set_hook_callback(hybris_hook_cb callback)
+{
+    // hook_callback = callback;
+}
+
 void* __hybris_get_hooked_symbol(const char *sym)
 {
     static int counter = -1;
@@ -1857,6 +1865,15 @@ void* __hybris_get_hooked_symbol(const char *sym)
     const int nhooks = sizeof(hooks) / sizeof(hooks[0]);
     void *found = NULL;
     struct _hook key;
+
+    /* First check if we have a callback registered which could
+     * give us a context specific hook implementation */
+    if (hook_callback)
+    {
+        found = hook_callback(sym);
+        if (found)
+            return (void*) found;
+    }
 
     if (!sorted)
     {

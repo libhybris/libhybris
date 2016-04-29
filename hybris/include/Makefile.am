@@ -87,4 +87,5 @@ commonincludedir = $(includedir)/hybris/common
 commoninclude_HEADERS = \
 	hybris/common/binding.h \
 	hybris/common/floating_point_abi.h \
-	hybris/common/dlfcn.h
+	hybris/common/dlfcn.h \
+	hybris/common/hooks.h
