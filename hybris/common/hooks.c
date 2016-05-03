@@ -1855,7 +1855,7 @@ static int hook_cmp(const void *a, const void *b)
 
 void hybris_set_hook_callback(hybris_hook_cb callback)
 {
-    // hook_callback = callback;
+    hook_callback = callback;
 }
 
 void* __hybris_get_hooked_symbol(const char *sym)
