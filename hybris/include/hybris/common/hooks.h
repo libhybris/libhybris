@@ -15,11 +15,19 @@
  *
  */
 
-#ifndef HYBRIS_HOOKS_H_
-#define HYBRIS_HOOKS_H_
+#ifndef _HYBRIS_HOOKS_H_
+#define _HYBRIS_HOOKS_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef void* (*hybris_hook_cb)(const char *symbol_name);
 
 void hybris_set_hook_callback(hybris_hook_cb callback);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
