@@ -19,7 +19,7 @@ Vcs-Git: https://git.launchpad.net/~libhybris-maintainers/libhybris/+git/libhybr
 Vcs-Browser: https://git.launchpad.net/~libhybris-maintainers/libhybris/+git/libhybris/
 
 Package: libandroid-properties1
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Description: Library to provide access to get, set and list Android properties
@@ -29,7 +29,7 @@ Description: Library to provide access to get, set and list Android properties
 
 Package: libandroid-properties-dev
 Section: libdevel
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: libandroid-properties1 (= ${binary:Version}),
          ${misc:Depends}
 Description: Development headers files for libandroid-properties
@@ -37,7 +37,7 @@ Description: Development headers files for libandroid-properties
  set or list the Android properties.
 
 Package: libmedia1
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Replaces: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu24)
@@ -52,7 +52,7 @@ Description: Library to provide access to the Android Media HAL
 
 Package: libmedia-dev
 Section: libdevel
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: libmedia1 (= ${binary:Version}),
          android-headers (>= 4.4.2),
          ${misc:Depends}
@@ -66,7 +66,7 @@ Description: Development files for libmedia
  glibc systems.
 
 Package: libhardware2
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Replaces: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
@@ -81,7 +81,7 @@ Description: Library to provide access to the Android libhardware HAL
 
 Package: libhardware-dev
 Section: libdevel
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: libhardware2 (= ${binary:Version}),
          android-headers (>= 4.4.2),
          ${misc:Depends}
@@ -96,7 +96,7 @@ Description: Development files for libhardware
  glibc systems.
 
 Package: libhybris-common1
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: ${shlibs:Depends},
          ${misc:Depends}
 Replaces: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
@@ -110,7 +110,7 @@ Description: Common library that contains the Android linker and custom hooks
 
 Package: libhybris-common-dev
 Section: libdevel
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: libhybris-common1 (= ${binary:Version}),
          ${misc:Depends}
 Replaces: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
@@ -124,7 +124,7 @@ Description: Development files for libhybris-common
  glibc systems.
 
 Package: libhybris
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: libandroid-properties1 (= ${binary:Version}),
          libhardware2,
          libmedia1,
@@ -136,7 +136,7 @@ Description: Allows to run bionic-based HW adaptations in glibc systems - libs
 
 Package: libhybris-dev
 Section: libdevel
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: libhybris (= ${binary:Version}),
          android-headers (>= 4.4.2),
          libandroid-properties-dev (= ${binary:Version}),
@@ -154,7 +154,7 @@ Description: Development headers and libraries for libhybris
 
 Package: libhybris-utils
 Section: utils
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: libhybris (= ${binary:Version}),
          ${shlibs:Depends},
          ${misc:Depends}
@@ -166,7 +166,7 @@ Description: Utilities to help working with the Android HW abstraction layer
 
 Package: libhybris-test
 Section: devel
-Architecture: armhf i386 amd64
+Architecture: armhf arm64 i386 amd64
 Depends: libhybris (= ${binary:Version}),
          ${shlibs:Depends},
          ${misc:Depends}
