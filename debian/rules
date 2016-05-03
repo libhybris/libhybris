@@ -77,20 +77,22 @@ get-packaged-orig-source:
 		| gzip >../$(PKG_source)_$(UPS_version).orig.tar.gz
 	rm -rf $(PKG_source)-$(UPS_version)
 
+ANDROID_HEADERS_PATH = /usr/include/android
+DEFAULT_CONFIGURATION = \
+	--enable-wayland \
+	--with-android-headers=$(ANDROID_HEADERS_PATH) \
+	--enable-property-cache
+
 override_dh_auto_configure:
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
 	dh_auto_configure --sourcedirectory=hybris -- \
-		--enable-wayland \
+		$(DEFAULT_CONFIGURATION) \
 		--enable-arch=arm \
-		--with-android-headers=/usr/include/android \
-		--enable-mali-quirks \
-		--enable-property-cache
+		--enable-mali-quirks
 else
 	dh_auto_configure --sourcedirectory=hybris -- \
-		--enable-wayland \
-		--enable-arch=x86 \
-		--with-android-headers=/usr/include/android \
-		--enable-property-cache
+		$(DEFAULT_CONFIGURATION) \
+		--enable-arch=x86
 endif
 
 override_dh_install:
