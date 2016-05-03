@@ -1763,7 +1763,7 @@ static ElfW(Addr) get_addend(ElfW(Rel)* rel, ElfW(Addr) reloc_addr) {
 }
 #endif
 
-extern "C" void* __hybris_get_hooked_symbol(const char *sym);
+extern "C" void* __hybris_get_hooked_symbol(const char *sym, const char *requester);
 
 template<typename ElfRelIteratorT>
 bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& rel_iterator,
@@ -1794,7 +1794,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       sym_name = get_string(symtab_[sym].st_name);
       const version_info* vi = nullptr;
 
-      sym_addr = reinterpret_cast<ElfW(Addr)>(__hybris_get_hooked_symbol(sym_name));
+      sym_addr = reinterpret_cast<ElfW(Addr)>(__hybris_get_hooked_symbol(sym_name, get_realpath()));
       if (!sym_addr) {
         if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
           return false;

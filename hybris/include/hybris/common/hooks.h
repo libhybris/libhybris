@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-typedef void* (*hybris_hook_cb)(const char *symbol_name);
+typedef void* (*hybris_hook_cb)(const char *symbol_name, const char *requester);
 
 void hybris_set_hook_callback(hybris_hook_cb callback);
 

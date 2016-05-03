@@ -1858,7 +1858,7 @@ void hybris_set_hook_callback(hybris_hook_cb callback)
     hook_callback = callback;
 }
 
-void* __hybris_get_hooked_symbol(const char *sym)
+void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
 {
     static int counter = -1;
     static int sorted = 0;
@@ -1870,7 +1870,7 @@ void* __hybris_get_hooked_symbol(const char *sym)
      * give us a context specific hook implementation */
     if (hook_callback)
     {
-        found = hook_callback(sym);
+        found = hook_callback(sym, requester);
         if (found)
             return (void*) found;
     }

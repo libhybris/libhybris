@@ -1327,7 +1327,7 @@ static int reloc_library(soinfo *si, Elf_Rel *rel, unsigned count)
         if(sym != 0) {
             sym_name = (char *)(strtab + symtab[sym].st_name);
             INFO("HYBRIS: '%s' checking hooks for sym '%s'\n", si->name, sym_name);
-            sym_addr = __hybris_get_hooked_symbol(sym_name);
+            sym_addr = __hybris_get_hooked_symbol(sym_name, si->name);
             if (sym_addr != NULL) {
                 INFO("HYBRIS: '%s' hooked symbol %s to %x\n", si->name,
                                                   sym_name, sym_addr);
