@@ -1,3 +1,13 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu11) xenial; urgency=medium
+
+  * hybris: common: add stub linker implementation
+  * debian: split out common parts of the default configuration
+  * debian: add build support for arm64
+  * hybris: add README file stating which architectures are supported
+  * hybris: autotools want it to be README
+
+ -- Simon Fels <simon.fels@canonical.com>  Tue, 03 May 2016 17:29:41 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu10) xenial; urgency=medium
 
   * debian: add missing hybris/common include directory
