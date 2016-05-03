@@ -193,6 +193,12 @@ AC_ARG_ENABLE(mali-quirks,
   [mali_quirks="no"])
 AM_CONDITIONAL([WANT_MALI_QUIRKS], [test x"$mali_quirks" = x"yes"])
 
+AC_ARG_ENABLE(stub-linker,
+  [  --enable-stub-linker            Enable a stub linker which does nothing (default=disabled)],
+  [stub_linker=$enableval],
+  [stub_linker="no"])
+AM_CONDITIONAL([WANT_STUB_LINKER], [test x"$stub_linker" = x"yes"])
+
 AC_CONFIG_FILES([
 	Makefile
 	properties/Makefile
@@ -201,6 +207,7 @@ AC_CONFIG_FILES([
 	common/gingerbread/Makefile
 	common/ics/Makefile
 	common/jb/Makefile
+	common/stub/Makefile
 	egl/egl.pc
 	egl/Makefile
 	egl/platforms/Makefile
@@ -264,6 +271,10 @@ echo
 echo "  default egl platform ...: $DEFAULT_EGL_PLATFORM"
 echo
 echo "  default ld_library_path.: $DEFAULT_HYBRIS_LD_LIBRARY_PATH"
+echo
+echo "Features:"
+echo
+echo "  stub linker.............: $stub_linker"
 echo
 echo "------------------------------------------------------------------------"
 echo
