@@ -82,22 +82,30 @@ DEFAULT_CONFIGURATION = \
 	--enable-wayland \
 	--with-android-headers=$(ANDROID_HEADERS_PATH) \
 	--enable-property-cache
+ARCH_CONFIGURATION =
+
+ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
+ARCH_CONFIGURATION = \
+	--enable-arch=arm \
+	--enable-mali-quirks
+endif
+ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), arm64))
+ARCH_CONFIGURATION = \
+	--enable-stub-linker
+endif
+ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), i386))
+ARCH_CONFIGURATION = \
+	--enable-arch=x86
+endif
+ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), amd64))
+ARCH_CONFIGURATION = \
+	--enable-arch=x86
+endif
 
 override_dh_auto_configure:
-ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
 	dh_auto_configure --sourcedirectory=hybris -- \
 		$(DEFAULT_CONFIGURATION) \
-		--enable-arch=arm \
-		--enable-mali-quirks
-else ifeq($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), arm64))
-	dh_auto_configure --sourcedirectory=hybris -- \
-		$(DEFAULT_CONFIGURATION) \
-		--enable-stub-linker
-else
-	dh_auto_configure --sourcedirectory=hybris -- \
-		$(DEFAULT_CONFIGURATION) \
-		--enable-arch=x86
-endif
+		$(ARCH_CONFIGURATION)
 
 override_dh_install:
 	# Fill in important variables
