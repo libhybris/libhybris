@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu12) xenial; urgency=medium
+
+  * debian: split out arch specific configuration flags
+
+ -- Simon Fels <simon.fels@canonical.com>  Fri, 06 May 2016 09:48:53 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu11) xenial; urgency=medium
 
   * hybris: common: add stub linker implementation
