@@ -1399,28 +1399,38 @@ static inline void swap(void **a, void **b)
 static int my_getaddrinfo(const char *hostname, const char *servname,
     const struct addrinfo *hints, struct addrinfo **res)
 {
-    // make a local copy of hints
-    struct addrinfo *fixed_hints = (struct addrinfo*)malloc(sizeof(struct addrinfo));
-    memcpy(fixed_hints, hints, sizeof(struct addrinfo));
-    // fix bionic -> glibc missmatch
-    swap((void**)&(fixed_hints->ai_canonname), (void**)&(fixed_hints->ai_addr));
-    // do glibc getaddrinfo
-    int result = getaddrinfo(hostname, servname, fixed_hints, res);
-    // release the copy of hints
-    free(fixed_hints);
-    // fix bionic <- glibc missmatch
-    struct addrinfo *it = *res;
-    while(NULL != it)
-    {
-        swap((void**)&(it->ai_canonname), (void**)&(it->ai_addr));
-        it = it->ai_next;
+    struct addrinfo *fixed_hints = NULL;
+
+    if (hints) {
+        fixed_hints = (struct addrinfo*) malloc(sizeof(struct addrinfo));
+        memcpy(fixed_hints, hints, sizeof(struct addrinfo));
+        // fix bionic -> glibc missmatch
+        swap((void**)&(fixed_hints->ai_canonname), (void**)&(fixed_hints->ai_addr));
     }
+
+    int result = getaddrinfo(hostname, servname, fixed_hints, res);
+
+    if (fixed_hints) {
+        free(fixed_hints);
+
+        // fix bionic <- glibc missmatch
+        struct addrinfo *it = *res;
+        while (it) {
+            swap((void**) &(it->ai_canonname), (void**) &(it->ai_addr));
+            it = it->ai_next;
+        }
+    }
+
     return result;
 }
 
 static void my_freeaddrinfo(struct addrinfo *__ai)
 {
-    swap((void**)&(__ai->ai_canonname), (void**)&(__ai->ai_addr));
+    if (__ai == NULL)
+        return;
+
+    swap((void**) &(__ai->ai_canonname), (void**) &(__ai->ai_addr));
+
     freeaddrinfo(__ai);
 }
 
@@ -1565,6 +1575,34 @@ int my_prctl(int option, unsigned long arg2, unsigned long arg3,
 #endif
 
     return prctl(option, arg2, arg3, arg4, arg5);
+}
+
+static char* my_basename(const char *path)
+{
+    static __thread char buf[PATH_MAX];
+
+    memset(buf, 0, sizeof(buf));
+
+    if (path)
+        strncpy(buf, path, sizeof(buf));
+
+    buf[sizeof buf - 1] = '\0';
+
+    return basename(buf);
+}
+
+static char* my_dirname(const char *path)
+{
+    static __thread char buf[PATH_MAX];
+
+    memset(buf, 0, sizeof(buf));
+
+    if (path)
+        strncpy(buf, path, sizeof(buf));
+
+    buf[sizeof buf - 1] = '\0';
+
+    return dirname(path);
 }
 
 static struct _hook hooks[] = {
@@ -1809,6 +1847,8 @@ static struct _hook hooks[] = {
     /* fcntl.h */
     {"open", my_open},
     // TODO: scandir, scandirat, alphasort, versionsort
+    {"scandir", scandir},
+    {"scandir64", scandir64},
     {"__get_tls_hooks", __get_tls_hooks},
     {"sscanf", sscanf},
     {"scanf", scanf},
@@ -1846,6 +1886,9 @@ static struct _hook hooks[] = {
     {"__system_property_find_nth", __my_system_property_find_nth},
     /* sys/prctl.h */
     {"prctl", my_prctl},
+    /* libgen.h */
+    {"basename", my_basename},
+    {"dirname", my_dirname},
 };
 
 static int hook_cmp(const void *a, const void *b)
