@@ -370,7 +370,7 @@ MAP_TO_UNISTD(SC_AVPHYS_PAGES),
 };
 #undef MAP_TO_UNISTD
 
-long my_sysconf(int name)
+long _hybris_hook_sysconf(int name)
 {
 	return sysconf(sysconf_map[name]);
 }
