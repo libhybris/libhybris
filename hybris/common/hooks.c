@@ -1649,15 +1649,14 @@ static int _hybris_hook_getaddrinfo(const char *hostname, const char *servname,
 
     int result = getaddrinfo(hostname, servname, fixed_hints, res);
 
-    if (fixed_hints) {
+    if (fixed_hints)
         free(fixed_hints);
 
-        // fix bionic <- glibc missmatch
-        struct addrinfo *it = *res;
-        while (it) {
-            swap((void**) &(it->ai_canonname), (void**) &(it->ai_addr));
-            it = it->ai_next;
-        }
+    // fix bionic <- glibc missmatch
+    struct addrinfo *it = *res;
+    while (it) {
+        swap((void**) &(it->ai_canonname), (void**) &(it->ai_addr));
+        it = it->ai_next;
     }
 
     return result;
@@ -1670,7 +1669,11 @@ static void _hybris_hook_freeaddrinfo(struct addrinfo *__ai)
     if (__ai == NULL)
         return;
 
-    swap((void**) &(__ai->ai_canonname), (void**) &(__ai->ai_addr));
+    struct addrinfo *it = __ai;
+    while (it) {
+        swap((void**) &(it->ai_canonname), (void**) &(it->ai_addr));
+        it = it->ai_next;
+    }
 
     freeaddrinfo(__ai);
 }
