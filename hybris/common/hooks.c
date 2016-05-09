@@ -40,6 +40,7 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <stdarg.h>
+#include <wchar.h>
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -240,7 +241,8 @@ static pthread_rwlock_t* hybris_alloc_init_rwlock(void)
  * utils, such as malloc, memcpy
  *
  * Useful to handle hacks such as the one applied for Nvidia, and to
- * avoid crashes.
+ * avoid crashes. Also we need to hook all memory allocation related
+ * ones to make sure all are using the same allocator implementation.
  *
  * */
 
@@ -249,6 +251,13 @@ static void *_hybris_hook_malloc(size_t size)
     TRACE_HOOK("size %u", size);
 
     return malloc(size);
+}
+
+static size_t _hybris_hook_malloc_usable_size (void *ptr)
+{
+    TRACE_HOOK("ptr %p", ptr);
+
+    return malloc_usable_size(ptr);
 }
 
 static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
@@ -1918,13 +1927,28 @@ static int _hybris_hook_posix_memalign(void **memptr, size_t alignment, size_t s
     return posix_memalign(memptr, alignment, size);
 }
 
+static pid_t _hybris_hook_fork(void)
+{
+    TRACE_HOOK("");
+
+    return fork();
+}
+
+extern size_t strlcat(char *dst, const char *src, size_t siz);
+extern size_t strlcpy(char *dst, const char *src, size_t siz);
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
     {"__system_property_get", _hybris_hook_system_property_get },
-    {"getenv", getenv },
+    {"getenv", getenv},
+    {"setenv", setenv},
+    {"putenv", putenv},
+    {"clearenv", clearenv},
     {"printf", printf },
+    {"dprintf", dprintf},
     {"malloc", _hybris_hook_malloc },
+    {"malloc_usable_size", _hybris_hook_malloc_usable_size},
     {"free", free },
     {"calloc", calloc },
     {"cfree", cfree },
@@ -1970,8 +1994,8 @@ static struct _hook hooks[] = {
     {"strncmp",strncmp},
     {"strncpy",strncpy},
     {"strtod", _hybris_hook_strtod},
-    //{"strlcat",strlcat},
-    //{"strlcpy",strlcpy},
+    {"strlcat",strlcat},
+    {"strlcpy",strlcpy},
     {"strcspn",strcspn},
     {"strpbrk",strpbrk},
     {"strsep",strsep},
@@ -2078,6 +2102,8 @@ static struct _hook hooks[] = {
     /* bionic-only pthread */
     {"__pthread_gettid", _hybris_hook_pthread_gettid},
     {"pthread_gettid_np", _hybris_hook_pthread_gettid},
+    /* unistd.h */
+    {"fork", _hybris_hook_fork},
     /* stdio.h */
     {"__isthreaded", &___hybris_hook_isthreaded},
     {"__sF", &_hybris_hook_sF},
@@ -2091,6 +2117,7 @@ static struct _hook hooks[] = {
     {"snprintf", snprintf},
     {"vsprintf", vsprintf},
     {"vsnprintf", vsnprintf},
+    {"swprintf", swprintf},
     {"clearerr", _hybris_hook_clearerr},
     {"fclose", _hybris_hook_fclose},
     {"feof", _hybris_hook_feof},
