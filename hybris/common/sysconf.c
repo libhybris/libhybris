@@ -1,8 +1,27 @@
+/*
+ * Copyright (c) 2013 Adrian Negreanu <adrian.m.negreanu@intel.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 #include <unistd.h>
 
 /*
- * bionic/libc/include/sys/sysconf.h processed with s/define _\(\w*\)\(.*\)/define \1\2\r#ifdef _\1\rMAP_TO_UNISTD(\1),\r#endif/g
+ * bionic/libc/include/sys/sysconf.h processed with:
+ * s/define _\(\w*\)\(.*\)/define \1\2\r#ifdef _\1\rMAP_TO_UNISTD(\1),\r#endif/g
  */
+
 #define MAP_TO_UNISTD(a) [a]=_##a
 static int sysconf_map[]= {
 #define SC_ARG_MAX             0x0000
