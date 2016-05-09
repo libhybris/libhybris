@@ -244,14 +244,14 @@ static pthread_rwlock_t* hybris_alloc_init_rwlock(void)
 
 static void *_hybris_hook_malloc(size_t size)
 {
-    TRACE_HOOK("size %d", size);
+    TRACE_HOOK("size %u", size);
 
     return malloc(size);
 }
 
 static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
 {
-    TRACE_HOOK("dst %p src %p len %d", dst, src, len);
+    TRACE_HOOK("dst %p src %p len %u", dst, src, len);
 
     if (src == NULL || dst == NULL)
         return NULL;
@@ -400,7 +400,7 @@ static int _hybris_hook_pthread_attr_setstacksize(pthread_attr_t *__attr, size_t
 {
     pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
 
-    TRACE_HOOK("attr %p stack size %d", __attr, stack_size);
+    TRACE_HOOK("attr %p stack size %u", __attr, stack_size);
 
     return pthread_attr_setstacksize(realattr, stack_size);
 }
@@ -436,7 +436,7 @@ static int _hybris_hook_pthread_attr_setstack(pthread_attr_t *__attr, void *stac
 {
     pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
 
-    TRACE_HOOK("attr %p stack base %p stack size %d", __attr,
+    TRACE_HOOK("attr %p stack base %p stack size %u", __attr,
                stack_base, stack_size);
 
     return pthread_attr_setstack(realattr, stack_base, stack_size);
@@ -456,7 +456,7 @@ static int _hybris_hook_pthread_attr_setguardsize(pthread_attr_t *__attr, size_t
 {
     pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
 
-    TRACE_HOOK("attr %p guard size %d", __attr, guard_size);
+    TRACE_HOOK("attr %p guard size %u", __attr, guard_size);
 
     return pthread_attr_setguardsize(realattr, guard_size);
 }
@@ -1315,7 +1315,7 @@ static int _hybris_hook_fputs(const char *s, FILE *fp)
 
 static size_t _hybris_hook_fread(void *ptr, size_t size, size_t nmemb, FILE *fp)
 {
-    TRACE_HOOK("ptr %p size %d nmemb %d fp %p", ptr, size, nmemb, fp);
+    TRACE_HOOK("ptr %p size %u nmemb %u fp %p", ptr, size, nmemb, fp);
 
     return fread(ptr, size, nmemb, _get_actual_fp(fp));
 }
