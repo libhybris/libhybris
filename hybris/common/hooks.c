@@ -1678,7 +1678,14 @@ static void _hybris_hook_freeaddrinfo(struct addrinfo *__ai)
     freeaddrinfo(__ai);
 }
 
-extern long _hybris_hook_sysconf(int name);
+extern long _hybris_map_sysconf(int name);
+
+long _hybris_hook_sysconf(int name)
+{
+    TRACE_HOOK("name %d", name);
+
+    return _hybris_map_sysconf(name);
+}
 
 FP_ATTRIB static double _hybris_hook_strtod(const char *nptr, char **endptr)
 {
