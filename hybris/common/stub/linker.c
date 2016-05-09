@@ -18,31 +18,32 @@
 #include <stdio.h>
 #include <assert.h>
 
-#define assert_not_reached() \
-    fprintf(stderr, "%s called but not implemented!\n", __func__); \
-    assert(0);
-
 void *android_dlopen(const char *filename, int flag)
 {
-    assert_not_reached();
+    fprintf(stderr, "%s called but not implemented!\n", __func__);
+    return NULL;
 }
 
 void *android_dlsym(void *name, const char *symbol)
 {
-    assert_not_reached();
+    fprintf(stderr, "%s called but not implemented!\n", __func__);
+    return NULL;
 }
 
 int android_dlclose(void *handle)
 {
-    assert_not_reached();
+    fprintf(stderr, "%s called but not implemented!\n", __func__);
+    return -1;
 }
 
 const char *android_dlerror(void)
 {
-    assert_not_reached();
+    fprintf(stderr, "%s called but not implemented!\n", __func__);
+    return NULL;
 }
 
 int android_dladdr(const void *addr, void *info)
 {
-    assert_not_reached();
+    fprintf(stderr, "%s called but not implemented!\n", __func__);
+    return -1;
 }
