@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu13) xenial; urgency=medium
+
+  * hybris: common: stub: don't assert but return error
+
+ -- Simon Fels <simon.fels@canonical.com>  Mon, 09 May 2016 16:09:26 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu12) xenial; urgency=medium
 
   * debian: split out arch specific configuration flags
