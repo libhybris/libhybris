@@ -57,6 +57,8 @@
 #include <sys/auxv.h>
 #include <sys/prctl.h>
 
+#include <sys/mman.h>
+
 #include <hybris/properties/properties.h>
 #include <hybris/common/hooks.h>
 
@@ -1888,6 +1890,34 @@ static char* _hybris_hook_dirname(const char *path)
     return dirname(path);
 }
 
+static char* _hybris_hook_strerror(int errnum)
+{
+    TRACE_HOOK("errnum %d", errnum);
+
+    return strerror(errnum);
+}
+
+static char* _hybris_hook__gnu_strerror_r(int errnum, char *buf, size_t buf_len)
+{
+    TRACE_HOOK("errnum %d buf '%s' buf len %d", errnum, buf, buf_len);
+
+    return strerror_r(errnum, buf, buf_len);
+}
+
+static int _hybris_hook_mprotect(void *addr, size_t len, int prot)
+{
+    TRACE_HOOK("addr %p len %u prot %d", addr, len, prot);
+
+    return mprotect(addr, len, prot);
+}
+
+static int _hybris_hook_posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+    TRACE_HOOK("memptr %p alignment %u size %u", memptr, alignment, size);
+
+    return posix_memalign(memptr, alignment, size);
+}
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -1900,10 +1930,12 @@ static struct _hook hooks[] = {
     {"cfree", cfree },
     {"realloc", realloc },
     {"memalign", memalign },
+    {"posix_memalign", _hybris_hook_posix_memalign},
     {"valloc", valloc },
     {"pvalloc", pvalloc },
     {"fread", fread },
     {"getxattr", getxattr},
+    {"mprotect", _hybris_hook_mprotect},
     /* string.h */
     {"memccpy",memccpy},
     {"memchr",memchr},
@@ -1929,8 +1961,9 @@ static struct _hook hooks[] = {
     {"strstr",strstr},
     {"strtok",strtok},
     {"strtok_r",strtok_r},
-    {"strerror",strerror},
+    {"strerror",_hybris_hook_strerror},
     {"strerror_r",strerror_r},
+    {"__gnu_strerror_r",_hybris_hook__gnu_strerror_r},
     {"strnlen",strnlen},
     {"strncat",strncat},
     {"strndup",strndup},
@@ -1957,6 +1990,7 @@ static struct _hook hooks[] = {
     {"strcasecmp",strcasecmp},
     {"__sprintf_chk", __sprintf_chk},
     {"__snprintf_chk", __snprintf_chk},
+    {"__strncpy_chk",__strncpy_chk},
     {"strncasecmp",strncasecmp},
     /* dirent.h */
     {"opendir", opendir},
