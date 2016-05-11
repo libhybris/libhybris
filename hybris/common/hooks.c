@@ -250,7 +250,11 @@ static void *_hybris_hook_malloc(size_t size)
 {
     TRACE_HOOK("size %u", size);
 
-    return malloc(size);
+    void *res = malloc(size);
+
+    TRACE_HOOK("res %p", res);
+
+    return res;
 }
 
 static size_t _hybris_hook_malloc_usable_size (void *ptr)
@@ -262,12 +266,19 @@ static size_t _hybris_hook_malloc_usable_size (void *ptr)
 
 static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
 {
-    TRACE_HOOK("dst %p src %p len %u", dst, src, len);
+    TRACE_HOOK("dst %p '%s' src %p '%s' len %u", dst, dst, src, src, len);
 
     if (src == NULL || dst == NULL)
         return NULL;
 
     return memcpy(dst, src, len);
+}
+
+static int _hybris_hook_memcmp(const void *s1, const void *s2, size_t n)
+{
+    TRACE_HOOK("s1 %p '%s' s2 %p '%s' n %u", s1, s1, s2, s2, n);
+
+    return memcmp(s1, s2, n);
 }
 
 static size_t _hybris_hook_strlen(const char *s)
@@ -1710,6 +1721,13 @@ FP_ATTRIB static double _hybris_hook_strtod(const char *nptr, char **endptr)
     return strtod_l(nptr, endptr, hybris_locale);
 }
 
+static long int _hybris_hook_strtol(const char* str, char** endptr, int base)
+{
+    TRACE_HOOK("str '%s' endptr %p base %i", str, endptr, base);
+
+    return strtol(str, endptr, base);
+}
+
 static int ___hybris_hook_system_property_read(const void *pi, char *name, char *value)
 {
     TRACE_HOOK("pi %p name '%s' value '%s'", pi, name, value);
@@ -1964,7 +1982,7 @@ static struct _hook hooks[] = {
     {"memccpy",memccpy},
     {"memchr",memchr},
     {"memrchr",memrchr},
-    {"memcmp",memcmp},
+    {"memcmp",_hybris_hook_memcmp},
     {"memcpy",_hybris_hook_memcpy},
     {"memmove",memmove},
     {"memset",memset},
@@ -1994,6 +2012,7 @@ static struct _hook hooks[] = {
     {"strncmp",strncmp},
     {"strncpy",strncpy},
     {"strtod", _hybris_hook_strtod},
+    {"strtol", _hybris_hook_strtol},
     {"strlcat",strlcat},
     {"strlcpy",strlcpy},
     {"strcspn",strcspn},
