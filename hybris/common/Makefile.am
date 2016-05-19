@@ -53,7 +53,7 @@ endif
 libhybris_common_la_LDFLAGS = \
 	-ldl \
 	-lrt \
-	-lpthread \
+	-pthread \
 	-lc \
 	-lstdc++ \
 	$(top_builddir)/properties/libandroid-properties.la \
