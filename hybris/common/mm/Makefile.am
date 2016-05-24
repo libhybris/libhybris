@@ -2,22 +2,17 @@ bionic = $(top_srcdir)/common/mm/bionic
 bionic_libc = $(bionic)/libc
 bionic_libstdcpp = $(bionic)/libstdc++
 
+ARCH_FLAGS =
+
 if WANT_ARCH_ARM
-ARCH_FLAGS = \
-	-DHAVE_ARM_TLS_REGISTER \
-	-DANDROID_ARM_LINKER
 ARCH_NAME = arm
 endif
 
 if  WANT_ARCH_X86
-ARCH_FLAGS = \
-	-DANDROID_X86_LINKER
 ARCH_NAME = x86
 endif
 
 if WANT_ARCH_X86_64
-ARCH_FLAGS = \
-	-DANDROID_X86_LINKER
 ARCH_NAME = x86_64
 endif
 
