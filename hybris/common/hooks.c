@@ -1955,6 +1955,16 @@ static pid_t _hybris_hook_fork(void)
 extern size_t strlcat(char *dst, const char *src, size_t siz);
 extern size_t strlcpy(char *dst, const char *src, size_t siz);
 
+static int _hybris_hook_strcmp(const char *s1, const char *s2)
+{
+    TRACE_HOOK("s1 '%s' s2 '%s'", s1, s2);
+
+    if ( s1 == NULL || s2 == NULL)
+        return -1;
+
+    return strcmp(s1, s2);
+}
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
@@ -1994,7 +2004,7 @@ static struct _hook hooks[] = {
     {"strchr",strchr},
     {"strrchr",strrchr},
     {"strlen",_hybris_hook_strlen},
-    {"strcmp",strcmp},
+    {"strcmp",_hybris_hook_strcmp},
     {"strcpy",strcpy},
     {"strcat",strcat},
     {"strcasecmp",strcasecmp},
