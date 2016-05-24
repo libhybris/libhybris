@@ -60,6 +60,8 @@
 
 #include <sys/mman.h>
 
+#include <libgen.h>
+
 #include <hybris/properties/properties.h>
 #include <hybris/common/hooks.h>
 
@@ -266,7 +268,7 @@ static size_t _hybris_hook_malloc_usable_size (void *ptr)
 
 static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
 {
-    TRACE_HOOK("dst %p '%s' src %p '%s' len %u", dst, dst, src, src, len);
+    TRACE_HOOK("dst %p '%s' src %p '%s' len %u", dst, (char*) dst, src, (char*) src, len);
 
     if (src == NULL || dst == NULL)
         return NULL;
@@ -276,7 +278,7 @@ static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
 
 static int _hybris_hook_memcmp(const void *s1, const void *s2, size_t n)
 {
-    TRACE_HOOK("s1 %p '%s' s2 %p '%s' n %u", s1, s1, s2, s2, n);
+    TRACE_HOOK("s1 %p '%s' s2 %p '%s' n %u", s1, (char*) s1, s2, (char*) s2, n);
 
     return memcmp(s1, s2, n);
 }
@@ -1337,7 +1339,7 @@ static int _hybris_hook_fputs(const char *s, FILE *fp)
 
 static size_t _hybris_hook_fread(void *ptr, size_t size, size_t nmemb, FILE *fp)
 {
-    TRACE_HOOK("ptr %p size %u nmemb %u fp %p", ptr, size, nmemb, fp);
+    TRACE_HOOK("ptr %p size %zu nmemb %zu fp %p", ptr, size, nmemb, fp);
 
     return fread(ptr, size, nmemb, _get_actual_fp(fp));
 }
@@ -1400,7 +1402,7 @@ static off_t _hybris_hook_ftello(FILE *fp)
 
 static size_t _hybris_hook_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *fp)
 {
-    TRACE_HOOK("ptr %p size %u nmemb %u fp %p", ptr, size, nmemb, fp);
+    TRACE_HOOK("ptr %p size %zu nmemb %zu fp %p", ptr, size, nmemb, fp);
 
     return fwrite(ptr, size, nmemb, _get_actual_fp(fp));
 }
@@ -1449,7 +1451,7 @@ static void _hybris_hook_setbuf(FILE *fp, char *buf)
 
 static int _hybris_hook_setvbuf(FILE *fp, char *buf, int mode, size_t size)
 {
-    TRACE_HOOK("fp %p buf '%s' mode %d size %u", fp, buf, mode, size);
+    TRACE_HOOK("fp %p buf '%s' mode %d size %zu", fp, buf, mode, size);
 
     return setvbuf(_get_actual_fp(fp), buf, mode, size);
 }
@@ -1926,21 +1928,21 @@ static char* _hybris_hook_strerror(int errnum)
 
 static char* _hybris_hook__gnu_strerror_r(int errnum, char *buf, size_t buf_len)
 {
-    TRACE_HOOK("errnum %d buf '%s' buf len %d", errnum, buf, buf_len);
+    TRACE_HOOK("errnum %d buf '%s' buf len %zu", errnum, buf, buf_len);
 
     return strerror_r(errnum, buf, buf_len);
 }
 
 static int _hybris_hook_mprotect(void *addr, size_t len, int prot)
 {
-    TRACE_HOOK("addr %p len %u prot %d", addr, len, prot);
+    TRACE_HOOK("addr %p len %zu prot %d", addr, len, prot);
 
     return mprotect(addr, len, prot);
 }
 
 static int _hybris_hook_posix_memalign(void **memptr, size_t alignment, size_t size)
 {
-    TRACE_HOOK("memptr %p alignment %u size %u", memptr, alignment, size);
+    TRACE_HOOK("memptr %p alignment %zu size %zu", memptr, alignment, size);
 
     return posix_memalign(memptr, alignment, size);
 }
