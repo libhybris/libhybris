@@ -41,6 +41,11 @@
 #include <sys/types.h>
 #include <stdarg.h>
 #include <wchar.h>
+#include <sched.h>
+#include <pwd.h>
+#include <signal.h>
+#include <setjmp.h>
+#include <sys/signalfd.h>
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -59,8 +64,8 @@
 #include <sys/prctl.h>
 
 #include <sys/mman.h>
-
 #include <libgen.h>
+#include <mntent.h>
 
 #include <hybris/properties/properties.h>
 #include <hybris/common/hooks.h>
@@ -268,7 +273,7 @@ static size_t _hybris_hook_malloc_usable_size (void *ptr)
 
 static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
 {
-    TRACE_HOOK("dst %p '%s' src %p '%s' len %u", dst, (char*) dst, src, (char*) src, len);
+    TRACE_HOOK("dst %p src %p len %u", dst, src, len);
 
     if (src == NULL || dst == NULL)
         return NULL;
@@ -329,6 +334,20 @@ static int _hybris_hook_pthread_kill(pthread_t thread, int sig)
         return ESRCH;
 
     return pthread_kill(thread, sig);
+}
+
+static int _hybris_hook_pthread_setspecific(pthread_key_t key, const void *ptr)
+{
+    TRACE_HOOK("key %d ptr %d", key, ptr);
+
+    return pthread_setspecific(key, ptr);
+}
+
+static void* _hybris_hook_pthread_getspecific(pthread_key_t key)
+{
+    TRACE_HOOK("key %d", key);
+
+    return pthread_getspecific(key);
 }
 
 /*
@@ -615,6 +634,7 @@ static int _hybris_hook_pthread_mutex_lock(pthread_mutex_t *__mutex)
         realmutex = (pthread_mutex_t *)hybris_get_shmpointer((hybris_shm_pointer_t)value);
 
     if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
+        TRACE("value %p <= ANDROID_TOP_ADDR_VALUE_MUTEX 0x%x", value, ANDROID_TOP_ADDR_VALUE_MUTEX);
         realmutex = hybris_alloc_init_mutex(value);
         *((unsigned int *)__mutex) = (unsigned int) realmutex;
     }
@@ -1037,6 +1057,24 @@ static int _hybris_hook_pthread_rwlockattr_getpshared(pthread_rwlockattr_t *__at
     TRACE_HOOK("attr %p pshared %p", __attr, pshared);
 
     return pthread_rwlockattr_getpshared(realattr, pshared);
+}
+
+int _hybris_hook_pthread_rwlockattr_setkind_np(pthread_rwlockattr_t *attr, int pref)
+{
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) attr;
+
+    TRACE_HOOK("attr %p pref %i", attr, pref);
+
+    return pthread_rwlockattr_setkind_np(realattr, pref);
+}
+
+int _hybris_hook_pthread_rwlockattr_getkind_np(const pthread_rwlockattr_t *attr, int *pref)
+{
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) attr;
+
+    TRACE_HOOK("attr %p pref %p", attr, pref);
+
+    return pthread_rwlockattr_getkind_np(realattr, pref);
 }
 
 /*
@@ -1808,6 +1846,49 @@ int _hybris_hook_system_property_get(const char *name, const char *value)
     return property_get(name, (char*) value, NULL);
 }
 
+int _hybris_hook_property_get(const char *key, char *value, const char *default_value)
+{
+    TRACE_HOOK("key '%s' value '%s' default value '%s'",
+               key, value, default_value);
+
+    return property_get(key, value, default_value);
+}
+
+int _hybris_hook_property_set(const char *key, const char *value)
+{
+    TRACE_HOOK("key '%s' value '%s'", key, value);
+
+    return property_set(key, value);
+}
+
+char *_hybris_hook_getenv(const char *name)
+{
+    TRACE_HOOK("name '%s'", name);
+
+    return getenv(name);
+}
+
+int _hybris_hook_setenv(const char *name, const char *value, int overwrite)
+{
+    TRACE_HOOK("name '%s' value '%s' overwrite %d", name, value, overwrite);
+
+    return setenv(name, value, overwrite);
+}
+
+int _hybris_hook_putenv(char *string)
+{
+    TRACE_HOOK("string '%s'", string);
+
+    return putenv(string);
+}
+
+int _hybris_hook_clearenv(void)
+{
+    TRACE_HOOK("");
+
+    return clearenv();
+}
+
 extern int __cxa_atexit(void (*)(void*), void*, void*);
 extern void __cxa_finalize(void * d);
 
@@ -1903,7 +1984,7 @@ static char* _hybris_hook_basename(const char *path)
     return basename(buf);
 }
 
-static char* _hybris_hook_dirname(const char *path)
+static char* _hybris_hook_dirname(char *path)
 {
     static __thread char buf[PATH_MAX];
 
@@ -1954,6 +2035,64 @@ static pid_t _hybris_hook_fork(void)
     return fork();
 }
 
+static locale_t _hybris_hook_newlocale(int category_mask, const char *locale, locale_t base)
+{
+    TRACE_HOOK("category mask %i locale '%s'", category_mask, locale);
+
+    return newlocale(category_mask, locale, base);
+}
+
+static void _hybris_hook_freelocale(locale_t locobj)
+{
+    TRACE_HOOK("");
+
+    return freelocale(locobj);
+}
+
+static locale_t _hybris_hook_duplocale(locale_t locobj)
+{
+    TRACE_HOOK("");
+
+    return duplocale(locobj);
+}
+
+static locale_t _hybris_hook_uselocale(locale_t newloc)
+{
+    TRACE_HOOK("");
+
+    return uselocale(newloc);
+}
+
+static struct lconv* _hybris_hook_localeconv(void)
+{
+    TRACE_HOOK("");
+
+    return localeconv();
+}
+
+static char* _hybris_hook_setlocale(int category, const char *locale)
+{
+    TRACE_HOOK("category %i locale '%s'", category, locale);
+
+    return setlocale(category, locale);
+}
+
+static void* _hybris_hook_mmap(void *addr, size_t len, int prot,
+                  int flags, int fd, off_t offset)
+{
+    TRACE_HOOK("addr %p len %u prot %i flags %i fd %i offset %u",
+               addr, len, prot, flags, fd, offset);
+
+    return mmap(addr, len, prot, flags, fd, offset);
+}
+
+static int _hybris_hook_munmap(void *addr, size_t length)
+{
+    TRACE_HOOK("addr %p length %u", addr, length);
+
+    return munmap(addr, length);
+}
+
 extern size_t strlcat(char *dst, const char *src, size_t siz);
 extern size_t strlcpy(char *dst, const char *src, size_t siz);
 
@@ -1967,16 +2106,88 @@ static int _hybris_hook_strcmp(const char *s1, const char *s2)
     return strcmp(s1, s2);
 }
 
+static FILE* _hybris_hook_setmntent(const char *filename, const char *type)
+{
+    TRACE_HOOK("filename %s type %s", filename, type);
+
+    return setmntent(filename, type);
+}
+
+static struct mntent* _hybris_hook_getmntent(FILE *fp)
+{
+    TRACE_HOOK("fp %p", fp);
+
+    return getmntent(_get_actual_fp(fp));
+}
+
+static struct mntent* _hybris_hook_getmntent_r(FILE *fp, struct mntent *e, char *buf, int buf_len)
+{
+    TRACE_HOOK("fp %p e %p buf '%s' buf len %i",
+               fp, e, buf, buf_len);
+
+    return getmntent_r(_get_actual_fp(fp), e, buf, buf_len);
+}
+
+int _hybris_hook_endmntent(FILE *fp)
+{
+    TRACE_HOOK("fp %p", fp);
+
+    return endmntent(_get_actual_fp(fp));
+}
+
+static int _hybris_hook_fputws(const wchar_t *ws, FILE *stream)
+{
+    TRACE_HOOK("stream %p", stream);
+
+    return fputws(ws, _get_actual_fp(stream));
+}
+
+static int _hybris_hook_vfwprintf(FILE *stream, const wchar_t *format, va_list args)
+{
+    TRACE_HOOK("stream %p", stream);
+
+    return vfwprintf(_get_actual_fp(stream), format, args);
+}
+
+static wint_t _hybris_hook_fputwc(wchar_t wc, FILE *stream)
+{
+    TRACE_HOOK("stream %p", stream);
+
+    return fputwc(wc, _get_actual_fp(stream));
+}
+
+static wint_t _hybris_hook_putwc(wchar_t wc, FILE *stream)
+{
+    TRACE_HOOK("stream %p", stream);
+
+    return putwc(wc, _get_actual_fp(stream));
+}
+
+static wint_t _hybris_hook_fgetwc(FILE *stream)
+{
+    TRACE_HOOK("stream %p", stream);
+
+    return fgetwc(_get_actual_fp(stream));
+}
+
+static wint_t _hybris_hook_getwc(FILE *stream)
+{
+    TRACE_HOOK("stream %p", stream);
+
+    return getwc(_get_actual_fp(stream));
+}
+
 static struct _hook hooks[] = {
-    {"property_get", property_get },
-    {"property_set", property_set },
+    {"property_get", _hybris_hook_property_get },
+    {"property_set", _hybris_hook_property_set },
     {"__system_property_get", _hybris_hook_system_property_get },
-    {"getenv", getenv},
-    {"setenv", setenv},
-    {"putenv", putenv},
-    {"clearenv", clearenv},
+    {"getenv", _hybris_hook_getenv},
+    {"setenv", _hybris_hook_setenv},
+    {"putenv", _hybris_hook_putenv},
+    {"clearenv", _hybris_hook_clearenv},
     {"printf", printf },
     {"dprintf", dprintf},
+    {"mallinfo", mallinfo},
     {"malloc", _hybris_hook_malloc },
     {"malloc_usable_size", _hybris_hook_malloc_usable_size},
     {"free", free },
@@ -1999,8 +2210,11 @@ static struct _hook hooks[] = {
     {"memmove",memmove},
     {"memset",memset},
     {"memmem",memmem},
+    {"mempcpy",mempcpy},
     {"getlogin", getlogin},
-    //  {"memswap",memswap},
+    {"__memcpy_chk", __memcpy_chk},
+    {"__memset_chk", __memset_chk},
+    // {"memswap",memswap},
     {"index",index},
     {"rindex",rindex},
     {"strchr",strchr},
@@ -2096,8 +2310,8 @@ static struct _hook hooks[] = {
     {"pthread_setname_np", _hybris_hook_pthread_setname_np},
     {"pthread_once", pthread_once},
     {"pthread_key_create", pthread_key_create},
-    {"pthread_setspecific", pthread_setspecific},
-    {"pthread_getspecific", pthread_getspecific},
+    {"pthread_setspecific", _hybris_hook_pthread_setspecific},
+    {"pthread_getspecific", _hybris_hook_pthread_getspecific},
     {"pthread_attr_init", _hybris_hook_pthread_attr_init},
     {"pthread_attr_destroy", _hybris_hook_pthread_attr_destroy},
     {"pthread_attr_setdetachstate", _hybris_hook_pthread_attr_setdetachstate},
@@ -2121,6 +2335,8 @@ static struct _hook hooks[] = {
     {"pthread_rwlockattr_destroy", _hybris_hook_pthread_rwlockattr_destroy},
     {"pthread_rwlockattr_setpshared", _hybris_hook_pthread_rwlockattr_setpshared},
     {"pthread_rwlockattr_getpshared", _hybris_hook_pthread_rwlockattr_getpshared},
+    {"pthread_rwlockattr_getkind_np", _hybris_hook_pthread_rwlockattr_getkind_np},
+    {"pthread_rwlockattr_setkind_np", _hybris_hook_pthread_rwlockattr_setkind_np},
     {"pthread_rwlock_init", _hybris_hook_pthread_rwlock_init},
     {"pthread_rwlock_destroy", _hybris_hook_pthread_rwlock_destroy},
     {"pthread_rwlock_unlock", _hybris_hook_pthread_rwlock_unlock},
@@ -2135,6 +2351,7 @@ static struct _hook hooks[] = {
     {"pthread_gettid_np", _hybris_hook_pthread_gettid},
     /* unistd.h */
     {"fork", _hybris_hook_fork},
+    {"ttyname", ttyname},
     /* stdio.h */
     {"__isthreaded", &___hybris_hook_isthreaded},
     {"__sF", &_hybris_hook_sF},
@@ -2187,6 +2404,10 @@ static struct _hook hooks[] = {
     {"funlockfile", _hybris_hook_funlockfile},
     {"getc_unlocked", _hybris_hook_getc_unlocked},
     {"putc_unlocked", _hybris_hook_putc_unlocked},
+    {"fmemopen", fmemopen},
+    {"open_memstream", open_memstream},
+    {"open_wmemstream", open_wmemstream},
+    {"ptsname", ptsname},
     //{"fgetln", _hybris_hook_fgetln},
     {"fpurge", _hybris_hook_fpurge},
     {"getw", _hybris_hook_getw},
@@ -2195,6 +2416,7 @@ static struct _hook hooks[] = {
     {"setlinebuf", _hybris_hook_setlinebuf},
     {"__errno", __errno_location},
     {"__set_errno", _hybris_hook_set_errno},
+    {"__hybris_set_errno_internal", _hybris_hook_set_errno},
     /* net specifics, to avoid __res_get_state */
     {"getaddrinfo", _hybris_hook_getaddrinfo},
     {"freeaddrinfo", _hybris_hook_freeaddrinfo},
@@ -2202,6 +2424,7 @@ static struct _hook hooks[] = {
     {"gethostbyname", gethostbyname},
     {"gethostbyname2", gethostbyname2},
     {"gethostent", gethostent},
+    {"getservbyname", getservbyname},
     {"strftime", strftime},
     {"sysconf", _hybris_hook_sysconf},
     {"dlopen", android_dlopen},
@@ -2264,6 +2487,68 @@ static struct _hook hooks[] = {
     /* libgen.h */
     {"basename", _hybris_hook_basename},
     {"dirname", _hybris_hook_dirname},
+    /* locale.h */
+    {"newlocale", _hybris_hook_newlocale},
+    {"freelocale", _hybris_hook_freelocale},
+    {"duplocale", _hybris_hook_duplocale},
+    {"uselocale", _hybris_hook_uselocale},
+    {"localeconv", _hybris_hook_localeconv},
+    {"setlocale", _hybris_hook_setlocale},
+    /* sys/mman.h */
+    {"mmap", _hybris_hook_mmap},
+    {"munmap", _hybris_hook_munmap},
+    /* wchar.h */
+    {"wmemchr", wmemchr},
+    {"wmemcmp", wmemcmp},
+    {"wmemcpy", wmemcpy},
+    {"wmemmove", wmemmove},
+    {"wmemset", wmemset},
+    {"wmempcpy", wmempcpy},
+    {"fputws", _hybris_hook_fputws},
+    // It's enough to hook vfwprintf here as fwprintf will call it with a
+    // proper va_list in place so we don't have to handle this here.
+    {"vfwprintf", _hybris_hook_vfwprintf},
+    {"fputwc", _hybris_hook_fputwc},
+    {"putwc", _hybris_hook_putwc},
+    {"fgetwc", _hybris_hook_fgetwc},
+    {"getwc", _hybris_hook_getwc},
+    /* sched.h */
+    {"clone", clone},
+    /* mntent.h */
+    {"setmntent", _hybris_hook_setmntent},
+    {"getmntent", _hybris_hook_getmntent},
+    {"getmntent_r", _hybris_hook_getmntent_r},
+    {"endmntent", _hybris_hook_endmntent},
+    /* stdlib.h */
+    {"system", system},
+    /* signal.h */
+    {"sigaction", sigaction},
+    {"sigaddset", sigaddset},
+    {"sigaltstack", sigaltstack},
+    {"sigblock", sigblock},
+    {"sigdelset", sigdelset},
+    {"sigemptyset", sigemptyset},
+    {"sigfillset", sigfillset},
+    {"siginterrupt", siginterrupt},
+    {"sigismember", sigismember},
+    {"siglongjmp", siglongjmp},
+    {"signal", signal},
+    {"signalfd", signalfd},
+    {"sigpending", sigpending},
+    {"sigprocmask", sigprocmask},
+    {"sigqueue", sigqueue},
+    // setjmp.h defines segsetjmp via a #define and the real symbol
+    // we have to forward to is __sigsetjmp
+    {"sigsetjmp", __sigsetjmp},
+    {"sigsetmask", sigsetmask},
+    {"sigsuspend", sigsuspend},
+    {"sigtimedwait", sigtimedwait},
+    {"sigwait", sigwait},
+    {"sigwaitinfo", sigwaitinfo},
+    /* pwd.h */
+    {"getgrnam", getgrnam},
+    {"getpwuid", getpwuid},
+    {"getpwnam", getpwnam},
 };
 
 static int hook_cmp(const void *a, const void *b)
@@ -2322,7 +2607,8 @@ void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
         return (void *) counter;
     }
 
-    LOGD("Could not find a hook for symbol %s", sym);
+    if (!getenv("HYBRIS_DONT_PRINT_SYMBOLS_WITHOUT_HOOK"))
+        LOGD("Could not find a hook for symbol %s", sym);
 
     return NULL;
 }
