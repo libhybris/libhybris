@@ -92,6 +92,8 @@ AC_ARG_ENABLE(arch,
                               x86: Compile for x86],
   [ if   test "x$enableval" = "xarm" ; then
       arch="arm"
+   elif test "x$enableval" = "xarm64" ; then
+      arch="arm64"
    elif test "x$enableval" = "xx86" ; then
       arch="x86"
    elif test "x$enableval" = "xx86-64" ; then
@@ -106,6 +108,7 @@ AC_ARG_ENABLE(arch,
   [arch="arm"]
   )
 AM_CONDITIONAL([WANT_ARCH_ARM], [test x$arch = xarm])
+AM_CONDITIONAL([WANT_ARCH_ARM64], [test x$arch = xarm64])
 AM_CONDITIONAL([WANT_ARCH_X86], [test x$arch = xx86])
 AM_CONDITIONAL([WANT_ARCH_X86_64], [test x$arch = xx86-64])
 
