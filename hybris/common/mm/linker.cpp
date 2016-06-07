@@ -2055,12 +2055,12 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
          */
         DL_ERR("%s R_AARCH64_COPY relocations are not supported", get_realpath());
         return false;
-      case R_AARCH64_TLS_TPREL64:
-        TRACE_TYPE(RELO, "RELO TLS_TPREL64 *** %16llx <- %16llx - %16llx\n",
+      case R_AARCH64_TLS_TPREL:
+        TRACE_TYPE(RELO, "RELO TLS_TPREL *** %16llx <- %16llx - %16llx\n",
                    reloc, (sym_addr + addend), rel->r_offset);
         break;
-      case R_AARCH64_TLS_DTPREL32:
-        TRACE_TYPE(RELO, "RELO TLS_DTPREL32 *** %16llx <- %16llx - %16llx\n",
+      case R_AARCH64_TLS_DTPREL:
+        TRACE_TYPE(RELO, "RELO TLS_DTPREL *** %16llx <- %16llx - %16llx\n",
                    reloc, (sym_addr + addend), rel->r_offset);
         break;
 #elif defined(__x86_64__)
