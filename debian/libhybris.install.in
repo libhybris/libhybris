@@ -12,3 +12,4 @@ usr/lib/*/libhybris/*.so
 usr/lib/*/libwayland-egl.so.*		#PKGLIBDIR#
 usr/lib/*/libEGL.so.*		#PKGLIBDIR#
 usr/lib/*/libGLESv2.so.*	#PKGLIBDIR#
+usr/lib/*/libGLESv1_CM.so.*	#PKGLIBDIR#
