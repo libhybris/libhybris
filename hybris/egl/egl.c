@@ -310,7 +310,7 @@ EGLContext eglCreateContext(EGLDisplay dpy, EGLConfig config,
 {
 	HYBRIS_DLSYSM(egl, &_eglCreateContext, "eglCreateContext");
 
-	EGLint *p = attrib_list;
+	const EGLint *p = attrib_list;
 	while (p != NULL && *p != EGL_NONE) {
 		if (*p == EGL_CONTEXT_CLIENT_VERSION) {
 			_egl_context_client_version = p[1];
@@ -398,19 +398,19 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 	HYBRIS_DLSYSM(egl, &_eglGetProcAddress, "eglGetProcAddress");
 	if (strcmp(procname, "eglCreateImageKHR") == 0)
 	{
-		return _my_eglCreateImageKHR;
+		return (__eglMustCastToProperFunctionPointerType) _my_eglCreateImageKHR;
 	}
 	else if (strcmp(procname, "eglDestroyImageKHR") == 0)
 	{
-		return eglDestroyImageKHR;
+		return (__eglMustCastToProperFunctionPointerType) eglDestroyImageKHR;
 	}
 	else if (strcmp(procname, "eglSwapBuffersWithDamageEXT") == 0)
 	{
-		return _my_eglSwapBuffersWithDamageEXT;
+		return (__eglMustCastToProperFunctionPointerType) _my_eglSwapBuffersWithDamageEXT;
 	}
 	else if (strcmp(procname, "glEGLImageTargetTexture2DOES") == 0)
 	{
-		return _my_glEGLImageTargetTexture2DOES;
+		return (__eglMustCastToProperFunctionPointerType) _my_glEGLImageTargetTexture2DOES;
 	}
 
 	__eglMustCastToProperFunctionPointerType ret = NULL;

@@ -25,7 +25,7 @@ extern "C" {
 void *hybris_dlopen(const char *filename, int flag);
 void *hybris_dlsym(void *handle, const char *symbol);
 int   hybris_dlclose(void *handle);
-char *hybris_dlerror(void);
+const char *hybris_dlerror(void);
 
 #ifdef __cplusplus
 }

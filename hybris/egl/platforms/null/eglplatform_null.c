@@ -2,6 +2,7 @@
 #include <ws.h>
 #include <dlfcn.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <hybris/common/binding.h>
 #include <eglplatformcommon.h>

@@ -1391,7 +1391,7 @@ int my_open(const char *pathname, int flags, ...)
  * implementation of our internal property handling
  */
 
-int my_system_property_get(const char *name, const char *value)
+int my_system_property_get(const char *name, char *value)
 {
 	return property_get(name, value, NULL);
 }

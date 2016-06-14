@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <hardware/sensors.h>
 
 static void process_event(sensors_event_t *data)

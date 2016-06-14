@@ -22,6 +22,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <string.h>
 
 #define FRAMEBUFFER_PARTITIONS 2
 

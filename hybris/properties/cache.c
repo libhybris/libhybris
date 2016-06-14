@@ -102,7 +102,7 @@ static void cache_update()
 	char *ret = NULL;
 
 	if (!f)
-		return NULL;
+		return;
 
 	/* before searching, we must first determine whether our cache is valid. if
 	 * it isn't, we must discard our results and re-create the cache.
