@@ -150,7 +150,7 @@ cat > $HEADERPATH/android-config.h << EOF
 #endif
 EOF
 
-cat > $HEADERPATH/android-headers.pc <<EOF
+cat > $HEADERPATH/android-headers.pc <<'EOF'
 Name: Android header files
 Description: Header files needed to write applications for the Android platform
 Version: androidversion
