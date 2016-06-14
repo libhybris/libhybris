@@ -42,7 +42,9 @@
 #include <media/stagefright/foundation/AMessage.h>
 #include <media/stagefright/MediaCodec.h>
 #include <media/stagefright/MediaErrors.h>
+#if ANDROID_VERSION_MAJOR<=5
 #include <media/stagefright/NativeWindowWrapper.h>
+#endif
 
 #include <gui/IGraphicBufferProducer.h>
 #include <binder/IServiceManager.h>

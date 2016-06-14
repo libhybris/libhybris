@@ -262,7 +262,7 @@ status_t MediaRecorder::setAudioEncoder(int ae)
     mIsAudioEncoderSet = true;
     return ret;
 }
-
+#if ANDROID_VERSION_MAJOR<=5
 status_t MediaRecorder::setOutputFile(const char* path)
 {
     ALOGV("setOutputFile(%s)", path);
@@ -288,6 +288,7 @@ status_t MediaRecorder::setOutputFile(const char* path)
     mIsOutputFileSet = true;
     return ret;
 }
+#endif
 
 status_t MediaRecorder::setOutputFile(int fd, int64_t offset, int64_t length)
 {

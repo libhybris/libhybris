@@ -68,7 +68,7 @@ _SurfaceTextureClientHybris::_SurfaceTextureClientHybris()
 }
 #endif
 
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
 _SurfaceTextureClientHybris::_SurfaceTextureClientHybris(const sp<IGraphicBufferProducer> &st)
     : Surface::Surface(st, true),
       refcount(1),
@@ -218,7 +218,7 @@ SurfaceTextureClientHybris surface_texture_client_create_by_id(unsigned int text
         ALOGE("Cannot create new SurfaceTextureClientHybris, texture id must be > 0.");
         return NULL;
     }
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
     sp<IGraphicBufferProducer> producer;
     sp<IGraphicBufferConsumer> consumer;
     BufferQueue::createBufferQueue(&producer, &consumer);
@@ -242,7 +242,7 @@ SurfaceTextureClientHybris surface_texture_client_create_by_id(unsigned int text
       stch->surface_texture.clear();
 
     const bool allow_synchronous_mode = true;
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
     stch->surface_texture = new GLConsumer(consumer, texture_id, GL_TEXTURE_EXTERNAL_OES, true, true);
 #elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     stch->surface_texture = new SurfaceTexture(texture_id, allow_synchronous_mode, GL_TEXTURE_EXTERNAL_OES, true, buffer_queue);

@@ -130,7 +130,7 @@ protected:
 
 private:
     static sp<DecodingService> decoding_service;
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
     sp<IGraphicBufferProducer> producer;
     sp<IGraphicBufferConsumer> consumer;
 #else

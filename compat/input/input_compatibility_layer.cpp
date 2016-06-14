@@ -22,7 +22,7 @@
 #if ANDROID_VERSION_MAJOR<=4
   #include "InputListener.h"
   #include "InputReader.h"
-#elif ANDROID_VERSION_MAJOR==5
+#elif ANDROID_VERSION_MAJOR>=5
   #include "inputflinger/InputListener.h"
   #include "inputflinger/InputReader.h"
 #endif
@@ -67,6 +67,14 @@ public:
 					ct,
 					SkAlphaType::kPremul_SkAlphaType),
 				0);
+#elif ANDROID_VERSION_MAJOR==6
+bitmap.setInfo(
+    SkImageInfo::Make(bitmap_width,
+      bitmap_height,
+      kRGBA_8888_SkColorType,
+      SkAlphaType::kPremul_SkAlphaType),
+    0);
+
 #endif
 		bitmap.allocPixels();
 
@@ -160,7 +168,7 @@ public:
 
 #if ANDROID_VERSION_MAJOR<=4
 	virtual android::sp<android::KeyCharacterMap> getKeyboardLayoutOverlay(const android::String8& inputDeviceDescriptor) {
-#elif ANDROID_VERSION_MAJOR==5
+#elif ANDROID_VERSION_MAJOR>=5
 	virtual android::sp<android::KeyCharacterMap> getKeyboardLayoutOverlay(const android::InputDeviceIdentifier& identifier) {
 #endif
 		return NULL;
@@ -170,7 +178,7 @@ public:
 		return android::String8::empty();
 	}
 
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
 	virtual android::TouchAffineTransformation getTouchAffineTransformation(const android::String8& inputDeviceDescriptor, int32_t surfaceRotation) {
 		return android::TouchAffineTransformation();
 	}

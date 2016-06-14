@@ -35,7 +35,7 @@
 #else
 #include <gui/GLConsumer.h>
 #endif
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
 #include <gui/IGraphicBufferProducer.h>
 #endif
 #include <ui/GraphicBuffer.h>
@@ -60,7 +60,7 @@
 using android::CompileTimeAssert; // So COMPILE_TIME_ASSERT works
 
 // From android::GLConsumer::FrameAvailableListener
-#if ANDROID_VERSION_MAJOR==5 && ANDROID_VERSION_MINOR>=1
+#if ANDROID_VERSION_MAJOR==5 && ANDROID_VERSION_MINOR>=1 || ANDROID_VERSION_MAJOR>=6
   void CameraControl::onFrameAvailable(const android::BufferItem& item)
 #else
   void CameraControl::onFrameAvailable()
@@ -220,7 +220,7 @@ CameraControl* android_camera_connect_by_id(int32_t camera_id, struct CameraCont
 
 	android::sp<CameraControl> cc = new CameraControl();
 	cc->listener = listener;
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR>=3 || ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR>=3 || ANDROID_VERSION_MAJOR==5 || ANDROID_VERSION_MAJOR>=6
 	cc->camera = android::Camera::connect(camera_id, android::String16("hybris"), android::Camera::USE_CALLING_UID);
 #else
 	cc->camera = android::Camera::connect(camera_id);
@@ -689,7 +689,7 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 			new android::NativeBufferAlloc()
 			);
 
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
 	android::sp<android::IGraphicBufferProducer> producer;
 	android::sp<android::IGraphicBufferConsumer> consumer;
 	android::BufferQueue::createBufferQueue(&producer, &consumer);
@@ -711,7 +711,7 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 		control->preview_texture = android::sp<android::GLConsumer>(
 				new android::GLConsumer(
 #endif
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
 					consumer,
 					texture_id,
 					GL_TEXTURE_EXTERNAL_OES,
@@ -739,7 +739,7 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 			android::sp<android::GLConsumer::FrameAvailableListener>(control));
 #endif
 
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
 	control->camera->setPreviewTarget(producer);
 #elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 	control->camera->setPreviewTexture(control->preview_texture->getBufferQueue());

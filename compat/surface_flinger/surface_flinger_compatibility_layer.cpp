@@ -28,7 +28,7 @@
 #include <ui/PixelFormat.h>
 #include <ui/Region.h>
 #include <ui/Rect.h>
-#if ANDROID_VERSION_MAJOR==5
+#if ANDROID_VERSION_MAJOR>=5
   #include <hardware/hwcomposer_defs.h>
 #endif
 
@@ -85,7 +85,7 @@ void sf_blank(size_t display_id)
 
 #if ANDROID_VERSION_MAJOR<=4
 	android::SurfaceComposerClient::blankDisplay(display);
-#elif ANDROID_VERSION_MAJOR==5
+#elif ANDROID_VERSION_MAJOR>=5
 	android::SurfaceComposerClient::setDisplayPowerMode(display, HWC_POWER_MODE_OFF);
 #endif
 }
@@ -107,7 +107,7 @@ void sf_unblank(size_t display_id)
 
 #if ANDROID_VERSION_MAJOR<=4
 	android::SurfaceComposerClient::unblankDisplay(display);
-#elif ANDROID_VERSION_MAJOR==5
+#elif ANDROID_VERSION_MAJOR>=5
 	android::SurfaceComposerClient::setDisplayPowerMode(display, HWC_POWER_MODE_NORMAL);
 #endif
 }

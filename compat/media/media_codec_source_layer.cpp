@@ -254,8 +254,12 @@ MediaCodecSourceWrapper* media_codec_source_create(MediaMessageWrapper *format, 
     MediaMessagePrivate *dm = MediaMessagePrivate::toPrivate(format);
 
     ALOGV("Creating media codec source");
-
+#if ANDROID_VERSION_MAJOR>=6
+    // We don't use persistent input surface
+    d->codec = android::MediaCodecSource::Create(d->looper, dm->msg, d->source, NULL, flags);
+#else
     d->codec = android::MediaCodecSource::Create(d->looper, dm->msg, d->source, flags);
+#endif
 
     return d;
 }
