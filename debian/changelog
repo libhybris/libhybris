@@ -1,3 +1,78 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu14) yakkety; urgency=medium
+
+  [ Ondrej Kubik ]
+  * Fix Android 6.x build for Android Build System.
+
+  [ Rex Tsai (蔡志展) ]
+  * Fix MediaCodecSource::Create() API change for Android 6.0.0_r1.
+
+  [ Simon Fels ]
+  * hybris: introduce experimental configuration feature
+  * hybris: note used android version in configure summary
+  * hybris: common: import marshmallow linker
+  * hybris: common: enable building marshmellow linker
+  * hybris: common: make marshmellow linker building
+  * hybris: common: mm: drop support for libs inside zip archives
+  * hybris: common: mm: get rid of sys/limits.h copy
+  * hybris: common: mm: disable tls initialization
+  * hybris: common: mm: disable debuggerd connection
+  * hybris: common: mm: export android_* dlfcn functions for use from C
+  * hybris: common: add hybris prefix for our hook processing method
+  * hybris: common: mm: add symbol hooking functionality
+  * hybris: common: mm: redirect all linker logs to stdout
+  * hybris: common: mm: use HYBRIS_LD_DEBUG to enable debug output
+  * hybris: common: mm: get linker building on arm platforms
+  * hybris: common: build with c++ support
+  * hybris: common: mm: further enablement work
+  * hybris: common: mm: don't memset class instance
+  * hybris: common: mm: disable linker internal memory mgmt for small objects
+  * hybris: common: mm: respect hybris specific library paths only
+  * hybris: common: mm: replace LINKER_DEBUG with TRACE_DEBUG
+  * hybris: mention experimental configure option in summary
+  * hybris: common: add missing libs we have to link to
+  * hybris: common: mm: switch from fprintf to DEBUG
+  * hybris: common: mm: disable some more code parts we don't use
+  * tests: add missing pthread to LDADD for test_nfc
+  * hybris: common: add c'tor to initialize linker logging
+  * hybris: common: add ability to deliver hooks from the outside
+  * hybris: common: mm: add missing line ending for error messages
+  * hybris: common: mm: fix compliation in x86
+  * hybris: common: really make hooking work
+  * hybris: common: make hook handler availble for C++
+  * hybris: common: deliver symbol requester through our hooks too
+  * hybris: egl: don't create surface mapping when creation failed
+  * hybris: hooks: hook a few more symbols for Android 6 support
+  * hybris: common: switch hook prefix to _hybris_hook_
+  * hybris: common: add tracing support for our hooks
+  * utils: update load-sym-files gdb command to python3
+  * hybris: common: convert addrinfo struct correctly
+  * hybris: common: respect unsigned nature of size_t
+  * hybris: common: add tracing for sysconf hook
+  * hybris: common: add proper copyright header for sysconf implementation
+  * hybris: common: add more hooks to let string.* bionic tests pass
+  * hybris: common: add new keys for sysconf
+  * hybris: common: add a few more necessary hooks
+  * hybris: common: improve tracing for a few hooks
+  * hybris: use pthread rather than lpthread to link with pthread lib
+  * hybris: common: mm: drop old ARCH_FLAGS we don't need
+  * hybris: common: add hook for strcmp to fail on nullptr
+  * hybris: common: fix printf format
+  * hybris: common: add more necessary hooks
+  * debian: install load_sym_files.py gdb helper script
+  * debian: enable mm linker by default
+  * hybris: detect arm64 architecture at configuration time
+  * hybris: common: mm: use correct names for relocation types
+  * debian: package libGLESv1_CM.so
+
+  [ Giulio Camuffo ]
+  * Fix resolving the GLEsv2 functions at link time
+
+  [ Simon Fels ]
+  * debian: update copyright file
+  * debian: bump standards version to 3.9.7
+
+ -- Simon Fels <simon.fels@canonical.com>  Tue, 14 Jun 2016 09:52:43 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu13) xenial; urgency=medium
 
   * hybris: common: stub: don't assert but return error
