@@ -13,7 +13,7 @@ Build-Depends: debhelper (>= 9.0.0),
                pkg-config,
                libgles2-mesa-dev,
                libwayland-dev
-Standards-Version: 3.9.5
+Standards-Version: 3.9.7
 Section: libs
 Vcs-Git: https://git.launchpad.net/~libhybris-maintainers/libhybris/+git/libhybris
 Vcs-Browser: https://git.launchpad.net/~libhybris-maintainers/libhybris/+git/libhybris/
