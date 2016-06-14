@@ -266,8 +266,11 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 
 	HYBRIS_TRACE_BEGIN("native-egl", "eglCreateWindowSurface", "");
 	EGLSurface result = (*_eglCreateWindowSurface)(dpy, config, win, attrib_list);
+
 	HYBRIS_TRACE_END("native-egl", "eglCreateWindowSurface", "");
-	egl_helper_push_mapping(result, win);
+
+	if (result != EGL_NO_SURFACE)
+		egl_helper_push_mapping(result, win);
 
 	HYBRIS_TRACE_END("hybris-egl", "eglCreateWindowSurface", "");
 	return result;

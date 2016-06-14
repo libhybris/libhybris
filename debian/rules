@@ -87,11 +87,14 @@ ARCH_CONFIGURATION =
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
 ARCH_CONFIGURATION = \
 	--enable-arch=arm \
-	--enable-mali-quirks
+	--enable-mali-quirks \
+	--enable-experimental
 endif
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), arm64))
 ARCH_CONFIGURATION = \
-	--enable-stub-linker
+	--enable-arch=arm64 \
+	--enable-mali-quirks \
+	--enable-experimental
 endif
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), i386))
 ARCH_CONFIGURATION = \

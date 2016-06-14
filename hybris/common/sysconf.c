@@ -1,8 +1,27 @@
+/*
+ * Copyright (c) 2013 Adrian Negreanu <adrian.m.negreanu@intel.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 #include <unistd.h>
 
 /*
- * bionic/libc/include/sys/sysconf.h processed with s/define _\(\w*\)\(.*\)/define \1\2\r#ifdef _\1\rMAP_TO_UNISTD(\1),\r#endif/g
+ * bionic/libc/include/sys/sysconf.h processed with:
+ * s/define _\(\w*\)\(.*\)/define \1\2\r#ifdef _\1\rMAP_TO_UNISTD(\1),\r#endif/g
  */
+
 #define MAP_TO_UNISTD(a) [a]=_##a
 static int sysconf_map[]= {
 #define SC_ARG_MAX             0x0000
@@ -321,7 +340,6 @@ MAP_TO_UNISTD(SC_THREAD_THREADS_MAX),
 #ifdef _SC_TTY_NAME_MAX
 MAP_TO_UNISTD(SC_TTY_NAME_MAX),
 #endif
-
 #define SC_THREADS                     0x004f
 #ifdef _SC_THREADS
 MAP_TO_UNISTD(SC_THREADS),
@@ -350,7 +368,6 @@ MAP_TO_UNISTD(SC_THREAD_PRIO_PROTECT),
 #ifdef _SC_THREAD_SAFE_FUNCTIONS
 MAP_TO_UNISTD(SC_THREAD_SAFE_FUNCTIONS),
 #endif
-
 #define SC_NPROCESSORS_CONF            0x0060
 #ifdef _SC_NPROCESSORS_CONF
 MAP_TO_UNISTD(SC_NPROCESSORS_CONF),
@@ -367,10 +384,242 @@ MAP_TO_UNISTD(SC_PHYS_PAGES),
 #ifdef _SC_AVPHYS_PAGES
 MAP_TO_UNISTD(SC_AVPHYS_PAGES),
 #endif
+#define SC_MONOTONIC_CLOCK             0x0064
+#ifdef _SC_MONOTONIC_CLOCK
+MAP_TO_UNISTD(SC_MONOTONIC_CLOCK),
+#endif
+#define SC_2_PBS               0x0065
+#ifdef _SC_2_PBS
+MAP_TO_UNISTD(SC_2_PBS),
+#endif
+#define SC_2_PBS_ACCOUNTING    0x0066
+#ifdef _SC_2_PBS_ACCOUNTING
+MAP_TO_UNISTD(SC_2_PBS_ACCOUNTING),
+#endif
+#define SC_2_PBS_CHECKPOINT    0x0067
+#ifdef _SC_2_PBS_CHECKPOINT
+MAP_TO_UNISTD(SC_2_PBS_CHECKPOINT),
+#endif
+#define SC_2_PBS_LOCATE        0x0068
+#ifdef _SC_2_PBS_LOCATE
+MAP_TO_UNISTD(SC_2_PBS_LOCATE),
+#endif
+#define SC_2_PBS_MESSAGE       0x0069
+#ifdef _SC_2_PBS_MESSAGE
+MAP_TO_UNISTD(SC_2_PBS_MESSAGE),
+#endif
+#define SC_2_PBS_TRACK         0x006a
+#ifdef _SC_2_PBS_TRACK
+MAP_TO_UNISTD(SC_2_PBS_TRACK),
+#endif
+#define SC_ADVISORY_INFO       0x006b
+#ifdef _SC_ADVISORY_INFO
+MAP_TO_UNISTD(SC_ADVISORY_INFO),
+#endif
+#define SC_BARRIERS            0x006c
+#ifdef _SC_BARRIERS
+MAP_TO_UNISTD(SC_BARRIERS),
+#endif
+#define SC_CLOCK_SELECTION     0x006d
+#ifdef _SC_CLOCK_SELECTION
+MAP_TO_UNISTD(SC_CLOCK_SELECTION),
+#endif
+#define SC_CPUTIME             0x006e
+#ifdef _SC_CPUTIME
+MAP_TO_UNISTD(SC_CPUTIME),
+#endif
+#define SC_HOST_NAME_MAX       0x006f
+#ifdef _SC_HOST_NAME_MAX
+MAP_TO_UNISTD(SC_HOST_NAME_MAX),
+#endif
+#define SC_IPV6                0x0070
+#ifdef _SC_IPV6
+MAP_TO_UNISTD(SC_IPV6),
+#endif
+#define SC_RAW_SOCKETS         0x0071
+#ifdef _SC_RAW_SOCKETS
+MAP_TO_UNISTD(SC_RAW_SOCKETS),
+#endif
+#define SC_READER_WRITER_LOCKS 0x0072
+#ifdef _SC_READER_WRITER_LOCKS
+MAP_TO_UNISTD(SC_READER_WRITER_LOCKS),
+#endif
+#define SC_REGEXP              0x0073
+#ifdef _SC_REGEXP
+MAP_TO_UNISTD(SC_REGEXP),
+#endif
+#define SC_SHELL               0x0074
+#ifdef _SC_SHELL
+MAP_TO_UNISTD(SC_SHELL),
+#endif
+#define SC_SPAWN               0x0075
+#ifdef _SC_SPAWN
+MAP_TO_UNISTD(SC_SPAWN),
+#endif
+#define SC_SPIN_LOCKS          0x0076
+#ifdef _SC_SPIN_LOCKS
+MAP_TO_UNISTD(SC_SPIN_LOCKS),
+#endif
+#define SC_SPORADIC_SERVER     0x0077
+#ifdef _SC_SPORADIC_SERVER
+MAP_TO_UNISTD(SC_SPORADIC_SERVER),
+#endif
+#define SC_SS_REPL_MAX         0x0078
+#ifdef _SC_SS_REPL_MAX
+MAP_TO_UNISTD(SC_SS_REPL_MAX),
+#endif
+#define SC_SYMLOOP_MAX         0x0079
+#ifdef _SC_SYMLOOP_MAX
+MAP_TO_UNISTD(SC_SYMLOOP_MAX),
+#endif
+#define SC_THREAD_CPUTIME      0x007a
+#ifdef _SC_THREAD_CPUTIME
+MAP_TO_UNISTD(SC_THREAD_CPUTIME),
+#endif
+#define SC_THREAD_PROCESS_SHARED       0x007b
+#ifdef _SC_THREAD_PROCESS_SHARED
+MAP_TO_UNISTD(SC_THREAD_PROCESS_SHARED),
+#endif
+#define SC_THREAD_ROBUST_PRIO_INHERIT  0x007c
+#ifdef _SC_THREAD_ROBUST_PRIO_INHERIT
+MAP_TO_UNISTD(SC_THREAD_ROBUST_PRIO_INHERIT),
+#endif
+#define SC_THREAD_ROBUST_PRIO_PROTECT  0x007d
+#ifdef _SC_THREAD_ROBUST_PRIO_PROTECT
+MAP_TO_UNISTD(SC_THREAD_ROBUST_PRIO_PROTECT),
+#endif
+#define SC_THREAD_SPORADIC_SERVER      0x007e
+#ifdef _SC_THREAD_SPORADIC_SERVER
+MAP_TO_UNISTD(SC_THREAD_SPORADIC_SERVER),
+#endif
+#define SC_TIMEOUTS            0x007f
+#ifdef _SC_TIMEOUTS
+MAP_TO_UNISTD(SC_TIMEOUTS),
+#endif
+#define SC_TRACE               0x0080
+#ifdef _SC_TRACE
+MAP_TO_UNISTD(SC_TRACE),
+#endif
+#define SC_TRACE_EVENT_FILTER  0x0081
+#ifdef _SC_TRACE_EVENT_FILTER
+MAP_TO_UNISTD(SC_TRACE_EVENT_FILTER),
+#endif
+#define SC_TRACE_EVENT_NAME_MAX  0x0082
+#ifdef _SC_TRACE_EVENT_NAME_MAX
+MAP_TO_UNISTD(SC_TRACE_EVENT_NAME_MAX),
+#endif
+#define SC_TRACE_INHERIT       0x0083
+#ifdef _SC_TRACE_INHERIT
+MAP_TO_UNISTD(SC_TRACE_INHERIT),
+#endif
+#define SC_TRACE_LOG           0x0084
+#ifdef _SC_TRACE_LOG
+MAP_TO_UNISTD(SC_TRACE_LOG),
+#endif
+#define SC_TRACE_NAME_MAX      0x0085
+#ifdef _SC_TRACE_NAME_MAX
+MAP_TO_UNISTD(SC_TRACE_NAME_MAX),
+#endif
+#define SC_TRACE_SYS_MAX       0x0086
+#ifdef _SC_TRACE_SYS_MAX
+MAP_TO_UNISTD(SC_TRACE_SYS_MAX),
+#endif
+#define SC_TRACE_USER_EVENT_MAX  0x0087
+#ifdef _SC_TRACE_USER_EVENT_MAX
+MAP_TO_UNISTD(SC_TRACE_USER_EVENT_MAX),
+#endif
+#define SC_TYPED_MEMORY_OBJECTS  0x0088
+#ifdef _SC_TYPED_MEMORY_OBJECTS
+MAP_TO_UNISTD(SC_TYPED_MEMORY_OBJECTS),
+#endif
+#define SC_V7_ILP32_OFF32      0x0089
+#ifdef _SC_V7_ILP32_OFF32
+MAP_TO_UNISTD(SC_V7_ILP32_OFF32),
+#endif
+#define SC_V7_ILP32_OFFBIG     0x008a
+#ifdef _SC_V7_ILP32_OFFBIG
+MAP_TO_UNISTD(SC_V7_ILP32_OFFBIG),
+#endif
+#define SC_V7_LP64_OFF64       0x008b
+#ifdef _SC_V7_LP64_OFF64
+MAP_TO_UNISTD(SC_V7_LP64_OFF64),
+#endif
+#define SC_V7_LPBIG_OFFBIG     0x008c
+#ifdef _SC_V7_LPBIG_OFFBIG
+MAP_TO_UNISTD(SC_V7_LPBIG_OFFBIG),
+#endif
+#define SC_XOPEN_STREAMS       0x008d
+#ifdef _SC_XOPEN_STREAMS
+MAP_TO_UNISTD(SC_XOPEN_STREAMS),
+#endif
+#define SC_XOPEN_UUCP          0x008e
+#ifdef _SC_XOPEN_UUCP
+MAP_TO_UNISTD(SC_XOPEN_UUCP),
+#endif
+#define SC_LEVEL1_ICACHE_SIZE      0x008f
+#ifdef _SC_LEVEL1_ICACHE_SIZE
+MAP_TO_UNISTD(SC_LEVEL1_ICACHE_SIZE),
+#endif
+#define SC_LEVEL1_ICACHE_ASSOC     0x0090
+#ifdef _SC_LEVEL1_ICACHE_ASSOC
+MAP_TO_UNISTD(SC_LEVEL1_ICACHE_ASSOC),
+#endif
+#define SC_LEVEL1_ICACHE_LINESIZE  0x0091
+#ifdef _SC_LEVEL1_ICACHE_LINESIZE
+MAP_TO_UNISTD(SC_LEVEL1_ICACHE_LINESIZE),
+#endif
+#define SC_LEVEL1_DCACHE_SIZE      0x0092
+#ifdef _SC_LEVEL1_DCACHE_SIZE
+MAP_TO_UNISTD(SC_LEVEL1_DCACHE_SIZE),
+#endif
+#define SC_LEVEL1_DCACHE_ASSOC     0x0093
+#ifdef _SC_LEVEL1_DCACHE_ASSOC
+MAP_TO_UNISTD(SC_LEVEL1_DCACHE_ASSOC),
+#endif
+#define SC_LEVEL1_DCACHE_LINESIZE  0x0094
+#ifdef _SC_LEVEL1_DCACHE_LINESIZE
+MAP_TO_UNISTD(SC_LEVEL1_DCACHE_LINESIZE),
+#endif
+#define SC_LEVEL2_CACHE_SIZE       0x0095
+#ifdef _SC_LEVEL2_CACHE_SIZE
+MAP_TO_UNISTD(SC_LEVEL2_CACHE_SIZE),
+#endif
+#define SC_LEVEL2_CACHE_ASSOC      0x0096
+#ifdef _SC_LEVEL2_CACHE_ASSOC
+MAP_TO_UNISTD(SC_LEVEL2_CACHE_ASSOC),
+#endif
+#define SC_LEVEL2_CACHE_LINESIZE   0x0097
+#ifdef _SC_LEVEL2_CACHE_LINESIZE
+MAP_TO_UNISTD(SC_LEVEL2_CACHE_LINESIZE),
+#endif
+#define SC_LEVEL3_CACHE_SIZE       0x0098
+#ifdef _SC_LEVEL3_CACHE_SIZE
+MAP_TO_UNISTD(SC_LEVEL3_CACHE_SIZE),
+#endif
+#define SC_LEVEL3_CACHE_ASSOC      0x0099
+#ifdef _SC_LEVEL3_CACHE_ASSOC
+MAP_TO_UNISTD(SC_LEVEL3_CACHE_ASSOC),
+#endif
+#define SC_LEVEL3_CACHE_LINESIZE   0x009a
+#ifdef _SC_LEVEL3_CACHE_LINESIZE
+MAP_TO_UNISTD(SC_LEVEL3_CACHE_LINESIZE),
+#endif
+#define SC_LEVEL4_CACHE_SIZE       0x009b
+#ifdef _SC_LEVEL4_CACHE_SIZE
+MAP_TO_UNISTD(SC_LEVEL4_CACHE_SIZE),
+#endif
+#define SC_LEVEL4_CACHE_ASSOC      0x009c
+#ifdef _SC_LEVEL4_CACHE_ASSOC
+MAP_TO_UNISTD(SC_LEVEL4_CACHE_ASSOC),
+#endif
+#define SC_LEVEL4_CACHE_LINESIZE   0x009d
+#ifdef _SC_LEVEL4_CACHE_LINESIZE
+MAP_TO_UNISTD(SC_LEVEL4_CACHE_LINESIZE),
+#endif
 };
 #undef MAP_TO_UNISTD
 
-long my_sysconf(int name)
+long _hybris_map_sysconf(int name)
 {
 	return sysconf(sysconf_map[name]);
 }

@@ -1327,7 +1327,7 @@ static int reloc_library(soinfo *si, Elf_Rel *rel, unsigned count)
         if(sym != 0) {
             sym_name = (char *)(strtab + symtab[sym].st_name);
             INFO("HYBRIS: '%s' checking hooks for sym '%s'\n", si->name, sym_name);
-            sym_addr = get_hooked_symbol(sym_name);
+            sym_addr = __hybris_get_hooked_symbol(sym_name, si->name);
             if (sym_addr != NULL) {
                 INFO("HYBRIS: '%s' hooked symbol %s to %x\n", si->name,
                                                   sym_name, sym_addr);
@@ -2332,4 +2332,7 @@ unsigned __linker_init(unsigned **elfdata) {
     // We have successfully fixed our own relocations. It's safe to run
     // the main part of the linker now.
     return __linker_init_post_relocation(elfdata);
+}
+
+void android_linker_init() {
 }

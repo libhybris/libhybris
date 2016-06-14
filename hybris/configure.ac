@@ -42,6 +42,12 @@ AC_ARG_ENABLE(debug,
   [debug="no"])
 AM_CONDITIONAL( [WANT_DEBUG], [test x"$debug" = x"yes"])
 
+AC_ARG_ENABLE(experimental,
+  [  --enable-experimental     Enable experimental features (default=disabled)],
+  [experimental=$enableval],
+  [experimental="no"])
+AM_CONDITIONAL( [WANT_EXPERIMENTAL], [test x"$experimental" = x"yes"])
+
 AC_ARG_ENABLE(trace,
   [  --enable-trace            Enable TRACE statements (default=disabled)],
   [trace=$enableval],
@@ -86,8 +92,12 @@ AC_ARG_ENABLE(arch,
                               x86: Compile for x86],
   [ if   test "x$enableval" = "xarm" ; then
       arch="arm"
+   elif test "x$enableval" = "xarm64" ; then
+      arch="arm64"
    elif test "x$enableval" = "xx86" ; then
       arch="x86"
+   elif test "x$enableval" = "xx86-64" ; then
+      arch="x86-64"
    else
       echo
       echo "Error!"
@@ -98,7 +108,9 @@ AC_ARG_ENABLE(arch,
   [arch="arm"]
   )
 AM_CONDITIONAL([WANT_ARCH_ARM], [test x$arch = xarm])
+AM_CONDITIONAL([WANT_ARCH_ARM64], [test x$arch = xarm64])
 AM_CONDITIONAL([WANT_ARCH_X86], [test x$arch = xx86])
+AM_CONDITIONAL([WANT_ARCH_X86_64], [test x$arch = xx86-64])
 
 DEFAULT_EGL_PLATFORM="null"
 AC_ARG_WITH(default-egl-platform,
@@ -208,6 +220,7 @@ AC_CONFIG_FILES([
 	common/ics/Makefile
 	common/jb/Makefile
 	common/stub/Makefile
+	common/mm/Makefile
 	egl/egl.pc
 	egl/Makefile
 	egl/platforms/Makefile
@@ -262,11 +275,15 @@ echo "  debug build.............: $debug"
 echo
 echo "  trace...................: $trace"
 echo
+echo "  experimental features...: $experimental"
+echo
 echo "  prefix..................: $prefix"
 echo
 echo "  arch  ..................: $arch"
 echo
 echo "  headers path ...........: $android_headers_path"
+echo
+echo "  Android version.........: $android_headers_major.$android_headers_minor.$android_headers_patch"
 echo
 echo "  default egl platform ...: $DEFAULT_EGL_PLATFORM"
 echo
