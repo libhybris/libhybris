@@ -74,6 +74,13 @@ static locale_t hybris_locale;
 static int locale_inited = 0;
 static hybris_hook_cb hook_callback = NULL;
 
+static void (*_android_linker_init)(int sdk_version) = NULL;
+static void* (*_android_dlopen)(const char *filename, int flags) = NULL;
+static void* (*_android_dlsym)(void *handle, const char *symbol) = NULL;
+static void* (*_android_dladdr)(void *addr, Dl_info *info) = NULL;
+static int (*_android_dlclose)(void *handle) = NULL;
+static const char* (*_android_dlerror)(void) = NULL;
+
 /* TODO:
 *  - Check if the int arguments at attr_set/get match the ones at Android
 *  - Check how to deal with memory leaks (specially with static initializers)
@@ -2177,6 +2184,41 @@ static wint_t _hybris_hook_getwc(FILE *stream)
     return getwc(_get_actual_fp(stream));
 }
 
+static void *_hybris_hook_android_dlopen(const char *filename, int flag)
+{
+    TRACE("filename %s flag %i", filename, flag);
+
+    return _android_dlopen(filename,flag);
+}
+
+static void *_hybris_hook_android_dlsym(void *handle, const char *symbol)
+{
+    TRACE("handle %p symbol %s", handle, symbol);
+
+    return _android_dlsym(handle,symbol);
+}
+
+static void* _hybris_hook_android_dladdr(void *addr, Dl_info *info)
+{
+    TRACE("addr %p info %p", addr, info);
+
+    return _android_dladdr(addr, info);
+}
+
+static int _hybris_hook_android_dlclose(void *handle)
+{
+    TRACE("handle %p", handle);
+
+    return _android_dlclose(handle);
+}
+
+static const char *_hybris_hook_android_dlerror(void)
+{
+    TRACE("");
+
+    return android_dlerror();
+}
+
 static struct _hook hooks[] = {
     {"property_get", _hybris_hook_property_get },
     {"property_set", _hybris_hook_property_set },
@@ -2427,11 +2469,11 @@ static struct _hook hooks[] = {
     {"getservbyname", getservbyname},
     {"strftime", strftime},
     {"sysconf", _hybris_hook_sysconf},
-    {"dlopen", android_dlopen},
-    {"dlerror", android_dlerror},
-    {"dlsym", android_dlsym},
-    {"dladdr", android_dladdr},
-    {"dlclose", android_dlclose},
+    {"dlopen", _hybris_hook_android_dlopen},
+    {"dlerror", _hybris_hook_android_dlerror},
+    {"dlsym", _hybris_hook_android_dlsym},
+    {"dladdr", _hybris_hook_android_dladdr},
+    {"dlclose", _hybris_hook_android_dlclose},
     /* dirent.h */
     {"opendir", opendir},
     {"fdopendir", fdopendir},
@@ -2613,11 +2655,128 @@ void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
     return NULL;
 }
 
-extern void android_linker_init();
+static int get_android_sdk_version()
+{
+    static int sdk_version = -1;
+
+    if (sdk_version > 0)
+        return sdk_version;
+
+    char *value = NULL;
+    property_get("ro.build.version.sdk", value, "19");
+
+    sdk_version = 19;
+    if (value)
+        sdk_version = atoi(value);
+
+    return sdk_version;
+}
+
+static void *linker_handle = NULL;
+
+static void* load_linker(const char *path)
+{
+    void *handle = dlopen(path, RTLD_LAZY);
+    if (!handle) {
+        fprintf(stderr, "ERROR: Failed to load hybris linker for Android SDK version %d\n",
+                get_android_sdk_version());
+        return NULL;
+    }
+    return handle;
+}
+
+#define LINKER_NAME_JB "jb"
+#define LINKER_NAME_MM "mm"
+
+static void android_linker_init(int sdk_version);
 
 __attribute__((constructor))
 static void hybris_linker_init()
 {
     LOGD("Linker initialization");
-    android_linker_init();
+
+    int sdk_version = get_android_sdk_version();
+
+    char path[PATH_MAX];
+    char *name = NULL;
+    /* See https://source.android.com/source/build-numbers.html for
+     * an overview over available SDK version numbers and which
+     * Android version they relate to. */
+    if (sdk_version < 21)
+        name = LINKER_NAME_JB;
+    else
+        name = LINKER_NAME_MM;
+
+    /* Allow our user to override the linker we select */
+    const char *user_linker = getenv("HYBRIS_LINKER");
+    if (user_linker)
+        name = user_linker;
+
+    char *linker_dir = LINKER_PLUGIN_DIR;
+    const char *user_linker_dir = getenv("HYBRIS_LINKER_DIR");
+    if (user_linker_dir)
+        linker_dir = user_linker_dir;
+
+    snprintf(path, PATH_MAX, "%s/%s.so", linker_dir, name);
+
+    LOGD("Loading linker from %s..", path);
+
+    linker_handle = load_linker(path);
+    if (!linker_handle)
+        exit(1);
+
+    /* Load all necessary symbols we need from the linker */
+    _android_linker_init = dlsym(linker_handle, "android_linker_init");
+    _android_dlopen = dlsym(linker_handle, "android_dlopen");
+    _android_dlsym = dlsym(linker_handle, "android_dlsym");
+    _android_dladdr = dlsym(linker_handle, "android_dladdr");
+    _android_dlclose = dlsym(linker_handle, "android_dlclose");
+    _android_dlerror = dlsym(linker_handle, "android_dlerror");
+
+    /* Now its time to setup the linker itself */
+    _android_linker_init(sdk_version);
+}
+
+void *hybris_dlopen(const char *filename, int flag)
+{
+    return _android_dlopen(filename,flag);
+}
+
+void *hybris_dlsym(void *handle, const char *symbol)
+{
+    return _android_dlsym(handle,symbol);
+}
+
+int hybris_dlclose(void *handle)
+{
+    return _android_dlclose(handle);
+}
+
+const char *hybris_dlerror(void)
+{
+    return _android_dlerror();
+}
+
+/* NOTE: As we're not linking directly with the linker anymore
+ * but several users are using android_* functions directly we
+ * have to export them here. */
+
+void *android_dlopen(const char *filename, int flag)
+{
+    return _android_dlopen(filename,flag);
+}
+
+void *android_dlsym(void *handle, const char *symbol)
+{
+    return _android_dlsym(handle,symbol);
+}
+
+int android_dlclose(void *handle)
+{
+    return _android_dlclose(handle);
+}
+
+const char *android_dlerror(void)
+{
+    return _android_dlerror();
 }

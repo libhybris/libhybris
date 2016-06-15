@@ -1,6 +1,9 @@
 bionic = $(top_srcdir)/common/mm/bionic
 bionic_libc = $(bionic)/libc
 
+modlibexecdir = $(libdir)/libhybris/linker
+modlibexec_LTLIBRARIES = mm.la
+
 ARCH_FLAGS =
 
 AM_CFLAGS = \
@@ -12,9 +15,7 @@ AM_CPPFLAGS = \
 	-fno-stack-protector \
 	-Wstrict-overflow=5
 
-noinst_LTLIBRARIES = \
-	libandroid-linker.la
-libandroid_linker_la_SOURCES = \
+mm_la_SOURCES = \
 	hybris_compat.cpp \
 	dlfcn.cpp \
 	linker_allocator.cpp \
@@ -24,7 +25,7 @@ libandroid_linker_la_SOURCES = \
 	linker_phdr.cpp \
 	linker_sdk_versions.cpp \
 	rt.cpp
-libandroid_linker_la_CPPFLAGS = \
+mm_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/common \
@@ -35,13 +36,15 @@ libandroid_linker_la_CPPFLAGS = \
 	-DDEFAULT_HYBRIS_LD_LIBRARY_PATH="\"@DEFAULT_HYBRIS_LD_LIBRARY_PATH@\"" \
 	$(ARCH_FLAGS) \
 	$(ANDROID_HEADERS_CFLAGS)
-libandroid_linker_la_LDFLAGS = \
-	-lsupc++
+mm_la_LDFLAGS = \
+	-lsupc++ \
+	-module \
+	-avoid-version
 
 if WANT_DEBUG
-libandroid_linker_la_CPPFLAGS += \
+mm_la_CPPFLAGS += \
 	-DTRACE_DEBUG=1
 else
-libandroid_linker_la_CPPFLAGS += \
+mm_la_CPPFLAGS += \
 	-DTRACE_DEBUG=1
 endif
