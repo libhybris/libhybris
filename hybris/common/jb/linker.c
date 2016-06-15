@@ -2334,5 +2334,6 @@ unsigned __linker_init(unsigned **elfdata) {
     return __linker_init_post_relocation(elfdata);
 }
 
-void android_linker_init() {
+void android_linker_init(int sdk_version) {
+   (void) sdk_version;
 }

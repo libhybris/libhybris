@@ -3292,12 +3292,15 @@ static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf) {
   return 0;
 }
 
-extern "C" void android_linker_init() {
+extern "C" void android_linker_init(int sdk_version) {
   // Get a few environment variables.
   const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
   if (LD_DEBUG != nullptr) {
     g_ld_debug_verbosity = atoi(LD_DEBUG);
   }
+
+  if (sdk_version > 0)
+    set_application_target_sdk_version(sdk_version);
 }
 
 #ifdef DISABLED_FOR_HYBRIS_SUPPORT

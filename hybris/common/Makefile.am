@@ -1,32 +1,14 @@
 lib_LTLIBRARIES = \
 	libhybris-common.la
 
-if WANT_STUB_LINKER
-SUBDIRS = stub
-libhybris_common_la_LIBADD = stub/libstub-linker.la
-else
+SUBDIRS =
+
+if !WANT_ARCH_ARM64
+SUBDIRS += jb
+endif
+
 if WANT_EXPERIMENTAL
-SUBDIRS = mm
-libhybris_common_la_LIBADD = mm/libandroid-linker.la
-else
-# JB linker works fine for ICS
-if HAS_ANDROID_4_0_0
-SUBDIRS = jb
-libhybris_common_la_LIBADD= jb/libandroid-linker.la
-else
-if HAS_ANDROID_5_0_0
-SUBDIRS = jb
-libhybris_common_la_LIBADD= jb/libandroid-linker.la
-else
-if HAS_ANDROID_2_3_0
-SUBDIRS = gingerbread
-libhybris_common_la_LIBADD= gingerbread/libandroid-linker.la
-else
-$(error No Android Version is defined)
-endif
-endif
-endif
-endif
+SUBDIRS += mm
 endif
 
 libhybris_common_la_SOURCES = \
@@ -34,13 +16,13 @@ libhybris_common_la_SOURCES = \
 	hooks_shm.c \
 	strlcpy.c \
 	strlcat.c \
-	dlfcn.c \
 	logging.c \
 	sysconf.c
 libhybris_common_la_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
-	-I$(top_srcdir)/common
+	-I$(top_srcdir)/common \
+	-DLINKER_PLUGIN_DIR=\"$(libdir)/libhybris/linker\"
 if WANT_TRACE
 libhybris_common_la_CPPFLAGS += -DDEBUG
 endif
