@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu16) yakkety; urgency=medium
+
+  * No change release.
+
+ -- Simon Fels <simon.fels@canonical.com>  Wed, 15 Jun 2016 17:48:02 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu15) yakkety; urgency=medium
 
   * hybris: mm: use recursive mutex for dlopen/.. locking
