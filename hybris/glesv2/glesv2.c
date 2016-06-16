@@ -65,25 +65,25 @@ typeof(sym) * sym ## _dispatch (void) \
 
 static void  __attribute__((constructor)) _init_androidglesv2()  {
 	_libglesv2 = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("LIBGLESV2") : "libGLESv2.so", RTLD_NOW);
-	GLES2_LOAD(glBlendColor);
-	GLES2_LOAD(glClearColor);
-	GLES2_LOAD(glClearDepthf);
-	GLES2_LOAD(glDepthRangef);
-	GLES2_LOAD(glLineWidth);
-	GLES2_LOAD(glPolygonOffset);
-	GLES2_LOAD(glSampleCoverage);
-	GLES2_LOAD(glTexParameterf);
-	GLES2_LOAD(glUniform1f);
-	GLES2_LOAD(glUniform2f);
-	GLES2_LOAD(glUniform3f);
-	GLES2_LOAD(glUniform4f);
-	GLES2_LOAD(glVertexAttrib1f);
-	GLES2_LOAD(glVertexAttrib2f);
-	GLES2_LOAD(glVertexAttrib3f);
-	GLES2_LOAD(glVertexAttrib4f);
-	GLES2_LOAD(glEGLImageTargetTexture2DOES);
 }
 
+GLES2_IDLOAD(glBlendColor);
+GLES2_IDLOAD(glClearColor);
+GLES2_IDLOAD(glClearDepthf);
+GLES2_IDLOAD(glDepthRangef);
+GLES2_IDLOAD(glLineWidth);
+GLES2_IDLOAD(glPolygonOffset);
+GLES2_IDLOAD(glSampleCoverage);
+GLES2_IDLOAD(glTexParameterf);
+GLES2_IDLOAD(glUniform1f);
+GLES2_IDLOAD(glUniform2f);
+GLES2_IDLOAD(glUniform3f);
+GLES2_IDLOAD(glUniform4f);
+GLES2_IDLOAD(glVertexAttrib1f);
+GLES2_IDLOAD(glVertexAttrib2f);
+GLES2_IDLOAD(glVertexAttrib3f);
+GLES2_IDLOAD(glVertexAttrib4f);
+GLES2_IDLOAD(glEGLImageTargetTexture2DOES);
 
 GLES2_IDLOAD(glActiveTexture);
 
