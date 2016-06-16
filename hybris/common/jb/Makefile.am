@@ -13,14 +13,13 @@ jb_la_SOURCES = \
 	linker.c \
 	linker_environ.c \
 	linker_format.c \
-	rt.c
+	rt.c \
+	../strlcpy.c
 jb_la_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common \
 	-D_GNU_SOURCE \
-	-DLINKER_TEXT_BASE=0xB0000100 \
-	-DLINKER_AREA_SIZE=0x01000000 \
 	-DDEFAULT_HYBRIS_LD_LIBRARY_PATH="\"@DEFAULT_HYBRIS_LD_LIBRARY_PATH@\"" \
 	$(ARCHFLAGS)
 jb_la_LDFLAGS = \

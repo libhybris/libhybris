@@ -74,7 +74,7 @@ static locale_t hybris_locale;
 static int locale_inited = 0;
 static hybris_hook_cb hook_callback = NULL;
 
-static void (*_android_linker_init)(int sdk_version) = NULL;
+static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) = NULL;
 static void* (*_android_dlopen)(const char *filename, int flags) = NULL;
 static void* (*_android_dlsym)(void *handle, const char *symbol) = NULL;
 static void* (*_android_dladdr)(void *addr, Dl_info *info) = NULL;
@@ -2603,7 +2603,7 @@ void hybris_set_hook_callback(hybris_hook_cb callback)
     hook_callback = callback;
 }
 
-void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
+static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
 {
     static int counter = -1;
     static int sorted = 0;
@@ -2676,7 +2676,7 @@ static void *linker_handle = NULL;
 
 static void* load_linker(const char *path)
 {
-    void *handle = dlopen(path, RTLD_LAZY);
+    void *handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
     if (!handle) {
         fprintf(stderr, "ERROR: Failed to load hybris linker for Android SDK version %d\n",
                 get_android_sdk_version());
@@ -2688,9 +2688,8 @@ static void* load_linker(const char *path)
 #define LINKER_NAME_JB "jb"
 #define LINKER_NAME_MM "mm"
 
-static void android_linker_init(int sdk_version);
+static int linker_initialized = 0;
 
-__attribute__((constructor))
 static void hybris_linker_init()
 {
     LOGD("Linker initialization");
@@ -2734,28 +2733,14 @@ static void hybris_linker_init()
     _android_dlerror = dlsym(linker_handle, "android_dlerror");
 
     /* Now its time to setup the linker itself */
-    _android_linker_init(sdk_version);
+    _android_linker_init(sdk_version, __hybris_get_hooked_symbol);
+
+    linker_initialized = 1;
 }
 
-void *hybris_dlopen(const char *filename, int flag)
-{
-    return _android_dlopen(filename,flag);
-}
-
-void *hybris_dlsym(void *handle, const char *symbol)
-{
-    return _android_dlsym(handle,symbol);
-}
-
-int hybris_dlclose(void *handle)
-{
-    return _android_dlclose(handle);
-}
-
-const char *hybris_dlerror(void)
-{
-    return _android_dlerror();
-}
+#define ENSURE_LINKER_IS_LOADED() \
+    if (!linker_initialized) \
+        hybris_linker_init();
 
 /* NOTE: As we're not linking directly with the linker anymore
  * but several users are using android_* functions directly we
@@ -2763,20 +2748,60 @@ const char *hybris_dlerror(void)
 
 void *android_dlopen(const char *filename, int flag)
 {
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dlopen)
+        return NULL;
+
     return _android_dlopen(filename,flag);
 }
 
 void *android_dlsym(void *handle, const char *symbol)
 {
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dlsym)
+        return NULL;
+
     return _android_dlsym(handle,symbol);
 }
 
 int android_dlclose(void *handle)
 {
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dlclose)
+        return -1;
+
     return _android_dlclose(handle);
 }
 
 const char *android_dlerror(void)
 {
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dlerror)
+        return NULL;
+
     return _android_dlerror();
+}
+
+void *hybris_dlopen(const char *filename, int flag)
+{
+    return android_dlopen(filename,flag);
+}
+
+void *hybris_dlsym(void *handle, const char *symbol)
+{
+    return android_dlsym(handle,symbol);
+}
+
+int hybris_dlclose(void *handle)
+{
+    return android_dlclose(handle);
+}
+
+const char *hybris_dlerror(void)
+{
+    return android_dlerror();
 }

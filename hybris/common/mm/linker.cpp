@@ -140,6 +140,8 @@ static r_debug _r_debug =
 
 static link_map* r_debug_tail = 0;
 
+static void* (*_get_hooked_symbol)(const char *sym, const char *requester);
+
 static void insert_soinfo_into_debug_map(soinfo* info) {
   // Copy the necessary fields into the debug structure.
   link_map* map = &(info->link_map_head);
@@ -1763,8 +1765,6 @@ static ElfW(Addr) get_addend(ElfW(Rel)* rel, ElfW(Addr) reloc_addr) {
 }
 #endif
 
-extern "C" void* __hybris_get_hooked_symbol(const char *sym, const char *requester);
-
 template<typename ElfRelIteratorT>
 bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& rel_iterator,
                       const soinfo_list_t& global_group, const soinfo_list_t& local_group) {
@@ -1794,7 +1794,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       sym_name = get_string(symtab_[sym].st_name);
       const version_info* vi = nullptr;
 
-      sym_addr = reinterpret_cast<ElfW(Addr)>(__hybris_get_hooked_symbol(sym_name, get_realpath()));
+      sym_addr = reinterpret_cast<ElfW(Addr)>(_get_hooked_symbol(sym_name, get_realpath()));
       if (!sym_addr) {
         if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
           return false;
@@ -3292,7 +3292,7 @@ static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf) {
   return 0;
 }
 
-extern "C" void android_linker_init(int sdk_version) {
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) {
   // Get a few environment variables.
   const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
   if (LD_DEBUG != nullptr) {
@@ -3301,6 +3301,8 @@ extern "C" void android_linker_init(int sdk_version) {
 
   if (sdk_version > 0)
     set_application_target_sdk_version(sdk_version);
+
+  _get_hooked_symbol = get_hooked_symbol;
 }
 
 #ifdef DISABLED_FOR_HYBRIS_SUPPORT
