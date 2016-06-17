@@ -1004,7 +1004,7 @@ int _hybris_hook_pthread_setname_np(pthread_t thread, const char *name)
             return;
         }
 
-        pthread_exit(thread);
+        pthread_exit((void*) thread);
 
         return;
     }
@@ -2219,25 +2219,18 @@ static const char *_hybris_hook_android_dlerror(void)
     return android_dlerror();
 }
 
-static struct _hook hooks[] = {
+static struct _hook hooks_all[] = {
     {"property_get", _hybris_hook_property_get },
     {"property_set", _hybris_hook_property_set },
     {"__system_property_get", _hybris_hook_system_property_get },
     {"getenv", _hybris_hook_getenv},
-    {"setenv", _hybris_hook_setenv},
-    {"putenv", _hybris_hook_putenv},
-    {"clearenv", _hybris_hook_clearenv},
     {"printf", printf },
-    {"dprintf", dprintf},
-    {"mallinfo", mallinfo},
     {"malloc", _hybris_hook_malloc },
-    {"malloc_usable_size", _hybris_hook_malloc_usable_size},
     {"free", free },
     {"calloc", calloc },
     {"cfree", cfree },
     {"realloc", realloc },
     {"memalign", memalign },
-    {"posix_memalign", _hybris_hook_posix_memalign},
     {"valloc", valloc },
     {"pvalloc", pvalloc },
     {"fread", fread },
@@ -2252,10 +2245,7 @@ static struct _hook hooks[] = {
     {"memmove",memmove},
     {"memset",memset},
     {"memmem",memmem},
-    {"mempcpy",mempcpy},
     {"getlogin", getlogin},
-    {"__memcpy_chk", __memcpy_chk},
-    {"__memset_chk", __memset_chk},
     // {"memswap",memswap},
     {"index",index},
     {"rindex",rindex},
@@ -2273,16 +2263,12 @@ static struct _hook hooks[] = {
     {"strtok_r",strtok_r},
     {"strerror",_hybris_hook_strerror},
     {"strerror_r",strerror_r},
-    {"__gnu_strerror_r",_hybris_hook__gnu_strerror_r},
     {"strnlen",strnlen},
     {"strncat",strncat},
     {"strndup",strndup},
     {"strncmp",strncmp},
     {"strncpy",strncpy},
     {"strtod", _hybris_hook_strtod},
-    {"strtol", _hybris_hook_strtol},
-    {"strlcat",strlcat},
-    {"strlcpy",strlcpy},
     {"strcspn",strcspn},
     {"strpbrk",strpbrk},
     {"strsep",strsep},
@@ -2301,7 +2287,6 @@ static struct _hook hooks[] = {
     {"strcasecmp",strcasecmp},
     {"__sprintf_chk", __sprintf_chk},
     {"__snprintf_chk", __snprintf_chk},
-    {"__strncpy_chk",__strncpy_chk},
     {"strncasecmp",strncasecmp},
     /* dirent.h */
     {"opendir", opendir},
@@ -2377,8 +2362,6 @@ static struct _hook hooks[] = {
     {"pthread_rwlockattr_destroy", _hybris_hook_pthread_rwlockattr_destroy},
     {"pthread_rwlockattr_setpshared", _hybris_hook_pthread_rwlockattr_setpshared},
     {"pthread_rwlockattr_getpshared", _hybris_hook_pthread_rwlockattr_getpshared},
-    {"pthread_rwlockattr_getkind_np", _hybris_hook_pthread_rwlockattr_getkind_np},
-    {"pthread_rwlockattr_setkind_np", _hybris_hook_pthread_rwlockattr_setkind_np},
     {"pthread_rwlock_init", _hybris_hook_pthread_rwlock_init},
     {"pthread_rwlock_destroy", _hybris_hook_pthread_rwlock_destroy},
     {"pthread_rwlock_unlock", _hybris_hook_pthread_rwlock_unlock},
@@ -2391,9 +2374,6 @@ static struct _hook hooks[] = {
     /* bionic-only pthread */
     {"__pthread_gettid", _hybris_hook_pthread_gettid},
     {"pthread_gettid_np", _hybris_hook_pthread_gettid},
-    /* unistd.h */
-    {"fork", _hybris_hook_fork},
-    {"ttyname", ttyname},
     /* stdio.h */
     {"__isthreaded", &___hybris_hook_isthreaded},
     {"__sF", &_hybris_hook_sF},
@@ -2407,7 +2387,6 @@ static struct _hook hooks[] = {
     {"snprintf", snprintf},
     {"vsprintf", vsprintf},
     {"vsnprintf", vsnprintf},
-    {"swprintf", swprintf},
     {"clearerr", _hybris_hook_clearerr},
     {"fclose", _hybris_hook_fclose},
     {"feof", _hybris_hook_feof},
@@ -2446,10 +2425,6 @@ static struct _hook hooks[] = {
     {"funlockfile", _hybris_hook_funlockfile},
     {"getc_unlocked", _hybris_hook_getc_unlocked},
     {"putc_unlocked", _hybris_hook_putc_unlocked},
-    {"fmemopen", fmemopen},
-    {"open_memstream", open_memstream},
-    {"open_wmemstream", open_wmemstream},
-    {"ptsname", ptsname},
     //{"fgetln", _hybris_hook_fgetln},
     {"fpurge", _hybris_hook_fpurge},
     {"getw", _hybris_hook_getw},
@@ -2458,7 +2433,6 @@ static struct _hook hooks[] = {
     {"setlinebuf", _hybris_hook_setlinebuf},
     {"__errno", __errno_location},
     {"__set_errno", _hybris_hook_set_errno},
-    {"__hybris_set_errno_internal", _hybris_hook_set_errno},
     /* net specifics, to avoid __res_get_state */
     {"getaddrinfo", _hybris_hook_getaddrinfo},
     {"freeaddrinfo", _hybris_hook_freeaddrinfo},
@@ -2466,7 +2440,6 @@ static struct _hook hooks[] = {
     {"gethostbyname", gethostbyname},
     {"gethostbyname2", gethostbyname2},
     {"gethostent", gethostent},
-    {"getservbyname", getservbyname},
     {"strftime", strftime},
     {"sysconf", _hybris_hook_sysconf},
     {"dlopen", _hybris_hook_android_dlopen},
@@ -2487,8 +2460,6 @@ static struct _hook hooks[] = {
     /* fcntl.h */
     {"open", _hybris_hook_open},
     // TODO: scandir, scandirat, alphasort, versionsort
-    {"scandir", scandir},
-    {"scandir64", scandir64},
     {"__get_tls_hooks", _hybris_hook_get_tls_hooks},
     {"sscanf", sscanf},
     {"scanf", scanf},
@@ -2526,6 +2497,38 @@ static struct _hook hooks[] = {
     {"__system_property_find_nth", ___hybris_hook_system_property_find_nth},
     /* sys/prctl.h */
     {"prctl", _hybris_hook_prctl},
+};
+
+static struct _hook hooks_mm[] = {
+    {"strtol", _hybris_hook_strtol},
+    {"strlcat",strlcat},
+    {"strlcpy",strlcpy},
+    {"setenv", _hybris_hook_setenv},
+    {"putenv", _hybris_hook_putenv},
+    {"clearenv", _hybris_hook_clearenv},
+    {"dprintf", dprintf},
+    {"mallinfo", mallinfo},
+    {"malloc_usable_size", _hybris_hook_malloc_usable_size},
+    {"posix_memalign", _hybris_hook_posix_memalign},
+    {"mprotect", _hybris_hook_mprotect},
+    {"__memcpy_chk", __memcpy_chk},
+    {"__memset_chk", __memset_chk},
+    {"__gnu_strerror_r",_hybris_hook__gnu_strerror_r},
+    {"__strncpy_chk",__strncpy_chk},
+    {"pthread_rwlockattr_getkind_np", _hybris_hook_pthread_rwlockattr_getkind_np},
+    {"pthread_rwlockattr_setkind_np", _hybris_hook_pthread_rwlockattr_setkind_np},
+    /* unistd.h */
+    {"fork", _hybris_hook_fork},
+    {"ttyname", ttyname},
+    {"swprintf", swprintf},
+    {"fmemopen", fmemopen},
+    {"open_memstream", open_memstream},
+    {"open_wmemstream", open_wmemstream},
+    {"ptsname", ptsname},
+    {"__hybris_set_errno_internal", _hybris_hook_set_errno},
+    {"getservbyname", getservbyname},
+    {"scandir", scandir},
+    {"scandir64", scandir64},
     /* libgen.h */
     {"basename", _hybris_hook_basename},
     {"dirname", _hybris_hook_dirname},
@@ -2563,6 +2566,10 @@ static struct _hook hooks[] = {
     {"endmntent", _hybris_hook_endmntent},
     /* stdlib.h */
     {"system", system},
+    /* pwd.h */
+    {"getgrnam", getgrnam},
+    {"getpwuid", getpwuid},
+    {"getpwnam", getpwnam},
     /* signal.h */
     {"sigaction", sigaction},
     {"sigaddset", sigaddset},
@@ -2587,11 +2594,8 @@ static struct _hook hooks[] = {
     {"sigtimedwait", sigtimedwait},
     {"sigwait", sigwait},
     {"sigwaitinfo", sigwaitinfo},
-    /* pwd.h */
-    {"getgrnam", getgrnam},
-    {"getpwuid", getpwuid},
-    {"getpwnam", getpwnam},
 };
+
 
 static int hook_cmp(const void *a, const void *b)
 {
@@ -2603,11 +2607,44 @@ void hybris_set_hook_callback(hybris_hook_cb callback)
     hook_callback = callback;
 }
 
+static int get_android_sdk_version()
+{
+    static int sdk_version = -1;
+
+    if (sdk_version > 0)
+        return sdk_version;
+
+    char value[PROP_VALUE_MAX];
+    property_get("ro.build.version.sdk", value, "19");
+
+    sdk_version = 19;
+    if (strlen(value) > 0)
+        sdk_version = atoi(value);
+
+    /* We override both frieza and turbo here until they are ready to be
+     * upgraded to the newer linker. */
+    char *device_name[PROP_VALUE_MAX];
+    property_get("ro.product.name", device_name, "");
+    if (strlen(device_name) > 0) {
+        /* Force SDK version for both frieza and turbo for the time being */
+        if (strcmp(device_name, "frieza") == 0 ||
+            strcmp(device_name, "turbo") == 0)
+            sdk_version = 19;
+    }
+
+    printf("Using SDK API version %i\n", sdk_version);
+
+    return sdk_version;
+}
+
+#define HOOKS_SIZE(hooks) \
+    (sizeof(hooks) / sizeof(hooks[0]))
+
+
 static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
 {
-    static int counter = -1;
     static int sorted = 0;
-    const int nhooks = sizeof(hooks) / sizeof(hooks[0]);
+    static int counter = -1;
     void *found = NULL;
     struct _hook key;
 
@@ -2622,17 +2659,20 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
 
     if (!sorted)
     {
-        qsort(hooks, nhooks, sizeof(hooks[0]), hook_cmp);
+        qsort(hooks_all, HOOKS_SIZE(hooks_all), sizeof(hooks_all[0]), hook_cmp);
+        qsort(hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
         sorted = 1;
     }
 
+    /* Allow newer hooks to override those which are available for all versions */
     key.name = sym;
-    found = bsearch(&key, hooks, nhooks, sizeof(hooks[0]), hook_cmp);
-    if (found != NULL)
-    {
-        LOGD("Found hook for symbol %s", sym);
-        return ((struct _hook*)found)->func;
-    }
+    if (get_android_sdk_version() > 21)
+        found = bsearch(&key, hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
+    if (!found)
+        found = bsearch(&key, hooks_all, HOOKS_SIZE(hooks_all), sizeof(hooks_all[0]), hook_cmp);
+
+    if (found)
+        return ((struct _hook*) found)->func;
 
     if (strncmp(sym, "pthread", 7) == 0 ||
         strncmp(sym, "__pthread", 9) == 0)
@@ -2655,26 +2695,9 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
     return NULL;
 }
 
-static int get_android_sdk_version()
-{
-    static int sdk_version = -1;
-
-    if (sdk_version > 0)
-        return sdk_version;
-
-    char *value = NULL;
-    property_get("ro.build.version.sdk", value, "19");
-
-    sdk_version = 19;
-    if (value)
-        sdk_version = atoi(value);
-
-    return sdk_version;
-}
-
 static void *linker_handle = NULL;
 
-static void* load_linker(const char *path)
+static void* __hybris_load_linker(const char *path)
 {
     void *handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
     if (!handle) {
@@ -2690,7 +2713,7 @@ static void* load_linker(const char *path)
 
 static int linker_initialized = 0;
 
-static void hybris_linker_init()
+static void __hybris_linker_init()
 {
     LOGD("Linker initialization");
 
@@ -2706,12 +2729,7 @@ static void hybris_linker_init()
     else
         name = LINKER_NAME_MM;
 
-    /* Allow our user to override the linker we select */
-    const char *user_linker = getenv("HYBRIS_LINKER");
-    if (user_linker)
-        name = user_linker;
-
-    char *linker_dir = LINKER_PLUGIN_DIR;
+    const char *linker_dir = LINKER_PLUGIN_DIR;
     const char *user_linker_dir = getenv("HYBRIS_LINKER_DIR");
     if (user_linker_dir)
         linker_dir = user_linker_dir;
@@ -2720,7 +2738,7 @@ static void hybris_linker_init()
 
     LOGD("Loading linker from %s..", path);
 
-    linker_handle = load_linker(path);
+    linker_handle = __hybris_load_linker(path);
     if (!linker_handle)
         exit(1);
 
@@ -2740,7 +2758,7 @@ static void hybris_linker_init()
 
 #define ENSURE_LINKER_IS_LOADED() \
     if (!linker_initialized) \
-        hybris_linker_init();
+        __hybris_linker_init();
 
 /* NOTE: As we're not linking directly with the linker anymore
  * but several users are using android_* functions directly we
