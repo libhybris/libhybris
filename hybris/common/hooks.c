@@ -2626,8 +2626,9 @@ static int get_android_sdk_version()
     char device_name[PROP_VALUE_MAX];
     property_get("ro.build.product", device_name, "");
     if (strlen(device_name) > 0) {
-        /* Force SDK version for both frieza and turbo for the time being */
+        /* Force SDK version for both frieza/cooler and turbo for the time being */
         if (strcmp(device_name, "frieza") == 0 ||
+            strcmp(device_name, "cooler") == 0 ||
             strcmp(device_name, "turbo") == 0)
             sdk_version = 19;
     }
