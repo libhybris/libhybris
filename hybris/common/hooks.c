@@ -2637,7 +2637,7 @@ static int get_android_sdk_version()
     if (version_override)
         sdk_version = atoi(version_override);
 
-    printf("Using SDK API version %i\n", sdk_version);
+    LOGD("Using SDK API version %i\n", sdk_version);
 
     return sdk_version;
 }
