@@ -21,6 +21,7 @@
 #include <dlfcn.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <egl/ws.h>
 #include <hybris/common/binding.h>
@@ -676,11 +677,6 @@ static void glGetShaderSource_wrapper(GLuint shader, GLsizei bufsize, GLsizei* l
 	return (*_glGetShaderSource)(shader, bufsize, length, source);
 }
 
-static const GLubyte* glGetString_wrapper(GLenum name)
-{
-	return (*_glGetString)(name);
-}
-
 static void glGetTexParameterfv_wrapper(GLenum target, GLenum pname, GLfloat* params)
 {
 	return (*_glGetTexParameterfv)(target, pname, params);
@@ -1107,8 +1103,6 @@ GLES2_IDLOAD(glGetShaderPrecisionFormat);
 
 GLES2_IDLOAD(glGetShaderSource);
 
-GLES2_IDLOAD(glGetString);
-
 GLES2_IDLOAD(glGetTexParameterfv);
 
 GLES2_IDLOAD(glGetTexParameteriv);
@@ -1310,4 +1304,14 @@ void glLineWidth (GLfloat width)
 	return (*_glLineWidth)(width);
 }
 
-
+const GLubyte *glGetString(GLenum name)
+{
+    // Return 2.0 even though drivers might actually support 3.0 or higher,
+    // because libhybris does not provide any 3.0+ symbols.
+    if (name == GL_VERSION) {
+        static GLubyte glGetString_versionString[64];
+        snprintf(glGetString_versionString, sizeof(glGetString_versionString), "OpenGL ES 2.0 (%s)", (*_glGetString)(name));
+        return glGetString_versionString;
+    }
+	return (*_glGetString)(name);
+}
