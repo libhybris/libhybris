@@ -2623,8 +2623,8 @@ static int get_android_sdk_version()
 
     /* We override both frieza and turbo here until they are ready to be
      * upgraded to the newer linker. */
-    char *device_name[PROP_VALUE_MAX];
-    property_get("ro.product.name", device_name, "");
+    char device_name[PROP_VALUE_MAX];
+    property_get("ro.build.product", device_name, "");
     if (strlen(device_name) > 0) {
         /* Force SDK version for both frieza and turbo for the time being */
         if (strcmp(device_name, "frieza") == 0 ||
