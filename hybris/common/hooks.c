@@ -2219,7 +2219,7 @@ static const char *_hybris_hook_android_dlerror(void)
     return android_dlerror();
 }
 
-static struct _hook hooks_all[] = {
+static struct _hook hooks_common[] = {
     {"property_get", _hybris_hook_property_get },
     {"property_set", _hybris_hook_property_set },
     {"__system_property_get", _hybris_hook_system_property_get },
@@ -2624,6 +2624,7 @@ static int get_android_sdk_version()
     /* We override both frieza and turbo here until they are ready to be
      * upgraded to the newer linker. */
     char device_name[PROP_VALUE_MAX];
+    memset(device_name, 0, sizeof(device_name));
     property_get("ro.build.product", device_name, "");
     if (strlen(device_name) > 0) {
         /* Force SDK version for both frieza/cooler and turbo for the time being */
@@ -2664,7 +2665,7 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
 
     if (!sorted)
     {
-        qsort(hooks_all, HOOKS_SIZE(hooks_all), sizeof(hooks_all[0]), hook_cmp);
+        qsort(hooks_common, HOOKS_SIZE(hooks_common), sizeof(hooks_common[0]), hook_cmp);
         qsort(hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
         sorted = 1;
     }
@@ -2674,7 +2675,7 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
     if (get_android_sdk_version() > 21)
         found = bsearch(&key, hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
     if (!found)
-        found = bsearch(&key, hooks_all, HOOKS_SIZE(hooks_all), sizeof(hooks_all[0]), hook_cmp);
+        found = bsearch(&key, hooks_common, HOOKS_SIZE(hooks_common), sizeof(hooks_common[0]), hook_cmp);
 
     if (found)
         return ((struct _hook*) found)->func;
