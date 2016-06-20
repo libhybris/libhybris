@@ -2633,6 +2633,10 @@ static int get_android_sdk_version()
             sdk_version = 19;
     }
 
+    char *version_override = getenv("HYBRIS_ANDROID_SDK_VERSION");
+    if (version_override)
+        sdk_version = atoi(version_override);
+
     printf("Using SDK API version %i\n", sdk_version);
 
     return sdk_version;
