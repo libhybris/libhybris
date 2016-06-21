@@ -85,6 +85,11 @@ AC_ARG_ENABLE(property_cache,
   [property_cache=no])
 AM_CONDITIONAL( [WANT_RUNTIME_PROPERTY_CACHE], [test x"$property_cache" = x"yes"])
 
+AC_ARG_ENABLE(ubuntu-linker-overrides,
+  [  --enable-ubuntu-linker-overrides  Enable Ubuntu linker overrides (default=disabled)],
+  [ubuntu_linker_overrides=$enableval],
+  [ubuntu_linker_overrides=no])
+AM_CONDITIONAL([WANT_UBUNTU_LINKER_OVERRIDES], [test x"$ubuntu_linker_overrides" = x"yes"])
 
 AC_ARG_ENABLE(arch,
   [  --enable-arch[=arch]     Compile specific CPU target(default=arm)
@@ -292,6 +297,8 @@ echo
 echo "Features:"
 echo
 echo "  stub linker.............: $stub_linker"
+echo
+echo "  Ubuntu linker overrides.: $ubuntu_linker_overrides"
 echo
 echo "------------------------------------------------------------------------"
 echo

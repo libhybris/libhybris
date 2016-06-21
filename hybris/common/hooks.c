@@ -2621,6 +2621,7 @@ static int get_android_sdk_version()
     if (strlen(value) > 0)
         sdk_version = atoi(value);
 
+#ifdef UBUNTU_LINKER_OVERRIDES
     /* We override both frieza and turbo here until they are ready to be
      * upgraded to the newer linker. */
     char device_name[PROP_VALUE_MAX];
@@ -2633,6 +2634,7 @@ static int get_android_sdk_version()
             strcmp(device_name, "turbo") == 0)
             sdk_version = 19;
     }
+#endif
 
     char *version_override = getenv("HYBRIS_ANDROID_SDK_VERSION");
     if (version_override)
