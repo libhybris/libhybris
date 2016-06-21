@@ -89,6 +89,12 @@ ARCH_CONFIGURATION = \
 	--enable-arch=arm \
 	--enable-mali-quirks \
 	--enable-experimental
+# We enable the linker selection overrides here as we want to stay
+# with the jb linker on a range of selected production devices to
+# not cause any extra risk for regressions on them. They will
+# migrate to a newer linker version when ported to arm64.
+ARCH_CONFIGURATION += \
+	--enable-ubuntu-linker-overrides
 endif
 ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), arm64))
 ARCH_CONFIGURATION = \

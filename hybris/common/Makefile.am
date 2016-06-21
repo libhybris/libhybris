@@ -32,6 +32,9 @@ endif
 if WANT_MALI_QUIRKS
 libhybris_common_la_CPPFLAGS += -DMALI_QUIRKS
 endif
+if WANT_UBUNTU_LINKER_OVERRIDES
+libhybris_common_la_CPPFLAGS += -DUBUNTU_LINKER_OVERRIDES
+endif
 libhybris_common_la_LDFLAGS = \
 	-ldl \
 	-lrt \
