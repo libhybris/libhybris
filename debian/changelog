@@ -1,3 +1,23 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu17) yakkety; urgency=medium
+
+  * Revert "Fix resolving the GLEsv2 functions at link time"
+  * hybris: common: fine tune dynamic linker load process
+  * hybris: glesv2: load symbols on demand
+  * hybris: glesv2: drop redefined symbols
+  * hybris: glesv2: really drop all unneeded symbols
+  * hybris: glesv2: revert back to version without using GNU indirect feature
+  * hybris: common: more fine tuning for runtime linker loading
+  * hybris: common: use correct property name for device name
+  * hybris: common: force SDK version 19 for cooler too
+  * hybris: common: add env variable to override selected SDK version
+  * hybris: common: use debug log statement rather than plain printf
+  * hybris: common: rename variable containing hooks for all devices
+  * hybris: glesv2: don't return anything in functions with void as return type
+  * hybris: common: enable linker overrides only by configure option
+  * debian: enable ubuntu linker overrides only for armhf
+
+ -- Simon Fels <simon.fels@canonical.com>  Tue, 21 Jun 2016 11:58:45 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu16) yakkety; urgency=medium
 
   * No change release.
