@@ -679,6 +679,14 @@ void glGetShaderSource (GLuint shader, GLsizei bufsize, GLsizei* length, GLchar*
 
 const GLubyte* glGetString (GLenum name)
 {
+	// Return 2.0 even though drivers might actually support 3.0 or higher,
+	// because libhybris does not provide any 3.0+ symbols.
+	if (name == GL_VERSION) {
+		static GLubyte glGetString_versionString[64];
+		snprintf(glGetString_versionString, sizeof(glGetString_versionString), "OpenGL ES 2.0 (%s)", (*_glGetString)(name));
+		return glGetString_versionString;
+	}
+
 	(*_glGetString)(name);
 }
 
