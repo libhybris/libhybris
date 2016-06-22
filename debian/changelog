@@ -1,3 +1,13 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu18) yakkety; urgency=medium
+
+  [ Boleslaw Tokarski ]
+  * [properties] An off-by-one error in prop handling
+
+  [ Gunnar Sletta ]
+  * [glesv2] Wrap glGetString() and return GL_VERSION == 2.0
+
+ -- Simon Fels <simon.fels@canonical.com>  Wed, 22 Jun 2016 13:27:17 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu17) yakkety; urgency=medium
 
   * Revert "Fix resolving the GLEsv2 functions at link time"
