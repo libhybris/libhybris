@@ -221,8 +221,6 @@ AC_CONFIG_FILES([
 	properties/Makefile
 	properties/libandroid-properties.pc
 	common/Makefile
-	common/gingerbread/Makefile
-	common/ics/Makefile
 	common/jb/Makefile
 	common/stub/Makefile
 	common/mm/Makefile
