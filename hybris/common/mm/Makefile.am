@@ -24,7 +24,9 @@ mm_la_SOURCES = \
 	linker_memory.cpp \
 	linker_phdr.cpp \
 	linker_sdk_versions.cpp \
-	rt.cpp
+	rt.cpp \
+	../strlcpy.c \
+	../strlcat.c
 mm_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
 	-I$(top_srcdir)/include \
