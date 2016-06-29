@@ -1,3 +1,15 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu19) yakkety; urgency=medium
+
+  [ Bin Li ]
+  * hybris: common: Add hooks to support scandir
+
+  [ Simon Fels ]
+  * hybris: common: remove old and unused gb and ics linkers
+  * hybris: common: mm: include strlcat/strlcpy to avoid linke time issues
+  * hybris: common: mm: drop unneeded compile time definitions
+
+ -- Simon Fels <simon.fels@canonical.com>  Wed, 29 Jun 2016 17:41:10 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu18) yakkety; urgency=medium
 
   [ Boleslaw Tokarski ]
