@@ -1694,6 +1694,78 @@ static int _hybris_hook_readdir_r(DIR *dir, struct bionic_dirent *entry,
     return res;
 }
 
+static int _hybris_hook_alphasort(struct bionic_dirent **a,
+                        struct bionic_dirent **b)
+{
+    return strcoll((*a)->d_name, (*b)->d_name);
+}
+
+static int _hybris_hook_versionsort(struct bionic_dirent **a,
+                          struct bionic_dirent **b)
+{
+    return strverscmp((*a)->d_name, (*b)->d_name);
+}
+
+static struct bionic_dirent *_hybris_hook_scandirat(int fd, DIR *dirp,  struct bionic_dirent ***namelist,
+		int (*filter)(const struct bionic_dirent *),
+		int (*compar)(const struct bionic_dirent **, const struct bionic_dirent **))
+{
+    struct dirent **namelist_r;
+    static struct bionic_dirent **result;
+    struct bionic_dirent *filter_r;
+
+    int i = 0;
+    size_t nItems = 0;
+
+    TRACE_HOOK("dirp %p", dirp);
+
+    int res = scandirat(fd, dirp, &namelist_r, NULL, NULL);
+
+    if (res != 0 && namelist_r != NULL) {
+
+        result = malloc(res * sizeof(struct bionic_dirent));
+        if (!result)
+            return -1;
+
+        for (i = 0; i < res; i++) {
+            filter_r = malloc(sizeof(struct bionic_dirent));
+            if (!filter_r) {
+                while (i-- > 0)
+                        free(result[i]);
+                    free(result);
+                    return -1;
+            }
+            filter_r->d_ino = namelist_r[i]->d_ino;
+            filter_r->d_off = namelist_r[i]->d_off;
+            filter_r->d_reclen = namelist_r[i]->d_reclen;
+            filter_r->d_type = namelist_r[i]->d_type;
+
+            strcpy(filter_r->d_name, namelist_r[i]->d_name);
+            filter_r->d_name[sizeof(namelist_r[i]->d_name) - 1] = '\0';
+
+            if (filter != NULL && !(*filter)(filter_r)) {//apply filter
+                free(filter_r);
+                continue;
+            }
+
+            result[nItems++] = filter_r;
+        }
+        if (nItems && compar != NULL)
+            qsort(result, nItems, sizeof(struct bionic_dirent *), compar);
+
+        *namelist = result;
+    }
+
+    return res;
+}
+
+static struct bionic_dirent *_hybris_hook_scandir(DIR *dirp,  struct bionic_dirent ***namelist,
+		int (*filter)(const struct bionic_dirent *),
+		int (*compar)(const struct bionic_dirent **, const struct bionic_dirent **))
+{
+    return _hybris_hook_scandirat(AT_FDCWD, dirp, namelist, filter, compar);
+}
+
 static inline void swap(void **a, void **b)
 {
     void *tmp = *a;
@@ -2594,6 +2666,12 @@ static struct _hook hooks_mm[] = {
     {"sigtimedwait", sigtimedwait},
     {"sigwait", sigwait},
     {"sigwaitinfo", sigwaitinfo},
+    /* dirent.h */
+    {"scandir", _hybris_hook_scandir},
+    {"scandirat", _hybris_hook_scandirat},
+    {"alphasort,", _hybris_hook_alphasort},
+    {"versionsort,", _hybris_hook_versionsort},
+    {"scandir64", scandir},
 };
 
 
