@@ -33,8 +33,6 @@ mm_la_CPPFLAGS = \
 	-I$(top_srcdir)/common \
 	-I$(bionic_libc)/ \
 	-I$(bionic_libc)/include \
-	-DLINKER_TEXT_BASE=0xB0000100 \
-	-DLINKER_AREA_SIZE=0x01000000 \
 	-DDEFAULT_HYBRIS_LD_LIBRARY_PATH="\"@DEFAULT_HYBRIS_LD_LIBRARY_PATH@\"" \
 	$(ARCH_FLAGS) \
 	$(ANDROID_HEADERS_CFLAGS)
