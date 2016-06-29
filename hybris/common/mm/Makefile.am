@@ -24,15 +24,15 @@ mm_la_SOURCES = \
 	linker_memory.cpp \
 	linker_phdr.cpp \
 	linker_sdk_versions.cpp \
-	rt.cpp
+	rt.cpp \
+	../strlcpy.c \
+	../strlcat.c
 mm_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/common \
 	-I$(bionic_libc)/ \
 	-I$(bionic_libc)/include \
-	-DLINKER_TEXT_BASE=0xB0000100 \
-	-DLINKER_AREA_SIZE=0x01000000 \
 	-DDEFAULT_HYBRIS_LD_LIBRARY_PATH="\"@DEFAULT_HYBRIS_LD_LIBRARY_PATH@\"" \
 	$(ARCH_FLAGS) \
 	$(ANDROID_HEADERS_CFLAGS)
