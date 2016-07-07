@@ -1,3 +1,13 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu20) yakkety; urgency=medium
+
+  [ Alfonso Sanchez-Beato ]
+  * hybris: common: remove hooks for signal handling
+
+  [ Simon Fels ]
+  * hybris: wifi: add new API method to send driver command
+
+ -- Simon Fels <simon.fels@canonical.com>  Thu, 07 Jul 2016 10:40:38 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu19) yakkety; urgency=medium
 
   [ Bin Li ]
