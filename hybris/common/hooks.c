@@ -2643,6 +2643,11 @@ static struct _hook hooks_mm[] = {
     {"getpwuid", getpwuid},
     {"getpwnam", getpwnam},
     /* signal.h */
+    /* Hooks commented out for the moment as we need proper translations between
+     * bionic and glibc types for them to work (for instance, sigset_t has
+     * different definitions in each library).
+     */
+#if 0
     {"sigaction", sigaction},
     {"sigaddset", sigaddset},
     {"sigaltstack", sigaltstack},
@@ -2666,6 +2671,7 @@ static struct _hook hooks_mm[] = {
     {"sigtimedwait", sigtimedwait},
     {"sigwait", sigwait},
     {"sigwaitinfo", sigwaitinfo},
+#endif
     /* dirent.h */
     {"scandir", _hybris_hook_scandir},
     {"scandirat", _hybris_hook_scandirat},
