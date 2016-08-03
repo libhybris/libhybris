@@ -35,6 +35,12 @@ endif
 if WANT_UBUNTU_LINKER_OVERRIDES
 libhybris_common_la_CPPFLAGS += -DUBUNTU_LINKER_OVERRIDES
 endif
+if !WANT_ARCH_ARM64
+libhybris_common_la_CPPFLAGS += -DWANT_LINKER_JB
+endif
+if WANT_EXPERIMENTAL
+libhybris_common_la_CPPFLAGS += -DWANT_LINKER_MM
+endif
 libhybris_common_la_LDFLAGS = \
 	-ldl \
 	-lrt \

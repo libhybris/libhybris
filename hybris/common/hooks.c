@@ -2803,6 +2803,12 @@ static void* __hybris_load_linker(const char *path)
 #define LINKER_NAME_JB "jb"
 #define LINKER_NAME_MM "mm"
 
+#if defined(WANT_LINKER_JB)
+#define LINKER_NAME_DEFAULT LINKER_NAME_JB
+#elif defined(WANT_LINKER_MM)
+#define LINKER_NAME_DEFAULT LINKER_NAME_MM
+#endif
+
 static int linker_initialized = 0;
 
 static void __hybris_linker_init()
@@ -2812,14 +2818,19 @@ static void __hybris_linker_init()
     int sdk_version = get_android_sdk_version();
 
     char path[PATH_MAX];
-    char *name = NULL;
+    const char *name = LINKER_NAME_DEFAULT;
+
     /* See https://source.android.com/source/build-numbers.html for
      * an overview over available SDK version numbers and which
      * Android version they relate to. */
+#if defined(WANT_LINKER_MM)
+    if (sdk_version <= 23)
+        name = LINKER_NAME_MM;
+#endif
+#if defined(WANT_LINKER_JB)
     if (sdk_version < 21)
         name = LINKER_NAME_JB;
-    else
-        name = LINKER_NAME_MM;
+#endif
 
     const char *linker_dir = LINKER_PLUGIN_DIR;
     const char *user_linker_dir = getenv("HYBRIS_LINKER_DIR");
