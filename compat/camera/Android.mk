@@ -8,7 +8,9 @@ LOCAL_SRC_FILES := camera_compatibility_layer.cpp
 
 LOCAL_MODULE := libcamera_compat_layer
 LOCAL_MODULE_TAGS := optional
-LOCAL_32_BIT_ONLY := true
+ifneq ($(strip $(BOARD_HAS_64_BIT_MEDIA_SERVICE)),true)
+  LOCAL_32_BIT_ONLY := true
+endif
 
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include
@@ -32,7 +34,9 @@ LOCAL_SRC_FILES := direct_camera_test.cpp
 
 LOCAL_MODULE := direct_camera_test
 LOCAL_MODULE_TAGS := optional
-LOCAL_32_BIT_ONLY := true
+ifneq ($(strip $(BOARD_HAS_64_BIT_MEDIA_SERVICE)),true)
+  LOCAL_32_BIT_ONLY := true
+endif
 
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \

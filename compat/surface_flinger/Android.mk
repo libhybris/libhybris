@@ -9,7 +9,9 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_MODULE:= libsf_compat_layer
 LOCAL_MODULE_TAGS := optional
-LOCAL_32_BIT_ONLY := true
+ifneq ($(strip $(BOARD_HAS_64_BIT_MEDIA_SERVICE)),true)
+  LOCAL_32_BIT_ONLY := true
+endif
 
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include
@@ -32,7 +34,9 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_MODULE:= direct_sf_test
 LOCAL_MODULE_TAGS := optional
-LOCAL_32_BIT_ONLY := true
+ifneq ($(strip $(BOARD_HAS_64_BIT_MEDIA_SERVICE)),true)
+  LOCAL_32_BIT_ONLY := true
+endif
 
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include
