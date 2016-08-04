@@ -16,7 +16,7 @@ static alloc_device_t *alloc = 0;
 
 static void _init_androidui()
 {
-       _libui = (void *) android_dlopen("/system/lib/libui.so", RTLD_LAZY);
+       _libui = (void *) android_dlopen("libui.so", RTLD_LAZY);
 }
 
 #define UI_DLSYM(fptr, sym) do { if (_libui == NULL) { _init_androidui(); }; if (*(fptr) == NULL) { *(fptr) = (void *) android_dlsym(_libui, sym); } } while (0) 

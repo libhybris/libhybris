@@ -24,7 +24,7 @@
 #include <hybris/common/binding.h>
 #include <hybris/surface_flinger/surface_flinger_compatibility_layer.h>
 
-#define COMPAT_LIBRARY_PATH "/system/lib/libsf_compat_layer.so"
+#define COMPAT_LIBRARY_PATH "libsf_compat_layer.so"
 
 HYBRIS_LIBRARY_INITIALIZE(sf, COMPAT_LIBRARY_PATH);
 
