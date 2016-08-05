@@ -34,7 +34,9 @@ endif
 
 LOCAL_MODULE := camera_service
 
-LOCAL_32_BIT_ONLY := true
+ifneq ($(strip $(BOARD_HAS_64_BIT_MEDIA_SERVICE)),true)
+  LOCAL_32_BIT_ONLY := true
+endif
 
 include $(BUILD_EXECUTABLE)
 
@@ -78,7 +80,9 @@ endif
 
 LOCAL_MODULE:= libmedia_compat_layer
 LOCAL_MODULE_TAGS := optional
-LOCAL_32_BIT_ONLY := true
+ifneq ($(strip $(BOARD_HAS_64_BIT_MEDIA_SERVICE)),true)
+  LOCAL_32_BIT_ONLY := true
+endif
 
 LOCAL_SHARED_LIBRARIES := \
 	libcutils \
@@ -126,7 +130,9 @@ LOCAL_C_INCLUDES+= \
 	$(TOP)/$(MTK_PATH_SOURCE)/frameworks/av/include
 endif
 
-LOCAL_32_BIT_ONLY := true
+ifneq ($(strip $(BOARD_HAS_64_BIT_MEDIA_SERVICE)),true)
+  LOCAL_32_BIT_ONLY := true
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 
@@ -140,7 +146,9 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_MODULE:= direct_media_test
 LOCAL_MODULE_TAGS := optional
-LOCAL_32_BIT_ONLY := true
+ifneq ($(strip $(BOARD_HAS_64_BIT_MEDIA_SERVICE)),true)
+  LOCAL_32_BIT_ONLY := true
+endif
 
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \
@@ -164,6 +172,8 @@ LOCAL_SHARED_LIBRARIES := \
 	libEGL \
 	libGLESv2
 
-LOCAL_32_BIT_ONLY := true
+ifneq ($(strip $(BOARD_HAS_64_BIT_MEDIA_SERVICE)),true)
+  LOCAL_32_BIT_ONLY := true
+endif
 
 include $(BUILD_EXECUTABLE)
