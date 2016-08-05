@@ -20,7 +20,7 @@
 #include <hybris/common/binding.h>
 #include <hybris/ui/ui_compatibility_layer.h>
 
-#define COMPAT_LIBRARY_PATH		"/system/lib/libui_compat_layer.so"
+#define COMPAT_LIBRARY_PATH		"libui_compat_layer.so"
 
 HYBRIS_LIBRARY_INITIALIZE(ui, COMPAT_LIBRARY_PATH);
 

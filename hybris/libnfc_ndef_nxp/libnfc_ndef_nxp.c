@@ -34,7 +34,7 @@
 
 #include <hybris/common/binding.h>
 
-HYBRIS_LIBRARY_INITIALIZE(libnfc_ndef_so, "/system/lib/libnfc_ndef.so");
+HYBRIS_LIBRARY_INITIALIZE(libnfc_ndef_so, "libnfc_ndef.so");
 
 HYBRIS_IMPLEMENT_FUNCTION5(libnfc_ndef_so, NFCSTATUS, phFriNfc_NdefRecord_GetRecords, uint8_t *, uint32_t, uint8_t **, uint8_t *, uint32_t *);
 HYBRIS_IMPLEMENT_FUNCTION1(libnfc_ndef_so, uint32_t, phFriNfc_NdefRecord_GetLength, phFriNfc_NdefRecord_t *);

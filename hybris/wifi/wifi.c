@@ -22,7 +22,7 @@
 #include <hybris/common/binding.h>
 #include <hardware_legacy/wifi.h>
 
-#define COMPAT_LIBRARY_PATH "/system/lib/libhardware_legacy.so"
+#define COMPAT_LIBRARY_PATH "libhardware_legacy.so"
 
 HYBRIS_LIBRARY_INITIALIZE(wifi, COMPAT_LIBRARY_PATH);
 

@@ -26,7 +26,7 @@
 #include <hybris/camera/camera_compatibility_layer_capabilities.h>
 #include <hybris/surface_flinger/surface_flinger_compatibility_layer.h>
 
-#define COMPAT_LIBRARY_PATH "/system/lib/libcamera_compat_layer.so"
+#define COMPAT_LIBRARY_PATH "libcamera_compat_layer.so"
 
 HYBRIS_LIBRARY_INITIALIZE(camera, COMPAT_LIBRARY_PATH);
 

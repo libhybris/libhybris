@@ -24,7 +24,7 @@
 #include <hybris/common/binding.h>
 #include <hybris/input/input_stack_compatibility_layer.h>
 
-#define COMPAT_LIBRARY_PATH "/system/lib/libis_compat_layer.so"
+#define COMPAT_LIBRARY_PATH "libis_compat_layer.so"
 
 HYBRIS_LIBRARY_INITIALIZE(is, COMPAT_LIBRARY_PATH);
 

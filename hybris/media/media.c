@@ -33,7 +33,7 @@
 #include <hybris/media/media_codec_source_layer.h>
 #include <hybris/media/media_buffer_layer.h>
 
-#define COMPAT_LIBRARY_PATH "/system/lib/libmedia_compat_layer.so"
+#define COMPAT_LIBRARY_PATH "libmedia_compat_layer.so"
 
 #ifdef __ARM_PCS_VFP
 #define FP_ATTRIB __attribute__((pcs("aapcs")))
