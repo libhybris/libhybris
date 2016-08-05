@@ -1,3 +1,13 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu22) yakkety; urgency=medium
+
+  [ You-Sheng Yang ]
+  * linker: disable linker probing when unavailable
+  * linker: remove /system/lib prefix from lib paths
+  * configure: use lib64 for DEFAULT_HYBRIS_LD_LIBRARY_PATH on arm64
+  * compat: build arm64 flavor when available
+
+ -- Simon Fels <simon.fels@canonical.com>  Fri, 05 Aug 2016 18:46:06 +0200
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu21) yakkety; urgency=medium
 
   [ Alfonso Sanchez-Beato ]
