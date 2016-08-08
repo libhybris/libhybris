@@ -140,7 +140,7 @@ typedef struct {
 } android_cond_t;
 
 /* Helpers */
-static int hybris_check_android_shared_mutex(unsigned int mutex_addr)
+static int hybris_check_android_shared_mutex(uintptr_t mutex_addr)
 {
     /* If not initialized or initialized by Android, it should contain a low
      * address, which is basically just the int values for Android's own
@@ -152,7 +152,7 @@ static int hybris_check_android_shared_mutex(unsigned int mutex_addr)
     return 0;
 }
 
-static int hybris_check_android_shared_cond(unsigned int cond_addr)
+static int hybris_check_android_shared_cond(uintptr_t cond_addr)
 {
     /* If not initialized or initialized by Android, it should contain a low
      * address, which is basically just the int values for Android's own
@@ -330,7 +330,7 @@ static int _hybris_hook_pthread_create(pthread_t *thread, const pthread_attr_t *
     TRACE_HOOK("thread %p attr %p", thread, __attr);
 
     if (__attr != NULL)
-        realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+        realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     return pthread_create(thread, realattr, start_routine, arg);
 }
@@ -374,7 +374,7 @@ static int _hybris_hook_pthread_attr_init(pthread_attr_t *__attr)
     TRACE_HOOK("attr %p", __attr);
 
     realattr = malloc(sizeof(pthread_attr_t));
-    *((unsigned int *)__attr) = (unsigned int) realattr;
+    *((uintptr_t *)__attr) = (uintptr_t) realattr;
 
     return pthread_attr_init(realattr);
 }
@@ -382,7 +382,7 @@ static int _hybris_hook_pthread_attr_init(pthread_attr_t *__attr)
 static int _hybris_hook_pthread_attr_destroy(pthread_attr_t *__attr)
 {
     int ret;
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p", __attr);
 
@@ -396,7 +396,7 @@ static int _hybris_hook_pthread_attr_destroy(pthread_attr_t *__attr)
 
 static int _hybris_hook_pthread_attr_setdetachstate(pthread_attr_t *__attr, int state)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p state %d", __attr, state);
 
@@ -405,7 +405,7 @@ static int _hybris_hook_pthread_attr_setdetachstate(pthread_attr_t *__attr, int 
 
 static int _hybris_hook_pthread_attr_getdetachstate(pthread_attr_t const *__attr, int *state)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p state %p", __attr, state);
 
@@ -414,7 +414,7 @@ static int _hybris_hook_pthread_attr_getdetachstate(pthread_attr_t const *__attr
 
 static int _hybris_hook_pthread_attr_setschedpolicy(pthread_attr_t *__attr, int policy)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p policy %d", __attr, policy);
 
@@ -423,7 +423,7 @@ static int _hybris_hook_pthread_attr_setschedpolicy(pthread_attr_t *__attr, int 
 
 static int _hybris_hook_pthread_attr_getschedpolicy(pthread_attr_t const *__attr, int *policy)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p policy %p", __attr, policy);
 
@@ -432,7 +432,7 @@ static int _hybris_hook_pthread_attr_getschedpolicy(pthread_attr_t const *__attr
 
 static int _hybris_hook_pthread_attr_setschedparam(pthread_attr_t *__attr, struct sched_param const *param)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p param %p", __attr, param);
 
@@ -441,7 +441,7 @@ static int _hybris_hook_pthread_attr_setschedparam(pthread_attr_t *__attr, struc
 
 static int _hybris_hook_pthread_attr_getschedparam(pthread_attr_t const *__attr, struct sched_param *param)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p param %p", __attr, param);
 
@@ -450,7 +450,7 @@ static int _hybris_hook_pthread_attr_getschedparam(pthread_attr_t const *__attr,
 
 static int _hybris_hook_pthread_attr_setstacksize(pthread_attr_t *__attr, size_t stack_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p stack size %zu", __attr, stack_size);
 
@@ -459,7 +459,7 @@ static int _hybris_hook_pthread_attr_setstacksize(pthread_attr_t *__attr, size_t
 
 static int _hybris_hook_pthread_attr_getstacksize(pthread_attr_t const *__attr, size_t *stack_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p stack size %p", __attr, stack_size);
 
@@ -468,7 +468,7 @@ static int _hybris_hook_pthread_attr_getstacksize(pthread_attr_t const *__attr, 
 
 static int _hybris_hook_pthread_attr_setstackaddr(pthread_attr_t *__attr, void *stack_addr)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p stack addr %p", __attr, stack_addr);
 
@@ -477,7 +477,7 @@ static int _hybris_hook_pthread_attr_setstackaddr(pthread_attr_t *__attr, void *
 
 static int _hybris_hook_pthread_attr_getstackaddr(pthread_attr_t const *__attr, void **stack_addr)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p stack addr %p", __attr, stack_addr);
 
@@ -486,7 +486,7 @@ static int _hybris_hook_pthread_attr_getstackaddr(pthread_attr_t const *__attr, 
 
 static int _hybris_hook_pthread_attr_setstack(pthread_attr_t *__attr, void *stack_base, size_t stack_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p stack base %p stack size %zu", __attr,
                stack_base, stack_size);
@@ -496,7 +496,7 @@ static int _hybris_hook_pthread_attr_setstack(pthread_attr_t *__attr, void *stac
 
 static int _hybris_hook_pthread_attr_getstack(pthread_attr_t const *__attr, void **stack_base, size_t *stack_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p stack base %p stack size %p", __attr,
                stack_base, stack_size);
@@ -506,7 +506,7 @@ static int _hybris_hook_pthread_attr_getstack(pthread_attr_t const *__attr, void
 
 static int _hybris_hook_pthread_attr_setguardsize(pthread_attr_t *__attr, size_t guard_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p guard size %zu", __attr, guard_size);
 
@@ -515,7 +515,7 @@ static int _hybris_hook_pthread_attr_setguardsize(pthread_attr_t *__attr, size_t
 
 static int _hybris_hook_pthread_attr_getguardsize(pthread_attr_t const *__attr, size_t *guard_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p guard size %p", __attr, guard_size);
 
@@ -524,7 +524,7 @@ static int _hybris_hook_pthread_attr_getguardsize(pthread_attr_t const *__attr, 
 
 static int _hybris_hook_pthread_attr_setscope(pthread_attr_t *__attr, int scope)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p scope %d", __attr, scope);
 
@@ -534,7 +534,7 @@ static int _hybris_hook_pthread_attr_setscope(pthread_attr_t *__attr, int scope)
 static int _hybris_hook_pthread_attr_getscope(pthread_attr_t const *__attr)
 {
     int scope;
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p", __attr);
 
@@ -552,7 +552,7 @@ static int _hybris_hook_pthread_getattr_np(pthread_t thid, pthread_attr_t *__att
     TRACE_HOOK("attr %p", __attr);
 
     realattr = malloc(sizeof(pthread_attr_t));
-    *((unsigned int *)__attr) = (unsigned int) realattr;
+    *((uintptr_t *)__attr) = (uintptr_t) realattr;
 
     return pthread_getattr_np(thid, realattr);
 }
@@ -580,7 +580,7 @@ static int _hybris_hook_pthread_mutex_init(pthread_mutex_t *__mutex,
         /* non shared, standard mutex: use malloc */
         realmutex = malloc(sizeof(pthread_mutex_t));
 
-        *((unsigned int *)__mutex) = (unsigned int) realmutex;
+        *((uintptr_t *)__mutex) = (uintptr_t) realmutex;
     }
     else {
         /* process-shared mutex: use the shared memory segment */
@@ -604,7 +604,7 @@ static int _hybris_hook_pthread_mutex_destroy(pthread_mutex_t *__mutex)
     if (!__mutex)
         return EINVAL;
 
-    pthread_mutex_t *realmutex = (pthread_mutex_t *) *(unsigned int *) __mutex;
+    pthread_mutex_t *realmutex = (pthread_mutex_t *) *(uintptr_t *) __mutex;
 
     if (!realmutex)
         return EINVAL;
@@ -618,7 +618,7 @@ static int _hybris_hook_pthread_mutex_destroy(pthread_mutex_t *__mutex)
         ret = pthread_mutex_destroy(realmutex);
     }
 
-    *((unsigned int *)__mutex) = 0;
+    *((uintptr_t *)__mutex) = 0;
 
     return ret;
 }
@@ -632,7 +632,7 @@ static int _hybris_hook_pthread_mutex_lock(pthread_mutex_t *__mutex)
         return 0;
     }
 
-    unsigned int value = (*(unsigned int *) __mutex);
+    uintptr_t value = (*(uintptr_t *) __mutex);
     if (hybris_check_android_shared_mutex(value)) {
         LOGD("Shared mutex with Android, not locking.");
         return 0;
@@ -643,9 +643,10 @@ static int _hybris_hook_pthread_mutex_lock(pthread_mutex_t *__mutex)
         realmutex = (pthread_mutex_t *)hybris_get_shmpointer((hybris_shm_pointer_t)value);
 
     if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
-        TRACE("value %p <= ANDROID_TOP_ADDR_VALUE_MUTEX 0x%x", value, ANDROID_TOP_ADDR_VALUE_MUTEX);
+        TRACE("value %p <= ANDROID_TOP_ADDR_VALUE_MUTEX 0x%x",
+              (void*) value, ANDROID_TOP_ADDR_VALUE_MUTEX);
         realmutex = hybris_alloc_init_mutex(value);
-        *((unsigned int *)__mutex) = (unsigned int) realmutex;
+        *((uintptr_t *)__mutex) = (uintptr_t) realmutex;
     }
 
     return pthread_mutex_lock(realmutex);
@@ -653,7 +654,7 @@ static int _hybris_hook_pthread_mutex_lock(pthread_mutex_t *__mutex)
 
 static int _hybris_hook_pthread_mutex_trylock(pthread_mutex_t *__mutex)
 {
-    unsigned int value = (*(unsigned int *) __mutex);
+    uintptr_t value = (*(uintptr_t *) __mutex);
 
     TRACE_HOOK("mutex %p", __mutex);
 
@@ -668,7 +669,7 @@ static int _hybris_hook_pthread_mutex_trylock(pthread_mutex_t *__mutex)
 
     if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(value);
-        *((unsigned int *)__mutex) = (unsigned int) realmutex;
+        *((uintptr_t *)__mutex) = (uintptr_t) realmutex;
     }
 
     return pthread_mutex_trylock(realmutex);
@@ -683,7 +684,7 @@ static int _hybris_hook_pthread_mutex_unlock(pthread_mutex_t *__mutex)
         return 0;
     }
 
-    unsigned int value = (*(unsigned int *) __mutex);
+    uintptr_t value = (*(uintptr_t *) __mutex);
     if (hybris_check_android_shared_mutex(value)) {
         LOGD("Shared mutex with Android, not unlocking.");
         return 0;
@@ -706,7 +707,7 @@ static int _hybris_hook_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, 
 {
     struct timespec tv;
     pthread_mutex_t *realmutex;
-    unsigned int value = (*(unsigned int *) __mutex);
+    uintptr_t value = (*(uintptr_t *) __mutex);
 
     TRACE_HOOK("mutex %p msecs %u", __mutex, __msecs);
 
@@ -719,7 +720,7 @@ static int _hybris_hook_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, 
 
     if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(value);
-        *((int *)__mutex) = (int) realmutex;
+        *((uintptr_t *)__mutex) = (uintptr_t) realmutex;
     }
 
     clock_gettime(CLOCK_REALTIME, &tv);
@@ -743,7 +744,7 @@ static int _hybris_hook_pthread_mutex_timedlock(pthread_mutex_t *__mutex,
         return 0;
     }
 
-    unsigned int value = (*(unsigned int *) __mutex);
+    uintptr_t value = (*(uintptr_t *) __mutex);
     if (hybris_check_android_shared_mutex(value)) {
         LOGD("Shared mutex with Android, not lock timeout np.");
         return 0;
@@ -752,7 +753,7 @@ static int _hybris_hook_pthread_mutex_timedlock(pthread_mutex_t *__mutex,
     pthread_mutex_t *realmutex = (pthread_mutex_t *) value;
     if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(value);
-        *((int *)__mutex) = (int) realmutex;
+        *((uintptr_t *)__mutex) = (uintptr_t) realmutex;
     }
 
     return pthread_mutex_timedlock(realmutex, __abs_timeout);
@@ -790,13 +791,13 @@ static int _hybris_hook_pthread_cond_init(pthread_cond_t *cond,
         /* non shared, standard cond: use malloc */
         realcond = malloc(sizeof(pthread_cond_t));
 
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
     else {
         /* process-shared condition: use the shared memory segment */
         hybris_shm_pointer_t handle = hybris_shm_alloc(sizeof(pthread_cond_t));
 
-        *((unsigned int *)cond) = (unsigned int) handle;
+        *((uintptr_t *)cond) = (uintptr_t) handle;
 
         if (handle)
             realcond = (pthread_cond_t *)hybris_get_shmpointer(handle);
@@ -808,7 +809,7 @@ static int _hybris_hook_pthread_cond_init(pthread_cond_t *cond,
 static int _hybris_hook_pthread_cond_destroy(pthread_cond_t *cond)
 {
     int ret;
-    pthread_cond_t *realcond = (pthread_cond_t *) *(unsigned int *) cond;
+    pthread_cond_t *realcond = (pthread_cond_t *) *(uintptr_t *) cond;
 
     TRACE_HOOK("cond %p", cond);
 
@@ -825,14 +826,14 @@ static int _hybris_hook_pthread_cond_destroy(pthread_cond_t *cond)
         ret = pthread_cond_destroy(realcond);
     }
 
-    *((unsigned int *)cond) = 0;
+    *((uintptr_t *)cond) = 0;
 
     return ret;
 }
 
 static int _hybris_hook_pthread_cond_broadcast(pthread_cond_t *cond)
 {
-    unsigned int value = (*(unsigned int *) cond);
+    uintptr_t value = (*(uintptr_t *) cond);
 
     TRACE_HOOK("cond %p", cond);
 
@@ -847,7 +848,7 @@ static int _hybris_hook_pthread_cond_broadcast(pthread_cond_t *cond)
 
     if (value <= ANDROID_TOP_ADDR_VALUE_COND) {
         realcond = hybris_alloc_init_cond();
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
 
     return pthread_cond_broadcast(realcond);
@@ -855,7 +856,7 @@ static int _hybris_hook_pthread_cond_broadcast(pthread_cond_t *cond)
 
 static int _hybris_hook_pthread_cond_signal(pthread_cond_t *cond)
 {
-    unsigned int value = (*(unsigned int *) cond);
+    uintptr_t value = (*(uintptr_t *) cond);
 
     TRACE_HOOK("cond %p", cond);
 
@@ -870,7 +871,7 @@ static int _hybris_hook_pthread_cond_signal(pthread_cond_t *cond)
 
     if (value <= ANDROID_TOP_ADDR_VALUE_COND) {
         realcond = hybris_alloc_init_cond();
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
 
     return pthread_cond_signal(realcond);
@@ -879,8 +880,8 @@ static int _hybris_hook_pthread_cond_signal(pthread_cond_t *cond)
 static int _hybris_hook_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
     /* Both cond and mutex can be statically initialized, check for both */
-    unsigned int cvalue = (*(unsigned int *) cond);
-    unsigned int mvalue = (*(unsigned int *) mutex);
+    uintptr_t cvalue = (*(uintptr_t *) cond);
+    uintptr_t mvalue = (*(uintptr_t *) mutex);
 
     TRACE_HOOK("cond %p mutex %p", cond, mutex);
 
@@ -896,7 +897,7 @@ static int _hybris_hook_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t 
 
     if (cvalue <= ANDROID_TOP_ADDR_VALUE_COND) {
         realcond = hybris_alloc_init_cond();
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
 
     pthread_mutex_t *realmutex = (pthread_mutex_t *) mvalue;
@@ -905,7 +906,7 @@ static int _hybris_hook_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t 
 
     if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(mvalue);
-        *((unsigned int *) mutex) = (unsigned int) realmutex;
+        *((uintptr_t *) mutex) = (uintptr_t) realmutex;
     }
 
     return pthread_cond_wait(realcond, realmutex);
@@ -915,8 +916,8 @@ static int _hybris_hook_pthread_cond_timedwait(pthread_cond_t *cond,
                 pthread_mutex_t *mutex, const struct timespec *abstime)
 {
     /* Both cond and mutex can be statically initialized, check for both */
-    unsigned int cvalue = (*(unsigned int *) cond);
-    unsigned int mvalue = (*(unsigned int *) mutex);
+    uintptr_t cvalue = (*(uintptr_t *) cond);
+    uintptr_t mvalue = (*(uintptr_t *) mutex);
 
     TRACE_HOOK("cond %p mutex %p abstime %p", cond, mutex, abstime);
 
@@ -932,7 +933,7 @@ static int _hybris_hook_pthread_cond_timedwait(pthread_cond_t *cond,
 
     if (cvalue <= ANDROID_TOP_ADDR_VALUE_COND) {
         realcond = hybris_alloc_init_cond();
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
 
     pthread_mutex_t *realmutex = (pthread_mutex_t *) mvalue;
@@ -941,7 +942,7 @@ static int _hybris_hook_pthread_cond_timedwait(pthread_cond_t *cond,
 
     if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(mvalue);
-        *((unsigned int *) mutex) = (unsigned int) realmutex;
+        *((uintptr_t *) mutex) = (uintptr_t) realmutex;
     }
 
     return pthread_cond_timedwait(realcond, realmutex, abstime);
@@ -951,8 +952,8 @@ static int _hybris_hook_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
                 pthread_mutex_t *mutex, const struct timespec *reltime)
 {
     /* Both cond and mutex can be statically initialized, check for both */
-    unsigned int cvalue = (*(unsigned int *) cond);
-    unsigned int mvalue = (*(unsigned int *) mutex);
+    uintptr_t cvalue = (*(uintptr_t *) cond);
+    uintptr_t mvalue = (*(uintptr_t *) mutex);
 
     TRACE_HOOK("cond %p mutex %p reltime %p", cond, mutex, reltime);
 
@@ -968,7 +969,7 @@ static int _hybris_hook_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
 
     if (cvalue <= ANDROID_TOP_ADDR_VALUE_COND) {
         realcond = hybris_alloc_init_cond();
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
 
     pthread_mutex_t *realmutex = (pthread_mutex_t *) mvalue;
@@ -977,7 +978,7 @@ static int _hybris_hook_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
 
     if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(mvalue);
-        *((unsigned int *) mutex) = (unsigned int) realmutex;
+        *((uintptr_t *) mutex) = (uintptr_t) realmutex;
     }
 
     struct timespec tv;
@@ -1030,7 +1031,7 @@ static int _hybris_hook_pthread_rwlockattr_init(pthread_rwlockattr_t *__attr)
     TRACE_HOOK("attr %p", __attr);
 
     realattr = malloc(sizeof(pthread_rwlockattr_t));
-    *((unsigned int *)__attr) = (unsigned int) realattr;
+    *((uintptr_t *)__attr) = (uintptr_t) realattr;
 
     return pthread_rwlockattr_init(realattr);
 }
@@ -1038,7 +1039,7 @@ static int _hybris_hook_pthread_rwlockattr_init(pthread_rwlockattr_t *__attr)
 static int _hybris_hook_pthread_rwlockattr_destroy(pthread_rwlockattr_t *__attr)
 {
     int ret;
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p", __attr);
 
@@ -1051,7 +1052,7 @@ static int _hybris_hook_pthread_rwlockattr_destroy(pthread_rwlockattr_t *__attr)
 static int _hybris_hook_pthread_rwlockattr_setpshared(pthread_rwlockattr_t *__attr,
                                             int pshared)
 {
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p pshared %d", __attr, pshared);
 
@@ -1061,7 +1062,7 @@ static int _hybris_hook_pthread_rwlockattr_setpshared(pthread_rwlockattr_t *__at
 static int _hybris_hook_pthread_rwlockattr_getpshared(pthread_rwlockattr_t *__attr,
                                             int *pshared)
 {
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) __attr;
 
     TRACE_HOOK("attr %p pshared %p", __attr, pshared);
 
@@ -1070,7 +1071,7 @@ static int _hybris_hook_pthread_rwlockattr_getpshared(pthread_rwlockattr_t *__at
 
 int _hybris_hook_pthread_rwlockattr_setkind_np(pthread_rwlockattr_t *attr, int pref)
 {
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) attr;
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) attr;
 
     TRACE_HOOK("attr %p pref %i", attr, pref);
 
@@ -1079,7 +1080,7 @@ int _hybris_hook_pthread_rwlockattr_setkind_np(pthread_rwlockattr_t *attr, int p
 
 int _hybris_hook_pthread_rwlockattr_getkind_np(const pthread_rwlockattr_t *attr, int *pref)
 {
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) attr;
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) attr;
 
     TRACE_HOOK("attr %p pref %p", attr, pref);
 
@@ -1104,7 +1105,7 @@ static int _hybris_hook_pthread_rwlock_init(pthread_rwlock_t *__rwlock,
     TRACE_HOOK("rwlock %p attr %p", __rwlock, __attr);
 
     if (__attr != NULL)
-        realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
+        realattr = (pthread_rwlockattr_t *) *(uintptr_t *) __attr;
 
     if (realattr)
         pthread_rwlockattr_getpshared(realattr, &pshared);
@@ -1113,13 +1114,13 @@ static int _hybris_hook_pthread_rwlock_init(pthread_rwlock_t *__rwlock,
         /* non shared, standard rwlock: use malloc */
         realrwlock = malloc(sizeof(pthread_rwlock_t));
 
-        *((unsigned int *) __rwlock) = (unsigned int) realrwlock;
+        *((uintptr_t *) __rwlock) = (uintptr_t) realrwlock;
     }
     else {
         /* process-shared condition: use the shared memory segment */
         hybris_shm_pointer_t handle = hybris_shm_alloc(sizeof(pthread_rwlock_t));
 
-        *((unsigned int *)__rwlock) = (unsigned int) handle;
+        *((uintptr_t *)__rwlock) = (uintptr_t) handle;
 
         if (handle)
             realrwlock = (pthread_rwlock_t *)hybris_get_shmpointer(handle);
@@ -1131,7 +1132,7 @@ static int _hybris_hook_pthread_rwlock_init(pthread_rwlock_t *__rwlock,
 static int _hybris_hook_pthread_rwlock_destroy(pthread_rwlock_t *__rwlock)
 {
     int ret;
-    pthread_rwlock_t *realrwlock = (pthread_rwlock_t *) *(unsigned int *) __rwlock;
+    pthread_rwlock_t *realrwlock = (pthread_rwlock_t *) *(uintptr_t *) __rwlock;
 
     TRACE_HOOK("rwlock %p", __rwlock);
 
@@ -1149,7 +1150,7 @@ static int _hybris_hook_pthread_rwlock_destroy(pthread_rwlock_t *__rwlock)
 
 static pthread_rwlock_t* hybris_set_realrwlock(pthread_rwlock_t *rwlock)
 {
-    unsigned int value = (*(unsigned int *) rwlock);
+    uintptr_t value = (*(uintptr_t *) rwlock);
     pthread_rwlock_t *realrwlock = (pthread_rwlock_t *) value;
 
     if (hybris_is_pointer_in_shm((void*)value))
@@ -1157,7 +1158,7 @@ static pthread_rwlock_t* hybris_set_realrwlock(pthread_rwlock_t *rwlock)
 
     if (realrwlock <= ANDROID_TOP_ADDR_VALUE_RWLOCK) {
         realrwlock = hybris_alloc_init_rwlock();
-        *((unsigned int *)rwlock) = (unsigned int) realrwlock;
+        *((uintptr_t *)rwlock) = (uintptr_t) realrwlock;
     }
     return realrwlock;
 }
@@ -1220,7 +1221,7 @@ static int _hybris_hook_pthread_rwlock_timedwrlock(pthread_rwlock_t *__rwlock,
 
 static int _hybris_hook_pthread_rwlock_unlock(pthread_rwlock_t *__rwlock)
 {
-    unsigned int value = (*(unsigned int *) __rwlock);
+    uintptr_t value = (*(uintptr_t *) __rwlock);
 
     TRACE_HOOK("rwlock %p", __rwlock);
 

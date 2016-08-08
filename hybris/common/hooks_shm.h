@@ -22,7 +22,7 @@
 #include <stdint.h>
 
 /* Leave space to workaround the issue that Android might pass negative int values */
-#define HYBRIS_SHM_MASK_TOP 0xFFFFFFF0UL
+#define HYBRIS_SHM_MASK_TOP (UINTPTR_MAX - 15)
 
 typedef uintptr_t hybris_shm_pointer_t;
 
