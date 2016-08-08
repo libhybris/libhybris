@@ -28,6 +28,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+extern size_t strlcpy(char *dst, const char *src, size_t siz);
+
 int sync_wait(int fd, int timeout)
 {
     __s32 to = timeout;

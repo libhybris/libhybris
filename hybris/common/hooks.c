@@ -1034,12 +1034,12 @@ int _hybris_hook_pthread_setname_np(pthread_t thread, const char *name)
         if (thread != pthread_self()) {
             HYBRIS_DEBUG_LOG(HOOKS, "%s: -> Failed, as calling thread is not mali-hist-dump itself",
                              __FUNCTION__);
-            return;
+            return 0;
         }
 
         pthread_exit((void*) thread);
 
-        return;
+        return 0;
     }
 #endif
 
@@ -1186,7 +1186,7 @@ static pthread_rwlock_t* hybris_set_realrwlock(pthread_rwlock_t *rwlock)
     if (hybris_is_pointer_in_shm((void*)value))
         realrwlock = (pthread_rwlock_t *)hybris_get_shmpointer((hybris_shm_pointer_t)value);
 
-    if (realrwlock <= ANDROID_TOP_ADDR_VALUE_RWLOCK) {
+    if ((uintptr_t)realrwlock <= ANDROID_TOP_ADDR_VALUE_RWLOCK) {
         realrwlock = hybris_alloc_init_rwlock();
         *((uintptr_t *)rwlock) = (uintptr_t) realrwlock;
     }
@@ -1786,7 +1786,7 @@ static int _hybris_hook_scandirat(int parent_fd, const char* dir_name,
             result[nItems++] = filter_r;
         }
         if (nItems && compar != NULL)
-            qsort(result, nItems, sizeof(struct bionic_dirent *), compar);
+            qsort(result, nItems, sizeof(struct bionic_dirent *), (__compar_fn_t) compar);
 
         *namelist = result;
     }

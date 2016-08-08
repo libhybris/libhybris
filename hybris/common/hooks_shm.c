@@ -22,7 +22,9 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -131,7 +133,7 @@ static void _hybris_shm_init()
             _hybris_shm_fd = shm_open(HYBRIS_SHM_PATH, O_RDWR | O_CREAT, 0666);
             umask(pumask);
             if (_hybris_shm_fd >= 0) {
-                ftruncate( _hybris_shm_fd, size_to_map );
+                TEMP_FAILURE_RETRY(ftruncate( _hybris_shm_fd, size_to_map ));
                 /* Map the memory object */
                 _hybris_shm_data = (hybris_shm_data_t *)mmap( NULL, size_to_map,
                                              PROT_READ | PROT_WRITE, MAP_SHARED,
@@ -167,7 +169,7 @@ static void _hybris_shm_init()
  */
 static void _hybris_shm_extend_region()
 {
-    ftruncate( _hybris_shm_fd, _current_mapped_size + HYBRIS_DATA_SIZE );
+    TEMP_FAILURE_RETRY(ftruncate( _hybris_shm_fd, _current_mapped_size + HYBRIS_DATA_SIZE ));
     _hybris_shm_data->max_offset += HYBRIS_DATA_SIZE;
 
     _sync_mmap_with_shm();

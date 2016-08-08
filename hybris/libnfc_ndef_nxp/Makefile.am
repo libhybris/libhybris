@@ -2,7 +2,10 @@ lib_LTLIBRARIES = \
 	libnfc_ndef_nxp.la
 
 libnfc_ndef_nxp_la_SOURCES = libnfc_ndef_nxp.c
-libnfc_ndef_nxp_la_CFLAGS = -I$(top_srcdir)/include $(ANDROID_HEADERS_CFLAGS)
+libnfc_ndef_nxp_la_CFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS) \
+	-Wno-error=unused-function
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libnfc_ndef_nxp.pc

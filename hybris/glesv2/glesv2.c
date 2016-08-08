@@ -21,6 +21,7 @@
 #include <dlfcn.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <hybris/common/binding.h>
 
@@ -609,7 +610,7 @@ void glGetAttachedShaders (GLuint program, GLsizei maxcount, GLsizei* count, GLu
 
 int glGetAttribLocation (GLuint program, const GLchar* name)
 {
-	(*_glGetAttribLocation)(program, name);
+	return (*_glGetAttribLocation)(program, name);
 }
 
 void glGetBooleanv (GLenum pname, GLboolean* params)
@@ -683,11 +684,11 @@ const GLubyte* glGetString (GLenum name)
 	// because libhybris does not provide any 3.0+ symbols.
 	if (name == GL_VERSION) {
 		static GLubyte glGetString_versionString[64];
-		snprintf(glGetString_versionString, sizeof(glGetString_versionString), "OpenGL ES 2.0 (%s)", (*_glGetString)(name));
+		snprintf((char *)glGetString_versionString, sizeof(glGetString_versionString), "OpenGL ES 2.0 (%s)", (*_glGetString)(name));
 		return glGetString_versionString;
 	}
 
-	(*_glGetString)(name);
+	return (*_glGetString)(name);
 }
 
 void glGetTexParameterfv (GLenum target, GLenum pname, GLfloat* params)
@@ -712,7 +713,7 @@ void glGetUniformiv (GLuint program, GLint location, GLint* params)
 
 int glGetUniformLocation (GLuint program, const GLchar* name)
 {
-	(*_glGetUniformLocation)(program, name);
+	return (*_glGetUniformLocation)(program, name);
 }
 
 void glGetVertexAttribfv (GLuint index, GLenum pname, GLfloat* params)

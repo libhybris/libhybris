@@ -16,6 +16,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <android-config.h>
 #include <hardware_legacy/wifi.h>

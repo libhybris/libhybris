@@ -190,7 +190,8 @@ test_nfc_SOURCES = test_nfc.c
 test_nfc_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(PTHREAD_CFLAGS) \
-	$(ANDROID_HEADERS_CFLAGS)
+	$(ANDROID_HEADERS_CFLAGS) \
+	-Wno-error=unused-function
 test_nfc_LDADD = \
 	$(PTHREAD_LIBS) \
 	$(top_builddir)/common/libhybris-common.la \
