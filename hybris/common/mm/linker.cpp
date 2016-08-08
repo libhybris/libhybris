@@ -1955,14 +1955,14 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_ABS64:
         count_relocation(kRelocAbsolute);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO ABS64 %16llx <- %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO ABS64 %16" PRIx64 " <- %16" PRIx64 " %s\n",
                    reloc, (sym_addr + addend), sym_name);
         *reinterpret_cast<ElfW(Addr)*>(reloc) += (sym_addr + addend);
         break;
       case R_AARCH64_ABS32:
         count_relocation(kRelocAbsolute);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO ABS32 %16llx <- %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO ABS32 %16" PRIx64 " <- %16" PRIx64 " %s\n",
                    reloc, (sym_addr + addend), sym_name);
         {
           const ElfW(Addr) reloc_value = *reinterpret_cast<ElfW(Addr)*>(reloc);
@@ -1972,7 +1972,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((reloc_value + (sym_addr + addend)) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) += (sym_addr + addend);
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%016" PRIx64 " out of range 0x%016" PRIx64 " to 0x%016" PRIx64,
                    (reloc_value + (sym_addr + addend)), min_value, max_value);
             return false;
           }
@@ -1981,7 +1981,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_ABS16:
         count_relocation(kRelocAbsolute);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO ABS16 %16llx <- %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO ABS16 %16" PRIx64 " <- %16" PRIx64 " %s\n",
                    reloc, (sym_addr + addend), sym_name);
         {
           const ElfW(Addr) reloc_value = *reinterpret_cast<ElfW(Addr)*>(reloc);
@@ -1991,7 +1991,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((reloc_value + (sym_addr + addend)) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) += (sym_addr + addend);
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%016" PRIx64 " out of range 0x%016" PRIx64 " to 0x%016" PRIx64,
                    reloc_value + (sym_addr + addend), min_value, max_value);
             return false;
           }
@@ -2000,14 +2000,14 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_PREL64:
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO REL64 %16llx <- %16llx - %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO REL64 %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 " %s\n",
                    reloc, (sym_addr + addend), rel->r_offset, sym_name);
         *reinterpret_cast<ElfW(Addr)*>(reloc) += (sym_addr + addend) - rel->r_offset;
         break;
       case R_AARCH64_PREL32:
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO REL32 %16llx <- %16llx - %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO REL32 %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 " %s\n",
                    reloc, (sym_addr + addend), rel->r_offset, sym_name);
         {
           const ElfW(Addr) reloc_value = *reinterpret_cast<ElfW(Addr)*>(reloc);
@@ -2017,7 +2017,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((reloc_value + ((sym_addr + addend) - rel->r_offset)) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) += ((sym_addr + addend) - rel->r_offset);
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%016" PRIx64 " out of range 0x%016" PRIx64 " to 0x%016" PRIx64,
                    reloc_value + ((sym_addr + addend) - rel->r_offset), min_value, max_value);
             return false;
           }
@@ -2026,7 +2026,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_PREL16:
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO REL16 %16llx <- %16llx - %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO REL16 %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 " %s\n",
                    reloc, (sym_addr + addend), rel->r_offset, sym_name);
         {
           const ElfW(Addr) reloc_value = *reinterpret_cast<ElfW(Addr)*>(reloc);
@@ -2036,7 +2036,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((reloc_value + ((sym_addr + addend) - rel->r_offset)) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) += ((sym_addr + addend) - rel->r_offset);
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%016" PRIx64 " out of range 0x%016" PRIx64 " to 0x%016" PRIx64,
                    reloc_value + ((sym_addr + addend) - rel->r_offset), min_value, max_value);
             return false;
           }
@@ -2056,11 +2056,11 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
         DL_ERR("%s R_AARCH64_COPY relocations are not supported", get_realpath());
         return false;
       case R_AARCH64_TLS_TPREL:
-        TRACE_TYPE(RELO, "RELO TLS_TPREL *** %16llx <- %16llx - %16llx\n",
+        TRACE_TYPE(RELO, "RELO TLS_TPREL *** %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 "\n",
                    reloc, (sym_addr + addend), rel->r_offset);
         break;
       case R_AARCH64_TLS_DTPREL:
-        TRACE_TYPE(RELO, "RELO TLS_DTPREL *** %16llx <- %16llx - %16llx\n",
+        TRACE_TYPE(RELO, "RELO TLS_DTPREL *** %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 "\n",
                    reloc, (sym_addr + addend), rel->r_offset);
         break;
 #elif defined(__x86_64__)

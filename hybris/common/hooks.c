@@ -30,6 +30,7 @@
 #include <limits.h>
 #include <malloc.h>
 #include <string.h>
+#include <inttypes.h>
 #include <strings.h>
 #include <dlfcn.h>
 #include <pthread.h>
@@ -262,7 +263,7 @@ static pthread_rwlock_t* hybris_alloc_init_rwlock(void)
 
 static void *_hybris_hook_malloc(size_t size)
 {
-    TRACE_HOOK("size %u", size);
+    TRACE_HOOK("size %zu", size);
 
     void *res = malloc(size);
 
@@ -280,7 +281,7 @@ static size_t _hybris_hook_malloc_usable_size (void *ptr)
 
 static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
 {
-    TRACE_HOOK("dst %p src %p len %u", dst, src, len);
+    TRACE_HOOK("dst %p src %p len %zu", dst, src, len);
 
     if (src == NULL || dst == NULL)
         return NULL;
@@ -290,7 +291,7 @@ static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
 
 static int _hybris_hook_memcmp(const void *s1, const void *s2, size_t n)
 {
-    TRACE_HOOK("s1 %p '%s' s2 %p '%s' n %u", s1, (char*) s1, s2, (char*) s2, n);
+    TRACE_HOOK("s1 %p '%s' s2 %p '%s' n %zu", s1, (char*) s1, s2, (char*) s2, n);
 
     return memcmp(s1, s2, n);
 }
@@ -345,7 +346,7 @@ static int _hybris_hook_pthread_kill(pthread_t thread, int sig)
 
 static int _hybris_hook_pthread_setspecific(pthread_key_t key, const void *ptr)
 {
-    TRACE_HOOK("key %d ptr %d", key, ptr);
+    TRACE_HOOK("key %d ptr %" PRIdPTR, key, (intptr_t) ptr);
 
     return pthread_setspecific(key, ptr);
 }
@@ -450,7 +451,7 @@ static int _hybris_hook_pthread_attr_setstacksize(pthread_attr_t *__attr, size_t
 {
     pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
 
-    TRACE_HOOK("attr %p stack size %u", __attr, stack_size);
+    TRACE_HOOK("attr %p stack size %zu", __attr, stack_size);
 
     return pthread_attr_setstacksize(realattr, stack_size);
 }
@@ -486,7 +487,7 @@ static int _hybris_hook_pthread_attr_setstack(pthread_attr_t *__attr, void *stac
 {
     pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
 
-    TRACE_HOOK("attr %p stack base %p stack size %u", __attr,
+    TRACE_HOOK("attr %p stack base %p stack size %zu", __attr,
                stack_base, stack_size);
 
     return pthread_attr_setstack(realattr, stack_base, stack_size);
@@ -506,7 +507,7 @@ static int _hybris_hook_pthread_attr_setguardsize(pthread_attr_t *__attr, size_t
 {
     pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
 
-    TRACE_HOOK("attr %p guard size %u", __attr, guard_size);
+    TRACE_HOOK("attr %p guard size %zu", __attr, guard_size);
 
     return pthread_attr_setguardsize(realattr, guard_size);
 }
@@ -1412,14 +1413,14 @@ FP_ATTRIB static int _hybris_hook_fscanf(FILE *fp, const char *fmt, ...)
 
 static int _hybris_hook_fseek(FILE *fp, long offset, int whence)
 {
-    TRACE_HOOK("fp %p offset %ld whence %d", fp, offset, whence);
+    TRACE_HOOK("fp %p offset %jd whence %d", fp, offset, whence);
 
     return fseek(_get_actual_fp(fp), offset, whence);
 }
 
 static int _hybris_hook_fseeko(FILE *fp, off_t offset, int whence)
 {
-    TRACE_HOOK("fp %p offset %ld whence %d", fp, offset, whence);
+    TRACE_HOOK("fp %p offset %jd whence %d", fp, offset, whence);
 
     return fseeko(_get_actual_fp(fp), offset, whence);
 }
@@ -2159,7 +2160,7 @@ static char* _hybris_hook_setlocale(int category, const char *locale)
 static void* _hybris_hook_mmap(void *addr, size_t len, int prot,
                   int flags, int fd, off_t offset)
 {
-    TRACE_HOOK("addr %p len %u prot %i flags %i fd %i offset %u",
+    TRACE_HOOK("addr %p len %zu prot %i flags %i fd %i offset %jd",
                addr, len, prot, flags, fd, offset);
 
     return mmap(addr, len, prot, flags, fd, offset);
@@ -2167,7 +2168,7 @@ static void* _hybris_hook_mmap(void *addr, size_t len, int prot,
 
 static int _hybris_hook_munmap(void *addr, size_t length)
 {
-    TRACE_HOOK("addr %p length %u", addr, length);
+    TRACE_HOOK("addr %p length %zu", addr, length);
 
     return munmap(addr, length);
 }
@@ -2736,7 +2737,7 @@ static int get_android_sdk_version()
 static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
 {
     static int sorted = 0;
-    static int counter = -1;
+    static intptr_t counter = -1;
     void *found = NULL;
     struct _hook key;
 
@@ -2777,7 +2778,7 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
         // If you're experiencing a crash later on check the address of the
         // function pointer being call. If it matches the printed counter
         // value here then you can easily find out which symbol is missing.
-        LOGD("Missing hook for pthread symbol %s (counter %i)\n", sym, counter);
+        LOGD("Missing hook for pthread symbol %s (counter %" PRIiPTR ")\n", sym, counter);
         return (void *) counter;
     }
 

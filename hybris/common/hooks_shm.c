@@ -177,8 +177,8 @@ static void _hybris_shm_extend_region()
   */
 int hybris_is_pointer_in_shm(void *ptr)
 {
-    if (((unsigned int) ptr >= HYBRIS_SHM_MASK) &&
-                    ((unsigned int) ptr <= HYBRIS_SHM_MASK_TOP))
+    if (((uintptr_t) ptr >= HYBRIS_SHM_MASK) &&
+                    ((uintptr_t) ptr <= HYBRIS_SHM_MASK_TOP))
         return 1;
 
     return 0;
@@ -244,7 +244,7 @@ hybris_shm_pointer_t hybris_shm_alloc(size_t size)
 
     /* there is now enough place in this pool */
     location = _hybris_shm_data->current_offset | HYBRIS_SHM_MASK;
-    LOGD("Allocated a shared object (size = %d, at offset %d)", size, _hybris_shm_data->current_offset);
+    LOGD("Allocated a shared object (size = %zu, at offset %d)", size, _hybris_shm_data->current_offset);
 
     _hybris_shm_data->current_offset += size;
 
