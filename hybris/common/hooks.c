@@ -1708,7 +1708,8 @@ static int _hybris_hook_versionsort(struct bionic_dirent **a,
     return strverscmp((*a)->d_name, (*b)->d_name);
 }
 
-static struct bionic_dirent *_hybris_hook_scandirat(int fd, DIR *dirp,  struct bionic_dirent ***namelist,
+static int _hybris_hook_scandirat(int parent_fd, const char* dir_name,
+                struct bionic_dirent ***namelist,
 		int (*filter)(const struct bionic_dirent *),
 		int (*compar)(const struct bionic_dirent **, const struct bionic_dirent **))
 {
@@ -1719,9 +1720,10 @@ static struct bionic_dirent *_hybris_hook_scandirat(int fd, DIR *dirp,  struct b
     int i = 0;
     size_t nItems = 0;
 
-    TRACE_HOOK("dirp %p", dirp);
+    TRACE_HOOK("parent_fd %d, dir_name %s, namelist %p, filter %p, compar %p",
+               parent_fd, dir_name, namelist, filter, compar);
 
-    int res = scandirat(fd, dirp, &namelist_r, NULL, NULL);
+    int res = scandirat(parent_fd, dir_name, &namelist_r, NULL, NULL);
 
     if (res != 0 && namelist_r != NULL) {
 
@@ -1761,11 +1763,11 @@ static struct bionic_dirent *_hybris_hook_scandirat(int fd, DIR *dirp,  struct b
     return res;
 }
 
-static struct bionic_dirent *_hybris_hook_scandir(DIR *dirp,  struct bionic_dirent ***namelist,
+static int _hybris_hook_scandir(const char* dir_path, struct bionic_dirent ***namelist,
 		int (*filter)(const struct bionic_dirent *),
 		int (*compar)(const struct bionic_dirent **, const struct bionic_dirent **))
 {
-    return _hybris_hook_scandirat(AT_FDCWD, dirp, namelist, filter, compar);
+    return _hybris_hook_scandirat(AT_FDCWD, dir_path, namelist, filter, compar);
 }
 
 static inline void swap(void **a, void **b)
@@ -2601,8 +2603,6 @@ static struct _hook hooks_mm[] = {
     {"ptsname", ptsname},
     {"__hybris_set_errno_internal", _hybris_hook_set_errno},
     {"getservbyname", getservbyname},
-    {"scandir", scandir},
-    {"scandir64", scandir64},
     /* libgen.h */
     {"basename", _hybris_hook_basename},
     {"dirname", _hybris_hook_dirname},
@@ -2679,7 +2679,7 @@ static struct _hook hooks_mm[] = {
     {"scandirat", _hybris_hook_scandirat},
     {"alphasort,", _hybris_hook_alphasort},
     {"versionsort,", _hybris_hook_versionsort},
-    {"scandir64", scandir},
+    {"scandir64", _hybris_hook_scandir},
 };
 
 
