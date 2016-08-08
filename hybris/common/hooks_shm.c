@@ -16,9 +16,9 @@
  *
  */
 
-#include "hooks_shm.h"
+#include "config.h"
 
-#define _GNU_SOURCE
+#include "hooks_shm.h"
 
 #include <stddef.h>
 #include <stdlib.h>

@@ -19,7 +19,6 @@ jb_la_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common \
-	-D_GNU_SOURCE \
 	-DDEFAULT_HYBRIS_LD_LIBRARY_PATH="\"@DEFAULT_HYBRIS_LD_LIBRARY_PATH@\"" \
 	$(ARCHFLAGS)
 jb_la_LDFLAGS = \

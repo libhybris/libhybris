@@ -17,11 +17,12 @@
  *
  */
 
+#include "config.h"
+
 #include <hybris/common/binding.h>
 
 #include "hooks_shm.h"
 
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdio_ext.h>
