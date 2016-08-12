@@ -2755,6 +2755,8 @@ static struct _hook hooks_mm[] = {
     {"sigwaitinfo", sigwaitinfo},
 #endif
     /* dirent.h */
+    {"readdir64", _hybris_hook_readdir},
+    {"readdir64_r", _hybris_hook_readdir_r},
     {"scandir", _hybris_hook_scandir},
     {"scandirat", _hybris_hook_scandirat},
     {"alphasort,", _hybris_hook_alphasort},
