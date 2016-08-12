@@ -308,8 +308,6 @@ int main(int argc, char **argv)
 	android_media_play(player);
 
 	while (android_media_is_playing(player)) {
-		GLushort indices[] = { 0, 1, 2, 0, 2, 3 };
-
 		const GLfloat textureCoordinates[] = {
 			1.0f,  1.0f,
 			0.0f,  1.0f,
@@ -360,7 +358,6 @@ int main(int argc, char **argv)
 		glUniform1i(gmTexMatrix, 0);
 		android_media_update_surface_texture(player);
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices);
 		glDisableVertexAttribArray(gaPositionHandle);
 		glDisableVertexAttribArray(gaTexHandle);
 

@@ -15,10 +15,10 @@
  *
  */
 
+#include "config.h"
+
 /* EGL function pointers */
 #define EGL_EGLEXT_PROTOTYPES
-/* For RTLD_DEFAULT */
-#define _GNU_SOURCE
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
@@ -370,7 +370,6 @@ EGLBoolean eglSwapInterval(EGLDisplay dpy, EGLint interval)
 {
 	EGLBoolean ret;
 	EGLSurface surface;
-	EGLNativeWindowType win;
 	HYBRIS_TRACE_BEGIN("hybris-egl", "eglSwapInterval", "=%d", interval);
 
 	/* Some egl implementations don't pass through the setSwapInterval
@@ -396,7 +395,7 @@ EGLContext eglCreateContext(EGLDisplay dpy, EGLConfig config,
 {
 	EGL_DLSYM(&_eglCreateContext, "eglCreateContext");
 
-	EGLint *p = attrib_list;
+	const EGLint *p = attrib_list;
 	while (p != NULL && *p != EGL_NONE) {
 		if (*p == EGL_CONTEXT_CLIENT_VERSION) {
 			_egl_context_client_version = p[1];
@@ -530,19 +529,19 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 	EGL_DLSYM(&_eglGetProcAddress, "eglGetProcAddress");
 	if (strcmp(procname, "eglCreateImageKHR") == 0)
 	{
-		return _my_eglCreateImageKHR;
+		return (__eglMustCastToProperFunctionPointerType) _my_eglCreateImageKHR;
 	}
 	else if (strcmp(procname, "eglDestroyImageKHR") == 0)
 	{
-		return eglDestroyImageKHR;
+		return (__eglMustCastToProperFunctionPointerType) eglDestroyImageKHR;
 	}
 	else if (strcmp(procname, "eglSwapBuffersWithDamageEXT") == 0)
 	{
-		return _my_eglSwapBuffersWithDamageEXT;
+		return (__eglMustCastToProperFunctionPointerType) _my_eglSwapBuffersWithDamageEXT;
 	}
 	else if (strcmp(procname, "glEGLImageTargetTexture2DOES") == 0)
 	{
-		return _my_glEGLImageTargetTexture2DOES;
+		return (__eglMustCastToProperFunctionPointerType) _my_glEGLImageTargetTexture2DOES;
 	}
 
 	__eglMustCastToProperFunctionPointerType ret = NULL;

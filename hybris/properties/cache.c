@@ -75,7 +75,6 @@ char *hybris_propcache_find(const char *key)
 	if (prop)
 		return prop->value;
 
-out:
 	return ret;
 }
 
@@ -99,10 +98,9 @@ static void cache_update()
 {
 	struct stat st;
 	FILE *f = fopen("/system/build.prop", "r");
-	char *ret = NULL;
 
 	if (!f)
-		return NULL;
+		return;
 
 	/* before searching, we must first determine whether our cache is valid. if
 	 * it isn't, we must discard our results and re-create the cache.

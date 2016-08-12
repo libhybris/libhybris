@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stddef.h>
+#include <stdlib.h>
 
 const char vertex_src [] =
 "                                        \

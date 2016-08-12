@@ -67,8 +67,6 @@ void zoom_msg_cb(void* context, int32_t new_zoom_level)
 {
 	printf("%s \n", __PRETTY_FUNCTION__);
 
-	struct CameraControl* cc = (struct CameraControl*) context;
-	static int zoom;
 	current_zoom_level = new_zoom_level;
 }
 
@@ -391,8 +389,6 @@ int main(int argc, char** argv)
 
 	printf("Supported video sizes:\n");
 	android_camera_enumerate_supported_video_sizes(cc, size_cb, NULL);
-
-	int min_fps, max_fps, current_fps;
 
 	android_camera_set_preview_size(cc, 1280, 720);
 

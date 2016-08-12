@@ -10,10 +10,12 @@ AM_CFLAGS = \
 	-std=gnu99
 
 AM_CPPFLAGS = \
-	-std=gnu++11 \
-	-Wold-style-cast \
 	-fno-stack-protector \
 	-Wstrict-overflow=5
+
+AM_CXXFLAGS = \
+	-std=gnu++11 \
+	-Wold-style-cast
 
 mm_la_SOURCES = \
 	hybris_compat.cpp \

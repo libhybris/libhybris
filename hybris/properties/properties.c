@@ -47,7 +47,6 @@ static int send_prop_msg(prop_msg_t *msg,
 		void (*propfn)(const char *, const char *, void *),
 		void *cookie)
 {
-	struct pollfd pollfds[1];
 	union {
 		struct sockaddr_un addr;
 		struct sockaddr addr_g;
@@ -86,8 +85,6 @@ static int send_prop_msg(prop_msg_t *msg,
 	r = TEMP_FAILURE_RETRY(send(s, msg, sizeof(prop_msg_t), 0));
 
 	if (r == sizeof(prop_msg_t)) {
-		pollfds[0].fd = s;
-		pollfds[0].events = 0;
 		// We successfully wrote to the property server, so use recv
 		// in case we need to get a property. Once the other side is
 		// finished, the socket is closed.

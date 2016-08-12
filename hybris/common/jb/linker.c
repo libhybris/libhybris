@@ -26,6 +26,8 @@
  * SUCH DAMAGE.
  */
 
+#include "config.h"
+
 #include <linux/auxvec.h>
 
 #include <stdio.h>
