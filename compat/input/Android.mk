@@ -10,9 +10,6 @@ LOCAL_SRC_FILES:= input_compatibility_layer.cpp
 
 LOCAL_MODULE:= libis_compat_layer
 LOCAL_MODULE_TAGS := optional
-ifneq ($(strip $(BOARD_HAS_64_BIT_MEDIA_SERVICE)),true)
-  LOCAL_32_BIT_ONLY := true
-endif
 
 LOCAL_SHARED_LIBRARIES := \
 	libinput \
@@ -56,8 +53,10 @@ LOCAL_SRC_FILES:= \
 
 LOCAL_MODULE:= direct_input_test
 LOCAL_MODULE_TAGS := optional
-ifneq ($(strip $(BOARD_HAS_64_BIT_MEDIA_SERVICE)),true)
-  LOCAL_32_BIT_ONLY := true
+ifdef TARGET_2ND_ARCH
+LOCAL_MULTILIB := both
+LOCAL_MODULE_STEM_32 := $(if $(filter false,$(BOARD_UBUNTU_PREFER_32_BIT)),$(LOCAL_MODULE)$(TARGET_2ND_ARCH_MODULE_SUFFIX),$(LOCAL_MODULE))
+LOCAL_MODULE_STEM_64 := $(if $(filter false,$(BOARD_UBUNTU_PREFER_32_BIT)),$(LOCAL_MODULE),$(LOCAL_MODULE)_64)
 endif
 
 LOCAL_C_INCLUDES := \
