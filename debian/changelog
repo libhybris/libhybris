@@ -1,3 +1,9 @@
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu23) UNRELEASED; urgency=medium
+
+  * hooks:c: Don't pass builtin functions.
+
+ -- Iain Lane <iain.lane@canonical.com>  Tue, 09 Aug 2016 11:40:54 +0100
+
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu22) yakkety; urgency=medium
 
   [ You-Sheng Yang ]

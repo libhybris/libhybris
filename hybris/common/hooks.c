@@ -2583,10 +2583,7 @@ static struct _hook hooks_mm[] = {
     {"malloc_usable_size", _hybris_hook_malloc_usable_size},
     {"posix_memalign", _hybris_hook_posix_memalign},
     {"mprotect", _hybris_hook_mprotect},
-    {"__memcpy_chk", __memcpy_chk},
-    {"__memset_chk", __memset_chk},
     {"__gnu_strerror_r",_hybris_hook__gnu_strerror_r},
-    {"__strncpy_chk",__strncpy_chk},
     {"pthread_rwlockattr_getkind_np", _hybris_hook_pthread_rwlockattr_getkind_np},
     {"pthread_rwlockattr_setkind_np", _hybris_hook_pthread_rwlockattr_setkind_np},
     /* unistd.h */
