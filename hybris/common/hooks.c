@@ -1305,6 +1305,59 @@ static int _hybris_hook_set_errno(int oi_errno)
  */
 static int ___hybris_hook_isthreaded = 1;
 
+/* "struct __sbuf" from bionic/libc/include/stdio.h */
+#if defined(__LP64__)
+struct bionic_sbuf {
+    unsigned char* _base;
+    size_t _size;
+};
+#else
+struct bionic_sbuf {
+    unsigned char *_base;
+    int _size;
+};
+#endif
+
+/* "struct __sFILE" from bionic/libc/include/stdio.h */
+struct __attribute__((packed)) bionic_file {
+    unsigned char *_p;      /* current position in (some) buffer */
+    int _r;                 /* read space left for getc() */
+    int _w;                 /* write space left for putc() */
+#if defined(__LP64__)
+    int _flags;             /* flags, below; this FILE is free if 0 */
+    int _file;              /* fileno, if Unix descriptor, else -1 */
+#else
+    short _flags;           /* flags, below; this FILE is free if 0 */
+    short _file;            /* fileno, if Unix descriptor, else -1 */
+#endif
+    struct bionic_sbuf _bf; /* the buffer (at least 1 byte, if !NULL) */
+    int _lbfsize;           /* 0 or -_bf._size, for inline putc */
+
+    /* operations */
+    void *_cookie;          /* cookie passed to io functions */
+    int (*_close)(void *);
+    int (*_read)(void *, char *, int);
+    fpos_t (*_seek)(void *, fpos_t, int);
+    int (*_write)(void *, const char *, int);
+
+    /* extension data, to avoid further ABI breakage */
+    struct bionic_sbuf _ext;
+    /* data for long sequences of ungetc() */
+    unsigned char *_up;     /* saved _p when _p is doing ungetc data */
+    int _ur;                /* saved _r when _r is counting ungetc data */
+
+    /* tricks to meet minimum requirements even when malloc() fails */
+    unsigned char _ubuf[3]; /* guarantee an ungetc() buffer */
+    unsigned char _nbuf[1]; /* guarantee a getc() buffer */
+
+    /* separate buffer for fgetln() when line crosses buffer boundary */
+    struct bionic_sbuf _lb; /* buffer for fgetln() */
+
+    /* Unix stdio files get aligned to block boundaries on fseek() */
+    int _blksize;           /* stat.st_blksize (may be != _bf._size) */
+    fpos_t _offset;         /* current lseek offset */
+};
+
 /*
  * redirection for bionic's __sF, which is defined as:
  *   FILE __sF[3];
@@ -1316,16 +1369,15 @@ static int ___hybris_hook_isthreaded = 1;
  *   pointer.
  *   Currently, only fputs is managed.
  */
-#define BIONIC_SIZEOF_FILE 84
-static char _hybris_hook_sF[3*BIONIC_SIZEOF_FILE] = {0};
+static char _hybris_hook_sF[3 * sizeof(struct bionic_file)] = {0};
 static FILE *_get_actual_fp(FILE *fp)
 {
     char *c_fp = (char*)fp;
     if (c_fp == &_hybris_hook_sF[0])
         return stdin;
-    else if (c_fp == &_hybris_hook_sF[BIONIC_SIZEOF_FILE])
+    else if (c_fp == &_hybris_hook_sF[sizeof(struct bionic_file)])
         return stdout;
-    else if (c_fp == &_hybris_hook_sF[BIONIC_SIZEOF_FILE*2])
+    else if (c_fp == &_hybris_hook_sF[sizeof(struct bionic_file) * 2])
         return stderr;
 
     return fp;
