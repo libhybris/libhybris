@@ -2283,6 +2283,10 @@ static struct mntent* _hybris_hook_getmntent(FILE *fp)
 {
     TRACE_HOOK("fp %p", fp);
 
+    /* glibc doesn't allow NULL fp here, but bionic does. */
+    if (fp == NULL)
+        return NULL;
+
     return getmntent(_get_actual_fp(fp));
 }
 
@@ -2290,6 +2294,10 @@ static struct mntent* _hybris_hook_getmntent_r(FILE *fp, struct mntent *e, char 
 {
     TRACE_HOOK("fp %p e %p buf '%s' buf len %i",
                fp, e, buf, buf_len);
+
+    /* glibc doesn't allow NULL fp here, but bionic does. */
+    if (fp == NULL)
+        return NULL;
 
     return getmntent_r(_get_actual_fp(fp), e, buf, buf_len);
 }
