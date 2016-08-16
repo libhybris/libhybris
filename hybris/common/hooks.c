@@ -454,17 +454,7 @@ static int _hybris_hook_pthread_attr_setstacksize(pthread_attr_t *__attr, size_t
 
     TRACE_HOOK("attr %p stack size %zu", __attr, stack_size);
 
-#ifdef HAVE_PTHREAD_ATTR_GETSTACK
-    size_t unused_size;
-    void *stack_addr;
-    int ret = pthread_attr_getstack(realattr, &stack_addr, &unused_size);
-    if (ret)
-        return ret;
-
-    return pthread_attr_setstack(realattr, stack_addr, stack_size);
-#else
     return pthread_attr_setstacksize(realattr, stack_size);
-#endif
 }
 
 static int _hybris_hook_pthread_attr_getstacksize(pthread_attr_t const *__attr, size_t *stack_size)
@@ -473,12 +463,7 @@ static int _hybris_hook_pthread_attr_getstacksize(pthread_attr_t const *__attr, 
 
     TRACE_HOOK("attr %p stack size %p", __attr, stack_size);
 
-#ifdef HAVE_PTHREAD_ATTR_GETSTACK
-    void *unused_addr;
-    return pthread_attr_getstack(realattr, &unused_addr, stack_size);
-#else
     return pthread_attr_getstacksize(realattr, stack_size);
-#endif
 }
 
 static int _hybris_hook_pthread_attr_setstackaddr(pthread_attr_t *__attr, void *stack_addr)
@@ -487,17 +472,7 @@ static int _hybris_hook_pthread_attr_setstackaddr(pthread_attr_t *__attr, void *
 
     TRACE_HOOK("attr %p stack addr %p", __attr, stack_addr);
 
-#ifdef HAVE_PTHREAD_ATTR_GETSTACK
-    size_t stack_size;
-    void *unused_addr;
-    int ret = pthread_attr_getstack(realattr, &unused_addr, &stack_size);
-    if (ret)
-        return ret;
-
-    return pthread_attr_setstack(realattr, stack_addr, stack_size);
-#else
     return pthread_attr_setstackaddr(realattr, stack_addr);
-#endif
 }
 
 static int _hybris_hook_pthread_attr_getstackaddr(pthread_attr_t const *__attr, void **stack_addr)
@@ -506,12 +481,7 @@ static int _hybris_hook_pthread_attr_getstackaddr(pthread_attr_t const *__attr, 
 
     TRACE_HOOK("attr %p stack addr %p", __attr, stack_addr);
 
-#ifdef HAVE_PTHREAD_ATTR_GETSTACK
-    size_t unused_size;
-    return pthread_attr_getstack(realattr, stack_addr, &unused_size);
-#else
     return pthread_attr_getstackaddr(realattr, stack_addr);
-#endif
 }
 
 static int _hybris_hook_pthread_attr_setstack(pthread_attr_t *__attr, void *stack_base, size_t stack_size)

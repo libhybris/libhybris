@@ -1,7 +1,6 @@
 AC_INIT([libhybris], [0.1.0])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS(config.h)
-AC_CONFIG_MACRO_DIRS([m4])
 AM_INIT_AUTOMAKE([dist-bzip2 subdir-objects])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
@@ -25,8 +24,6 @@ AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 
-AX_PTHREAD
-
 PKG_PROG_PKG_CONFIG
 
 LT_CURRENT=hybris_lt_current
@@ -38,14 +35,6 @@ AC_SUBST([LT_AGE])
 
 AC_CHECK_LIB(dl, dlopen, dummy=yes, AC_MSG_ERROR(dynamic linking loader is required))
 AC_CHECK_LIB(rt, clock_gettime, dummy=yes, AC_MSG_ERROR(librt is required))
-
-CFLAGS_save="$CFLAGS"
-LIBS_save="$LIBS"
-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-LIBS="$LIBS $PTHREAD_LIBS"
-AC_CHECK_FUNCS(pthread_attr_getstack)
-CFLAGS="$CFLAGS_save"
-LIBS="$LIBS_save"
 
 AC_ARG_ENABLE(debug,
   [  --enable-debug            Enable debug build (default=disabled)],
