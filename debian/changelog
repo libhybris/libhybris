@@ -1,8 +1,24 @@
-libhybris (0.1.0+git20151016+6d424c9-0ubuntu23) UNRELEASED; urgency=medium
+libhybris (0.1.0+git20151016+6d424c9-0ubuntu23) yakkety; urgency=medium
 
+  [ You-Sheng Yang ]
+  * build: fix warnings due to arm32/arm64 types size differences
+  * build: include config.h first
+  * hooks: fix scandir/scandirat hooks prototypes
+  * hooks: fix arm64 shared pthread ptr implementation
+  * hooks: use pthread_attr_{get,set}stack when available
+
+  [ Iain Lane ]
   * hooks:c: Don't pass builtin functions.
 
- -- Iain Lane <iain.lane@canonical.com>  Tue, 09 Aug 2016 11:40:54 +0100
+  [ You-Sheng Yang ]
+  * compat: always build binaries for both arch
+  * build: fix misc warnings
+  * hooks: fix bionic FILE struct size on arm64
+  * hooks: add readdir64, readdir64_r
+  * hooks: fix getmntent, getmntent_r
+  * Revert "hooks: use pthread_attr_{get,set}stack when available"
+
+ -- Simon Fels <simon.fels@canonical.com>  Thu, 18 Aug 2016 10:35:52 +0200
 
 libhybris (0.1.0+git20151016+6d424c9-0ubuntu22) yakkety; urgency=medium
 
