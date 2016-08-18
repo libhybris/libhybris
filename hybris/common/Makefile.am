@@ -41,12 +41,11 @@ endif
 if WANT_EXPERIMENTAL
 libhybris_common_la_CPPFLAGS += -DWANT_LINKER_MM
 endif
-libhybris_common_la_CFLAGS = $(PTHREAD_CFLAGS)
 libhybris_common_la_LDFLAGS = \
 	-ldl \
 	-lrt \
+	-pthread \
 	-lc \
 	-lstdc++ \
-	$(PTHREAD_LIBS) \
 	$(top_builddir)/properties/libandroid-properties.la \
 	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"

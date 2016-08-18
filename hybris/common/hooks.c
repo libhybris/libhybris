@@ -454,17 +454,7 @@ static int _hybris_hook_pthread_attr_setstacksize(pthread_attr_t *__attr, size_t
 
     TRACE_HOOK("attr %p stack size %zu", __attr, stack_size);
 
-#ifdef HAVE_PTHREAD_ATTR_GETSTACK
-    size_t unused_size;
-    void *stack_addr;
-    int ret = pthread_attr_getstack(realattr, &stack_addr, &unused_size);
-    if (ret)
-        return ret;
-
-    return pthread_attr_setstack(realattr, stack_addr, stack_size);
-#else
     return pthread_attr_setstacksize(realattr, stack_size);
-#endif
 }
 
 static int _hybris_hook_pthread_attr_getstacksize(pthread_attr_t const *__attr, size_t *stack_size)
@@ -473,12 +463,7 @@ static int _hybris_hook_pthread_attr_getstacksize(pthread_attr_t const *__attr, 
 
     TRACE_HOOK("attr %p stack size %p", __attr, stack_size);
 
-#ifdef HAVE_PTHREAD_ATTR_GETSTACK
-    void *unused_addr;
-    return pthread_attr_getstack(realattr, &unused_addr, stack_size);
-#else
     return pthread_attr_getstacksize(realattr, stack_size);
-#endif
 }
 
 static int _hybris_hook_pthread_attr_setstackaddr(pthread_attr_t *__attr, void *stack_addr)
@@ -487,17 +472,7 @@ static int _hybris_hook_pthread_attr_setstackaddr(pthread_attr_t *__attr, void *
 
     TRACE_HOOK("attr %p stack addr %p", __attr, stack_addr);
 
-#ifdef HAVE_PTHREAD_ATTR_GETSTACK
-    size_t stack_size;
-    void *unused_addr;
-    int ret = pthread_attr_getstack(realattr, &unused_addr, &stack_size);
-    if (ret)
-        return ret;
-
-    return pthread_attr_setstack(realattr, stack_addr, stack_size);
-#else
     return pthread_attr_setstackaddr(realattr, stack_addr);
-#endif
 }
 
 static int _hybris_hook_pthread_attr_getstackaddr(pthread_attr_t const *__attr, void **stack_addr)
@@ -506,12 +481,7 @@ static int _hybris_hook_pthread_attr_getstackaddr(pthread_attr_t const *__attr, 
 
     TRACE_HOOK("attr %p stack addr %p", __attr, stack_addr);
 
-#ifdef HAVE_PTHREAD_ATTR_GETSTACK
-    size_t unused_size;
-    return pthread_attr_getstack(realattr, stack_addr, &unused_size);
-#else
     return pthread_attr_getstackaddr(realattr, stack_addr);
-#endif
 }
 
 static int _hybris_hook_pthread_attr_setstack(pthread_attr_t *__attr, void *stack_base, size_t stack_size)
@@ -1305,6 +1275,59 @@ static int _hybris_hook_set_errno(int oi_errno)
  */
 static int ___hybris_hook_isthreaded = 1;
 
+/* "struct __sbuf" from bionic/libc/include/stdio.h */
+#if defined(__LP64__)
+struct bionic_sbuf {
+    unsigned char* _base;
+    size_t _size;
+};
+#else
+struct bionic_sbuf {
+    unsigned char *_base;
+    int _size;
+};
+#endif
+
+/* "struct __sFILE" from bionic/libc/include/stdio.h */
+struct __attribute__((packed)) bionic_file {
+    unsigned char *_p;      /* current position in (some) buffer */
+    int _r;                 /* read space left for getc() */
+    int _w;                 /* write space left for putc() */
+#if defined(__LP64__)
+    int _flags;             /* flags, below; this FILE is free if 0 */
+    int _file;              /* fileno, if Unix descriptor, else -1 */
+#else
+    short _flags;           /* flags, below; this FILE is free if 0 */
+    short _file;            /* fileno, if Unix descriptor, else -1 */
+#endif
+    struct bionic_sbuf _bf; /* the buffer (at least 1 byte, if !NULL) */
+    int _lbfsize;           /* 0 or -_bf._size, for inline putc */
+
+    /* operations */
+    void *_cookie;          /* cookie passed to io functions */
+    int (*_close)(void *);
+    int (*_read)(void *, char *, int);
+    fpos_t (*_seek)(void *, fpos_t, int);
+    int (*_write)(void *, const char *, int);
+
+    /* extension data, to avoid further ABI breakage */
+    struct bionic_sbuf _ext;
+    /* data for long sequences of ungetc() */
+    unsigned char *_up;     /* saved _p when _p is doing ungetc data */
+    int _ur;                /* saved _r when _r is counting ungetc data */
+
+    /* tricks to meet minimum requirements even when malloc() fails */
+    unsigned char _ubuf[3]; /* guarantee an ungetc() buffer */
+    unsigned char _nbuf[1]; /* guarantee a getc() buffer */
+
+    /* separate buffer for fgetln() when line crosses buffer boundary */
+    struct bionic_sbuf _lb; /* buffer for fgetln() */
+
+    /* Unix stdio files get aligned to block boundaries on fseek() */
+    int _blksize;           /* stat.st_blksize (may be != _bf._size) */
+    fpos_t _offset;         /* current lseek offset */
+};
+
 /*
  * redirection for bionic's __sF, which is defined as:
  *   FILE __sF[3];
@@ -1316,16 +1339,15 @@ static int ___hybris_hook_isthreaded = 1;
  *   pointer.
  *   Currently, only fputs is managed.
  */
-#define BIONIC_SIZEOF_FILE 84
-static char _hybris_hook_sF[3*BIONIC_SIZEOF_FILE] = {0};
+static char _hybris_hook_sF[3 * sizeof(struct bionic_file)] = {0};
 static FILE *_get_actual_fp(FILE *fp)
 {
     char *c_fp = (char*)fp;
     if (c_fp == &_hybris_hook_sF[0])
         return stdin;
-    else if (c_fp == &_hybris_hook_sF[BIONIC_SIZEOF_FILE])
+    else if (c_fp == &_hybris_hook_sF[sizeof(struct bionic_file)])
         return stdout;
-    else if (c_fp == &_hybris_hook_sF[BIONIC_SIZEOF_FILE*2])
+    else if (c_fp == &_hybris_hook_sF[sizeof(struct bionic_file) * 2])
         return stderr;
 
     return fp;
@@ -2231,6 +2253,10 @@ static struct mntent* _hybris_hook_getmntent(FILE *fp)
 {
     TRACE_HOOK("fp %p", fp);
 
+    /* glibc doesn't allow NULL fp here, but bionic does. */
+    if (fp == NULL)
+        return NULL;
+
     return getmntent(_get_actual_fp(fp));
 }
 
@@ -2238,6 +2264,10 @@ static struct mntent* _hybris_hook_getmntent_r(FILE *fp, struct mntent *e, char 
 {
     TRACE_HOOK("fp %p e %p buf '%s' buf len %i",
                fp, e, buf, buf_len);
+
+    /* glibc doesn't allow NULL fp here, but bionic does. */
+    if (fp == NULL)
+        return NULL;
 
     return getmntent_r(_get_actual_fp(fp), e, buf, buf_len);
 }
@@ -2703,6 +2733,8 @@ static struct _hook hooks_mm[] = {
     {"sigwaitinfo", sigwaitinfo},
 #endif
     /* dirent.h */
+    {"readdir64", _hybris_hook_readdir},
+    {"readdir64_r", _hybris_hook_readdir_r},
     {"scandir", _hybris_hook_scandir},
     {"scandirat", _hybris_hook_scandirat},
     {"alphasort,", _hybris_hook_alphasort},
