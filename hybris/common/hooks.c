@@ -72,11 +72,20 @@
 #include <hybris/properties/properties.h>
 #include <hybris/common/hooks.h>
 
+#ifdef WANT_ARM_TRACING
+#include "wrappers.h"
+#endif
+
 static locale_t hybris_locale;
 static int locale_inited = 0;
 static hybris_hook_cb hook_callback = NULL;
 
+#ifdef WANT_ARM_TRACING
+static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), void *(_create_wrapper)(const char*, void*, int)) = NULL;
+#else
 static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) = NULL;
+#endif
+
 static void* (*_android_dlopen)(const char *filename, int flags) = NULL;
 static void* (*_android_dlsym)(void *handle, const char *symbol) = NULL;
 static void* (*_android_dladdr)(void *addr, Dl_info *info) = NULL;
@@ -2977,7 +2986,11 @@ static void __hybris_linker_init()
     _android_dlerror = dlsym(linker_handle, "android_dlerror");
 
     /* Now its time to setup the linker itself */
+#ifdef WANT_ARM_TRACING
+    _android_linker_init(sdk_version, __hybris_get_hooked_symbol, create_wrapper);
+#else
     _android_linker_init(sdk_version, __hybris_get_hooked_symbol);
+#endif
 
     linker_initialized = 1;
 }

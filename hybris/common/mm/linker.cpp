@@ -60,6 +60,10 @@
 
 #include "hybris_compat.h"
 
+#ifdef WANT_ARM_TRACING
+#include "../wrappers.h"
+#endif
+
 #ifdef DISABLED_FOR_HYBRIS_SUPPORT
 extern void __libc_init_AT_SECURE(KernelArgumentBlock&);
 #endif
@@ -141,6 +145,10 @@ static r_debug _r_debug =
 static link_map* r_debug_tail = 0;
 
 static void* (*_get_hooked_symbol)(const char *sym, const char *requester);
+
+#ifdef WANT_ARM_TRACING
+void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
+#endif
 
 static void insert_soinfo_into_debug_map(soinfo* info) {
   // Copy the necessary fields into the debug structure.
@@ -1804,6 +1812,28 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
           return false;
         }
       }
+#ifdef WANT_ARM_TRACING
+      else
+      {
+        // this will be slower.
+        if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
+          return false;
+        }
+
+        if (!soinfo_do_lookup(this, sym_name, vi, &lsi, global_group, local_group, &s)) {
+          return false;
+        }
+
+        switch(ELF_ST_TYPE(s->st_info))
+        {
+          case STT_FUNC:
+          case STT_GNU_IFUNC:
+          case STT_ARM_TFUNC:
+            sym_addr = (ElfW(Addr))_create_wrapper(sym_name, (void*)sym_addr, WRAPPER_HOOKED);
+            break;
+        }
+      }
+#endif
 
       if (sym_addr == 0 && s == nullptr) {
         // We only allow an undefined symbol if this is a weak reference...
@@ -1877,7 +1907,24 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
           }
         }
 #endif
+
+#ifdef WANT_ARM_TRACING
+        switch(ELF_ST_TYPE(s->st_info))
+        {
+          case STT_FUNC:
+          case STT_GNU_IFUNC:
+          case STT_ARM_TFUNC:
+            sym_addr = (ElfW(Addr))_create_wrapper(sym_name,
+                    (void*)lsi->resolve_symbol_address(s), WRAPPER_UNHOOKED);
+            break;
+          default:
+            sym_addr = lsi->resolve_symbol_address(s);
+            break;
+        }
+#else
         sym_addr = lsi->resolve_symbol_address(s);
+#endif
+
 #if !defined(__LP64__)
         if (protect_segments) {
           if (phdr_table_unprotect_segments(phdr, phnum, load_bias) < 0) {
@@ -3292,7 +3339,11 @@ static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf) {
   return 0;
 }
 
+#ifdef WANT_ARM_TRACING
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), void *(create_wrapper)(const char*, void*, int)) {
+#else
 extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) {
+#endif
   // Get a few environment variables.
   const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
   if (LD_DEBUG != nullptr) {
@@ -3316,6 +3367,9 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
     set_application_target_sdk_version(sdk_version);
 
   _get_hooked_symbol = get_hooked_symbol;
+#ifdef WANT_ARM_TRACING
+  _create_wrapper = create_wrapper;
+#endif
 }
 
 #ifdef DISABLED_FOR_HYBRIS_SUPPORT

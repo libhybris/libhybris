@@ -30,3 +30,9 @@ jb_la_CFLAGS += -DLINKER_DEBUG=1
 else
 jb_la_CFLAGS += -DLINKER_DEBUG=0
 endif
+
+if WANT_ARM_TRACING
+jb_la_CPPFLAGS = \
+	-DWANT_ARM_TRACING
+endif
+

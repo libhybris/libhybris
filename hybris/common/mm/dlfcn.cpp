@@ -31,6 +31,12 @@
 
 #include "hybris_compat.h"
 
+#ifdef WANT_ARM_TRACING
+#include "../wrappers.h"
+#endif
+
+extern void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
+
 /* This file hijacks the symbols stubbed out in libdl.so. */
 
 static pthread_mutex_t g_dl_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
@@ -131,7 +137,19 @@ extern "C" void* android_dlsym(void* handle, const char* symbol) {
     unsigned bind = ELF_ST_BIND(sym->st_info);
 
     if ((bind == STB_GLOBAL || bind == STB_WEAK) && sym->st_shndx != 0) {
+#ifdef WANT_ARM_TRACING
+      switch(ELF_ST_TYPE(sym->st_info))
+      {
+        case STT_FUNC:
+        case STT_GNU_IFUNC:
+        case STT_ARM_TFUNC:
+          return reinterpret_cast<void*>(_create_wrapper((char*)symbol, (void*)found->resolve_symbol_address(sym), WRAPPER_DYNHOOK));
+        default:
+          return reinterpret_cast<void*>(found->resolve_symbol_address(sym));
+      }
+#else
       return reinterpret_cast<void*>(found->resolve_symbol_address(sym));
+#endif
     }
 
     __bionic_format_dlerror("symbol found but not global", symbol);
