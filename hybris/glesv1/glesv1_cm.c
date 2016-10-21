@@ -26,9 +26,9 @@
 
 #include <hybris/common/binding.h>
 
-#define GLESV1_CM_LIBRARY_PATH "/system/lib/libGLESv1_CM.so"
+#define GLESV1_CM_LIBRARY "libGLESv1_CM.so"
 
-HYBRIS_LIBRARY_INITIALIZE(glesv1_cm, GLESV1_CM_LIBRARY_PATH);
+HYBRIS_LIBRARY_INITIALIZE(glesv1_cm, GLESV1_CM_LIBRARY);
 
 /* Scripts to generate these bindings can be found in utils/generate_glesv1/ */
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv1_cm, glAlphaFunc, GLenum, GLclampf);
