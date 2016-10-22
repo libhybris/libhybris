@@ -1641,6 +1641,7 @@ static struct _hook hooks[] = {
     {"versionsort", my_versionsort},
     /* fcntl.h */
     {"open", my_open},
+    {"close", close},
     {"__get_tls_hooks", __get_tls_hooks},
     {"sscanf", sscanf},
     {"scanf", scanf},
