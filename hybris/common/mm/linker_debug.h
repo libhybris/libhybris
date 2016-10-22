@@ -56,19 +56,25 @@
 
 #include "private/libc_logging.h"
 
-__LIBC_HIDDEN__ extern int g_ld_debug_verbosity;
+extern int g_ld_debug_verbosity;
+extern int g_ld_debug_stdout;
 
-#if LINKER_DEBUG_TO_LOG
-#define _PRINTVF(v, x...) \
+#define LOG_PRINTVF(v, x...) \
     do { \
       if (g_ld_debug_verbosity > (v)) __libc_format_log(5-(v), "linker", x); \
     } while (0)
-#else /* !LINKER_DEBUG_TO_LOG */
-#define _PRINTVF(v, x...) \
+#define FILE_PRINTVF(v, x...) \
     do { \
       if (g_ld_debug_verbosity > (v)) { __libc_format_fd(1, x); write(1, "\n", 1); } \
     } while (0)
-#endif /* !LINKER_DEBUG_TO_LOG */
+
+#define _PRINTVF(v, x...) \
+    do { \
+      if (g_ld_debug_stdout) \
+        FILE_PRINTVF(v, x); \
+      else \
+        LOG_PRINTVF(v, x); \
+    } while(0);
 
 #define PRINT(x...)          _PRINTVF(-1, x)
 #define INFO(x...)           _PRINTVF(0, x)

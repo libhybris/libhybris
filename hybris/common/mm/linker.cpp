@@ -45,7 +45,9 @@
 #include <vector>
 
 // Private C library headers.
+#if 0 // ANDROID
 #include "private/bionic_tls.h"
+#endif
 #include "private/KernelArgumentBlock.h"
 #include "private/ScopedPthreadMutexLocker.h"
 #include "private/ScopeGuard.h"
@@ -58,7 +60,17 @@
 #include "linker_phdr.h"
 #include "linker_relocs.h"
 #include "linker_reloc_iterators.h"
+#if 0 // ANDROID
 #include "ziparchive/zip_archive.h"
+#else
+
+#include "hybris_compat.h"
+
+extern "C" void *get_hooked_symbol(const char *symbol);
+
+int g_ld_debug_stdout = 0;
+
+#endif
 
 extern void __libc_init_AT_SECURE(KernelArgumentBlock&);
 
@@ -71,8 +83,8 @@ static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf);
 static LinkerTypeAllocator<soinfo> g_soinfo_allocator;
 static LinkerTypeAllocator<LinkedListEntry<soinfo>> g_soinfo_links_allocator;
 
-static soinfo* solist;
-static soinfo* sonext;
+static soinfo* solist = get_libdl_info();
+static soinfo* sonext = get_libdl_info();
 static soinfo* somain; // main process, always the one after libdl_info
 
 static const char* const kDefaultLdPaths[] = {
@@ -94,9 +106,9 @@ static std::vector<std::string> g_ld_preload_names;
 
 static std::vector<soinfo*> g_ld_preloads;
 
-__LIBC_HIDDEN__ int g_ld_debug_verbosity;
+int g_ld_debug_verbosity;
 
-__LIBC_HIDDEN__ abort_msg_t* g_abort_message = nullptr; // For debuggerd.
+abort_msg_t* g_abort_message = nullptr; // For debuggerd.
 
 #if STATS
 struct linker_stats_t {
@@ -133,8 +145,8 @@ extern "C"
 void __attribute__((noinline)) __attribute__((visibility("default"))) rtld_db_dlactivity();
 
 static pthread_mutex_t g__r_debug_mutex = PTHREAD_MUTEX_INITIALIZER;
-static r_debug _r_debug =
-    {1, nullptr, reinterpret_cast<uintptr_t>(&rtld_db_dlactivity), r_debug::RT_CONSISTENT, 0};
+//static r_debug _r_debug =
+//    {1, nullptr, reinterpret_cast<uintptr_t>(&rtld_db_dlactivity), r_debug::RT_CONSISTENT, 0};
 
 static link_map* r_debug_tail = 0;
 
@@ -334,7 +346,7 @@ static bool realpath_fd(int fd, std::string* realpath) {
   return true;
 }
 
-#if defined(__arm__)
+#if defined(ANDROID_ARM_LINKER)
 
 // For a given PC, find the .so that it belongs to.
 // Returns the base address of the .ARM.exidx section
@@ -344,7 +356,7 @@ static bool realpath_fd(int fd, std::string* realpath) {
 // Intended to be called by libc's __gnu_Unwind_Find_exidx().
 //
 // This function is exposed via dlfcn.cpp and libdl.so.
-_Unwind_Ptr dl_unwind_find_exidx(_Unwind_Ptr pc, int* pcount) {
+_Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int* pcount) {
   uintptr_t addr = reinterpret_cast<uintptr_t>(pc);
 
   for (soinfo* si = solist; si != 0; si = si->next) {
@@ -642,7 +654,9 @@ bool soinfo::elf_lookup(SymbolName& symbol_name,
 
 soinfo::soinfo(const char* realpath, const struct stat* file_stat,
                off64_t file_offset, int rtld_flags) {
+#if 0 // ANDROID
   memset(this, 0, sizeof(*this));
+#endif
 
   if (realpath != nullptr) {
     realpath_ = realpath;
@@ -883,12 +897,12 @@ class LoadTask {
 
 LoadTask::deleter_t LoadTask::deleter;
 
-template <typename T>
-using linked_list_t = LinkedList<T, TypeBasedAllocator<LinkedListEntry<T>>>;
+//template <typename T>
+//using linked_list_t = LinkedList<T, TypeBasedAllocator<LinkedListEntry<T>>>;
 
-typedef linked_list_t<soinfo> SoinfoLinkedList;
-typedef linked_list_t<const char> StringLinkedList;
-typedef linked_list_t<LoadTask> LoadTaskList;
+typedef LinkedList<soinfo, TypeBasedAllocator<LinkedListEntry<soinfo>>> SoinfoLinkedList;
+typedef LinkedList<const char, TypeBasedAllocator<LinkedListEntry<const char>>> StringLinkedList;
+typedef LinkedList<LoadTask, TypeBasedAllocator<LinkedListEntry<LoadTask>>> LoadTaskList;
 
 static soinfo* find_library(const char* name, int rtld_flags, const android_dlextinfo* extinfo);
 
@@ -902,7 +916,7 @@ static std::vector<std::string> g_ld_all_shim_libs;
 // we load the library to avoid recursive loops (load shim libA
 // for libB where libA also links against libB).
 
-static linked_list_t<const std::string> g_active_shim_libs;
+static LinkedList<const std::string, TypeBasedAllocator<LinkedListEntry<const std::string>>> g_active_shim_libs;
 
 static void reset_g_active_shim_libs(void) {
   g_active_shim_libs.clear();
@@ -1154,6 +1168,7 @@ ElfW(Sym)* soinfo::elf_addr_lookup(const void* addr) {
   return nullptr;
 }
 
+#if 0 // ANDROID
 static int open_library_in_zipfile(const char* const path,
                                    off64_t* file_offset) {
   TRACE("Trying zip file open from path '%s'", path);
@@ -1210,6 +1225,7 @@ static int open_library_in_zipfile(const char* const path,
   *file_offset = entry.offset;
   return fd;
 }
+#endif
 
 static bool format_path(char* buf, size_t buf_size, const char* path, const char* name) {
   int n = __libc_format_buffer(buf, buf_size, "%s/%s", path, name);
@@ -1239,6 +1255,15 @@ static int open_library_on_default_path(const char* name, off64_t* file_offset) 
 }
 
 static int open_library_on_ld_library_path(const char* name, off64_t* file_offset) {
+#ifdef DEFAULT_HYBRIS_LD_LIBRARY_PATH
+  if (getenv("HYBRIS_LD_LIBRARY_PATH") == NULL && g_ld_library_paths.size() == 0) {
+    parse_path(DEFAULT_HYBRIS_LD_LIBRARY_PATH, ":", &g_ld_library_paths);
+  }
+#endif
+  if (getenv("HYBRIS_LD_LIBRARY_PATH") != NULL && g_ld_library_paths.size() == 0) {
+    parse_path(getenv("HYBRIS_LD_LIBRARY_PATH"), ":", &g_ld_library_paths);
+  }
+
   for (const auto& path_str : g_ld_library_paths) {
     char buf[512];
     const char* const path = path_str.c_str();
@@ -1247,9 +1272,11 @@ static int open_library_on_ld_library_path(const char* name, off64_t* file_offse
     }
 
     int fd = -1;
+#if 0 // ANDROID
     if (strchr(buf, '!') != nullptr) {
       fd = open_library_in_zipfile(buf, file_offset);
     }
+#endif
 
     if (fd == -1) {
       fd = TEMP_FAILURE_RETRY(open(buf, O_RDONLY | O_CLOEXEC));
@@ -1271,12 +1298,14 @@ static int open_library(const char* name, off64_t* file_offset) {
 
   // If the name contains a slash, we should attempt to open it directly and not search the paths.
   if (strchr(name, '/') != nullptr) {
+#if 0 // ANDROID
     if (strchr(name, '!') != nullptr) {
       int fd = open_library_in_zipfile(name, file_offset);
       if (fd != -1) {
         return fd;
       }
     }
+#endif
 
     int fd = TEMP_FAILURE_RETRY(open(name, O_RDONLY | O_CLOEXEC));
     if (fd != -1) {
@@ -1293,7 +1322,7 @@ static int open_library(const char* name, off64_t* file_offset) {
   return fd;
 }
 
-static const char* fix_dt_needed(const char* dt_needed, const char* sopath __unused) {
+static const char* fix_dt_needed(const char* dt_needed, const char* sopath) {
 #if !defined(__LP64__)
   // Work around incorrect DT_NEEDED entries for old apps: http://b/21364029
   if (get_application_target_sdk_version() <= 22) {
@@ -1458,6 +1487,18 @@ static bool find_loaded_library_by_soname(const char* name, soinfo** candidate) 
 
 static soinfo* find_library_internal(LoadTaskList& load_tasks, const char* name,
                                      int rtld_flags, const android_dlextinfo* extinfo) {
+#if LINKER_DEBUG
+    /* Has to be set via init_library as we don't get called via the
+     * traditional android init library path  */
+    const char* env;
+    env = getenv("HYBRIS_LINKER_DEBUG");
+    if (env)
+        g_ld_debug_verbosity = atoi(env);
+    if (getenv("HYBRIS_LINKER_STDOUT"))
+        g_ld_debug_stdout = 1;
+
+    INFO("[ HYBRIS: linker debug initialized, continuing find_library_internal '%s']\n", name);
+#endif
   soinfo* candidate;
 
   if (find_loaded_library_by_soname(name, &candidate)) {
@@ -1894,7 +1935,7 @@ bool soinfo::lookup_version_info(const VersionTracker& version_tracker, ElfW(Wor
 
 #if !defined(__mips__)
 #if defined(USE_RELA)
-static ElfW(Addr) get_addend(ElfW(Rela)* rela, ElfW(Addr) reloc_addr __unused) {
+static ElfW(Addr) get_addend(ElfW(Rela)* rela, ElfW(Addr) reloc_addr) {
   return rela->r_addend;
 }
 #else
@@ -1936,15 +1977,20 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       sym_name = get_string(symtab_[sym].st_name);
       const version_info* vi = nullptr;
 
-      if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
-        return false;
+      INFO("HYBRIS: '%s' checking hooks for sym '%s'\n", get_soname(), sym_name);
+      sym_addr = reinterpret_cast<ElfW(Addr)>(get_hooked_symbol(sym_name));
+      if (sym_addr == 0)
+      {
+        if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
+          return false;
+        }
+
+        if (!soinfo_do_lookup(this, sym_name, vi, &lsi, global_group, local_group, &s)) {
+          return false;
+        }
       }
 
-      if (!soinfo_do_lookup(this, sym_name, vi, &lsi, global_group, local_group, &s)) {
-        return false;
-      }
-
-      if (s == nullptr) {
+      if (sym_addr == 0 && s == nullptr) {
         // We only allow an undefined symbol if this is a weak reference...
         s = &symtab_[sym];
         if (ELF_ST_BIND(s->st_info) != STB_WEAK) {
@@ -1976,9 +2022,9 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
 #elif defined(__x86_64__)
           case R_X86_64_32:
           case R_X86_64_64:
-#elif defined(__arm__)
+#elif defined(ANDROID_ARM_LINKER)
           case R_ARM_ABS32:
-#elif defined(__i386__)
+#elif defined(ANDROID_X86_LINKER)
           case R_386_32:
 #endif
             /*
@@ -1991,7 +2037,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
           case R_X86_64_PC32:
             sym_addr = reloc;
             break;
-#elif defined(__i386__)
+#elif defined(ANDROID_X86_LINKER)
           case R_386_PC32:
             sym_addr = reloc;
             break;
@@ -2000,7 +2046,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
             DL_ERR("unknown weak reloc type %d @ %p (%zu)", type, rel, idx);
             return false;
         }
-      } else { // We got a definition.
+      } else if (sym_addr == 0) { // We got a definition.
 #if !defined(__LP64__)
         // When relocating dso with text_relocation .text segment is
         // not executable. We need to restore elf flags before resolving
@@ -2225,7 +2271,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
                    static_cast<size_t>(sym_addr), static_cast<size_t>(reloc), sym_name);
         *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend - reloc;
         break;
-#elif defined(__arm__)
+#elif defined(ANDROID_ARM_LINKER)
       case R_ARM_ABS32:
         count_relocation(kRelocAbsolute);
         MARK(rel->r_offset);
@@ -2251,7 +2297,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
          */
         DL_ERR("%s R_ARM_COPY relocations are not supported", get_realpath());
         return false;
-#elif defined(__i386__)
+#elif defined(ANDROID_X86_LINKER)
       case R_386_32:
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
@@ -2275,7 +2321,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
 }
 #endif  // !defined(__mips__)
 
-void soinfo::call_array(const char* array_name __unused, linker_function_t* functions,
+void soinfo::call_array(const char* array_name, linker_function_t* functions,
                         size_t count, bool reverse) {
   if (functions == nullptr) {
     return;
@@ -2295,7 +2341,7 @@ void soinfo::call_array(const char* array_name __unused, linker_function_t* func
   TRACE("[ Done calling %s for '%s' ]", array_name, get_realpath());
 }
 
-void soinfo::call_function(const char* function_name __unused, linker_function_t function) {
+void soinfo::call_function(const char* function_name, linker_function_t function) {
   if (function == nullptr || reinterpret_cast<uintptr_t>(function) == static_cast<uintptr_t>(-1)) {
     return;
   }
@@ -2313,6 +2359,11 @@ void soinfo::call_pre_init_constructors() {
 
 void soinfo::call_constructors() {
   if (constructors_called) {
+    return;
+  }
+
+  if (strcmp(soname_, "libc.so") == 0) {
+    DEBUG("HYBRIS: =============> Skipping libc.so\n");
     return;
   }
 
@@ -2589,7 +2640,7 @@ bool soinfo::prelink_image() {
     }
   }
 
-#if defined(__arm__)
+#if defined(ANDROID_ARM_LINKER)
   (void) phdr_table_get_arm_exidx(phdr, phnum, load_bias,
                                   &ARM_exidx, &ARM_exidx_count);
 #endif
@@ -3143,7 +3194,7 @@ bool soinfo::link_image(const soinfo_list_t& global_group, const soinfo_list_t& 
  * It helps to stack unwinding through signal handlers.
  * Also, it makes bionic more like glibc.
  */
-static void add_vdso(KernelArgumentBlock& args __unused) {
+static void add_vdso(KernelArgumentBlock& args) {
 #if defined(AT_SYSINFO_EHDR)
   ElfW(Ehdr)* ehdr_vdso = reinterpret_cast<ElfW(Ehdr)*>(args.getauxval(AT_SYSINFO_EHDR));
   if (ehdr_vdso == nullptr) {
@@ -3225,7 +3276,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   debuggerd_init();
 
   // Get a few environment variables.
-  const char* LD_DEBUG = getenv("LD_DEBUG");
+  const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
   if (LD_DEBUG != nullptr) {
     g_ld_debug_verbosity = atoi(LD_DEBUG);
   }
@@ -3236,9 +3287,9 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   const char* ldpreload_env = nullptr;
   const char* ldshim_libs_env = nullptr;
   if (!getauxval(AT_SECURE)) {
-    ldpath_env = getenv("LD_LIBRARY_PATH");
-    ldpreload_env = getenv("LD_PRELOAD");
-    ldshim_libs_env = getenv("LD_SHIM_LIBS");
+    ldpath_env = getenv("HYBRIS_LD_LIBRARY_PATH");
+    ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
+    ldshim_libs_env = getenv("HYBRIS_LD_SHIM_LIBS");
   }
 
   INFO("[ android linker & debugger ]");
@@ -3423,6 +3474,7 @@ static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf) {
   return 0;
 }
 
+#if 0 // ANDROID
 extern "C" void _start();
 
 /*
@@ -3501,3 +3553,4 @@ extern "C" ElfW(Addr) __linker_init(void* raw_args) {
   // Return the address that the calling assembly stub should jump to.
   return start_address;
 }
+#endif

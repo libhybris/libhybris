@@ -86,6 +86,8 @@ AC_ARG_ENABLE(arch,
                               x86: Compile for x86],
   [ if   test "x$enableval" = "xarm" ; then
       arch="arm"
+   elif test "x$enableval" = "xarm64" ; then
+      arch="arm64"
    elif test "x$enableval" = "xx86" ; then
       arch="x86"
    else
@@ -98,6 +100,7 @@ AC_ARG_ENABLE(arch,
   [arch="arm"]
   )
 AM_CONDITIONAL([WANT_ARCH_ARM], [test x$arch = xarm])
+AM_CONDITIONAL([WANT_ARCH_ARM64], [test x$arch = xarm64])
 AM_CONDITIONAL([WANT_ARCH_X86], [test x$arch = xx86])
 
 DEFAULT_EGL_PLATFORM="null"
@@ -178,6 +181,7 @@ AC_SUBST(ANDROID_VERSION_PATCH, [$android_headers_patch])
 AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch")
 
 # Add automake tests for version/API needs here that you need in code, including test .am's
+AM_CONDITIONAL([HAS_ANDROID_6_0_0], [test $android_headers_major -ge 6 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_5_0_0], [test $android_headers_major -ge 5 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_4_2_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 2 ])
 AM_CONDITIONAL([HAS_ANDROID_4_1_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 1 ])
@@ -194,6 +198,7 @@ AC_CONFIG_FILES([
 	common/gingerbread/Makefile
 	common/ics/Makefile
 	common/jb/Makefile
+	common/mm/Makefile
 	egl/egl.pc
 	egl/Makefile
 	egl/platforms/Makefile

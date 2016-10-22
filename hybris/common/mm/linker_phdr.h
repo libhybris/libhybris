@@ -100,7 +100,7 @@ int phdr_table_serialize_gnu_relro(const ElfW(Phdr)* phdr_table, size_t phdr_cou
 int phdr_table_map_gnu_relro(const ElfW(Phdr)* phdr_table, size_t phdr_count,
                              ElfW(Addr) load_bias, int fd);
 
-#if defined(__arm__)
+#if defined(ANDROID_ARM_LINKER)
 int phdr_table_get_arm_exidx(const ElfW(Phdr)* phdr_table, size_t phdr_count, ElfW(Addr) load_bias,
                              ElfW(Addr)** arm_exidx, size_t* arm_exidix_count);
 #endif

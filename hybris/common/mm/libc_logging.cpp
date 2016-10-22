@@ -26,11 +26,16 @@
  * SUCH DAMAGE.
  */
 
-#include "../private/libc_logging.h" // Relative path so we can #include this .cpp file for testing.
-#include "../private/ScopedPthreadMutexLocker.h"
+#include "private/libc_logging.h" // Relative path so we can #include this .cpp file for testing.
+#include "private/ScopedPthreadMutexLocker.h"
 
 #include <android/set_abort_message.h>
+#if 0 // ANDROID
 #include <assert.h>
+#else
+void android___assert(const char *, int, const char *);
+void android___assert(const char *, int, const char *, const char *);
+#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -48,7 +53,7 @@
 
 static pthread_mutex_t g_abort_msg_lock = PTHREAD_MUTEX_INITIALIZER;
 
-__LIBC_HIDDEN__ abort_msg_t** __abort_message_ptr; // Accessible to __libc_init_common.
+abort_msg_t** __abort_message_ptr; // Accessible to __libc_init_common.
 
 // Must be kept in sync with frameworks/base/core/java/android/util/EventLog.java.
 enum AndroidEventLogType {
@@ -383,7 +388,7 @@ static void out_vformat(Out& o, const char* format, va_list args) {
             buffer[0] = '%';
             buffer[1] = '\0';
         } else {
-            __assert(__FILE__, __LINE__, "conversion specifier unsupported");
+            android___assert(__FILE__, __LINE__, "conversion specifier unsupported");
         }
 
         /* if we are here, 'str' points to the content that must be
@@ -392,7 +397,7 @@ static void out_vformat(Out& o, const char* format, va_list args) {
         slen = strlen(str);
 
         if (sign != '\0' || prec != -1) {
-            __assert(__FILE__, __LINE__, "sign/precision unsupported");
+            android___assert(__FILE__, __LINE__, "sign/precision unsupported");
         }
 
         if (slen < width && !padLeft) {

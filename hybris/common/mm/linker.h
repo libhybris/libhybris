@@ -237,7 +237,7 @@ struct soinfo {
   linker_function_t init_func_;
   linker_function_t fini_func_;
 
-#if defined(__arm__)
+#if defined(ANDROID_ARM_LINKER)
  public:
   // ARM EABI section used for stack unwinding.
   uint32_t* ARM_exidx;
@@ -304,10 +304,11 @@ struct soinfo {
   bool can_unload() const;
   bool is_gnu_hash() const;
 
-  bool inline has_min_version(uint32_t min_version __unused) const {
+  bool inline has_min_version(uint32_t min_version) const {
 #if defined(__work_around_b_19059885__)
     return (flags_ & FLAG_NEW_SOINFO) != 0 && version_ >= min_version;
 #else
+    (void)min_version;
     return true;
 #endif
   }

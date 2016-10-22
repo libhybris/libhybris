@@ -26,6 +26,8 @@
 
 #include "private/bionic_prctl.h"
 
+#include "hybris_compat.h"
+
 //
 // LinkerMemeoryAllocator is general purpose allocator
 // designed to provide the same functionality as the malloc/free/realloc
@@ -289,7 +291,7 @@ void* LinkerMemoryAllocator::realloc(void* ptr, size_t size) {
   }
 
   if (size == 0) {
-    free(ptr);
+    this->free(ptr);
     return nullptr;
   }
 
@@ -311,7 +313,7 @@ void* LinkerMemoryAllocator::realloc(void* ptr, size_t size) {
   if (old_size < size) {
     void *result = alloc(size);
     memcpy(result, ptr, old_size);
-    free(ptr);
+    this->free(ptr);
     return result;
   }
 

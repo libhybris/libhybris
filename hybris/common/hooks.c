@@ -27,8 +27,10 @@
 #include <stdio_ext.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <malloc.h>
 #include <string.h>
+#include <inttypes.h>
 #include <strings.h>
 #include <dlfcn.h>
 #include <pthread.h>
@@ -39,10 +41,20 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <stdarg.h>
+#include <wchar.h>
+#include <sched.h>
+#include <pwd.h>
+#include <signal.h>
+#include <setjmp.h>
+#include <sys/signalfd.h>
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <fcntl.h>
+
+#include <linux/futex.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
 
 #include <netdb.h>
 #include <unistd.h>
@@ -50,6 +62,11 @@
 #include <locale.h>
 #include <sys/syscall.h>
 #include <sys/auxv.h>
+#include <sys/prctl.h>
+
+#include <sys/mman.h>
+#include <libgen.h>
+#include <mntent.h>
 
 #include <hybris/properties/properties.h>
 
@@ -153,6 +170,20 @@ static pthread_rwlock_t* hybris_alloc_init_rwlock(void)
     pthread_rwlockattr_init(&attr);
     pthread_rwlock_init(realrwlock, &attr);
     return realrwlock;
+}
+
+int my_pthread_rwlockattr_setkind_np(pthread_rwlockattr_t *attr, int pref)
+{
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) attr;
+
+    return pthread_rwlockattr_setkind_np(realattr, pref);
+}
+
+int my_pthread_rwlockattr_getkind_np(const pthread_rwlockattr_t *attr, int *pref)
+{
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) attr;
+
+    return pthread_rwlockattr_getkind_np(realattr, pref);
 }
 
 /*
@@ -1403,11 +1434,14 @@ void *__get_tls_hooks()
   return tls_hooks;
 }
 
+extern size_t strlcat(char *dst, const char *src, size_t siz);
+extern size_t strlcpy(char *dst, const char *src, size_t siz);
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
     {"__system_property_get", my_system_property_get },
-    {"getenv", getenv },
+    /* stdlib.h */
     {"printf", printf },
     {"malloc", my_malloc },
     {"free", free },
@@ -1417,7 +1451,13 @@ static struct _hook hooks[] = {
     {"memalign", memalign },
     {"valloc", valloc },
     {"pvalloc", pvalloc },
-    {"fread", fread },
+    {"posix_memalign", posix_memalign},
+    {"setenv", setenv},
+    {"putenv", putenv},
+    {"getenv", getenv},
+    {"clearenv", clearenv},
+    {"system", system},
+    /* xattr.h */
     {"getxattr", getxattr},
     /* string.h */
     {"memccpy",memccpy},
@@ -1429,6 +1469,7 @@ static struct _hook hooks[] = {
     {"memset",memset},
     {"memmem",memmem},
     {"getlogin", getlogin},
+    {"__gnu_strerror_r", strerror_r},
     //  {"memswap",memswap},
     {"index",index},
     {"rindex",rindex},
@@ -1452,14 +1493,14 @@ static struct _hook hooks[] = {
     {"strncmp",strncmp},
     {"strncpy",strncpy},
     {"strtod", my_strtod},
-    //{"strlcat",strlcat},
-    //{"strlcpy",strlcpy},
+    {"strtol", strtol},
+    {"strlcat",strlcat},
+    {"strlcpy",strlcpy},
     {"strcspn",strcspn},
     {"strpbrk",strpbrk},
     {"strsep",strsep},
     {"strspn",strspn},
     {"strsignal",strsignal},
-    {"getgrnam", getgrnam},
     {"strcoll",strcoll},
     {"strxfrm",strxfrm},
     /* strings.h */
@@ -1473,9 +1514,6 @@ static struct _hook hooks[] = {
     {"__sprintf_chk", __sprintf_chk},
     {"__snprintf_chk", __snprintf_chk},
     {"strncasecmp",strncasecmp},
-    /* dirent.h */
-    {"opendir", opendir},
-    {"closedir", closedir},
     /* pthread.h */
     {"getauxval", getauxval},
     {"gettid", my_gettid},
@@ -1502,6 +1540,8 @@ static struct _hook hooks[] = {
     {"pthread_mutexattr_settype", pthread_mutexattr_settype},
     {"pthread_mutexattr_getpshared", pthread_mutexattr_getpshared},
     {"pthread_mutexattr_setpshared", my_pthread_mutexattr_setpshared},
+    {"pthread_rwlockattr_getkind_np", my_pthread_rwlockattr_getkind_np},
+    {"pthread_rwlockattr_setkind_np", my_pthread_rwlockattr_setkind_np},
     {"pthread_condattr_init", pthread_condattr_init},
     {"pthread_condattr_getpshared", pthread_condattr_getpshared},
     {"pthread_condattr_setpshared", pthread_condattr_setpshared},
@@ -1538,7 +1578,7 @@ static struct _hook hooks[] = {
     {"pthread_attr_setguardsize", my_pthread_attr_setguardsize},
     {"pthread_attr_getguardsize", my_pthread_attr_getguardsize},
     {"pthread_attr_setscope", my_pthread_attr_setscope},
-    {"pthread_attr_setscope", my_pthread_attr_getscope},
+    {"pthread_attr_getscope", my_pthread_attr_getscope},
     {"pthread_getattr_np", my_pthread_getattr_np},
     {"pthread_rwlockattr_init", my_pthread_rwlockattr_init},
     {"pthread_rwlockattr_destroy", my_pthread_rwlockattr_destroy},
@@ -1560,6 +1600,7 @@ static struct _hook hooks[] = {
     {"fdopen", fdopen},
     {"popen", popen},
     {"puts", puts},
+    {"dprintf", dprintf},
     {"sprintf", sprintf},
     {"asprintf", asprintf},
     {"vasprintf", vasprintf},
@@ -1594,7 +1635,6 @@ static struct _hook hooks[] = {
     {"setbuf", my_setbuf},
     {"setvbuf", my_setvbuf},
     {"ungetc", my_ungetc},
-    {"vasprintf", vasprintf},
     {"vfprintf", my_vfprintf},
     {"vfscanf", my_vfscanf},
     {"fileno", my_fileno},
@@ -1631,12 +1671,15 @@ static struct _hook hooks[] = {
     {"closedir", closedir},
     {"readdir", my_readdir},
     {"readdir_r", my_readdir_r},
+    {"readdir64", my_readdir},
+    {"readdir64_r", my_readdir_r},
     {"rewinddir", rewinddir},
     {"seekdir", seekdir},
     {"telldir", telldir},
     {"dirfd", dirfd},
     {"scandir", my_scandir},
     {"scandirat", my_scandirat},
+    {"scandir64", my_scandir},
     {"alphasort", my_alphasort},
     {"versionsort", my_versionsort},
     /* fcntl.h */
@@ -1663,8 +1706,58 @@ static struct _hook hooks[] = {
     {"writev", writev},
     /* unistd.h */
     {"access", access},
+    {"fork", fork},
+    {"ttyname", ttyname},
+    {"swprintf", swprintf},
+    {"fmemopen", fmemopen},
+    {"open_memstream", open_memstream},
+    {"open_wmemstream", open_wmemstream},
+    {"ptsname", ptsname},
+    {"getservbyname", getservbyname},
     /* grp.h */
     {"getgrgid", getgrgid},
+    /* malloc.h */
+    {"mallinfo", mallinfo},
+    {"malloc_usable_size", malloc_usable_size},
+    /* libgen.h */
+    {"basename", basename},
+    {"dirname", dirname},
+    /* locale.h */
+    {"newlocale", newlocale},
+    {"freelocale", freelocale},
+    {"duplocale", duplocale},
+    {"uselocale", uselocale},
+    {"localeconv", localeconv},
+    {"setlocale", setlocale},
+    /* sys/mman.h */
+    {"mprotect", mprotect},
+    {"mmap", mmap},
+    {"munmap", munmap},
+    /* wchar.h */
+    {"wmemchr", wmemchr},
+    {"wmemcmp", wmemcmp},
+    {"wmemcpy", wmemcpy},
+    {"wmemmove", wmemmove},
+    {"wmemset", wmemset},
+    {"wmempcpy", wmempcpy},
+    {"fputws", fputws},
+    {"vfwprintf", vfwprintf},
+    {"fputwc", fputwc},
+    {"putwc", putwc},
+    {"fgetwc", fgetwc},
+    {"getwc", getwc},
+    /* pwd.h */
+    {"getgrnam", getgrnam},
+    {"getpwuid", getpwuid},
+    {"getpwnam", getpwnam},
+    /* mntent.h */
+    {"setmntent", setmntent},
+    {"getmntent", getmntent},
+    {"getmntent_r", getmntent_r},
+    {"endmntent", endmntent},
+    /* sched.h */
+    {"clone", clone},
+
     {"__cxa_atexit", __cxa_atexit},
     {"__cxa_finalize", __cxa_finalize},
     {NULL, NULL},

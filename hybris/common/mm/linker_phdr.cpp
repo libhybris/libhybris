@@ -38,12 +38,14 @@
 #include "linker.h"
 #include "linker_debug.h"
 
+#include "hybris_compat.h"
+
 static int GetTargetElfMachine() {
-#if defined(__arm__)
+#if defined(ANDROID_ARM_LINKER)
   return EM_ARM;
 #elif defined(__aarch64__)
   return EM_AARCH64;
-#elif defined(__i386__)
+#elif defined(ANDROID_X86_LINKER)
   return EM_386;
 #elif defined(__mips__)
   return EM_MIPS;
@@ -702,7 +704,7 @@ int phdr_table_map_gnu_relro(const ElfW(Phdr)* phdr_table,
 }
 
 
-#if defined(__arm__)
+#if defined(ANDROID_ARM_LINKER)
 
 #  ifndef PT_ARM_EXIDX
 #    define PT_ARM_EXIDX    0x70000001      /* .ARM.exidx segment */
