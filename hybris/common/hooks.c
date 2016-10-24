@@ -171,7 +171,7 @@ static void *my_malloc(size_t size)
 static void *my_memcpy(void *dst, const void *src, size_t len)
 {
     if (src == NULL || dst == NULL)
-        return NULL;
+        return dst;
 
     return memcpy(dst, src, len);
 }
