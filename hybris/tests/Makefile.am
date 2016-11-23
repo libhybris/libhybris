@@ -1,10 +1,17 @@
 bin_PROGRAMS = \
+	test_audio \
 	test_egl \
 	test_egl_configs \
 	test_glesv2 \
 	test_sensors \
+	test_input \
+	test_lights \
+	test_camera \
 	test_vibrator \
-	test_gps
+	test_media \
+	test_recorder \
+	test_gps \
+	test_wifi
 
 if HAS_ANDROID_4_2_0
 bin_PROGRAMS += test_hwcomposer
@@ -34,7 +41,8 @@ endif
 bin_PROGRAMS += test_audio
 test_audio_SOURCES = test_audio.c
 test_audio_CFLAGS = \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/include/android
 test_audio_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/hardware/libhardware.la
@@ -112,8 +120,68 @@ test_lights_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/hardware/libhardware.la
 
+test_ui_SOURCES = test_ui.c
+test_ui_CFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS)
+test_ui_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/ui/libui.la
+
+test_sf_SOURCES = test_sf.c
+test_sf_CFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS)
+test_sf_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/egl/libEGL.la \
+	$(top_builddir)/glesv2/libGLESv2.la \
+	$(top_builddir)/sf/libsf.la
+
+test_input_SOURCES = test_input.c
+test_input_CFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS)
+test_input_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/input/libis.la
+
+test_camera_SOURCES = test_camera.c
+test_camera_CFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS)
+
+test_camera_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/egl/libEGL.la \
+	$(top_builddir)/glesv2/libGLESv2.la \
+	$(top_builddir)/camera/libcamera.la \
+	$(top_builddir)/input/libis.la
+
+test_media_SOURCES = test_media.c
+test_media_CFLAGS = \
+	-I$(top_srcdir)/include
+test_media_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/egl/libEGL.la \
+	$(top_builddir)/glesv2/libGLESv2.la \
+	$(top_builddir)/media/libmedia.la \
+	$(top_builddir)/sf/libsf.la
+
+test_recorder_SOURCES = test_recorder.c
+test_recorder_CFLAGS = \
+	-I$(top_srcdir)/include
+test_recorder_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/egl/libEGL.la \
+	$(top_builddir)/glesv2/libGLESv2.la \
+	$(top_builddir)/media/libmedia.la \
+	$(top_builddir)/camera/libcamera.la \
+	$(top_builddir)/input/libis.la \
+	$(top_builddir)/sf/libsf.la
+
 test_gps_SOURCES = test_gps.c
-test_gps_CFLAGS = -pthread \
+test_gps_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS)
 test_gps_LDFLAGS = -pthread
@@ -124,10 +192,11 @@ test_gps_LDADD =  \
 test_nfc_SOURCES = test_nfc.c
 test_nfc_CFLAGS = \
 	-I$(top_srcdir)/include \
-	$(ANDROID_HEADERS_CFLAGS)
-
-test_nfc_LDFLAGS =
+	$(ANDROID_HEADERS_CFLAGS) \
+	-Wno-error=unused-function
+test_nfc_LDFLAGS = -pthread
 test_nfc_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/libnfc_nxp/libnfc_nxp.la \
 	$(top_builddir)/hardware/libhardware.la
 
@@ -138,4 +207,11 @@ test_vibrator_CFLAGS = \
 test_vibrator_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/vibrator/libvibrator.la
+
+test_wifi_SOURCES = test_wifi.c
+test_wifi_CFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS)
+test_wifi_LDADD = \
+	$(top_builddir)/wifi/libwifi.la
 

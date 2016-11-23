@@ -1,0 +1,24 @@
+.TH GETPROP 1 "July 1, 2013"
+.SH NAME
+getprop \- get property via the android property service
+.SH SYNOPSIS
+.B getprop
+.RI "[property] [default]"
+.SH DESCRIPTION
+.PP
+\fBgetprop\fP is an android utility to retrive a property via the android property service.
+
+All properties and values are retrieved when there's no argument.
+
+.SH OPTIONS
+.TP
+.B property
+Name of the property to be retrieved
+.TP
+.B default
+Default property value in case it's not available in the android property service
+.SH AUTHOR
+getprop is originally available in the Android AOSP project.
+.PP
+This manual page was written by Ricardo Salveti de Araujo <ricardo.salveti@canonical.com>,
+for the Debian project (and may be used by others).

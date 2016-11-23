@@ -17,6 +17,7 @@
 
 #include <dlfcn.h>
 #include <stddef.h>
+#include <errno.h>
 #include <hardware/hardware.h>
 #include <hybris/common/binding.h>
 

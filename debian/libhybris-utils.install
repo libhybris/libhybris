@@ -1,0 +1,3 @@
+usr/bin/getprop
+usr/bin/setprop
+utils/load_sym_files.py usr/share/libhybris/gdb/

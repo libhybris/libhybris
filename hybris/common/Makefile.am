@@ -1,44 +1,51 @@
 lib_LTLIBRARIES = \
 	libhybris-common.la
 
-# JB linker works fine for ICS
-if HAS_ANDROID_4_0_0
-SUBDIRS = jb
-libhybris_common_la_LIBADD= jb/libandroid-linker.la
-else
-if HAS_ANDROID_5_0_0
-SUBDIRS = jb
-libhybris_common_la_LIBADD= jb/libandroid-linker.la
-else
-if HAS_ANDROID_2_3_0
-SUBDIRS = gingerbread
-libhybris_common_la_LIBADD= gingerbread/libandroid-linker.la
-else
-$(error No Android Version is defined)
+SUBDIRS =
+
+if !WANT_ARCH_ARM64
+SUBDIRS += jb
 endif
-endif
+
+if WANT_EXPERIMENTAL
+SUBDIRS += mm
 endif
 
 libhybris_common_la_SOURCES = \
 	hooks.c \
 	hooks_shm.c \
 	strlcpy.c \
-	dlfcn.c \
+	strlcat.c \
 	logging.c \
 	sysconf.c
-libhybris_common_la_CFLAGS = \
+libhybris_common_la_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
-	-I$(top_srcdir)/common
+	-I$(top_srcdir)/common \
+	-DLINKER_PLUGIN_DIR=\"$(libdir)/libhybris/linker\"
 if WANT_TRACE
-libhybris_common_la_CFLAGS += -DDEBUG
+libhybris_common_la_CPPFLAGS += -DDEBUG
 endif
 if WANT_DEBUG
-libhybris_common_la_CFLAGS += -ggdb -O0
+libhybris_common_la_CPPFLAGS += -ggdb -O0
+endif
+if WANT_MALI_QUIRKS
+libhybris_common_la_CPPFLAGS += -DMALI_QUIRKS
+endif
+if WANT_UBUNTU_LINKER_OVERRIDES
+libhybris_common_la_CPPFLAGS += -DUBUNTU_LINKER_OVERRIDES
+endif
+if !WANT_ARCH_ARM64
+libhybris_common_la_CPPFLAGS += -DWANT_LINKER_JB
+endif
+if WANT_EXPERIMENTAL
+libhybris_common_la_CPPFLAGS += -DWANT_LINKER_MM
 endif
 libhybris_common_la_LDFLAGS = \
 	-ldl \
 	-lrt \
 	-pthread \
+	-lc \
+	-lstdc++ \
 	$(top_builddir)/properties/libandroid-properties.la \
 	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"

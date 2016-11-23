@@ -21,7 +21,7 @@
 
 #include <hybris/common/binding.h>
 
-HYBRIS_LIBRARY_INITIALIZE(vibrator, "/system/lib/libhardware_legacy.so");
+HYBRIS_LIBRARY_INITIALIZE(vibrator, "libhardware_legacy.so");
 
 HYBRIS_IMPLEMENT_FUNCTION0(vibrator, int, vibrator_exists);
 HYBRIS_IMPLEMENT_FUNCTION1(vibrator, int, vibrator_on, int);

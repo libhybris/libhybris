@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <signal.h>
+#include <inttypes.h>
 
 #include <hybris/input/input_stack_compatibility_layer.h>
 
@@ -45,7 +46,7 @@ void on_new_event(struct Event* event, void* context)
 
 	switch (event->type) {
 	case MOTION_EVENT_TYPE:
-		printf("\tdetails.motion.event_time: %lld\n",
+		printf("\tdetails.motion.event_time: %" PRId64 "\n",
 				event->details.motion.event_time);
 		printf("\tdetails.motion.pointer_coords.x: %f\n",
 				event->details.motion.pointer_coordinates[0].x);

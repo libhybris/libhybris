@@ -42,6 +42,12 @@ AC_ARG_ENABLE(debug,
   [debug="no"])
 AM_CONDITIONAL( [WANT_DEBUG], [test x"$debug" = x"yes"])
 
+AC_ARG_ENABLE(experimental,
+  [  --enable-experimental     Enable experimental features (default=disabled)],
+  [experimental=$enableval],
+  [experimental="no"])
+AM_CONDITIONAL( [WANT_EXPERIMENTAL], [test x"$experimental" = x"yes"])
+
 AC_ARG_ENABLE(trace,
   [  --enable-trace            Enable TRACE statements (default=disabled)],
   [trace=$enableval],
@@ -79,6 +85,11 @@ AC_ARG_ENABLE(property_cache,
   [property_cache=no])
 AM_CONDITIONAL( [WANT_RUNTIME_PROPERTY_CACHE], [test x"$property_cache" = x"yes"])
 
+AC_ARG_ENABLE(ubuntu-linker-overrides,
+  [  --enable-ubuntu-linker-overrides  Enable Ubuntu linker overrides (default=disabled)],
+  [ubuntu_linker_overrides=$enableval],
+  [ubuntu_linker_overrides=no])
+AM_CONDITIONAL([WANT_UBUNTU_LINKER_OVERRIDES], [test x"$ubuntu_linker_overrides" = x"yes"])
 
 AC_ARG_ENABLE(arch,
   [  --enable-arch[=arch]     Compile specific CPU target(default=arm)
@@ -86,8 +97,12 @@ AC_ARG_ENABLE(arch,
                               x86: Compile for x86],
   [ if   test "x$enableval" = "xarm" ; then
       arch="arm"
+   elif test "x$enableval" = "xarm64" ; then
+      arch="arm64"
    elif test "x$enableval" = "xx86" ; then
       arch="x86"
+   elif test "x$enableval" = "xx86-64" ; then
+      arch="x86-64"
    else
       echo
       echo "Error!"
@@ -98,7 +113,9 @@ AC_ARG_ENABLE(arch,
   [arch="arm"]
   )
 AM_CONDITIONAL([WANT_ARCH_ARM], [test x$arch = xarm])
+AM_CONDITIONAL([WANT_ARCH_ARM64], [test x$arch = xarm64])
 AM_CONDITIONAL([WANT_ARCH_X86], [test x$arch = xx86])
+AM_CONDITIONAL([WANT_ARCH_X86_64], [test x$arch = xx86-64])
 
 DEFAULT_EGL_PLATFORM="null"
 AC_ARG_WITH(default-egl-platform,
@@ -107,7 +124,11 @@ AC_ARG_WITH(default-egl-platform,
   [ ])
 AC_SUBST(DEFAULT_EGL_PLATFORM)
 
-DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib:/system/lib"
+if test "x$arch" = "xarm" -o "x$arch" = "xx86"; then
+  DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib:/system/lib"
+else
+  DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib64:/system/lib64"
+fi
 AC_ARG_WITH(default-hybris-ld-library-path,
   [  --with-default-hybris-ld-library-path=PATH1:PATH2:...     Use PATH1:PATH2 for default HYBRIS_LD_LIBRARY_PATH if not specified by environment ],
   [ DEFAULT_HYBRIS_LD_LIBRARY_PATH="$withval" ],
@@ -121,7 +142,10 @@ AC_ARG_WITH(android-headers,
     AS_IF([test -f $withval/libnfc-nxp/phLibNfc.h], [ANDROID_HEADERS_CFLAGS="-I$withval -I$withval/libnfc-nxp"],[ANDROID_HEADERS_CFLAGS="-I$withval"])
     AC_SUBST([ANDROID_HEADERS_CFLAGS])
   ],
-  [ PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit) ]
+  [
+    PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit)
+    AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [false])
+  ]
 )
 CPPFLAGS="$CPPFLAGS $ANDROID_HEADERS_CFLAGS"
 
@@ -185,15 +209,28 @@ AM_CONDITIONAL([HAS_ANDROID_4_0_3], [test $android_headers_major -ge 4 -a $andro
 AM_CONDITIONAL([HAS_ANDROID_4_0_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_2_3_0], [test $android_headers_major -ge 2 -a $android_headers_minor -ge 3 ])
 
+AC_ARG_ENABLE(mali-quirks,
+  [  --enable-mali-quirks            Enable Mali GPU driver quirks (default=disabled)],
+  [mali_quirks=$enableval],
+  [mali_quirks="no"])
+AM_CONDITIONAL([WANT_MALI_QUIRKS], [test x"$mali_quirks" = x"yes"])
+
+AC_ARG_ENABLE(stub-linker,
+  [  --enable-stub-linker            Enable a stub linker which does nothing (default=disabled)],
+  [stub_linker=$enableval],
+  [stub_linker="no"])
+AM_CONDITIONAL([WANT_STUB_LINKER], [test x"$stub_linker" = x"yes"])
 
 AC_CONFIG_FILES([
 	Makefile
 	properties/Makefile
 	properties/libandroid-properties.pc
+	camera/Makefile
+	camera/libcamera.pc
 	common/Makefile
-	common/gingerbread/Makefile
-	common/ics/Makefile
 	common/jb/Makefile
+	common/stub/Makefile
+	common/mm/Makefile
 	egl/egl.pc
 	egl/Makefile
 	egl/platforms/Makefile
@@ -218,8 +255,17 @@ AC_CONFIG_FILES([
 	libsync/libsync.pc
 	vibrator/Makefile
 	vibrator/libvibrator.pc
+	media/Makefile
+	media/libmedia.pc
+	wifi/Makefile
+	wifi/libwifi.pc
 	include/Makefile
+	input/Makefile
+	input/libis.pc
+	ui/Makefile
 	utils/Makefile
+	sf/Makefile
+	sf/libsf.pc
 	tests/Makefile
 ])
 
@@ -237,15 +283,25 @@ echo "  debug build.............: $debug"
 echo
 echo "  trace...................: $trace"
 echo
+echo "  experimental features...: $experimental"
+echo
 echo "  prefix..................: $prefix"
 echo
 echo "  arch  ..................: $arch"
 echo
 echo "  headers path ...........: $android_headers_path"
 echo
+echo "  Android version.........: $android_headers_major.$android_headers_minor.$android_headers_patch"
+echo
 echo "  default egl platform ...: $DEFAULT_EGL_PLATFORM"
 echo
 echo "  default ld_library_path.: $DEFAULT_HYBRIS_LD_LIBRARY_PATH"
+echo
+echo "Features:"
+echo
+echo "  stub linker.............: $stub_linker"
+echo
+echo "  Ubuntu linker overrides.: $ubuntu_linker_overrides"
 echo
 echo "------------------------------------------------------------------------"
 echo

@@ -1,0 +1,539 @@
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: libhybris
+Source: https://github.com/libhybris/libhybris
+
+Files: *
+Copyright: 2012-2014, 2016, Canonical Ltd
+License: Apache-2.0
+
+Files: compat/media/SimplePlayer.cpp
+  compat/media/SimplePlayer.h
+  compat/media/codec.cpp
+Copyright: 2005-2008, 2010, 2012-2015, The Android Open Source Project
+License: Apache-2.0
+
+Files: compat/media/media_recorder.cpp
+  compat/media/media_recorder.h
+Copyright: 2013, 2014, Canonical Ltd
+  2008, The Android Open Source Project
+License: Apache-2.0
+
+Files: compat/ui/*
+Copyright: 2012, 2013, Simon Busch <morphis@gravedo.de>
+License: Apache-2.0
+
+Files: hybris/common/*
+Copyright: 2008-2015, The Android Open Source Project
+License: BSD-2-clause
+
+Files: hybris/common/dlfcn.c
+Copyright: 2013, Intel Corporation
+License: Apache-2.0
+
+Files: hybris/common/gingerbread/NOTICE
+  hybris/common/gingerbread/dlfcn.c
+Copyright: 2005-2008, 2010, 2012-2015, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/common/hooks.c
+Copyright: 2013, Christophe Chapuis <chris.chapuis@gmail.com>
+  2012, Carsten Munk <carsten.munk@gmail.com>
+  2012, Canonical Ltd
+License: Apache-2.0
+
+Files: hybris/common/hooks_shm.c
+Copyright: 2013, Christophe Chapuis <chris.chapuis@gmail.com>
+  2012, Carsten Munk <carsten.munk@gmail.com>
+License: Apache-2.0
+
+Files: hybris/common/hooks_shm.h
+Copyright: 2012, Carsten Munk <carsten.munk@gmail.com>
+License: Apache-2.0
+
+Files: hybris/common/ics/dlfcn.c
+Copyright: 2005-2008, 2010, 2012-2015, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/common/jb/dlfcn.c
+Copyright: 2005-2008, 2010, 2012-2015, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/common/logging.c
+  hybris/common/logging.h
+Copyright: 2013, Thomas Perl <m@thp.io>
+License: Apache-2.0
+
+Files: hybris/common/mm/*
+Copyright: 2005-2008, 2010, 2012-2015, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/common/mm/bionic/*
+Copyright: 2008-2015, The Android Open Source Project
+License: BSD-2-clause
+
+Files: hybris/common/mm/bionic/libc/include/android/dlext.h
+Copyright: 2005-2008, 2010, 2012-2015, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/common/mm/bionic/libc/private/*
+Copyright: 2005-2008, 2010, 2012-2015, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/common/mm/bionic/libc/private/ThreadLocalBuffer.h
+  hybris/common/mm/bionic/libc/private/__get_tls.h
+  hybris/common/mm/bionic/libc/private/bionic_asm.h
+  hybris/common/mm/bionic/libc/private/bionic_auxv.h
+  hybris/common/mm/bionic/libc/private/bionic_futex.h
+  hybris/common/mm/bionic/libc/private/bionic_lock.h
+  hybris/common/mm/bionic/libc/private/bionic_mbstate.h
+  hybris/common/mm/bionic/libc/private/bionic_ssp.h
+  hybris/common/mm/bionic/libc/private/bionic_time.h
+  hybris/common/mm/bionic/libc/private/bionic_time_conversions.h
+  hybris/common/mm/bionic/libc/private/bionic_tls.h
+  hybris/common/mm/bionic/libc/private/libc_events.h
+  hybris/common/mm/bionic/libc/private/libc_logging.h
+Copyright: 2008-2015, The Android Open Source Project
+License: BSD-2-clause
+
+Files: hybris/common/mm/hybris_compat.cpp
+  hybris/common/mm/hybris_compat.h
+  hybris/common/mm/linker.cpp
+  hybris/common/mm/linker.h
+  hybris/common/mm/linker_debug.h
+  hybris/common/mm/linker_phdr.cpp
+  hybris/common/mm/linker_phdr.h
+  hybris/common/mm/rt.cpp
+Copyright: 2008-2015, The Android Open Source Project
+License: BSD-2-clause
+
+Files: hybris/common/strlcat.c
+Copyright: 1998, Todd C. Miller <Todd.Miller@courtesan.com>
+License: ISC
+
+Files: hybris/common/strlcpy.c
+Copyright: 1998, Todd C. Miller <Todd.Miller@courtesan.com>
+License: ISC
+
+Files: hybris/common/stub/*
+Copyright: 2012-2014, 2016, Canonical Ltd
+License: Apache-2.0
+
+Files: hybris/common/sysconf.c
+Copyright: 2013, Adrian Negreanu <adrian.m.negreanu@intel.com>
+License: Apache-2.0
+
+Files: hybris/egl/*
+Copyright: 2012-2014, Jolla Ltd
+License: Apache-2.0
+
+Files: hybris/egl/egl.c
+Copyright: 2012, Carsten Munk <carsten.munk@gmail.com>
+License: Apache-2.0
+
+Files: hybris/egl/eglhybris.h
+Copyright: 2012, 2013, Simon Busch <morphis@gravedo.de>
+License: Apache-2.0
+
+Files: hybris/egl/platforms/*
+Copyright: 2013, libhybris
+License: Apache-2.0
+
+Files: hybris/egl/platforms/common/*
+Copyright: 2012, Collabora, Ltd
+License: MIT2
+ Permission to use, copy, modify, distribute, and sell this software and
+ its documentation for any purpose is hereby granted without fee, provided
+ that the above copyright notice appear in all copies and that both that
+ copyright notice and this permission notice appear in supporting
+ documentation, and that the name of the copyright holders not be used in
+ advertising or publicity pertaining to distribution of the software
+ without specific, written prior permission.  The copyright holders make
+ no representations about the suitability of this software for any
+ purpose.  It is provided "as is" without express or implied warranty.
+ .
+ THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS
+ SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+ FITNESS, IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+ RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
+ CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+ CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+Files: hybris/egl/platforms/common/hybris_nativebufferext.h
+Copyright: 2013, Jolla Ltd
+  2011, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/egl/platforms/common/native_handle.c
+Copyright: 2005-2008, 2010, 2012-2015, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/egl/platforms/common/server_wlegl_handle.h
+  hybris/egl/platforms/common/windowbuffer.cpp
+  hybris/egl/platforms/common/windowbuffer.h
+Copyright: 2012, Collabora, Ltd
+License: BSD-2-clause
+
+Files: hybris/egl/platforms/wayland/*
+Copyright: 2013, Jolla Ltd
+License: LGPL-2.1
+
+Files: hybris/egl/ws.c
+Copyright: 2013, libhybris
+License: Apache-2.0
+
+Files: hybris/glesv1/*
+Copyright: 2012-2014, Jolla Ltd
+License: Apache-2.0
+
+Files: hybris/glesv2/*
+Copyright: 2012, Carsten Munk <carsten.munk@gmail.com>
+License: Apache-2.0
+
+Files: hybris/hardware/*
+Copyright: 2012, 2013, Simon Busch <morphis@gravedo.de>
+License: Apache-2.0
+
+Files: hybris/include/*
+Copyright: 2007-2012, The Khronos Group Inc
+License: Expat
+
+Files: hybris/include/EGL/eglmesaext.h
+Copyright: 2008, Tungsten Graphics, Inc., Cedar Park, Texas
+License: Expat
+
+Files: hybris/include/GL/gl.h
+Copyright: 2009, VMware, Inc.
+  1999-2006, Brian Paul
+License: Expat
+
+Files: hybris/include/GL/glx.h
+  hybris/include/GL/glx_mangle.h
+  hybris/include/GL/osmesa.h
+Copyright: 1999-2006, Brian Paul
+License: Expat
+
+Files: hybris/include/GL/internal/*
+Copyright: IBM Corporation 2004, / 2007-2008, Red Hat, Inc / 1998-1999, Precision Insight, Inc., Cedar Park, Texas
+License: Expat
+
+Files: hybris/include/GL/internal/sarea.h
+Copyright: 2000, VA Linux Systems, Inc
+  1998, 1999, Precision Insight, Inc., Cedar Park, Texas
+License: Expat
+
+Files: hybris/include/GL/wmesa.h
+Copyright: 1995-1998, Brian Paul
+License: LGPL-2+
+
+Files: hybris/include/GLES/*
+Copyright: 2010-2012 Silicon Graphics, Inc
+License: SGI-2.0
+
+Files: hybris/include/GLES2/*
+Copyright: 2010-2012 Silicon Graphics, Inc
+License: SGI-2.0
+
+Files: hybris/include/VG/*
+Copyright: 2008, The Khronos Group Inc
+License: X11/MIT
+
+Files: hybris/include/hybris/*
+Copyright: 2012-2014, 2016, Canonical Ltd
+License: Apache-2.0
+
+Files: hybris/include/hybris/common/binding.h
+Copyright: 2013, Simon Busch <morphis@gravedo.de>
+  2013, Jolla Ltd.
+  2012, Canonical Ltd
+License: Apache-2.0
+
+Files: hybris/include/hybris/common/dlfcn.h
+Copyright: 2013, Intel Corporation
+License: Apache-2.0
+
+Files: hybris/include/hybris/common/floating_point_abi.h
+Copyright: 2012-2014, Jolla Ltd
+License: Apache-2.0
+
+Files: hybris/include/hybris/dlfcn/*
+Copyright: 2013, Intel Corporation
+License: Apache-2.0
+
+Files: hybris/include/hybris/properties/*
+Copyright: 2013, Simon Busch <morphis@gravedo.de>
+  2013, Canonical Ltd
+  2012, Carsten Munk <carsten.munk@gmail.com>
+  2008, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/include/hybris/ui/*
+Copyright: 2012, 2013, Simon Busch <morphis@gravedo.de>
+License: Apache-2.0
+
+Files: hybris/libnfc_ndef_nxp/*
+Copyright: 2012-2014, Jolla Ltd
+License: Apache-2.0
+
+Files: hybris/libnfc_nxp/*
+Copyright: 2012-2014, Jolla Ltd
+License: Apache-2.0
+
+Files: hybris/libsync/*
+Copyright: 2012, Google, Inc
+License: Apache-2.0
+
+Files: hybris/properties/*
+Copyright: 2013, Simon Busch <morphis@gravedo.de>
+  2013, Canonical Ltd
+  2012, Carsten Munk <carsten.munk@gmail.com>
+  2008, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/properties/cache.c
+Copyright: 2013, Simon Busch <morphis@gravedo.de>
+  2013, Jolla Ltd. <robin.burchell@jollamobile.com>
+  2013, Canonical Ltd
+  2012, Carsten Munk <carsten.munk@gmail.com>
+  2008, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/properties/properties_p.h
+Copyright: 2013, Jolla Ltd. <robin.burchell@jollamobile.com>
+License: Apache-2.0
+
+Files: hybris/properties/runtime_cache.c
+Copyright: 2015, Jolla Ltd. <mikko.harju@jollamobile.com>
+  2013, Simon Busch <morphis@gravedo.de>
+  2013, Jolla Ltd. <robin.burchell@jollamobile.com>
+  2013, Canonical Ltd
+  2012, Carsten Munk <carsten.munk@gmail.com>
+  2008, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/tests/test_egl.c
+  hybris/tests/test_glesv2.c
+  hybris/tests/test_hwcomposer.cpp
+Copyright: 2012, Carsten Munk <carsten.munk@gmail.com>
+License: Apache-2.0
+
+Files: hybris/tests/test_egl_configs.c
+Copyright: 2013, Thomas Perl <m@thp.io>
+License: Apache-2.0
+
+Files: hybris/tests/test_gps.c
+  hybris/tests/test_nfc.c
+  hybris/tests/test_vibrator.c
+Copyright: 2012-2014, Jolla Ltd
+License: Apache-2.0
+
+Files: hybris/tests/test_lights.c
+  hybris/tests/test_sensors.c
+  hybris/tests/test_ui.c
+Copyright: 2012, 2013, Simon Busch <morphis@gravedo.de>
+License: Apache-2.0
+
+Files: hybris/ui/*
+Copyright: 2012, 2013, Simon Busch <morphis@gravedo.de>
+License: Apache-2.0
+
+Files: hybris/utils/*
+Copyright: 2013, 2014, Canonical Ltd
+  2008, The Android Open Source Project
+License: Apache-2.0
+
+Files: hybris/vibrator/*
+Copyright: 2012-2014, Jolla Ltd
+License: Apache-2.0
+
+Files: utils/*
+Copyright: 2013, Jolla Ltd
+  2012, Thomas Perl <m@thp.io>; 2012-10-19 libhybris version:
+License: BSD-2-clause
+
+Files: utils/generate_wrapper_macros.py
+Copyright: 2013, Jolla Ltd
+License: BSD-2-clause
+
+Files: utils/load_sym_files.py
+Copyright: 2013, Adrian Negreanu <groleo@gmail.com>
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <http://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the full text of the GNU Lesser General Public
+ License version 3 can be found in the file
+ `/usr/share/common-licenses/GPL-3'.
+
+License: Apache-2.0
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ .
+ http://www.apache.org/licenses/LICENSE-2.0
+ .
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+License: BSD-2-clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+  * Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in
+    the documentation and/or other materials provided with the
+    distribution.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+ OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ SUCH DAMAGE.
+
+License: Expat
+ The MIT License
+ .
+ Permission is hereby granted, free of charge, to any person
+ obtaining a copy of this software and associated
+ documentation files (the "Software"), to deal in the Software
+ without restriction, including without limitation the rights to
+ use, copy, modify, merge, publish, distribute, sublicense,
+ and/or sell copies of the Software, and to permit persons to
+ whom the Software is furnished to do so, subject to the
+ following conditions:
+ .
+ The above copyright notice and this permission notice shall
+ be included in all copies or substantial portions of the
+ Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT
+ WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR
+ PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+ SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ CONNECTION WITH THE SOFTWARE OR THE USE OR
+ OTHER DEALINGS IN THE SOFTWARE.
+
+License: ISC
+ Permission to use, copy, modify, and distribute this software for any
+ purpose with or without fee is hereby granted, provided that the above
+ copyright notice and this permission notice appear in all copies.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+License: LGPL-2+
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; either
+ version 2 of the License, or (at your option) any later version.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+ .
+ You should have received a copy of the GNU Lesser General Public
+ License along with this library; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA  02110-1301  USA
+ .
+ On Debian systems, the full text of the GNU Lesser General Public
+ License version 2 can be found in the file
+ `/usr/share/common-licenses/LGPL-2'.
+
+License: LGPL-2.1
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation, version 2.1
+ of the License.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+ .
+ You should have received a copy of the GNU Lesser General Public
+ License along with this library; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ Boston, MA  02110-1301  USA
+ .
+ On Debian systems, the full text of the GNU Lesser General Public
+ License version 2.1 can be found in the file
+ `/usr/share/common-licenses/LGPL-2.1'.
+
+License: X11/MIT
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ THE SOFTWARE.
+
+License: SGI-2.0
+ Permission is hereby granted, free of charge, to any person obtaining a
+ copy of this software and associated documentation files (the "Software"),
+ to deal in the Software without restriction, including without limitation the
+ rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is furnished
+ to do so, subject to the following conditions:
+ .
+ The above copyright notice including the dates of first publication and either
+ this permission notice or a reference to  http://oss.sgi.com/projects/FreeB/
+ shall be included in all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ NONINFRINGEMENT. IN NO EVENT SHALL SILICON GRAPHICS, INC. BE
+ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+ IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ IN THE SOFTWARE.
+ .
+ Except as contained in this notice, the name of Silicon Graphics, Inc. shall
+ not be used in advertising or otherwise to promote the sale, use or other
+ dealings in this Software without prior written authorization from Silicon
+ Graphics, Inc.

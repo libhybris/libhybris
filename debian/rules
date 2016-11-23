@@ -1,0 +1,156 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# Package names
+PKG_driver      := libhybris
+PKG_driver_dev  := libhybris-dev
+PKG_driver_dbg  := libhybris-dbg
+PKG_version     := $(shell dpkg-parsechangelog | sed -n 's/^Version: //p')
+PKG_source      := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
+PKG_distro      := $(shell dpkg-parsechangelog | sed -n 's/^Distribution: //p')
+UPS_version     := $(shell echo '$(PKG_version)' | sed 's/.*://; s/-[^-]*$$//')
+GIT_rev         := $(shell echo '$(UPS_version)' | sed 's/.*+//')
+
+DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+ifeq ($(PKG_distro),vivid)
+# For vivid we still depend on GCC 4.7 as this seems to be still
+# required to workaround ABI issues.
+export CC=gcc-4.7
+export CXX=g++-4.7
+EXTRA_BUILD_DEPENDS = gcc-4.7, g++-4.7,
+endif
+
+# Strong needs at least gcc 4.9
+export DEB_BUILD_MAINT_OPTIONS=hardening=-stackprotectorstrong
+
+ifneq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
+	CC :=$(DEB_HOST_GNU_TYPE)-$(CC)
+	CXX :=$(DEB_HOST_GNU_TYPE)-$(CXX)
+endif
+
+# Priority of the alternatives
+alt_priority    := 400
+
+# Directory naming schemes
+PKG_dirname             := $(PKG_driver)-egl
+bindir                  := usr/bin
+datadir                 := usr/share
+libdir                  := usr/lib/$(DEB_HOST_MULTIARCH)
+includedir              := usr/include
+sysconfdir              := etc
+PKG_libdir              := $(libdir)/$(PKG_dirname)
+PKG_configdir           := $(PKG_libdir)
+ld_so_conf_dir          := $(PKG_configdir)
+ld_so_conf_file         := ld.so.conf
+alt_ld_so_conf_file     := alt_ld.so.conf
+ld_so_conf_path         := $(ld_so_conf_dir)/$(ld_so_conf_file)
+alt_ld_so_conf_path     := $(ld_so_conf_dir)/$(alt_ld_so_conf_file)
+
+.PHONY: debian/control
+debian/control: debian/control.in
+	if [ "$(EXTRA_BUILD_DEPENDS)" = "" ] ; then \
+		sed -e '/@EXTRA_BUILD_DEPENDS@/,+0d' \
+			debian/control.in > debian/control ; \
+	else \
+		sed -e "s/@EXTRA_BUILD_DEPENDS@/$(EXTRA_BUILD_DEPENDS)/" \
+			debian/control.in > debian/control ; \
+	fi
+
+override_dh_auto_clean: debian/control
+	dh_auto_clean
+
+# --remote doesn't work with github so this needs to be run from a local checkout
+get-packaged-orig-source:
+	rm -rf $(PKG_source)-$(UPS_version)
+	rm -f $(PKG_source)-$(UPS_version).orig.tar.gz
+	git clone https://github.com/libhybris/libhybris.git $(PKG_source)-$(UPS_version)
+	cd $(PKG_source)-$(UPS_version) && git archive \
+		--format tar \
+		--prefix $(PKG_source)-$(UPS_version)/ \
+		$(GIT_rev) \
+		| gzip >../$(PKG_source)_$(UPS_version).orig.tar.gz
+	rm -rf $(PKG_source)-$(UPS_version)
+
+ANDROID_HEADERS_PATH = /usr/include/android
+DEFAULT_CONFIGURATION = \
+	--enable-wayland \
+	--with-android-headers=$(ANDROID_HEADERS_PATH) \
+	--enable-property-cache
+ARCH_CONFIGURATION =
+
+ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), armhf))
+ARCH_CONFIGURATION = \
+	--enable-arch=arm \
+	--enable-mali-quirks \
+	--enable-experimental
+# We enable the linker selection overrides here as we want to stay
+# with the jb linker on a range of selected production devices to
+# not cause any extra risk for regressions on them. They will
+# migrate to a newer linker version when ported to arm64.
+ARCH_CONFIGURATION += \
+	--enable-ubuntu-linker-overrides
+endif
+ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), arm64))
+ARCH_CONFIGURATION = \
+	--enable-arch=arm64 \
+	--enable-mali-quirks \
+	--enable-experimental
+endif
+ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), i386))
+ARCH_CONFIGURATION = \
+	--enable-arch=x86
+endif
+ifeq ($(DEB_HOST_ARCH),$(findstring $(DEB_HOST_ARCH), amd64))
+ARCH_CONFIGURATION = \
+	--enable-arch=x86
+endif
+
+override_dh_auto_configure:
+	dh_auto_configure --sourcedirectory=hybris -- \
+		$(DEFAULT_CONFIGURATION) \
+		$(ARCH_CONFIGURATION)
+
+override_dh_install:
+	# Fill in important variables
+	for i in $(PKG_driver).dirs \
+			$(PKG_driver).install \
+			$(PKG_driver).links \
+			$(PKG_driver).postinst \
+			$(PKG_driver).postrm \
+			$(PKG_driver).prerm; do \
+		sed -e "s|#LIBDIR#|$(libdir)|g" \
+			-e "s|#BINDIR#|$(bindir)|g" \
+			-e "s|#SYSCONFDIR#|$(sysconfdir)|g" \
+			-e "s|#LDSOCONF#|$(ld_so_conf_path)|g" \
+			-e "s|#ALTLDSOCONF#|$(alt_ld_so_conf_path)|g" \
+			-e "s|#ALTPRIORITY#|$(alt_priority)|g" \
+			-e "s|#DATADIR#|$(datadir)|g" \
+			-e "s|#PKGCONFIGDIR#|$(PKG_configdir)|g" \
+			-e "s|#PKGLIBDIR#|$(PKG_libdir)|g" \
+			-e "s|#DRIVERNAME#|$(PKG_driver)|g" \
+			-e "s|#DRIVERSRCNAME#|$(PKG_source)|g" \
+			-e "s|#VERSION#|$(PKG_version)|g" \
+			-e "s|#INCLUDEDIR#|$(includedir)|g" \
+			-e "s|#DEB_HOST_MULTIARCH#|$(DEB_HOST_MULTIARCH)|g" \
+			debian/$$i.in > debian/$$i; \
+	done
+
+	dh_install
+
+	# ld.so.conf
+	echo "/$(PKG_libdir)" > "$(CURDIR)/debian/$(PKG_driver)/$(ld_so_conf_path)"
+
+	# empty ld.so.conf for the fake multi-arch alternative
+	echo "" > "$(CURDIR)/debian/$(PKG_driver)/$(alt_ld_so_conf_path)"
+
+override_dh_autoreconf:
+	NOCONFIGURE=1 dh_autoreconf ./hybris/autogen.sh
+
+%:
+	dh $@ --with quilt,autoreconf --sourcedirectory=hybris

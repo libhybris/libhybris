@@ -1,0 +1,2 @@
+usr/lib/*/libhybris-common.so.*
+usr/lib/*/libhybris/linker/*.so

@@ -15,6 +15,8 @@
  *
  */
 
+#include "config.h"
+
 #include <hybris/camera/camera_compatibility_layer.h>
 #include <hybris/camera/camera_compatibility_layer_capabilities.h>
 
@@ -28,6 +30,7 @@
 #include <GLES2/gl2ext.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -98,8 +101,6 @@ void zoom_msg_cb(void* context, int32_t new_zoom_level)
 {
 	printf("%s \n", __PRETTY_FUNCTION__);
 
-	struct CameraControl* cc = (struct CameraControl*) context;
-	static int zoom;
 	current_zoom_level = new_zoom_level;
 }
 
@@ -122,7 +123,7 @@ void jpeg_data_cb(void* data, uint32_t data_size, void* context)
 	int fd = open(fn, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if(fd < 0)
 	    return;
-	ssize_t ret = write(fd, data, data_size);
+	TEMP_FAILURE_RETRY(write(fd, data, data_size));
 	close(fd);
 	shot_counter++;
 

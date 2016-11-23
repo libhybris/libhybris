@@ -1,0 +1,175 @@
+Source: libhybris
+Priority: extra
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Build-Depends: debhelper (>= 9.0.0),
+               autotools-dev,
+               dh-autoreconf,
+               android-headers (>= 4.4.2),
+               @EXTRA_BUILD_DEPENDS@
+               quilt,
+               pkg-config,
+               libgles2-mesa-dev,
+               libwayland-dev
+Standards-Version: 3.9.7
+Section: libs
+Vcs-Git: https://git.launchpad.net/~libhybris-maintainers/libhybris/+git/libhybris
+Vcs-Browser: https://git.launchpad.net/~libhybris-maintainers/libhybris/+git/libhybris/
+
+Package: libandroid-properties1
+Architecture: armhf arm64 i386 amd64
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Description: Library to provide access to get, set and list Android properties
+ Contains a library that provides access to get, set and list Android
+ properties, which can be used by any Ubuntu app that needs to probe
+ for properties (gps, modem, device specifics).
+
+Package: libandroid-properties-dev
+Section: libdevel
+Architecture: armhf arm64 i386 amd64
+Depends: libandroid-properties1 (= ${binary:Version}),
+         ${misc:Depends}
+Description: Development headers files for libandroid-properties
+ Contains the development files for use in applications that wants to get,
+ set or list the Android properties.
+
+Package: libmedia1
+Architecture: armhf arm64 i386 amd64
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Replaces: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu24)
+Breaks: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu24)
+Description: Library to provide access to the Android Media HAL
+ Contains a library that provides access to the Android Media HAL,
+ which abstract the access to the Android libstagefright based
+ decoders.
+ .
+ Hybris is a solution that allows the use of bionic-based HW adaptations in
+ glibc systems.
+
+Package: libmedia-dev
+Section: libdevel
+Architecture: armhf arm64 i386 amd64
+Depends: libmedia1 (= ${binary:Version}),
+         android-headers (>= 4.4.2),
+         ${misc:Depends}
+Replaces: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu24)
+Breaks: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu24)
+Description: Development files for libmedia
+ Contains the development files for the Android Media HAL, which
+ abstract the access to the Android libstagefright based decoders.
+ .
+ Hybris is a solution that allows the use of bionic-based HW adaptations in
+ glibc systems.
+
+Package: libhardware2
+Architecture: armhf arm64 i386 amd64
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Replaces: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
+Breaks: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
+Description: Library to provide access to the Android libhardware HAL
+ Contains a library that provides access to the Android libhardware HAL,
+ which can be used to access a wide range of other HALs, such as audio,
+ power, gralloc, etc.
+ .
+ Hybris is a solution that allows the use of bionic-based HW adaptations in
+ glibc systems.
+
+Package: libhardware-dev
+Section: libdevel
+Architecture: armhf arm64 i386 amd64
+Depends: libhardware2 (= ${binary:Version}),
+         android-headers (>= 4.4.2),
+         ${misc:Depends}
+Replaces: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
+Breaks: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
+Description: Development files for libhardware
+ Contains the development files for the Android libhardware HAL, which can
+ be used to access a wide range of other HALs, such as audio, power,
+ gralloc, etc.
+ .
+ Hybris is a solution that allows the use of bionic-based HW adaptations in
+ glibc systems.
+
+Package: libhybris-common1
+Architecture: armhf arm64 i386 amd64
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Replaces: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
+Breaks: libhybris (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
+Description: Common library that contains the Android linker and custom hooks
+ Contains a common library that contains the Android linker, used to
+ dynamically load and use symbols from Android based libraries.
+ .
+ Hybris is a solution that allows the use of bionic-based HW adaptations in
+ glibc systems.
+
+Package: libhybris-common-dev
+Section: libdevel
+Architecture: armhf arm64 i386 amd64
+Depends: libhybris-common1 (= ${binary:Version}),
+         ${misc:Depends}
+Replaces: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
+Breaks: libhybris-dev (<< 0.1.0+git20130606+c5d897a-0ubuntu13)
+Description: Development files for libhybris-common
+ Contains the development files for the common library that contains the
+ Android linker, used to dynamically load and use symbols from Android
+ based libraries.
+ .
+ Hybris is a solution that allows the use of bionic-based HW adaptations in
+ glibc systems.
+
+Package: libhybris
+Architecture: armhf arm64 i386 amd64
+Depends: libandroid-properties1 (= ${binary:Version}),
+         libhardware2,
+         libmedia1,
+         ${shlibs:Depends},
+         ${misc:Depends}
+Description: Allows to run bionic-based HW adaptations in glibc systems - libs
+ Hybris is a solution that allows the use of bionic-based HW adaptations in
+ glibc systems.
+
+Package: libhybris-dev
+Section: libdevel
+Architecture: armhf arm64 i386 amd64
+Depends: libhybris (= ${binary:Version}),
+         android-headers (>= 4.4.2),
+         libandroid-properties-dev (= ${binary:Version}),
+         libhardware-dev (= ${binary:Version}),
+         libmedia-dev (= ${binary:Version}),
+         libhybris-common-dev (= ${binary:Version}),
+         ${misc:Depends},
+         libgles2-mesa-dev,
+Description: Development headers and libraries for libhybris
+ Contains the header files for use in developing applications that use
+ the libhybris library.
+ .
+ Hybris is a solution that allows the use of bionic-based HW adaptations in
+ glibc systems.
+
+Package: libhybris-utils
+Section: utils
+Architecture: armhf arm64 i386 amd64
+Depends: libhybris (= ${binary:Version}),
+         ${shlibs:Depends},
+         ${misc:Depends}
+Description: Utilities to help working with the Android HW abstraction layer
+ Contains utilities used to help working with Android HW abstraction layer.
+ .
+ Hybris is a solution that allows the use of bionic-based HW adaptations in
+ glibc systems.
+
+Package: libhybris-test
+Section: devel
+Architecture: armhf arm64 i386 amd64
+Depends: libhybris (= ${binary:Version}),
+         ${shlibs:Depends},
+         ${misc:Depends}
+Description: Allows to run bionic-based HW adaptations in glibc systems - tests
+ Contains the test applications used to validate libhybris (needs Android
+ libraries or container).
+ .
+ Hybris is a solution that allows the use of bionic-based HW adaptations in
+ glibc systems.
