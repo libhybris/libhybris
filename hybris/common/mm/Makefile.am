@@ -14,7 +14,7 @@ AM_CPPFLAGS = \
 	-Wstrict-overflow=5
 
 AM_CXXFLAGS = \
-	-std=gnu++11 \
+	-std=c++0x \
 	-Wold-style-cast
 
 mm_la_SOURCES = \
@@ -39,7 +39,6 @@ mm_la_CPPFLAGS = \
 	$(ARCH_FLAGS) \
 	$(ANDROID_HEADERS_CFLAGS)
 mm_la_LDFLAGS = \
-	-lsupc++ \
 	-module \
 	-avoid-version
 

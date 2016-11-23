@@ -44,8 +44,7 @@ endif
 libhybris_common_la_LDFLAGS = \
 	-ldl \
 	-lrt \
-	-pthread \
+	-lpthread \
 	-lc \
-	-lstdc++ \
 	$(top_builddir)/properties/libandroid-properties.la \
 	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"

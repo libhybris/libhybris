@@ -879,12 +879,12 @@ class LoadTask {
 
 LoadTask::deleter_t LoadTask::deleter;
 
-template <typename T>
-using linked_list_t = LinkedList<T, TypeBasedAllocator<LinkedListEntry<T>>>;
+//template <typename T>
+//using linked_list_t = LinkedList<T, TypeBasedAllocator<LinkedListEntry<T>>>;
 
-typedef linked_list_t<soinfo> SoinfoLinkedList;
-typedef linked_list_t<const char> StringLinkedList;
-typedef linked_list_t<LoadTask> LoadTaskList;
+typedef LinkedList<soinfo, TypeBasedAllocator<LinkedListEntry<soinfo>>> SoinfoLinkedList;
+typedef LinkedList<const char, TypeBasedAllocator<LinkedListEntry<const char>>> StringLinkedList;
+typedef LinkedList<LoadTask, TypeBasedAllocator<LinkedListEntry<LoadTask>>> LoadTaskList;
 
 
 // This function walks down the tree of soinfo dependencies
