@@ -97,6 +97,7 @@ static std::vector<std::string> g_ld_preload_names;
 static std::vector<soinfo*> g_ld_preloads;
 
 int g_ld_debug_verbosity = 0;
+int g_ld_debug_stdout = 0;
 
 abort_msg_t* g_abort_message = nullptr; // For debuggerd.
 
@@ -3293,6 +3294,19 @@ static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf) {
 }
 
 extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) {
+#if TRACE_DEBUG
+    /* Has to be set via init_library as we don't get called via the
+     * traditional android init library path  */
+    const char* env;
+    env = getenv("HYBRIS_LINKER_DEBUG");
+    if (env)
+        g_ld_debug_verbosity = atoi(env);
+    if (getenv("HYBRIS_LINKER_STDOUT"))
+        g_ld_debug_stdout = 1;
+
+    INFO("[ HYBRIS: linker debug initialized]\n");
+#endif
+
   // Get a few environment variables.
   const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
   if (LD_DEBUG != nullptr) {

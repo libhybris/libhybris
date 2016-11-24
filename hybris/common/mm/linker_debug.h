@@ -37,7 +37,7 @@
 // By default, traces are sent to logcat, with the "linker" tag. You can
 // change this to go to stdout instead by setting the definition of
 // LINKER_DEBUG_TO_LOG to 0.
-#define LINKER_DEBUG_TO_LOG  0
+#define LINKER_DEBUG_TO_LOG  1
 
 #define TRACE_DEBUG          1
 #define DO_TRACE_LOOKUP      1
@@ -57,11 +57,24 @@
 #include "private/libc_logging.h"
 
 extern int g_ld_debug_verbosity;
+extern int g_ld_debug_stdout;
+
+#define LOG_PRINTVF(v, x...) \
+    do { \
+      if (g_ld_debug_verbosity > (v)) __libc_format_log(5-(v), "linker", x); \
+    } while (0)
+#define FILE_PRINTVF(v, x...) \
+    do { \
+      if (g_ld_debug_verbosity > (v)) { __libc_format_fd(1, x); int res = write(1, "\n", 1); (void)res; } \
+    } while (0)
 
 #define _PRINTVF(v, x...) \
     do { \
-      if (g_ld_debug_verbosity > (v)) { fprintf(stderr, x); fprintf(stderr, "\n"); } \
-    } while (0)
+      if (g_ld_debug_stdout) \
+        FILE_PRINTVF(v, x); \
+      else \
+        LOG_PRINTVF(v, x); \
+    } while(0);
 
 #define PRINT(x...)          _PRINTVF(-1, x)
 #define INFO(x...)           _PRINTVF(0, x)

@@ -20,6 +20,7 @@ AM_CXXFLAGS = \
 mm_la_SOURCES = \
 	hybris_compat.cpp \
 	dlfcn.cpp \
+	linker_debug.cpp \
 	linker_allocator.cpp \
 	linker_block_allocator.cpp \
 	linker.cpp \
