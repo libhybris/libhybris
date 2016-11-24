@@ -356,6 +356,9 @@ static void* _hybris_hook_pthread_getspecific(pthread_key_t key)
 {
     TRACE_HOOK("key %d", key);
 
+    // see android_bionic/tests/pthread_test.cpp, test static_pthread_key_used_before_creation
+    if(!key) return NULL;
+
     return pthread_getspecific(key);
 }
 
