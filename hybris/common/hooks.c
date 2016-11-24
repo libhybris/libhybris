@@ -2664,6 +2664,7 @@ static struct _hook hooks_common[] = {
     {"setlinebuf", _hybris_hook_setlinebuf},
     {"__errno", __errno_location},
     {"__set_errno", _hybris_hook_set_errno},
+    {"__progname", &program_invocation_name},
     /* net specifics, to avoid __res_get_state */
     {"getaddrinfo", _hybris_hook_getaddrinfo},
     {"freeaddrinfo", _hybris_hook_freeaddrinfo},
