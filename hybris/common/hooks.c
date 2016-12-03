@@ -1660,6 +1660,7 @@ static struct _hook hooks[] = {
     {"setlinebuf", my_setlinebuf},
     {"__errno", __errno_location},
     {"__set_errno", my_set_errno},
+    {"__progname", &program_invocation_name},
     /* net specifics, to avoid __res_get_state */
     {"getaddrinfo", getaddrinfo},
     {"gethostbyaddr", gethostbyaddr},
