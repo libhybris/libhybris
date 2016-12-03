@@ -240,6 +240,14 @@ static int my_pthread_create(pthread_t *thread, const pthread_attr_t *__attr,
     return pthread_create(thread, realattr, start_routine, arg);
 }
 
+static void *my_pthread_getspecific(pthread_key_t key)
+{
+    // see android_bionic/tests/pthread_test.cpp, test static_pthread_key_used_before_creation
+    if(!key) return NULL;
+
+    return pthread_getspecific(key);
+}
+
 /*
  * pthread_attr_* functions
  *
@@ -1560,7 +1568,7 @@ static struct _hook hooks[] = {
     {"pthread_once", pthread_once},
     {"pthread_key_create", pthread_key_create},
     {"pthread_setspecific", pthread_setspecific},
-    {"pthread_getspecific", pthread_getspecific},
+    {"pthread_getspecific", my_pthread_getspecific},
     {"pthread_attr_init", my_pthread_attr_init},
     {"pthread_attr_destroy", my_pthread_attr_destroy},
     {"pthread_attr_setdetachstate", my_pthread_attr_setdetachstate},
