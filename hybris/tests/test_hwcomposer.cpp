@@ -19,6 +19,7 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <assert.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <stddef.h>
@@ -129,6 +130,20 @@ void HWComposer::present(HWComposerNativeWindowBuffer *buffer)
 	}
 } 
 
+inline static uint32_t interpreted_version(hw_device_t *hwc_device)
+{
+	uint32_t version = hwc_device->version;
+
+	if ((version & 0xffff0000) == 0) {
+		// Assume header version is always 1
+		uint32_t header_version = 1;
+
+		// Legacy version encoding
+		version = (version << 16) | header_version;
+	}
+	return version;
+}
+
 int main(int argc, char **argv)
 {
 	EGLDisplay display;
@@ -166,7 +181,21 @@ int main(int argc, char **argv)
 	err = hwc_open_1(hwcModule, &hwcDevicePtr);
 	assert(err == 0);
 
-	hwcDevicePtr->blank(hwcDevicePtr, 0, 0);
+	hw_device_t *hwcDevice = &hwcDevicePtr->common;
+
+	uint32_t hwc_version = interpreted_version(hwcDevice);
+
+#ifdef HWC_DEVICE_API_VERSION_1_4
+	if (hwc_version == HWC_DEVICE_API_VERSION_1_4) {
+		hwcDevicePtr->setPowerMode(hwcDevicePtr, 0, HWC_POWER_MODE_NORMAL);
+	} else
+#endif
+#ifdef HWC_DEVICE_API_VERSION_1_5
+	if (hwc_version == HWC_DEVICE_API_VERSION_1_5) {
+		hwcDevicePtr->setPowerMode(hwcDevicePtr, 0, HWC_POWER_MODE_NORMAL);
+	} else
+#endif
+		hwcDevicePtr->blank(hwcDevicePtr, 0, 0);
 
 	uint32_t configs[5];
 	size_t numConfigs = 5;
@@ -199,12 +228,32 @@ int main(int argc, char **argv)
 	layer->handle = 0;
 	layer->transform = 0;
 	layer->blending = HWC_BLENDING_NONE;
+#ifdef HWC_DEVICE_API_VERSION_1_3
+	layer->sourceCropf.top = 0.0f;
+	layer->sourceCropf.left = 0.0f;
+	layer->sourceCropf.bottom = (float) attr_values[1];
+	layer->sourceCropf.right = (float) attr_values[0];
+#else
 	layer->sourceCrop = r;
+#endif
 	layer->displayFrame = r;
 	layer->visibleRegionScreen.numRects = 1;
 	layer->visibleRegionScreen.rects = &layer->displayFrame;
 	layer->acquireFenceFd = -1;
 	layer->releaseFenceFd = -1;
+#if (ANDROID_VERSION_MAJOR >= 4) && (ANDROID_VERSION_MINOR >= 3) || (ANDROID_VERSION_MAJOR >= 5)
+	// We've observed that qualcomm chipsets enters into compositionType == 6
+	// (HWC_BLIT), an undocumented composition type which gives us rendering
+	// glitches and warnings in logcat. By setting the planarAlpha to non-
+	// opaque, we attempt to force the HWC into using HWC_FRAMEBUFFER for this
+	// layer so the HWC_FRAMEBUFFER_TARGET layer actually gets used.
+	bool tryToForceGLES = getenv("QPA_HWC_FORCE_GLES") != NULL;
+	layer->planeAlpha = tryToForceGLES ? 1 : 255;
+#endif
+#ifdef HWC_DEVICE_API_VERSION_1_5
+	layer->surfaceDamage.numRects = 0;
+#endif
+
 	layer = &list->hwLayers[1];
 	memset(layer, 0, sizeof(hwc_layer_1_t));
 	layer->compositionType = HWC_FRAMEBUFFER_TARGET;
@@ -213,12 +262,25 @@ int main(int argc, char **argv)
 	layer->handle = 0;
 	layer->transform = 0;
 	layer->blending = HWC_BLENDING_NONE;
+#ifdef HWC_DEVICE_API_VERSION_1_3
+	layer->sourceCropf.top = 0.0f;
+	layer->sourceCropf.left = 0.0f;
+	layer->sourceCropf.bottom = (float) attr_values[1];
+	layer->sourceCropf.right = (float) attr_values[0];
+#else
 	layer->sourceCrop = r;
+#endif
 	layer->displayFrame = r;
 	layer->visibleRegionScreen.numRects = 1;
 	layer->visibleRegionScreen.rects = &layer->displayFrame;
 	layer->acquireFenceFd = -1;
 	layer->releaseFenceFd = -1;
+#if (ANDROID_VERSION_MAJOR >= 4) && (ANDROID_VERSION_MINOR >= 3) || (ANDROID_VERSION_MAJOR >= 5)
+	layer->planeAlpha = 0xff;
+#endif
+#ifdef HWC_DEVICE_API_VERSION_1_5
+	layer->surfaceDamage.numRects = 0;
+#endif
 
 	list->retireFenceFd = -1;
 	list->flags = HWC_GEOMETRY_CHANGED;
