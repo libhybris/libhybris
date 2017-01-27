@@ -27,8 +27,10 @@
 #include <stdio_ext.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <malloc.h>
 #include <string.h>
+#include <inttypes.h>
 #include <strings.h>
 #include <dlfcn.h>
 #include <pthread.h>
@@ -39,10 +41,20 @@
 #include <dirent.h>
 #include <sys/types.h>
 #include <stdarg.h>
+#include <wchar.h>
+#include <sched.h>
+#include <pwd.h>
+#include <signal.h>
+#include <setjmp.h>
+#include <sys/signalfd.h>
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <fcntl.h>
+
+#include <linux/futex.h>
+#include <sys/syscall.h>
+#include <sys/time.h>
 
 #include <netdb.h>
 #include <unistd.h>
@@ -50,6 +62,11 @@
 #include <locale.h>
 #include <sys/syscall.h>
 #include <sys/auxv.h>
+#include <sys/prctl.h>
+
+#include <sys/mman.h>
+#include <libgen.h>
+#include <mntent.h>
 
 #include <hybris/properties/properties.h>
 
@@ -92,7 +109,7 @@ struct _hook {
 };
 
 /* Helpers */
-static int hybris_check_android_shared_mutex(unsigned int mutex_addr)
+static int hybris_check_android_shared_mutex(uintptr_t mutex_addr)
 {
     /* If not initialized or initialized by Android, it should contain a low
      * address, which is basically just the int values for Android's own
@@ -104,7 +121,7 @@ static int hybris_check_android_shared_mutex(unsigned int mutex_addr)
     return 0;
 }
 
-static int hybris_check_android_shared_cond(unsigned int cond_addr)
+static int hybris_check_android_shared_cond(uintptr_t cond_addr)
 {
     /* If not initialized or initialized by Android, it should contain a low
      * address, which is basically just the int values for Android's own
@@ -155,6 +172,20 @@ static pthread_rwlock_t* hybris_alloc_init_rwlock(void)
     return realrwlock;
 }
 
+int my_pthread_rwlockattr_setkind_np(pthread_rwlockattr_t *attr, int pref)
+{
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) attr;
+
+    return pthread_rwlockattr_setkind_np(realattr, pref);
+}
+
+int my_pthread_rwlockattr_getkind_np(const pthread_rwlockattr_t *attr, int *pref)
+{
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) attr;
+
+    return pthread_rwlockattr_getkind_np(realattr, pref);
+}
+
 /*
  * utils, such as malloc, memcpy
  *
@@ -187,7 +218,7 @@ static size_t my_strlen(const char *s)
 
 static pid_t my_gettid( void )
 {
-        return syscall( __NR_gettid );
+    return syscall(__NR_gettid);
 }
 
 /*
@@ -204,9 +235,25 @@ static int my_pthread_create(pthread_t *thread, const pthread_attr_t *__attr,
     pthread_attr_t *realattr = NULL;
 
     if (__attr != NULL)
-        realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+        realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     return pthread_create(thread, realattr, start_routine, arg);
+}
+
+static void *my_pthread_getspecific(pthread_key_t key)
+{
+    // see android_bionic/tests/pthread_test.cpp, test static_pthread_key_used_before_creation
+    if(!key) return NULL;
+
+    return pthread_getspecific(key);
+}
+
+static int my_pthread_kill(pthread_t thread, int sig)
+{
+    if (thread == 0)
+        return ESRCH;
+
+    return pthread_kill(thread, sig);
 }
 
 /*
@@ -222,7 +269,7 @@ static int my_pthread_attr_init(pthread_attr_t *__attr)
     pthread_attr_t *realattr;
 
     realattr = malloc(sizeof(pthread_attr_t));
-    *((unsigned int *)__attr) = (unsigned int) realattr;
+    *((uintptr_t *)__attr) = (uintptr_t) realattr;
 
     return pthread_attr_init(realattr);
 }
@@ -230,7 +277,7 @@ static int my_pthread_attr_init(pthread_attr_t *__attr)
 static int my_pthread_attr_destroy(pthread_attr_t *__attr)
 {
     int ret;
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     ret = pthread_attr_destroy(realattr);
     /* We need to release the memory allocated at my_pthread_attr_init
@@ -242,98 +289,113 @@ static int my_pthread_attr_destroy(pthread_attr_t *__attr)
 
 static int my_pthread_attr_setdetachstate(pthread_attr_t *__attr, int state)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_setdetachstate(realattr, state);
 }
 
 static int my_pthread_attr_getdetachstate(pthread_attr_t const *__attr, int *state)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_getdetachstate(realattr, state);
 }
 
 static int my_pthread_attr_setschedpolicy(pthread_attr_t *__attr, int policy)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_setschedpolicy(realattr, policy);
 }
 
 static int my_pthread_attr_getschedpolicy(pthread_attr_t const *__attr, int *policy)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_getschedpolicy(realattr, policy);
 }
 
 static int my_pthread_attr_setschedparam(pthread_attr_t *__attr, struct sched_param const *param)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_setschedparam(realattr, param);
 }
 
 static int my_pthread_attr_getschedparam(pthread_attr_t const *__attr, struct sched_param *param)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_getschedparam(realattr, param);
 }
 
 static int my_pthread_attr_setstacksize(pthread_attr_t *__attr, size_t stack_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_setstacksize(realattr, stack_size);
 }
 
 static int my_pthread_attr_getstacksize(pthread_attr_t const *__attr, size_t *stack_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_getstacksize(realattr, stack_size);
 }
 
 static int my_pthread_attr_setstackaddr(pthread_attr_t *__attr, void *stack_addr)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_setstackaddr(realattr, stack_addr);
 }
 
 static int my_pthread_attr_getstackaddr(pthread_attr_t const *__attr, void **stack_addr)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_getstackaddr(realattr, stack_addr);
 }
 
 static int my_pthread_attr_setstack(pthread_attr_t *__attr, void *stack_base, size_t stack_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_setstack(realattr, stack_base, stack_size);
 }
 
 static int my_pthread_attr_getstack(pthread_attr_t const *__attr, void **stack_base, size_t *stack_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_getstack(realattr, stack_base, stack_size);
 }
 
 static int my_pthread_attr_setguardsize(pthread_attr_t *__attr, size_t guard_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_setguardsize(realattr, guard_size);
 }
 
 static int my_pthread_attr_getguardsize(pthread_attr_t const *__attr, size_t *guard_size)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_getguardsize(realattr, guard_size);
 }
 
 static int my_pthread_attr_setscope(pthread_attr_t *__attr, int scope)
 {
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
+
     return pthread_attr_setscope(realattr, scope);
 }
 
 static int my_pthread_attr_getscope(pthread_attr_t const *__attr)
 {
     int scope;
-    pthread_attr_t *realattr = (pthread_attr_t *) *(unsigned int *) __attr;
+    pthread_attr_t *realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
     /* Android doesn't have the scope attribute because it always
      * returns PTHREAD_SCOPE_SYSTEM */
@@ -347,7 +409,7 @@ static int my_pthread_getattr_np(pthread_t thid, pthread_attr_t *__attr)
     pthread_attr_t *realattr;
 
     realattr = malloc(sizeof(pthread_attr_t));
-    *((unsigned int *)__attr) = (unsigned int) realattr;
+    *((uintptr_t *)__attr) = (uintptr_t) realattr;
 
     return pthread_getattr_np(thid, realattr);
 }
@@ -373,7 +435,7 @@ static int my_pthread_mutex_init(pthread_mutex_t *__mutex,
         /* non shared, standard mutex: use malloc */
         realmutex = malloc(sizeof(pthread_mutex_t));
 
-        *((unsigned int *)__mutex) = (unsigned int) realmutex;
+        *((uintptr_t *)__mutex) = (uintptr_t) realmutex;
     }
     else {
         /* process-shared mutex: use the shared memory segment */
@@ -395,7 +457,7 @@ static int my_pthread_mutex_destroy(pthread_mutex_t *__mutex)
     if (!__mutex)
         return EINVAL;
 
-    pthread_mutex_t *realmutex = (pthread_mutex_t *) *(unsigned int *) __mutex;
+    pthread_mutex_t *realmutex = (pthread_mutex_t *) *(uintptr_t *) __mutex;
 
     if (!realmutex)
         return EINVAL;
@@ -409,7 +471,7 @@ static int my_pthread_mutex_destroy(pthread_mutex_t *__mutex)
         ret = pthread_mutex_destroy(realmutex);
     }
 
-    *((unsigned int *)__mutex) = 0;
+    *((uintptr_t *)__mutex) = 0;
 
     return ret;
 }
@@ -421,7 +483,7 @@ static int my_pthread_mutex_lock(pthread_mutex_t *__mutex)
         return 0;
     }
 
-    unsigned int value = (*(unsigned int *) __mutex);
+    uintptr_t value = (*(uintptr_t *) __mutex);
     if (hybris_check_android_shared_mutex(value)) {
         LOGD("Shared mutex with Android, not locking.");
         return 0;
@@ -433,7 +495,7 @@ static int my_pthread_mutex_lock(pthread_mutex_t *__mutex)
 
     if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(value);
-        *((unsigned int *)__mutex) = (unsigned int) realmutex;
+        *((uintptr_t *)__mutex) = (uintptr_t) realmutex;
     }
 
     return pthread_mutex_lock(realmutex);
@@ -441,7 +503,7 @@ static int my_pthread_mutex_lock(pthread_mutex_t *__mutex)
 
 static int my_pthread_mutex_trylock(pthread_mutex_t *__mutex)
 {
-    unsigned int value = (*(unsigned int *) __mutex);
+    uintptr_t value = (*(uintptr_t *) __mutex);
 
     if (hybris_check_android_shared_mutex(value)) {
         LOGD("Shared mutex with Android, not try locking.");
@@ -454,7 +516,7 @@ static int my_pthread_mutex_trylock(pthread_mutex_t *__mutex)
 
     if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(value);
-        *((unsigned int *)__mutex) = (unsigned int) realmutex;
+        *((uintptr_t *)__mutex) = (uintptr_t) realmutex;
     }
 
     return pthread_mutex_trylock(realmutex);
@@ -467,7 +529,7 @@ static int my_pthread_mutex_unlock(pthread_mutex_t *__mutex)
         return 0;
     }
 
-    unsigned int value = (*(unsigned int *) __mutex);
+    uintptr_t value = (*(uintptr_t *) __mutex);
     if (hybris_check_android_shared_mutex(value)) {
         LOGD("Shared mutex with Android, not unlocking.");
         return 0;
@@ -490,7 +552,7 @@ static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned _
 {
     struct timespec tv;
     pthread_mutex_t *realmutex;
-    unsigned int value = (*(unsigned int *) __mutex);
+    uintptr_t value = (*(uintptr_t *) __mutex);
 
     if (hybris_check_android_shared_mutex(value)) {
         LOGD("Shared mutex with Android, not lock timeout np.");
@@ -501,7 +563,7 @@ static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned _
 
     if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(value);
-        *((int *)__mutex) = (int) realmutex;
+        *((uintptr_t *)__mutex) = (uintptr_t) realmutex;
     }
 
     clock_gettime(CLOCK_REALTIME, &tv);
@@ -513,6 +575,29 @@ static int my_pthread_mutex_lock_timeout_np(pthread_mutex_t *__mutex, unsigned _
     }
 
     return pthread_mutex_timedlock(realmutex, &tv);
+}
+
+static int my_pthread_mutex_timedlock(pthread_mutex_t *__mutex,
+                                      const struct timespec *__abs_timeout)
+{
+    if (!__mutex) {
+        LOGD("Null mutex lock, not unlocking.");
+        return 0;
+    }
+
+    uintptr_t value = (*(uintptr_t *) __mutex);
+    if (hybris_check_android_shared_mutex(value)) {
+        LOGD("Shared mutex with Android, not lock timeout np.");
+        return 0;
+    }
+
+    pthread_mutex_t *realmutex = (pthread_mutex_t *) value;
+    if (value <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
+        realmutex = hybris_alloc_init_mutex(value);
+        *((uintptr_t *)__mutex) = (uintptr_t) realmutex;
+    }
+
+    return pthread_mutex_timedlock(realmutex, __abs_timeout);
 }
 
 static int my_pthread_mutexattr_setpshared(pthread_mutexattr_t *__attr,
@@ -543,13 +628,13 @@ static int my_pthread_cond_init(pthread_cond_t *cond,
         /* non shared, standard cond: use malloc */
         realcond = malloc(sizeof(pthread_cond_t));
 
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
     else {
         /* process-shared condition: use the shared memory segment */
         hybris_shm_pointer_t handle = hybris_shm_alloc(sizeof(pthread_cond_t));
 
-        *((unsigned int *)cond) = (unsigned int) handle;
+        *((uintptr_t *)cond) = (uintptr_t) handle;
 
         if (handle)
             realcond = (pthread_cond_t *)hybris_get_shmpointer(handle);
@@ -561,7 +646,7 @@ static int my_pthread_cond_init(pthread_cond_t *cond,
 static int my_pthread_cond_destroy(pthread_cond_t *cond)
 {
     int ret;
-    pthread_cond_t *realcond = (pthread_cond_t *) *(unsigned int *) cond;
+    pthread_cond_t *realcond = (pthread_cond_t *) *(uintptr_t *) cond;
 
     if (!realcond) {
       return EINVAL;
@@ -576,14 +661,15 @@ static int my_pthread_cond_destroy(pthread_cond_t *cond)
         ret = pthread_cond_destroy(realcond);
     }
 
-    *((unsigned int *)cond) = 0;
+    *((uintptr_t *)cond) = 0;
 
     return ret;
 }
 
 static int my_pthread_cond_broadcast(pthread_cond_t *cond)
 {
-    unsigned int value = (*(unsigned int *) cond);
+    uintptr_t value = (*(uintptr_t *) cond);
+
     if (hybris_check_android_shared_cond(value)) {
         LOGD("shared condition with Android, not broadcasting.");
         return 0;
@@ -595,7 +681,7 @@ static int my_pthread_cond_broadcast(pthread_cond_t *cond)
 
     if (value <= ANDROID_TOP_ADDR_VALUE_COND) {
         realcond = hybris_alloc_init_cond();
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
 
     return pthread_cond_broadcast(realcond);
@@ -603,7 +689,7 @@ static int my_pthread_cond_broadcast(pthread_cond_t *cond)
 
 static int my_pthread_cond_signal(pthread_cond_t *cond)
 {
-    unsigned int value = (*(unsigned int *) cond);
+    uintptr_t value = (*(uintptr_t *) cond);
 
     if (hybris_check_android_shared_cond(value)) {
         LOGD("Shared condition with Android, not signaling.");
@@ -616,7 +702,7 @@ static int my_pthread_cond_signal(pthread_cond_t *cond)
 
     if (value <= ANDROID_TOP_ADDR_VALUE_COND) {
         realcond = hybris_alloc_init_cond();
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
 
     return pthread_cond_signal(realcond);
@@ -625,8 +711,8 @@ static int my_pthread_cond_signal(pthread_cond_t *cond)
 static int my_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
     /* Both cond and mutex can be statically initialized, check for both */
-    unsigned int cvalue = (*(unsigned int *) cond);
-    unsigned int mvalue = (*(unsigned int *) mutex);
+    uintptr_t cvalue = (*(uintptr_t *) cond);
+    uintptr_t mvalue = (*(uintptr_t *) mutex);
 
     if (hybris_check_android_shared_cond(cvalue) ||
         hybris_check_android_shared_mutex(mvalue)) {
@@ -640,7 +726,7 @@ static int my_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 
     if (cvalue <= ANDROID_TOP_ADDR_VALUE_COND) {
         realcond = hybris_alloc_init_cond();
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
 
     pthread_mutex_t *realmutex = (pthread_mutex_t *) mvalue;
@@ -649,7 +735,7 @@ static int my_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 
     if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(mvalue);
-        *((unsigned int *) mutex) = (unsigned int) realmutex;
+        *((uintptr_t *) mutex) = (uintptr_t) realmutex;
     }
 
     return pthread_cond_wait(realcond, realmutex);
@@ -659,8 +745,8 @@ static int my_pthread_cond_timedwait(pthread_cond_t *cond,
                 pthread_mutex_t *mutex, const struct timespec *abstime)
 {
     /* Both cond and mutex can be statically initialized, check for both */
-    unsigned int cvalue = (*(unsigned int *) cond);
-    unsigned int mvalue = (*(unsigned int *) mutex);
+    uintptr_t cvalue = (*(uintptr_t *) cond);
+    uintptr_t mvalue = (*(uintptr_t *) mutex);
 
     if (hybris_check_android_shared_cond(cvalue) ||
          hybris_check_android_shared_mutex(mvalue)) {
@@ -674,7 +760,7 @@ static int my_pthread_cond_timedwait(pthread_cond_t *cond,
 
     if (cvalue <= ANDROID_TOP_ADDR_VALUE_COND) {
         realcond = hybris_alloc_init_cond();
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
 
     pthread_mutex_t *realmutex = (pthread_mutex_t *) mvalue;
@@ -683,7 +769,7 @@ static int my_pthread_cond_timedwait(pthread_cond_t *cond,
 
     if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(mvalue);
-        *((unsigned int *) mutex) = (unsigned int) realmutex;
+        *((uintptr_t *) mutex) = (uintptr_t) realmutex;
     }
 
     return pthread_cond_timedwait(realcond, realmutex, abstime);
@@ -693,8 +779,8 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
                 pthread_mutex_t *mutex, const struct timespec *reltime)
 {
     /* Both cond and mutex can be statically initialized, check for both */
-    unsigned int cvalue = (*(unsigned int *) cond);
-    unsigned int mvalue = (*(unsigned int *) mutex);
+    uintptr_t cvalue = (*(uintptr_t *) cond);
+    uintptr_t mvalue = (*(uintptr_t *) mutex);
 
     if (hybris_check_android_shared_cond(cvalue) ||
          hybris_check_android_shared_mutex(mvalue)) {
@@ -708,7 +794,7 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
 
     if (cvalue <= ANDROID_TOP_ADDR_VALUE_COND) {
         realcond = hybris_alloc_init_cond();
-        *((unsigned int *) cond) = (unsigned int) realcond;
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
     }
 
     pthread_mutex_t *realmutex = (pthread_mutex_t *) mvalue;
@@ -717,7 +803,7 @@ static int my_pthread_cond_timedwait_relative_np(pthread_cond_t *cond,
 
     if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
         realmutex = hybris_alloc_init_mutex(mvalue);
-        *((unsigned int *) mutex) = (unsigned int) realmutex;
+        *((uintptr_t *) mutex) = (uintptr_t) realmutex;
     }
 
     struct timespec tv;
@@ -744,7 +830,7 @@ static int my_pthread_rwlockattr_init(pthread_rwlockattr_t *__attr)
     pthread_rwlockattr_t *realattr;
 
     realattr = malloc(sizeof(pthread_rwlockattr_t));
-    *((unsigned int *)__attr) = (unsigned int) realattr;
+    *((uintptr_t *)__attr) = (uintptr_t) realattr;
 
     return pthread_rwlockattr_init(realattr);
 }
@@ -752,7 +838,7 @@ static int my_pthread_rwlockattr_init(pthread_rwlockattr_t *__attr)
 static int my_pthread_rwlockattr_destroy(pthread_rwlockattr_t *__attr)
 {
     int ret;
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) __attr;
 
     ret = pthread_rwlockattr_destroy(realattr);
     free(realattr);
@@ -763,14 +849,16 @@ static int my_pthread_rwlockattr_destroy(pthread_rwlockattr_t *__attr)
 static int my_pthread_rwlockattr_setpshared(pthread_rwlockattr_t *__attr,
                                             int pshared)
 {
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) __attr;
+
     return pthread_rwlockattr_setpshared(realattr, pshared);
 }
 
 static int my_pthread_rwlockattr_getpshared(pthread_rwlockattr_t *__attr,
                                             int *pshared)
 {
-    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
+    pthread_rwlockattr_t *realattr = (pthread_rwlockattr_t *) *(uintptr_t *) __attr;
+
     return pthread_rwlockattr_getpshared(realattr, pshared);
 }
 
@@ -790,7 +878,7 @@ static int my_pthread_rwlock_init(pthread_rwlock_t *__rwlock,
     int pshared = 0;
 
     if (__attr != NULL)
-        realattr = (pthread_rwlockattr_t *) *(unsigned int *) __attr;
+        realattr = (pthread_rwlockattr_t *) *(uintptr_t *) __attr;
 
     if (realattr)
         pthread_rwlockattr_getpshared(realattr, &pshared);
@@ -799,13 +887,13 @@ static int my_pthread_rwlock_init(pthread_rwlock_t *__rwlock,
         /* non shared, standard rwlock: use malloc */
         realrwlock = malloc(sizeof(pthread_rwlock_t));
 
-        *((unsigned int *) __rwlock) = (unsigned int) realrwlock;
+        *((uintptr_t *) __rwlock) = (uintptr_t) realrwlock;
     }
     else {
         /* process-shared condition: use the shared memory segment */
         hybris_shm_pointer_t handle = hybris_shm_alloc(sizeof(pthread_rwlock_t));
 
-        *((unsigned int *)__rwlock) = (unsigned int) handle;
+        *((uintptr_t *)__rwlock) = (uintptr_t) handle;
 
         if (handle)
             realrwlock = (pthread_rwlock_t *)hybris_get_shmpointer(handle);
@@ -817,7 +905,7 @@ static int my_pthread_rwlock_init(pthread_rwlock_t *__rwlock,
 static int my_pthread_rwlock_destroy(pthread_rwlock_t *__rwlock)
 {
     int ret;
-    pthread_rwlock_t *realrwlock = (pthread_rwlock_t *) *(unsigned int *) __rwlock;
+    pthread_rwlock_t *realrwlock = (pthread_rwlock_t *) *(uintptr_t *) __rwlock;
 
     if (!hybris_is_pointer_in_shm((void*)realrwlock)) {
         ret = pthread_rwlock_destroy(realrwlock);
@@ -833,14 +921,14 @@ static int my_pthread_rwlock_destroy(pthread_rwlock_t *__rwlock)
 
 static pthread_rwlock_t* hybris_set_realrwlock(pthread_rwlock_t *rwlock)
 {
-    unsigned int value = (*(unsigned int *) rwlock);
+    uintptr_t value = (*(uintptr_t *) rwlock);
     pthread_rwlock_t *realrwlock = (pthread_rwlock_t *) value;
     if (hybris_is_pointer_in_shm((void*)value))
         realrwlock = (pthread_rwlock_t *)hybris_get_shmpointer((hybris_shm_pointer_t)value);
 
     if (realrwlock <= ANDROID_TOP_ADDR_VALUE_RWLOCK) {
         realrwlock = hybris_alloc_init_rwlock();
-        *((unsigned int *)rwlock) = (unsigned int) realrwlock;
+        *((uintptr_t *)rwlock) = (uintptr_t) realrwlock;
     }
     return realrwlock;
 }
@@ -885,7 +973,8 @@ static int my_pthread_rwlock_timedwrlock(pthread_rwlock_t *__rwlock,
 
 static int my_pthread_rwlock_unlock(pthread_rwlock_t *__rwlock)
 {
-    unsigned int value = (*(unsigned int *) __rwlock);
+    uintptr_t value = (*(uintptr_t *) __rwlock);
+
     if (value <= ANDROID_TOP_ADDR_VALUE_RWLOCK) {
         LOGD("Trying to unlock a rwlock that's not locked/initialized"
                " by Hybris, not unlocking.");
@@ -898,6 +987,18 @@ static int my_pthread_rwlock_unlock(pthread_rwlock_t *__rwlock)
     return pthread_rwlock_unlock(realrwlock);
 }
 
+#define min(X,Y) (((X) < (Y)) ? (X) : (Y))
+
+static pid_t my_pthread_gettid(pthread_t t)
+{
+    // glibc doesn't offer us a way to retrieve the thread id for a
+    // specific thread. However pthread_t is defined as unsigned
+    // long int and is the thread id so we can just copy it over
+    // into a pid_t.
+    pid_t tid;
+    memcpy(&tid, &t, min(sizeof(tid), sizeof(t)));
+    return tid;
+}
 
 static int my_set_errno(int oi_errno)
 {
@@ -918,6 +1019,61 @@ static int my_set_errno(int oi_errno)
  */
 static int __my_isthreaded = 1;
 
+/* "struct __sbuf" from bionic/libc/include/stdio.h */
+#if defined(__LP64__)
+struct bionic_sbuf {
+    unsigned char* _base;
+    size_t _size;
+};
+#else
+struct bionic_sbuf {
+    unsigned char *_base;
+    int _size;
+};
+#endif
+
+typedef off_t bionic_fpos_t;
+
+/* "struct __sFILE" from bionic/libc/include/stdio.h */
+struct __attribute__((packed)) bionic_file {
+    unsigned char *_p;      /* current position in (some) buffer */
+    int _r;                 /* read space left for getc() */
+    int _w;                 /* write space left for putc() */
+#if defined(__LP64__)
+    int _flags;             /* flags, below; this FILE is free if 0 */
+    int _file;              /* fileno, if Unix descriptor, else -1 */
+#else
+    short _flags;           /* flags, below; this FILE is free if 0 */
+    short _file;            /* fileno, if Unix descriptor, else -1 */
+#endif
+    struct bionic_sbuf _bf; /* the buffer (at least 1 byte, if !NULL) */
+    int _lbfsize;           /* 0 or -_bf._size, for inline putc */
+
+    /* operations */
+    void *_cookie;          /* cookie passed to io functions */
+    int (*_close)(void *);
+    int (*_read)(void *, char *, int);
+    bionic_fpos_t (*_seek)(void *, bionic_fpos_t, int);
+    int (*_write)(void *, const char *, int);
+
+    /* extension data, to avoid further ABI breakage */
+    struct bionic_sbuf _ext;
+    /* data for long sequences of ungetc() */
+    unsigned char *_up;     /* saved _p when _p is doing ungetc data */
+    int _ur;                /* saved _r when _r is counting ungetc data */
+
+    /* tricks to meet minimum requirements even when malloc() fails */
+    unsigned char _ubuf[3]; /* guarantee an ungetc() buffer */
+    unsigned char _nbuf[1]; /* guarantee a getc() buffer */
+
+    /* separate buffer for fgetln() when line crosses buffer boundary */
+    struct bionic_sbuf _lb; /* buffer for fgetln() */
+
+    /* Unix stdio files get aligned to block boundaries on fseek() */
+    int _blksize;           /* stat.st_blksize (may be != _bf._size) */
+    bionic_fpos_t _offset;         /* current lseek offset */
+};
+
 /*
  * redirection for bionic's __sF, which is defined as:
  *   FILE __sF[3];
@@ -929,16 +1085,16 @@ static int __my_isthreaded = 1;
  *   pointer.
  *   Currently, only fputs is managed.
  */
-#define BIONIC_SIZEOF_FILE 84
-static char my_sF[3*BIONIC_SIZEOF_FILE] = {0};
+static char my_sF[3 * sizeof(struct bionic_file)] = {0};
+
 static FILE *_get_actual_fp(FILE *fp)
 {
     char *c_fp = (char*)fp;
     if (c_fp == &my_sF[0])
         return stdin;
-    else if (c_fp == &my_sF[BIONIC_SIZEOF_FILE])
+    else if (c_fp == &my_sF[sizeof(struct bionic_file)])
         return stdout;
-    else if (c_fp == &my_sF[BIONIC_SIZEOF_FILE*2])
+    else if (c_fp == &my_sF[sizeof(struct bionic_file) * 2])
         return stderr;
 
     return fp;
@@ -974,9 +1130,14 @@ static int my_fgetc(FILE *fp)
     return fgetc(_get_actual_fp(fp));
 }
 
-static int my_fgetpos(FILE *fp, fpos_t *pos)
+static int my_fgetpos(FILE *fp, bionic_fpos_t *pos)
 {
-    return fgetpos(_get_actual_fp(fp), pos);
+    fpos_t my_fpos;
+    int ret = fgetpos(_get_actual_fp(fp), &my_fpos);
+
+    *pos = my_fpos.__pos;
+
+    return ret;
 }
 
 static char* my_fgets(char *s, int n, FILE *fp)
@@ -1038,9 +1199,14 @@ static int my_fseeko(FILE *fp, off_t offset, int whence)
     return fseeko(_get_actual_fp(fp), offset, whence);
 }
 
-static int my_fsetpos(FILE *fp, const fpos_t *pos)
+static int my_fsetpos(FILE *fp, const bionic_fpos_t *pos)
 {
-    return fsetpos(_get_actual_fp(fp), pos);
+    fpos_t my_fpos;
+    my_fpos.__pos = *pos;
+    memset(&my_fpos.__state, 0, sizeof(mbstate_t));
+    mbsinit(&my_fpos.__state);
+
+    return fsetpos(_get_actual_fp(fp), &my_fpos);
 }
 
 static long my_ftell(FILE *fp)
@@ -1429,11 +1595,14 @@ void *__get_tls_hooks()
   return tls_hooks;
 }
 
+extern size_t strlcat(char *dst, const char *src, size_t siz);
+extern size_t strlcpy(char *dst, const char *src, size_t siz);
+
 static struct _hook hooks[] = {
     {"property_get", property_get },
     {"property_set", property_set },
     {"__system_property_get", my_system_property_get },
-    {"getenv", getenv },
+    /* stdlib.h */
     {"printf", printf },
     {"malloc", my_malloc },
     {"free", free },
@@ -1443,7 +1612,13 @@ static struct _hook hooks[] = {
     {"memalign", memalign },
     {"valloc", valloc },
     {"pvalloc", pvalloc },
-    {"fread", fread },
+    {"posix_memalign", posix_memalign},
+    {"setenv", setenv},
+    {"putenv", putenv},
+    {"getenv", getenv},
+    {"clearenv", clearenv},
+    {"system", system},
+    /* xattr.h */
     {"getxattr", getxattr},
     /* string.h */
     {"memccpy",memccpy},
@@ -1455,6 +1630,7 @@ static struct _hook hooks[] = {
     {"memset",memset},
     {"memmem",memmem},
     {"getlogin", getlogin},
+    {"__gnu_strerror_r", strerror_r},
     //  {"memswap",memswap},
     {"index",index},
     {"rindex",rindex},
@@ -1478,14 +1654,14 @@ static struct _hook hooks[] = {
     {"strncmp",strncmp},
     {"strncpy",strncpy},
     {"strtod", my_strtod},
-    //{"strlcat",strlcat},
-    //{"strlcpy",strlcpy},
+    {"strtol", strtol},
+    {"strlcat",strlcat},
+    {"strlcpy",strlcpy},
     {"strcspn",strcspn},
     {"strpbrk",strpbrk},
     {"strsep",strsep},
     {"strspn",strspn},
     {"strsignal",strsignal},
-    {"getgrnam", getgrnam},
     {"strcoll",strcoll},
     {"strxfrm",strxfrm},
     /* strings.h */
@@ -1499,16 +1675,13 @@ static struct _hook hooks[] = {
     {"__sprintf_chk", my__sprintf_chk},
     {"__snprintf_chk", my__snprintf_chk},
     {"strncasecmp",strncasecmp},
-    /* dirent.h */
-    {"opendir", opendir},
-    {"closedir", closedir},
     /* pthread.h */
     {"getauxval", getauxval},
     {"gettid", my_gettid},
     {"getpid", getpid},
     {"pthread_atfork", pthread_atfork},
     {"pthread_create", my_pthread_create},
-    {"pthread_kill", pthread_kill},
+    {"pthread_kill", my_pthread_kill},
     {"pthread_exit", pthread_exit},
     {"pthread_join", pthread_join},
     {"pthread_detach", pthread_detach},
@@ -1522,16 +1695,21 @@ static struct _hook hooks[] = {
     {"pthread_mutex_unlock", my_pthread_mutex_unlock},
     {"pthread_mutex_trylock", my_pthread_mutex_trylock},
     {"pthread_mutex_lock_timeout_np", my_pthread_mutex_lock_timeout_np},
+    {"pthread_mutex_timedlock", my_pthread_mutex_timedlock},
     {"pthread_mutexattr_init", pthread_mutexattr_init},
     {"pthread_mutexattr_destroy", pthread_mutexattr_destroy},
     {"pthread_mutexattr_gettype", pthread_mutexattr_gettype},
     {"pthread_mutexattr_settype", pthread_mutexattr_settype},
     {"pthread_mutexattr_getpshared", pthread_mutexattr_getpshared},
     {"pthread_mutexattr_setpshared", my_pthread_mutexattr_setpshared},
+    {"pthread_rwlockattr_getkind_np", my_pthread_rwlockattr_getkind_np},
+    {"pthread_rwlockattr_setkind_np", my_pthread_rwlockattr_setkind_np},
     {"pthread_condattr_init", pthread_condattr_init},
     {"pthread_condattr_getpshared", pthread_condattr_getpshared},
     {"pthread_condattr_setpshared", pthread_condattr_setpshared},
     {"pthread_condattr_destroy", pthread_condattr_destroy},
+    {"pthread_condattr_getclock", pthread_condattr_getclock},
+    {"pthread_condattr_setclock", pthread_condattr_setclock},
     {"pthread_cond_init", my_pthread_cond_init},
     {"pthread_cond_destroy", my_pthread_cond_destroy},
     {"pthread_cond_broadcast", my_pthread_cond_broadcast},
@@ -1546,7 +1724,7 @@ static struct _hook hooks[] = {
     {"pthread_once", pthread_once},
     {"pthread_key_create", pthread_key_create},
     {"pthread_setspecific", pthread_setspecific},
-    {"pthread_getspecific", pthread_getspecific},
+    {"pthread_getspecific", my_pthread_getspecific},
     {"pthread_attr_init", my_pthread_attr_init},
     {"pthread_attr_destroy", my_pthread_attr_destroy},
     {"pthread_attr_setdetachstate", my_pthread_attr_setdetachstate},
@@ -1564,7 +1742,7 @@ static struct _hook hooks[] = {
     {"pthread_attr_setguardsize", my_pthread_attr_setguardsize},
     {"pthread_attr_getguardsize", my_pthread_attr_getguardsize},
     {"pthread_attr_setscope", my_pthread_attr_setscope},
-    {"pthread_attr_setscope", my_pthread_attr_getscope},
+    {"pthread_attr_getscope", my_pthread_attr_getscope},
     {"pthread_getattr_np", my_pthread_getattr_np},
     {"pthread_rwlockattr_init", my_pthread_rwlockattr_init},
     {"pthread_rwlockattr_destroy", my_pthread_rwlockattr_destroy},
@@ -1579,6 +1757,9 @@ static struct _hook hooks[] = {
     {"pthread_rwlock_trywrlock", my_pthread_rwlock_trywrlock},
     {"pthread_rwlock_timedrdlock", my_pthread_rwlock_timedrdlock},
     {"pthread_rwlock_timedwrlock", my_pthread_rwlock_timedwrlock},
+    /* bionic-only pthread */
+    {"__pthread_gettid", my_pthread_gettid},
+    {"pthread_gettid_np", my_pthread_gettid},
     /* stdio.h */
     {"__isthreaded", &__my_isthreaded},
     {"__sF", &my_sF},
@@ -1586,6 +1767,7 @@ static struct _hook hooks[] = {
     {"fdopen", fdopen},
     {"popen", popen},
     {"puts", puts},
+    {"dprintf", dprintf},
     {"sprintf", sprintf},
     {"asprintf", asprintf},
     {"vasprintf", vasprintf},
@@ -1620,7 +1802,6 @@ static struct _hook hooks[] = {
     {"setbuf", my_setbuf},
     {"setvbuf", my_setvbuf},
     {"ungetc", my_ungetc},
-    {"vasprintf", vasprintf},
     {"vfprintf", my_vfprintf},
     {"vfscanf", my_vfscanf},
     {"fileno", my_fileno},
@@ -1638,6 +1819,7 @@ static struct _hook hooks[] = {
     {"setlinebuf", my_setlinebuf},
     {"__errno", __errno_location},
     {"__set_errno", my_set_errno},
+    {"__progname", &program_invocation_name},
     /* net specifics, to avoid __res_get_state */
     {"getaddrinfo", getaddrinfo},
     {"gethostbyaddr", gethostbyaddr},
@@ -1657,16 +1839,20 @@ static struct _hook hooks[] = {
     {"closedir", closedir},
     {"readdir", my_readdir},
     {"readdir_r", my_readdir_r},
+    {"readdir64", my_readdir},
+    {"readdir64_r", my_readdir_r},
     {"rewinddir", rewinddir},
     {"seekdir", seekdir},
     {"telldir", telldir},
     {"dirfd", dirfd},
     {"scandir", my_scandir},
     {"scandirat", my_scandirat},
+    {"scandir64", my_scandir},
     {"alphasort", my_alphasort},
     {"versionsort", my_versionsort},
     /* fcntl.h */
     {"open", my_open},
+    {"close", close},
     {"__get_tls_hooks", __get_tls_hooks},
     {"sscanf", sscanf},
     {"scanf", scanf},
@@ -1688,8 +1874,58 @@ static struct _hook hooks[] = {
     {"writev", writev},
     /* unistd.h */
     {"access", access},
+    {"fork", fork},
+    {"ttyname", ttyname},
+    {"swprintf", swprintf},
+    {"fmemopen", fmemopen},
+    {"open_memstream", open_memstream},
+    {"open_wmemstream", open_wmemstream},
+    {"ptsname", ptsname},
+    {"getservbyname", getservbyname},
     /* grp.h */
     {"getgrgid", getgrgid},
+    /* malloc.h */
+    {"mallinfo", mallinfo},
+    {"malloc_usable_size", malloc_usable_size},
+    /* libgen.h */
+    {"basename", basename},
+    {"dirname", dirname},
+    /* locale.h */
+    {"newlocale", newlocale},
+    {"freelocale", freelocale},
+    {"duplocale", duplocale},
+    {"uselocale", uselocale},
+    {"localeconv", localeconv},
+    {"setlocale", setlocale},
+    /* sys/mman.h */
+    {"mprotect", mprotect},
+    {"mmap", mmap},
+    {"munmap", munmap},
+    /* wchar.h */
+    {"wmemchr", wmemchr},
+    {"wmemcmp", wmemcmp},
+    {"wmemcpy", wmemcpy},
+    {"wmemmove", wmemmove},
+    {"wmemset", wmemset},
+    {"wmempcpy", wmempcpy},
+    {"fputws", fputws},
+    {"vfwprintf", vfwprintf},
+    {"fputwc", fputwc},
+    {"putwc", putwc},
+    {"fgetwc", fgetwc},
+    {"getwc", getwc},
+    /* pwd.h */
+    {"getgrnam", getgrnam},
+    {"getpwuid", getpwuid},
+    {"getpwnam", getpwnam},
+    /* mntent.h */
+    {"setmntent", setmntent},
+    {"getmntent", getmntent},
+    {"getmntent_r", getmntent_r},
+    {"endmntent", endmntent},
+    /* sched.h */
+    {"clone", clone},
+
     {"__cxa_atexit", __cxa_atexit},
     {"__cxa_finalize", __cxa_finalize},
     {NULL, NULL},
@@ -1707,7 +1943,7 @@ void *get_hooked_symbol(char *sym)
         }
         ptr++;
     }
-    if (strstr(sym, "pthread") != NULL)
+    if (strncmp(sym, "__pthread", 9) == 0 || strncmp(sym, "pthread", 7) == 0)
     {
         /* safe */
         if (strcmp(sym, "pthread_sigmask") == 0)

@@ -18,9 +18,14 @@
 #ifndef HOOKS_SHM_H_
 #define HOOKS_SHM_H_
 
+#define _GNU_SOURCE
 #include <stddef.h>
+#include <stdint.h>
 
-typedef unsigned int hybris_shm_pointer_t;
+/* Leave space to workaround the issue that Android might pass negative int values */
+#define HYBRIS_SHM_MASK_TOP (UINTPTR_MAX - 15)
+
+typedef uintptr_t hybris_shm_pointer_t;
 
 /* 
  * Allocate a space in the shared memory region of hybris

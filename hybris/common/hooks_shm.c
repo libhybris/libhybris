@@ -37,7 +37,11 @@
 #define LOGD(message, ...) HYBRIS_DEBUG_LOG(HOOKS, message, ##__VA_ARGS__)
 
 #define HYBRIS_DATA_SIZE    4000
-#define HYBRIS_SHM_MASK     0xFF000000UL
+#if defined(__LP64__)
+# define HYBRIS_SHM_MASK    0xFFFFFFFFFF000000ULL
+#else
+# define HYBRIS_SHM_MASK    0xFF000000UL
+#endif
 #define HYBRIS_SHM_PATH     "/hybris_shm_data"
 
 /* Structure of a shared memory region */
@@ -200,7 +204,7 @@ void *hybris_get_shmpointer(hybris_shm_pointer_t handle)
         _sync_mmap_with_shm();  /* make sure our mmap is sync'ed */
 
         if (_hybris_shm_data != NULL) {
-            unsigned int offset = handle & (~HYBRIS_SHM_MASK);
+            uintptr_t offset = handle & (~HYBRIS_SHM_MASK);
             realpointer = &(_hybris_shm_data->data) + offset;
 
             /* Be careful when activating this trace: this method is called *a lot* !

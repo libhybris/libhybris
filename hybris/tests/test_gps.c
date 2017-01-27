@@ -406,7 +406,7 @@ void sigint_handler(int signum)
   fprintf(stdout, "*** cleanup\n");
   if(AGps)
   {
-#if ! defined(HAS_ANDROID_4_2_0) && ! defined(HAS_ANDROID_5_0_0)
+#if ! defined(HAS_ANDROID_4_2_0) && ! defined(HAS_ANDROID_5_0_0) && ! defined(HAS_ANDROID_6_0_0)
         AGps->data_conn_closed(AGPS_TYPE_SUPL);
 #else
         AGps->data_conn_closed();
