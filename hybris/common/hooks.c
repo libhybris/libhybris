@@ -1707,7 +1707,7 @@ void *get_hooked_symbol(char *sym)
         }
         ptr++;
     }
-    if (strstr(sym, "pthread") != NULL)
+    if (strncmp(sym, "__pthread", 9) == 0 || strncmp(sym, "pthread", 7) == 0)
     {
         /* safe */
         if (strcmp(sym, "pthread_sigmask") == 0)
