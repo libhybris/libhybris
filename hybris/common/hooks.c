@@ -2137,6 +2137,32 @@ int _hybris_hook_open(const char *pathname, int flags, ...)
     return open(target_path, flags, mode);
 }
 
+/**
+ * Wrap some GCC builtin functions, which don't have any address
+ */
+__THROW int my__sprintf_chk (char *__restrict __s, int __flag, size_t __slen,
+			  const char *__restrict __format, ...)
+{
+    int ret = 0;
+    va_list args;
+    va_start(args,__format);
+    ret = __vsprintf_chk (__s, __flag, __slen, __format, args);
+    va_end(args);
+
+    return ret;
+}
+__THROW int my__snprintf_chk (char *__restrict __s, size_t __n, int __flag,
+			   size_t __slen, const char *__restrict __format, ...)
+{
+    int ret = 0;
+    va_list args;
+    va_start(args,__format);
+    ret = __vsnprintf_chk (__s, __n, __flag, __slen, __format, args);
+    va_end(args);
+
+    return ret;
+}
+
 static __thread void *tls_hooks[16];
 
 static void *_hybris_hook_get_tls_hooks()
@@ -2490,8 +2516,8 @@ static struct _hook hooks_common[] = {
     {"index",index},
     {"rindex",rindex},
     {"strcasecmp",strcasecmp},
-    {"__sprintf_chk", __sprintf_chk},
-    {"__snprintf_chk", __snprintf_chk},
+    {"__sprintf_chk", my__sprintf_chk},
+    {"__snprintf_chk", my__snprintf_chk},
     {"strncasecmp",strncasecmp},
     /* dirent.h */
     {"opendir", opendir},
