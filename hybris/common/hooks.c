@@ -1291,6 +1291,8 @@ struct bionic_sbuf {
 };
 #endif
 
+typedef off_t bionic_fpos_t;
+
 /* "struct __sFILE" from bionic/libc/include/stdio.h */
 struct __attribute__((packed)) bionic_file {
     unsigned char *_p;      /* current position in (some) buffer */
@@ -1310,7 +1312,7 @@ struct __attribute__((packed)) bionic_file {
     void *_cookie;          /* cookie passed to io functions */
     int (*_close)(void *);
     int (*_read)(void *, char *, int);
-    fpos_t (*_seek)(void *, fpos_t, int);
+    bionic_fpos_t (*_seek)(void *, bionic_fpos_t, int);
     int (*_write)(void *, const char *, int);
 
     /* extension data, to avoid further ABI breakage */
@@ -1328,7 +1330,7 @@ struct __attribute__((packed)) bionic_file {
 
     /* Unix stdio files get aligned to block boundaries on fseek() */
     int _blksize;           /* stat.st_blksize (may be != _bf._size) */
-    fpos_t _offset;         /* current lseek offset */
+    bionic_fpos_t _offset;         /* current lseek offset */
 };
 
 /*
@@ -1398,11 +1400,16 @@ static int _hybris_hook_fgetc(FILE *fp)
     return fgetc(_get_actual_fp(fp));
 }
 
-static int _hybris_hook_fgetpos(FILE *fp, fpos_t *pos)
+static int _hybris_hook_fgetpos(FILE *fp, bionic_fpos_t *pos)
 {
     TRACE_HOOK("fp %p pos %p", fp, pos);
 
-    return fgetpos(_get_actual_fp(fp), pos);
+    fpos_t my_fpos;
+    int ret = fgetpos(_get_actual_fp(fp), &my_fpos);
+
+    *pos = my_fpos.__pos;
+
+    return ret;
 }
 
 static char* _hybris_hook_fgets(char *s, int n, FILE *fp)
@@ -1482,11 +1489,16 @@ static int _hybris_hook_fseeko(FILE *fp, off_t offset, int whence)
     return fseeko(_get_actual_fp(fp), offset, whence);
 }
 
-static int _hybris_hook_fsetpos(FILE *fp, const fpos_t *pos)
+static int _hybris_hook_fsetpos(FILE *fp, const bionic_fpos_t *pos)
 {
     TRACE_HOOK("fp %p pos %p", fp, pos);
 
-    return fsetpos(_get_actual_fp(fp), pos);
+    fpos_t my_fpos;
+    my_fpos.__pos = *pos;
+    memset(&my_fpos.__state, 0, sizeof(mbstate_t));
+    mbsinit(&my_fpos.__state);
+
+    return fsetpos(_get_actual_fp(fp), &my_fpos);
 }
 
 static long _hybris_hook_ftell(FILE *fp)
