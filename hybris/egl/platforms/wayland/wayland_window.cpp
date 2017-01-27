@@ -36,7 +36,7 @@
 #include "logging.h"
 #include <eglhybris.h>
 
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
+#if (ANDROID_API_LEVEL >= 17)
 extern "C" {
 #include <sync/sync.h>
 }
@@ -587,7 +587,7 @@ int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd
 
     }
 
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
+#if (ANDROID_API_LEVEL >= 17)
     HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer_waiting_for_fence", "-%p", wnb);
     if (fenceFd >= 0)
     {
@@ -675,7 +675,7 @@ unsigned int WaylandNativeWindow::queueLength() const {
 
 unsigned int WaylandNativeWindow::type() const {
     TRACE("");
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=3 || ANDROID_VERSION_MAJOR>=5
+#if (ANDROID_API_LEVEL >= 18)
     /* https://android.googlesource.com/platform/system/core/+/bcfa910611b42018db580b3459101c564f802552%5E!/ */
     return NATIVE_WINDOW_SURFACE;
 #else

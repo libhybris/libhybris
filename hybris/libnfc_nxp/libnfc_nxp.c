@@ -138,7 +138,7 @@ HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phLibNfc_Llcp_SocketGetLocalOpt
 HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phFriNfc_LlcpTransport_SocketGetLocalOptions, phFriNfc_LlcpTransport_Socket_t *, phLibNfc_Llcp_sSocketOptions_t *);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phLibNfc_Llcp_SocketGetRemoteOptions, phLibNfc_Handle, phLibNfc_Handle, phLibNfc_Llcp_sSocketOptions_t *);
 HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phFriNfc_LlcpTransport_SocketGetRemoteOptions, phFriNfc_LlcpTransport_Socket_t *, phLibNfc_Llcp_sSocketOptions_t *);
-#if (ANDROID_VERSION_MAJOR == 4 && ANDROID_VERSION_MINOR >= 1) || (ANDROID_VERSION_MAJOR >= 5)
+#if (ANDROID_API_LEVEL >= 16)
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phLibNfc_Llcp_Bind, phLibNfc_Handle, uint8_t, phNfc_sData_t *);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phFriNfc_LlcpTransport_Bind, phFriNfc_LlcpTransport_Socket_t *, uint8_t, phNfc_sData_t *);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phLibNfc_Llcp_Listen, phLibNfc_Handle, pphLibNfc_LlcpSocketListenCb_t, void *);
@@ -191,7 +191,7 @@ HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phLibNfc_RemoteDev_FormatNdef, 
 HYBRIS_IMPLEMENT_FUNCTION6(libnfc_so, NFCSTATUS, phFriNfc_NdefSmtCrd_Reset, phFriNfc_sNdefSmtCrdFmt_t *, void *, phHal_sRemoteDevInformation_t *, phHal_sDevInputParam_t *, uint8_t *, uint16_t *);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phFriNfc_NdefSmtCrd_SetCR, phFriNfc_sNdefSmtCrdFmt_t *, uint8_t, pphFriNfc_Cr_t, void *);
 HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, NFCSTATUS, phFriNfc_NdefSmtCrd_Format, phFriNfc_sNdefSmtCrdFmt_t *, const uint8_t *);
-#if (ANDROID_VERSION_MAJOR == 4 && ANDROID_VERSION_MINOR >= 1) || (ANDROID_VERSION_MAJOR >= 5)
+#if (ANDROID_API_LEVEL >= 16)
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_so, NFCSTATUS, phLibNfc_ConvertToReadOnlyNdef, phLibNfc_Handle, phNfc_sData_t *, pphLibNfc_RspCb_t, void *);
 #else
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, NFCSTATUS, phLibNfc_ConvertToReadOnlyNdef, phLibNfc_Handle, pphLibNfc_RspCb_t, void *);
@@ -470,7 +470,7 @@ HYBRIS_IMPLEMENT_FUNCTION1(libnfc_so, uint32_t, phFriNfc_Llcp_CyclicFifoAvailabl
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, uint32_t, phFriNfc_Llcp_Buffer2Sequence, uint8_t *, uint32_t, phFriNfc_Llcp_sPacketSequence_t *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION5(libnfc_so, Handle_ConnectionOriented_IncommingFrame, phFriNfc_LlcpTransport_t *, phNfc_sData_t *, uint8_t, uint8_t, uint8_t);
 HYBRIS_IMPLEMENT_VOID_FUNCTION4(libnfc_so, Handle_Connectionless_IncommingFrame, phFriNfc_LlcpTransport_t *, phNfc_sData_t *, uint8_t, uint8_t);
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=3 || ANDROID_VERSION_MAJOR >= 5
+#if (ANDROID_API_LEVEL >= 18)
 /* see libnfc-nxp commit 7c4b4fad -- since Android 4.3 */
 HYBRIS_IMPLEMENT_FUNCTION7(libnfc_so, NFCSTATUS, phFriNfc_LlcpTransport_LinkSend, phFriNfc_LlcpTransport_t *, phFriNfc_Llcp_sPacketHeader_t *, phFriNfc_Llcp_sPacketSequence_t *, phNfc_sData_t *, phFriNfc_Llcp_LinkSend_CB_t, uint8_t, void *);
 #else

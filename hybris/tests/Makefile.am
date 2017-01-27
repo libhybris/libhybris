@@ -6,28 +6,16 @@ bin_PROGRAMS = \
 	test_vibrator \
 	test_gps
 
-if HAS_ANDROID_4_2_0
-bin_PROGRAMS += test_hwcomposer
-endif
-
-if HAS_ANDROID_5_0_0
+if HAS_ANDROID_HAL_HWCOMPOSER
 bin_PROGRAMS += test_hwcomposer
 endif
 
 
-if HAS_LIBNFC_NXP_HEADERS
+if HAS_ANDROID_LIBNFC_NXP
 # test_nfc depends on NFC hardware HAL interface, which is only
 # available until Android API level 15 (v4.0.3, v4.0.4).
-if HAS_ANDROID_4_0_3
+if HAS_ANDROID_HAL_NFC
 bin_PROGRAMS += test_nfc
-else
-if HAS_ANDROID_4_1_0
-bin_PROGRAMS += test_nfc
-else
-if HAS_ANDROID_5_0_0
-bin_PROGRAMS += test_nfc
-endif
-endif
 endif
 endif
 

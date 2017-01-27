@@ -92,11 +92,7 @@ libhybris_eglplatformcommon_la_LDFLAGS = \
 	$(top_builddir)/common/libhybris-common.la \
 	-version-info "1":"0":"0"
 
-if HAS_ANDROID_4_2_0
-libhybris_eglplatformcommon_la_LDFLAGS += $(top_builddir)/libsync/libsync.la
-endif
-
-if HAS_ANDROID_5_0_0
+if HAS_ANDROID_LIBSYNC
 libhybris_eglplatformcommon_la_LDFLAGS += $(top_builddir)/libsync/libsync.la
 endif
 

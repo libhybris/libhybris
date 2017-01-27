@@ -9,6 +9,31 @@ PATCH=$5
 PATCH2=$6
 PATCH3=$7
 
+# Android API level mapping.
+# See http://developer.android.com/guide/topics/manifest/uses-sdk-element.html#ApiLevels
+ANDROID_API_LEVEL_6_0_0=23
+ANDROID_API_LEVEL_5_1_0=22
+ANDROID_API_LEVEL_5_0_0=21
+ANDROID_API_LEVEL_4_4_0=19
+ANDROID_API_LEVEL_4_3_0=18
+ANDROID_API_LEVEL_4_2_0=17
+ANDROID_API_LEVEL_4_1_0=16
+ANDROID_API_LEVEL_4_0_3=15
+ANDROID_API_LEVEL_4_0_0=14
+ANDROID_API_LEVEL_3_2_0=13
+ANDROID_API_LEVEL_3_1_0=12
+ANDROID_API_LEVEL_3_0_0=11
+ANDROID_API_LEVEL_2_3_3=10
+ANDROID_API_LEVEL_2_3_0=9
+ANDROID_API_LEVEL_2_2_0=8
+ANDROID_API_LEVEL_2_1_0=7
+ANDROID_API_LEVEL_2_0_1=6
+ANDROID_API_LEVEL_2_0_0=5
+ANDROID_API_LEVEL_1_6_0=4
+ANDROID_API_LEVEL_1_5_0=3
+ANDROID_API_LEVEL_1_1_0=2
+ANDROID_API_LEVEL_1_0_0=1
+
 usage() {
     echo "Usage: extract-headers.sh <ANDROID_ROOT> <HEADER_PATH> [Android Platform Version]"
     echo
@@ -54,6 +79,23 @@ EOF
     fi
 
     echo -n "Auto-detected version: ${MAJOR}.${MINOR}.${PATCH}";echo "${PATCH2:+.${PATCH2}}${PATCH3:+.${PATCH3}}"
+fi
+
+ANDROID_API_LEVEL=
+if [ $PATCH -gt 0 ]; then
+    p=$PATCH
+    while [ $p -gt 0 ]; do
+        eval "ANDROID_API_LEVEL=\$ANDROID_API_LEVEL_${MAJOR}_${MINOR}_$p"
+        [ -n "${ANDROID_API_LEVEL}" ] && break;
+        p=$(($p - 1))
+    done
+fi
+if [ x$ANDROID_API_LEVEL = x ]; then
+    eval "ANDROID_API_LEVEL=\$ANDROID_API_LEVEL_${MAJOR}_${MINOR}_0"
+    if [ x$ANDROID_API_LEVEL = x ]; then
+        echo "Error: unknown android version ${MAJOR}.${MINOR}.${PATCH}."
+        exit 1
+    fi
 fi
 
 require_sources() {
@@ -117,6 +159,8 @@ cat > $HEADERPATH/android-version.h << EOF
 #define ANDROID_VERSION_PATCH $PATCH
 #define ANDROID_VERSION_PATCH2 $PATCH2
 #define ANDROID_VERSION_PATCH3 $PATCH3
+
+#define ANDROID_API_LEVEL $ANDROID_API_LEVEL
 
 #endif
 EOF

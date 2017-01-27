@@ -75,7 +75,7 @@ FbDevNativeWindow::FbDevNativeWindow( alloc_device_t* alloc,
     m_bufferCount = 0;
     m_allocateBuffers = true;
 
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
+#if (ANDROID_API_LEVEL >= 17)
     if (m_fbDev->numFramebuffers>0)
         setBufferCount(m_fbDev->numFramebuffers);
     else
@@ -189,7 +189,7 @@ int FbDevNativeWindow::dequeueBuffer(BaseNativeWindowBuffer** buffer, int *fence
 
         if (it == m_bufList.end())
         {
-#if ANDROID_VERSION_MAJOR<=4 && ANDROID_VERSION_MINOR<2
+#if (ANDROID_API_LEVEL <= 16)
             /*
              * This is acceptable in case you are on a stack that calls lock() before starting to render into buffer
              * When you are using fences (>= 2) you'll be waiting on the fence to signal instead. 
