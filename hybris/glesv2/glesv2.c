@@ -23,40 +23,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <egl/ws.h>
 #include <hybris/common/binding.h>
-#include <hybris/common/floating_point_abi.h>
 
 static void *_libglesv2 = NULL;
-
-/* Only functions with floating point argument need a wrapper to change the call convention correctly */
-
-static void         (*_glBlendColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) FP_ATTRIB = NULL;
-static void         (*_glClearColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) FP_ATTRIB = NULL;
-static void         (*_glClearDepthf)(GLclampf depth) FP_ATTRIB = NULL;
-static void         (*_glDepthRangef)(GLclampf zNear, GLclampf zFar) FP_ATTRIB = NULL;
-static void         (*_glLineWidth)(GLfloat width) FP_ATTRIB = NULL;
-static void         (*_glPolygonOffset)(GLfloat factor, GLfloat units) FP_ATTRIB = NULL;
-static void         (*_glSampleCoverage)(GLclampf value, GLboolean invert) FP_ATTRIB = NULL;
-static void         (*_glTexParameterf)(GLenum target, GLenum pname, GLfloat param) FP_ATTRIB = NULL;
-static void         (*_glUniform1f)(GLint location, GLfloat x) FP_ATTRIB = NULL;
-static void         (*_glUniform2f)(GLint location, GLfloat x, GLfloat y) FP_ATTRIB = NULL;
-static void         (*_glUniform3f)(GLint location, GLfloat x, GLfloat y, GLfloat z) FP_ATTRIB = NULL;
-static void         (*_glUniform4f)(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w) FP_ATTRIB = NULL;
-static void         (*_glVertexAttrib1f)(GLuint indx, GLfloat x) FP_ATTRIB = NULL;
-static void         (*_glVertexAttrib2f)(GLuint indx, GLfloat x, GLfloat y) FP_ATTRIB = NULL;
-static void         (*_glVertexAttrib3f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z) FP_ATTRIB = NULL;
-static void         (*_glVertexAttrib4f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w) FP_ATTRIB = NULL;
-static void         (*_glEGLImageTargetTexture2DOES)(GLenum target, GLeglImageOES image) = NULL;
 
 static void         (*_glActiveTexture)(GLenum texture) = NULL;
 static void         (*_glAttachShader)(GLuint program, GLuint shader) = NULL;
 static void         (*_glBindAttribLocation)(GLuint program, GLuint index, const GLchar* name) = NULL;
 static void         (*_glBindBuffer)(GLenum target, GLuint buffer) = NULL;
 static void         (*_glBindFramebuffer)(GLenum target, GLuint framebuffer) = NULL;
-static void         (*_glBindRenderbuffer)(GLenum target, GLuint framebuffer) = NULL;
+static void         (*_glBindRenderbuffer)(GLenum target, GLuint renderbuffer) = NULL;
 static void         (*_glBindTexture)(GLenum target, GLuint texture) = NULL;
-static void         (*_glBlendEquation)(GLenum mode) = NULL;
+static void         (*_glBlendColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) FP_ATTRIB = NULL;
+static void         (*_glBlendEquation)(GLenum mode ) = NULL;
 static void         (*_glBlendEquationSeparate)(GLenum modeRGB, GLenum modeAlpha) = NULL;
 static void         (*_glBlendFunc)(GLenum sfactor, GLenum dfactor) = NULL;
 static void         (*_glBlendFuncSeparate)(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha) = NULL;
@@ -64,6 +43,8 @@ static void         (*_glBufferData)(GLenum target, GLsizeiptr size, const GLvoi
 static void         (*_glBufferSubData)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data) = NULL;
 static GLenum       (*_glCheckFramebufferStatus)(GLenum target) = NULL;
 static void         (*_glClear)(GLbitfield mask) = NULL;
+static void         (*_glClearColor)(GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha) FP_ATTRIB = NULL;
+static void         (*_glClearDepthf)(GLclampf depth) FP_ATTRIB = NULL;
 static void         (*_glClearStencil)(GLint s) = NULL;
 static void         (*_glColorMask)(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha) = NULL;
 static void         (*_glCompileShader)(GLuint shader) = NULL;
@@ -75,13 +56,14 @@ static GLuint       (*_glCreateProgram)(void) = NULL;
 static GLuint       (*_glCreateShader)(GLenum type) = NULL;
 static void         (*_glCullFace)(GLenum mode) = NULL;
 static void         (*_glDeleteBuffers)(GLsizei n, const GLuint* buffers) = NULL;
-static void         (*_glDeleteFramebuffers)(GLsizei n, const GLuint* buffers) = NULL;
+static void         (*_glDeleteFramebuffers)(GLsizei n, const GLuint* framebuffers) = NULL;
 static void         (*_glDeleteProgram)(GLuint program) = NULL;
 static void         (*_glDeleteRenderbuffers)(GLsizei n, const GLuint* renderbuffers) = NULL;
 static void         (*_glDeleteShader)(GLuint shader) = NULL;
 static void         (*_glDeleteTextures)(GLsizei n, const GLuint* textures) = NULL;
 static void         (*_glDepthFunc)(GLenum func) = NULL;
 static void         (*_glDepthMask)(GLboolean flag) = NULL;
+static void         (*_glDepthRangef)(GLclampf zNear, GLclampf zFar) FP_ATTRIB = NULL;
 static void         (*_glDetachShader)(GLuint program, GLuint shader) = NULL;
 static void         (*_glDisable)(GLenum cap) = NULL;
 static void         (*_glDisableVertexAttribArray)(GLuint index) = NULL;
@@ -133,11 +115,14 @@ static GLboolean    (*_glIsProgram)(GLuint program) = NULL;
 static GLboolean    (*_glIsRenderbuffer)(GLuint renderbuffer) = NULL;
 static GLboolean    (*_glIsShader)(GLuint shader) = NULL;
 static GLboolean    (*_glIsTexture)(GLuint texture) = NULL;
+static void         (*_glLineWidth)(GLfloat width) FP_ATTRIB = NULL;
 static void         (*_glLinkProgram)(GLuint program) = NULL;
 static void         (*_glPixelStorei)(GLenum pname, GLint param) = NULL;
+static void         (*_glPolygonOffset)(GLfloat factor, GLfloat units) FP_ATTRIB = NULL;
 static void         (*_glReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels) = NULL;
 static void         (*_glReleaseShaderCompiler)(void) = NULL;
 static void         (*_glRenderbufferStorage)(GLenum target, GLenum internalformat, GLsizei width, GLsizei height) = NULL;
+static void         (*_glSampleCoverage)(GLclampf value, GLboolean invert) FP_ATTRIB = NULL;
 static void         (*_glScissor)(GLint x, GLint y, GLsizei width, GLsizei height) = NULL;
 static void         (*_glShaderBinary)(GLsizei n, const GLuint* shaders, GLenum binaryformat, const GLvoid* binary, GLsizei length) = NULL;
 static void         (*_glShaderSource)(GLuint shader, GLsizei count, const GLchar** string, const GLint* length) = NULL;
@@ -148,19 +133,24 @@ static void         (*_glStencilMaskSeparate)(GLenum face, GLuint mask) = NULL;
 static void         (*_glStencilOp)(GLenum fail, GLenum zfail, GLenum zpass) = NULL;
 static void         (*_glStencilOpSeparate)(GLenum face, GLenum fail, GLenum zfail, GLenum zpass) = NULL;
 static void         (*_glTexImage2D)(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels) = NULL;
+static void         (*_glTexParameterf)(GLenum target, GLenum pname, GLfloat param) FP_ATTRIB = NULL;
 static void         (*_glTexParameterfv)(GLenum target, GLenum pname, const GLfloat* params) = NULL;
 static void         (*_glTexParameteri)(GLenum target, GLenum pname, GLint param) = NULL;
 static void         (*_glTexParameteriv)(GLenum target, GLenum pname, const GLint* params) = NULL;
 static void         (*_glTexSubImage2D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels) = NULL;
+static void         (*_glUniform1f)(GLint location, GLfloat x) FP_ATTRIB = NULL;
 static void         (*_glUniform1fv)(GLint location, GLsizei count, const GLfloat* v) = NULL;
 static void         (*_glUniform1i)(GLint location, GLint x) = NULL;
 static void         (*_glUniform1iv)(GLint location, GLsizei count, const GLint* v) = NULL;
+static void         (*_glUniform2f)(GLint location, GLfloat x, GLfloat y) FP_ATTRIB = NULL;
 static void         (*_glUniform2fv)(GLint location, GLsizei count, const GLfloat* v) = NULL;
 static void         (*_glUniform2i)(GLint location, GLint x, GLint y) = NULL;
 static void         (*_glUniform2iv)(GLint location, GLsizei count, const GLint* v) = NULL;
+static void         (*_glUniform3f)(GLint location, GLfloat x, GLfloat y, GLfloat z) FP_ATTRIB = NULL;
 static void         (*_glUniform3fv)(GLint location, GLsizei count, const GLfloat* v) = NULL;
 static void         (*_glUniform3i)(GLint location, GLint x, GLint y, GLint z) = NULL;
 static void         (*_glUniform3iv)(GLint location, GLsizei count, const GLint* v) = NULL;
+static void         (*_glUniform4f)(GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w) FP_ATTRIB = NULL;
 static void         (*_glUniform4fv)(GLint location, GLsizei count, const GLfloat* v) = NULL;
 static void         (*_glUniform4i)(GLint location, GLint x, GLint y, GLint z, GLint w) = NULL;
 static void         (*_glUniform4iv)(GLint location, GLsizei count, const GLint* v) = NULL;
@@ -169,51 +159,23 @@ static void         (*_glUniformMatrix3fv)(GLint location, GLsizei count, GLbool
 static void         (*_glUniformMatrix4fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value) = NULL;
 static void         (*_glUseProgram)(GLuint program) = NULL;
 static void         (*_glValidateProgram)(GLuint program) = NULL;
+static void         (*_glVertexAttrib1f)(GLuint indx, GLfloat x) FP_ATTRIB = NULL;
 static void         (*_glVertexAttrib1fv)(GLuint indx, const GLfloat* values) = NULL;
+static void         (*_glVertexAttrib2f)(GLuint indx, GLfloat x, GLfloat y) FP_ATTRIB = NULL;
 static void         (*_glVertexAttrib2fv)(GLuint indx, const GLfloat* values) = NULL;
+static void         (*_glVertexAttrib3f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z) FP_ATTRIB = NULL;
 static void         (*_glVertexAttrib3fv)(GLuint indx, const GLfloat* values) = NULL;
+static void         (*_glVertexAttrib4f)(GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w) FP_ATTRIB = NULL;
 static void         (*_glVertexAttrib4fv)(GLuint indx, const GLfloat* values) = NULL;
 static void         (*_glVertexAttribPointer)(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* ptr) = NULL;
 static void         (*_glViewport)(GLint x, GLint y, GLsizei width, GLsizei height) = NULL;
+static void         (*_glEGLImageTargetTexture2DOES) (GLenum target, GLeglImageOES image) = NULL;
 
 
 #define GLES2_LOAD(sym)  { *(&_ ## sym) = (void *) android_dlsym(_libglesv2, #sym);  } 
 
-/*
-This generates a function that when first called overwrites it's plt entry with new address. Subsequent calls jump directly at the target function in the android library. This means effectively 0 call overhead after the first call.
-*/
-
-#define GLES2_IDLOAD(sym) \
- __asm__ (".type " #sym ", %gnu_indirect_function"); \
-typeof(sym) * sym ## _dispatch (void) __asm__ (#sym);\
-typeof(sym) * sym ## _dispatch (void) \
-{ \
-	if (_libglesv2) \
-		return (void *) android_dlsym(_libglesv2, #sym); \
-	else \
-		return &sym ## _wrapper; \
-}
-
 static void  __attribute__((constructor)) _init_androidglesv2()  {
 	_libglesv2 = (void *) android_dlopen(getenv("LIBGLESV2") ? getenv("LIBGLESV2") : "libGLESv2.so", RTLD_NOW);
-	GLES2_LOAD(glBlendColor);
-	GLES2_LOAD(glClearColor);
-	GLES2_LOAD(glClearDepthf);
-	GLES2_LOAD(glDepthRangef);
-	GLES2_LOAD(glLineWidth);
-	GLES2_LOAD(glPolygonOffset);
-	GLES2_LOAD(glSampleCoverage);
-	GLES2_LOAD(glTexParameterf);
-	GLES2_LOAD(glUniform1f);
-	GLES2_LOAD(glUniform2f);
-	GLES2_LOAD(glUniform3f);
-	GLES2_LOAD(glUniform4f);
-	GLES2_LOAD(glVertexAttrib1f);
-	GLES2_LOAD(glVertexAttrib2f);
-	GLES2_LOAD(glVertexAttrib3f);
-	GLES2_LOAD(glVertexAttrib4f);
-	GLES2_LOAD(glEGLImageTargetTexture2DOES);
-
 	GLES2_LOAD(glActiveTexture);
 	GLES2_LOAD(glAttachShader);
 	GLES2_LOAD(glBindAttribLocation);
@@ -221,6 +183,7 @@ static void  __attribute__((constructor)) _init_androidglesv2()  {
 	GLES2_LOAD(glBindFramebuffer);
 	GLES2_LOAD(glBindRenderbuffer);
 	GLES2_LOAD(glBindTexture);
+	GLES2_LOAD(glBlendColor);
 	GLES2_LOAD(glBlendEquation);
 	GLES2_LOAD(glBlendEquationSeparate);
 	GLES2_LOAD(glBlendFunc);
@@ -229,6 +192,8 @@ static void  __attribute__((constructor)) _init_androidglesv2()  {
 	GLES2_LOAD(glBufferSubData);
 	GLES2_LOAD(glCheckFramebufferStatus);
 	GLES2_LOAD(glClear);
+	GLES2_LOAD(glClearColor);
+	GLES2_LOAD(glClearDepthf);
 	GLES2_LOAD(glClearStencil);
 	GLES2_LOAD(glColorMask);
 	GLES2_LOAD(glCompileShader);
@@ -247,6 +212,7 @@ static void  __attribute__((constructor)) _init_androidglesv2()  {
 	GLES2_LOAD(glDeleteTextures);
 	GLES2_LOAD(glDepthFunc);
 	GLES2_LOAD(glDepthMask);
+	GLES2_LOAD(glDepthRangef);
 	GLES2_LOAD(glDetachShader);
 	GLES2_LOAD(glDisable);
 	GLES2_LOAD(glDisableVertexAttribArray);
@@ -298,11 +264,14 @@ static void  __attribute__((constructor)) _init_androidglesv2()  {
 	GLES2_LOAD(glIsRenderbuffer);
 	GLES2_LOAD(glIsShader);
 	GLES2_LOAD(glIsTexture);
+	GLES2_LOAD(glLineWidth);
 	GLES2_LOAD(glLinkProgram);
 	GLES2_LOAD(glPixelStorei);
+	GLES2_LOAD(glPolygonOffset);
 	GLES2_LOAD(glReadPixels);
 	GLES2_LOAD(glReleaseShaderCompiler);
 	GLES2_LOAD(glRenderbufferStorage);
+	GLES2_LOAD(glSampleCoverage);
 	GLES2_LOAD(glScissor);
 	GLES2_LOAD(glShaderBinary);
 	GLES2_LOAD(glShaderSource);
@@ -313,19 +282,24 @@ static void  __attribute__((constructor)) _init_androidglesv2()  {
 	GLES2_LOAD(glStencilOp);
 	GLES2_LOAD(glStencilOpSeparate);
 	GLES2_LOAD(glTexImage2D);
+	GLES2_LOAD(glTexParameterf);
 	GLES2_LOAD(glTexParameterfv);
 	GLES2_LOAD(glTexParameteri);
 	GLES2_LOAD(glTexParameteriv);
 	GLES2_LOAD(glTexSubImage2D);
+	GLES2_LOAD(glUniform1f);
 	GLES2_LOAD(glUniform1fv);
 	GLES2_LOAD(glUniform1i);
 	GLES2_LOAD(glUniform1iv);
+	GLES2_LOAD(glUniform2f);
 	GLES2_LOAD(glUniform2fv);
 	GLES2_LOAD(glUniform2i);
 	GLES2_LOAD(glUniform2iv);
+	GLES2_LOAD(glUniform3f);
 	GLES2_LOAD(glUniform3fv);
 	GLES2_LOAD(glUniform3i);
 	GLES2_LOAD(glUniform3iv);
+	GLES2_LOAD(glUniform4f);
 	GLES2_LOAD(glUniform4fv);
 	GLES2_LOAD(glUniform4i);
 	GLES2_LOAD(glUniform4iv);
@@ -334,984 +308,743 @@ static void  __attribute__((constructor)) _init_androidglesv2()  {
 	GLES2_LOAD(glUniformMatrix4fv);
 	GLES2_LOAD(glUseProgram);
 	GLES2_LOAD(glValidateProgram);
+	GLES2_LOAD(glVertexAttrib1f);
 	GLES2_LOAD(glVertexAttrib1fv);
+	GLES2_LOAD(glVertexAttrib2f);
 	GLES2_LOAD(glVertexAttrib2fv);
+	GLES2_LOAD(glVertexAttrib3f);
 	GLES2_LOAD(glVertexAttrib3fv);
+	GLES2_LOAD(glVertexAttrib4f);
 	GLES2_LOAD(glVertexAttrib4fv);
 	GLES2_LOAD(glVertexAttribPointer);
 	GLES2_LOAD(glViewport);
+	GLES2_LOAD(glEGLImageTargetTexture2DOES);
+	
 }
 
-static void glActiveTexture_wrapper(GLenum texture)
-{
-	return (*_glActiveTexture)(texture);
-}
-
-static void glAttachShader_wrapper(GLuint program, GLuint shader)
-{
-	return (*_glAttachShader)(program, shader);
-}
-
-static void glBindAttribLocation_wrapper(GLuint program, GLuint index, const GLchar* name)
-{
-	return (*_glBindAttribLocation)(program, index, name);
-}
-
-static void glBindBuffer_wrapper(GLenum target, GLuint buffer)
-{
-	return (*_glBindBuffer)(target, buffer);
-}
-
-static void glBindFramebuffer_wrapper(GLenum target, GLuint framebuffer)
-{
-	return (*_glBindFramebuffer)(target, framebuffer);
-}
-
-static void glBindRenderbuffer_wrapper(GLenum target, GLuint framebuffer)
-{
-	return (*_glBindRenderbuffer)(target, framebuffer);
-}
-
-static void glBindTexture_wrapper(GLenum target, GLuint texture)
-{
-	return (*_glBindTexture)(target, texture);
-}
-
-static void glBlendEquation_wrapper(GLenum mode)
-{
-	return (*_glBlendEquation)(mode);
-}
-
-static void glBlendEquationSeparate_wrapper(GLenum modeRGB, GLenum modeAlpha)
-{
-	return (*_glBlendEquationSeparate)(modeRGB, modeAlpha);
-}
-
-static void glBlendFunc_wrapper(GLenum sfactor, GLenum dfactor)
-{
-	return (*_glBlendFunc)(sfactor, dfactor);
-}
-
-static void glBlendFuncSeparate_wrapper(GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
-{
-	return (*_glBlendFuncSeparate)(srcRGB, dstRGB, srcAlpha, dstAlpha);
-}
-
-static void glBufferData_wrapper(GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage)
-{
-	return (*_glBufferData)(target, size, data, usage);
-}
-
-static void glBufferSubData_wrapper(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data)
-{
-	return (*_glBufferSubData)(target, offset, size, data);
-}
-
-static GLenum glCheckFramebufferStatus_wrapper(GLenum target)
-{
-	return (*_glCheckFramebufferStatus)(target);
-}
-
-static void glClear_wrapper(GLbitfield mask)
-{
-	return (*_glClear)(mask);
-}
-
-static void glClearStencil_wrapper(GLint s)
-{
-	return (*_glClearStencil)(s);
-}
-
-static void glColorMask_wrapper(GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha)
-{
-	return (*_glColorMask)(red, green, blue, alpha);
-}
-
-static void glCompileShader_wrapper(GLuint shader)
-{
-	return (*_glCompileShader)(shader);
-}
-
-static void glCompressedTexImage2D_wrapper(GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid* data)
-{
-	return (*_glCompressedTexImage2D)(target, level, internalformat, width, height, border, imageSize, data);
-}
-
-static void glCompressedTexSubImage2D_wrapper(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* data)
-{
-	return (*_glCompressedTexSubImage2D)(target, level, xoffset, yoffset, width, height, format, imageSize, data);
-}
-
-static void glCopyTexImage2D_wrapper(GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border)
-{
-	return (*_glCopyTexImage2D)(target, level, internalformat, x, y, width, height, border);
-}
-
-static void glCopyTexSubImage2D_wrapper(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height)
-{
-	return (*_glCopyTexSubImage2D)(target, level, xoffset, yoffset, x, y, width, height);
-}
-
-static GLuint glCreateProgram_wrapper(void)
-{
-	return (*_glCreateProgram)();
-}
-
-static GLuint glCreateShader_wrapper(GLenum type)
-{
-	return (*_glCreateShader)(type);
-}
-
-static void glCullFace_wrapper(GLenum mode)
-{
-	return (*_glCullFace)(mode);
-}
-
-static void glDeleteBuffers_wrapper(GLsizei n, const GLuint* buffers)
-{
-	return (*_glDeleteBuffers)(n, buffers);
-}
-
-static void glDeleteFramebuffers_wrapper(GLsizei n, const GLuint* buffers)
-{
-	return (*_glDeleteFramebuffers)(n, buffers);
-}
-
-static void glDeleteProgram_wrapper(GLuint program)
-{
-	return (*_glDeleteProgram)(program);
-}
-
-static void glDeleteRenderbuffers_wrapper(GLsizei n, const GLuint* renderbuffers)
-{
-	return (*_glDeleteRenderbuffers)(n, renderbuffers);
-}
-
-static void glDeleteShader_wrapper(GLuint shader)
-{
-	return (*_glDeleteShader)(shader);
-}
-
-static void glDeleteTextures_wrapper(GLsizei n, const GLuint* textures)
-{
-	return (*_glDeleteTextures)(n, textures);
-}
-
-static void glDepthFunc_wrapper(GLenum func)
-{
-	return (*_glDepthFunc)(func);
-}
-
-static void glDepthMask_wrapper(GLboolean flag)
-{
-	return (*_glDepthMask)(flag);
-}
-
-static void glDetachShader_wrapper(GLuint program, GLuint shader)
-{
-	return (*_glDetachShader)(program, shader);
-}
-
-static void glDisable_wrapper(GLenum cap)
-{
-	return (*_glDisable)(cap);
-}
-
-static void glDisableVertexAttribArray_wrapper(GLuint index)
-{
-	return (*_glDisableVertexAttribArray)(index);
-}
-
-static void glDrawArrays_wrapper(GLenum mode, GLint first, GLsizei count)
-{
-	return (*_glDrawArrays)(mode, first, count);
-}
-
-static void glDrawElements_wrapper(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)
-{
-	return (*_glDrawElements)(mode, count, type, indices);
-}
-
-static void glEnable_wrapper(GLenum cap)
-{
-	return (*_glEnable)(cap);
-}
-
-static void glEnableVertexAttribArray_wrapper(GLuint index)
-{
-	return (*_glEnableVertexAttribArray)(index);
-}
-
-static void glFinish_wrapper(void)
-{
-	return (*_glFinish)();
-}
-
-static void glFlush_wrapper(void)
-{
-	return (*_glFlush)();
-}
-
-static void glFramebufferRenderbuffer_wrapper(GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
-{
-	return (*_glFramebufferRenderbuffer)(target, attachment, renderbuffertarget, renderbuffer);
-}
-
-static void glFramebufferTexture2D_wrapper(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
-{
-	return (*_glFramebufferTexture2D)(target, attachment, textarget, texture, level);
-}
-
-static void glFrontFace_wrapper(GLenum mode)
-{
-	return (*_glFrontFace)(mode);
-}
-
-static void glGenBuffers_wrapper(GLsizei n, GLuint* buffers)
-{
-	return (*_glGenBuffers)(n, buffers);
-}
-
-static void glGenerateMipmap_wrapper(GLenum target)
-{
-	return (*_glGenerateMipmap)(target);
-}
-
-static void glGenFramebuffers_wrapper(GLsizei n, GLuint* framebuffers)
-{
-	return (*_glGenFramebuffers)(n, framebuffers);
-}
-
-static void glGenRenderbuffers_wrapper(GLsizei n, GLuint* renderbuffers)
-{
-	return (*_glGenRenderbuffers)(n, renderbuffers);
-}
-
-static void glGenTextures_wrapper(GLsizei n, GLuint* textures)
-{
-	return (*_glGenTextures)(n, textures);
-}
-
-static void glGetActiveAttrib_wrapper(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, GLchar* name)
-{
-	return (*_glGetActiveAttrib)(program, index, bufsize, length, size, type, name);
-}
-
-static void glGetActiveUniform_wrapper(GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, GLchar* name)
-{
-	return (*_glGetActiveUniform)(program, index, bufsize, length, size, type, name);
-}
-
-static void glGetAttachedShaders_wrapper(GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders)
-{
-	return (*_glGetAttachedShaders)(program, maxcount, count, shaders);
-}
-
-static int  glGetAttribLocation_wrapper(GLuint program, const GLchar* name)
-{
-	return (*_glGetAttribLocation)(program, name);
-}
-
-static void glGetBooleanv_wrapper(GLenum pname, GLboolean* params)
-{
-	return (*_glGetBooleanv)(pname, params);
-}
-
-static void glGetBufferParameteriv_wrapper(GLenum target, GLenum pname, GLint* params)
-{
-	return (*_glGetBufferParameteriv)(target, pname, params);
-}
-
-static GLenum glGetError_wrapper(void)
-{
-	return (*_glGetError)();
-}
-
-static void glGetFloatv_wrapper(GLenum pname, GLfloat* params)
-{
-	return (*_glGetFloatv)(pname, params);
-}
-
-static void glGetFramebufferAttachmentParameteriv_wrapper(GLenum target, GLenum attachment, GLenum pname, GLint* params)
-{
-	return (*_glGetFramebufferAttachmentParameteriv)(target, attachment, pname, params);
-}
-
-static void glGetIntegerv_wrapper(GLenum pname, GLint* params)
-{
-	return (*_glGetIntegerv)(pname, params);
-}
-
-static void glGetProgramiv_wrapper(GLuint program, GLenum pname, GLint* params)
-{
-	return (*_glGetProgramiv)(program, pname, params);
-}
-
-static void glGetProgramInfoLog_wrapper(GLuint program, GLsizei bufsize, GLsizei* length, GLchar* infolog)
-{
-	return (*_glGetProgramInfoLog)(program, bufsize, length, infolog);
-}
-
-static void glGetRenderbufferParameteriv_wrapper(GLenum target, GLenum pname, GLint* params)
-{
-	return (*_glGetRenderbufferParameteriv)(target, pname, params);
-}
-
-static void glGetShaderiv_wrapper(GLuint shader, GLenum pname, GLint* params)
-{
-	return (*_glGetShaderiv)(shader, pname, params);
-}
-
-static void glGetShaderInfoLog_wrapper(GLuint shader, GLsizei bufsize, GLsizei* length, GLchar* infolog)
-{
-	return (*_glGetShaderInfoLog)(shader, bufsize, length, infolog);
-}
-
-static void glGetShaderPrecisionFormat_wrapper(GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision)
-{
-	return (*_glGetShaderPrecisionFormat)(shadertype, precisiontype, range, precision);
-}
-
-static void glGetShaderSource_wrapper(GLuint shader, GLsizei bufsize, GLsizei* length, GLchar* source)
-{
-	return (*_glGetShaderSource)(shader, bufsize, length, source);
-}
-
-static void glGetTexParameterfv_wrapper(GLenum target, GLenum pname, GLfloat* params)
-{
-	return (*_glGetTexParameterfv)(target, pname, params);
-}
-
-static void glGetTexParameteriv_wrapper(GLenum target, GLenum pname, GLint* params)
-{
-	return (*_glGetTexParameteriv)(target, pname, params);
-}
-
-static void glGetUniformfv_wrapper(GLuint program, GLint location, GLfloat* params)
-{
-	return (*_glGetUniformfv)(program, location, params);
-}
-
-static void glGetUniformiv_wrapper(GLuint program, GLint location, GLint* params)
-{
-	return (*_glGetUniformiv)(program, location, params);
-}
-
-static int  glGetUniformLocation_wrapper(GLuint program, const GLchar* name)
-{
-	return (*_glGetUniformLocation)(program, name);
-}
-
-static void glGetVertexAttribfv_wrapper(GLuint index, GLenum pname, GLfloat* params)
-{
-	return (*_glGetVertexAttribfv)(index, pname, params);
-}
-
-static void glGetVertexAttribiv_wrapper(GLuint index, GLenum pname, GLint* params)
-{
-	return (*_glGetVertexAttribiv)(index, pname, params);
-}
-
-static void glGetVertexAttribPointerv_wrapper(GLuint index, GLenum pname, GLvoid** pointer)
-{
-	return (*_glGetVertexAttribPointerv)(index, pname, pointer);
-}
-
-static void glHint_wrapper(GLenum target, GLenum mode)
-{
-	return (*_glHint)(target, mode);
-}
-
-static GLboolean glIsBuffer_wrapper(GLuint buffer)
-{
-	return (*_glIsBuffer)(buffer);
-}
-
-static GLboolean glIsEnabled_wrapper(GLenum cap)
-{
-	return (*_glIsEnabled)(cap);
-}
-
-static GLboolean glIsFramebuffer_wrapper(GLuint framebuffer)
-{
-	return (*_glIsFramebuffer)(framebuffer);
-}
-
-static GLboolean glIsProgram_wrapper(GLuint program)
-{
-	return (*_glIsProgram)(program);
-}
-
-static GLboolean glIsRenderbuffer_wrapper(GLuint renderbuffer)
-{
-	return (*_glIsRenderbuffer)(renderbuffer);
-}
-
-static GLboolean glIsShader_wrapper(GLuint shader)
-{
-	return (*_glIsShader)(shader);
-}
-
-static GLboolean glIsTexture_wrapper(GLuint texture)
-{
-	return (*_glIsTexture)(texture);
-}
-
-static void glLinkProgram_wrapper(GLuint program)
-{
-	return (*_glLinkProgram)(program);
-}
-
-static void glPixelStorei_wrapper(GLenum pname, GLint param)
-{
-	return (*_glPixelStorei)(pname, param);
-}
-
-static void glReadPixels_wrapper(GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels)
-{
-	return (*_glReadPixels)(x, y, width, height, format, type, pixels);
-}
-
-static void glReleaseShaderCompiler_wrapper(void)
-{
-	return (*_glReleaseShaderCompiler)();
-}
-
-static void glRenderbufferStorage_wrapper(GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
-{
-	return (*_glRenderbufferStorage)(target, internalformat, width, height);
-}
-
-static void glScissor_wrapper(GLint x, GLint y, GLsizei width, GLsizei height)
-{
-	return (*_glScissor)(x, y, width, height);
-}
-
-static void glShaderBinary_wrapper(GLsizei n, const GLuint* shaders, GLenum binaryformat, const GLvoid* binary, GLsizei length)
-{
-	return (*_glShaderBinary)(n, shaders, binaryformat, binary, length);
-}
-
-static void glShaderSource_wrapper(GLuint shader, GLsizei count, const GLchar** string, const GLint* length)
-{
-	return (*_glShaderSource)(shader, count, string, length);
-}
-
-static void glStencilFunc_wrapper(GLenum func, GLint ref, GLuint mask)
-{
-	return (*_glStencilFunc)(func, ref, mask);
-}
-
-static void glStencilFuncSeparate_wrapper(GLenum face, GLenum func, GLint ref, GLuint mask)
-{
-	return (*_glStencilFuncSeparate)(face, func, ref, mask);
-}
-
-static void glStencilMask_wrapper(GLuint mask)
-{
-	return (*_glStencilMask)(mask);
-}
-
-static void glStencilMaskSeparate_wrapper(GLenum face, GLuint mask)
-{
-	return (*_glStencilMaskSeparate)(face, mask);
-}
-
-static void glStencilOp_wrapper(GLenum fail, GLenum zfail, GLenum zpass)
-{
-	return (*_glStencilOp)(fail, zfail, zpass);
-}
-
-static void glStencilOpSeparate_wrapper(GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
-{
-	return (*_glStencilOpSeparate)(face, fail, zfail, zpass);
-}
-
-static void glTexImage2D_wrapper(GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
-{
-	return (*_glTexImage2D)(target, level, internalformat, width, height, border, format, type, pixels);
-}
-
-static void glTexParameterfv_wrapper(GLenum target, GLenum pname, const GLfloat* params)
-{
-	return (*_glTexParameterfv)(target, pname, params);
-}
-
-static void glTexParameteri_wrapper(GLenum target, GLenum pname, GLint param)
-{
-	return (*_glTexParameteri)(target, pname, param);
-}
-
-static void glTexParameteriv_wrapper(GLenum target, GLenum pname, const GLint* params)
-{
-	return (*_glTexParameteriv)(target, pname, params);
-}
-
-static void glTexSubImage2D_wrapper(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels)
-{
-	return (*_glTexSubImage2D)(target, level, xoffset, yoffset, width, height, format, type, pixels);
-}
-
-static void glUniform1fv_wrapper(GLint location, GLsizei count, const GLfloat* v)
-{
-	return (*_glUniform1fv)(location, count, v);
-}
-
-static void glUniform1i_wrapper(GLint location, GLint x)
-{
-	return (*_glUniform1i)(location, x);
-}
-
-static void glUniform1iv_wrapper(GLint location, GLsizei count, const GLint* v)
-{
-	return (*_glUniform1iv)(location, count, v);
-}
-
-static void glUniform2fv_wrapper(GLint location, GLsizei count, const GLfloat* v)
-{
-	return (*_glUniform2fv)(location, count, v);
-}
-
-static void glUniform2i_wrapper(GLint location, GLint x, GLint y)
-{
-	return (*_glUniform2i)(location, x, y);
-}
-
-static void glUniform2iv_wrapper(GLint location, GLsizei count, const GLint* v)
-{
-	return (*_glUniform2iv)(location, count, v);
-}
-
-static void glUniform3fv_wrapper(GLint location, GLsizei count, const GLfloat* v)
-{
-	return (*_glUniform3fv)(location, count, v);
-}
-
-static void glUniform3i_wrapper(GLint location, GLint x, GLint y, GLint z)
-{
-	return (*_glUniform3i)(location, x, y, z);
-}
-
-static void glUniform3iv_wrapper(GLint location, GLsizei count, const GLint* v)
-{
-	return (*_glUniform3iv)(location, count, v);
-}
-
-static void glUniform4fv_wrapper(GLint location, GLsizei count, const GLfloat* v)
-{
-	return (*_glUniform4fv)(location, count, v);
-}
-
-static void glUniform4i_wrapper(GLint location, GLint x, GLint y, GLint z, GLint w)
-{
-	return (*_glUniform4i)(location, x, y, z, w);
-}
-
-static void glUniform4iv_wrapper(GLint location, GLsizei count, const GLint* v)
-{
-	return (*_glUniform4iv)(location, count, v);
-}
-
-static void glUniformMatrix2fv_wrapper(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
-{
-	return (*_glUniformMatrix2fv)(location, count, transpose, value);
-}
-
-static void glUniformMatrix3fv_wrapper(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
-{
-	return (*_glUniformMatrix3fv)(location, count, transpose, value);
-}
-
-static void glUniformMatrix4fv_wrapper(GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
-{
-	return (*_glUniformMatrix4fv)(location, count, transpose, value);
-}
-
-static void glUseProgram_wrapper(GLuint program)
-{
-	return (*_glUseProgram)(program);
-}
-
-static void glValidateProgram_wrapper(GLuint program)
-{
-	return (*_glValidateProgram)(program);
-}
 
-static void glVertexAttrib1fv_wrapper(GLuint indx, const GLfloat* values)
+void glActiveTexture (GLenum texture)
 {
-	return (*_glVertexAttrib1fv)(indx, values);
+	(*_glActiveTexture)(texture);
 }
 
-static void glVertexAttrib2fv_wrapper(GLuint indx, const GLfloat* values)
+void glAttachShader (GLuint program, GLuint shader)
 {
-	return (*_glVertexAttrib2fv)(indx, values);
+	(*_glAttachShader)(program, shader);
 }
 
-static void glVertexAttrib3fv_wrapper(GLuint indx, const GLfloat* values)
+void glBindAttribLocation (GLuint program, GLuint index, const GLchar* name)
 {
-	return (*_glVertexAttrib3fv)(indx, values);
+	(*_glBindAttribLocation)(program, index, name);
 }
 
-static void glVertexAttrib4fv_wrapper(GLuint indx, const GLfloat* values)
+void glBindBuffer (GLenum target, GLuint buffer)
 {
-	return (*_glVertexAttrib4fv)(indx, values);
+	(*_glBindBuffer)(target, buffer);
 }
 
-static void glVertexAttribPointer_wrapper(GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* ptr)
+void glBindFramebuffer (GLenum target, GLuint framebuffer)
 {
-	return (*_glVertexAttribPointer)(indx, size, type, normalized, stride, ptr);
+	(*_glBindFramebuffer)(target, framebuffer);
 }
 
-static void glViewport_wrapper(GLint x, GLint y, GLsizei width, GLsizei height)
+void glBindRenderbuffer (GLenum target, GLuint renderbuffer)
 {
-	return (*_glViewport)(x, y, width, height);
+	(*_glBindRenderbuffer)(target, renderbuffer);
 }
-
-
-
-GLES2_IDLOAD(glActiveTexture);
-
-GLES2_IDLOAD(glAttachShader);
-
-GLES2_IDLOAD(glBindAttribLocation);
-
-GLES2_IDLOAD(glBindBuffer);
-
-GLES2_IDLOAD(glBindFramebuffer);
-
-GLES2_IDLOAD(glBindRenderbuffer);
-
-GLES2_IDLOAD(glBindTexture);
-
-GLES2_IDLOAD(glBlendEquation);
-
-GLES2_IDLOAD(glBlendEquationSeparate);
-
-GLES2_IDLOAD(glBlendFunc);
-
-GLES2_IDLOAD(glBlendFuncSeparate);
-
-GLES2_IDLOAD(glBufferData);
-
-GLES2_IDLOAD(glBufferSubData);
-
-GLES2_IDLOAD(glCheckFramebufferStatus);
-
-GLES2_IDLOAD(glClear);
-
-GLES2_IDLOAD(glClearStencil);
-
-GLES2_IDLOAD(glColorMask);
-
-GLES2_IDLOAD(glCompileShader);
-
-GLES2_IDLOAD(glCompressedTexImage2D);
-
-GLES2_IDLOAD(glCompressedTexSubImage2D);
-
-GLES2_IDLOAD(glCopyTexImage2D);
-
-GLES2_IDLOAD(glCopyTexSubImage2D);
-
-GLES2_IDLOAD(glCreateProgram);
-
-GLES2_IDLOAD(glCreateShader);
-
-GLES2_IDLOAD(glCullFace);
-
-GLES2_IDLOAD(glDeleteBuffers);
-
-GLES2_IDLOAD(glDeleteFramebuffers);
-
-GLES2_IDLOAD(glDeleteProgram);
-
-GLES2_IDLOAD(glDeleteRenderbuffers);
-
-GLES2_IDLOAD(glDeleteShader);
-
-GLES2_IDLOAD(glDeleteTextures);
-
-GLES2_IDLOAD(glDepthFunc);
-
-GLES2_IDLOAD(glDepthMask);
-
-GLES2_IDLOAD(glDetachShader);
-
-GLES2_IDLOAD(glDisable);
-
-GLES2_IDLOAD(glDisableVertexAttribArray);
-
-GLES2_IDLOAD(glDrawArrays);
-
-GLES2_IDLOAD(glDrawElements);
-
-GLES2_IDLOAD(glEnable);
-
-GLES2_IDLOAD(glEnableVertexAttribArray);
-
-GLES2_IDLOAD(glFinish);
-
-GLES2_IDLOAD(glFlush);
-
-GLES2_IDLOAD(glFramebufferRenderbuffer);
-
-GLES2_IDLOAD(glFramebufferTexture2D);
-
-GLES2_IDLOAD(glFrontFace);
-
-GLES2_IDLOAD(glGenBuffers);
-
-GLES2_IDLOAD(glGenerateMipmap);
-
-GLES2_IDLOAD(glGenFramebuffers);
-
-GLES2_IDLOAD(glGenRenderbuffers);
-
-GLES2_IDLOAD(glGenTextures);
-
-GLES2_IDLOAD(glGetActiveAttrib);
-
-GLES2_IDLOAD(glGetActiveUniform);
-
-GLES2_IDLOAD(glGetAttachedShaders);
-
-GLES2_IDLOAD(glGetAttribLocation);
-
-GLES2_IDLOAD(glGetBooleanv);
-
-GLES2_IDLOAD(glGetBufferParameteriv);
-
-GLES2_IDLOAD(glGetError);
-
-GLES2_IDLOAD(glGetFloatv);
-
-GLES2_IDLOAD(glGetFramebufferAttachmentParameteriv);
-
-GLES2_IDLOAD(glGetIntegerv);
-
-GLES2_IDLOAD(glGetProgramiv);
-
-GLES2_IDLOAD(glGetProgramInfoLog);
-
-GLES2_IDLOAD(glGetRenderbufferParameteriv);
-
-GLES2_IDLOAD(glGetShaderiv);
-
-GLES2_IDLOAD(glGetShaderInfoLog);
-
-GLES2_IDLOAD(glGetShaderPrecisionFormat);
-
-GLES2_IDLOAD(glGetShaderSource);
-
-GLES2_IDLOAD(glGetTexParameterfv);
-
-GLES2_IDLOAD(glGetTexParameteriv);
-
-GLES2_IDLOAD(glGetUniformfv);
-
-GLES2_IDLOAD(glGetUniformiv);
-
-GLES2_IDLOAD(glGetUniformLocation);
-
-GLES2_IDLOAD(glGetVertexAttribfv);
-
-GLES2_IDLOAD(glGetVertexAttribiv);
-
-GLES2_IDLOAD(glGetVertexAttribPointerv);
-
-GLES2_IDLOAD(glHint);
-
-GLES2_IDLOAD(glIsBuffer);
-
-GLES2_IDLOAD(glIsEnabled);
-
-GLES2_IDLOAD(glIsFramebuffer);
-
-GLES2_IDLOAD(glIsProgram);
-
-GLES2_IDLOAD(glIsRenderbuffer);
-
-GLES2_IDLOAD(glIsShader);
-
-GLES2_IDLOAD(glIsTexture);
-
-GLES2_IDLOAD(glLinkProgram);
-
-GLES2_IDLOAD(glPixelStorei);
-
-GLES2_IDLOAD(glReadPixels);
-
-GLES2_IDLOAD(glReleaseShaderCompiler);
-
-GLES2_IDLOAD(glRenderbufferStorage);
-
-GLES2_IDLOAD(glScissor);
-
-GLES2_IDLOAD(glShaderBinary);
-
-GLES2_IDLOAD(glShaderSource);
-
-GLES2_IDLOAD(glStencilFunc);
-
-GLES2_IDLOAD(glStencilFuncSeparate);
-
-GLES2_IDLOAD(glStencilMask);
-
-GLES2_IDLOAD(glStencilMaskSeparate);
-
-GLES2_IDLOAD(glStencilOp);
-
-GLES2_IDLOAD(glStencilOpSeparate);
-
-GLES2_IDLOAD(glTexImage2D);
-
-GLES2_IDLOAD(glTexParameterfv);
-
-GLES2_IDLOAD(glTexParameteri);
-
-GLES2_IDLOAD(glTexParameteriv);
-
-GLES2_IDLOAD(glTexSubImage2D);
-
-GLES2_IDLOAD(glUniform1fv);
-
-GLES2_IDLOAD(glUniform1i);
-
-GLES2_IDLOAD(glUniform1iv);
-
-GLES2_IDLOAD(glUniform2fv);
-
-GLES2_IDLOAD(glUniform2i);
-
-GLES2_IDLOAD(glUniform2iv);
-
-GLES2_IDLOAD(glUniform3fv);
-
-GLES2_IDLOAD(glUniform3i);
-
-GLES2_IDLOAD(glUniform3iv);
-
-GLES2_IDLOAD(glUniform4fv);
-
-GLES2_IDLOAD(glUniform4i);
-
-GLES2_IDLOAD(glUniform4iv);
-
-GLES2_IDLOAD(glUniformMatrix2fv);
-
-GLES2_IDLOAD(glUniformMatrix3fv);
-
-GLES2_IDLOAD(glUniformMatrix4fv);
-
-GLES2_IDLOAD(glUseProgram);
-
-GLES2_IDLOAD(glValidateProgram);
-
-GLES2_IDLOAD(glVertexAttrib1fv);
-
-GLES2_IDLOAD(glVertexAttrib2fv);
-
-GLES2_IDLOAD(glVertexAttrib3fv);
-
-GLES2_IDLOAD(glVertexAttrib4fv);
-
-GLES2_IDLOAD(glVertexAttribPointer);
-
-GLES2_IDLOAD(glViewport);
 
-void glEGLImageTargetTexture2DOES(GLenum target, GLeglImageOES image)
+void glBindTexture (GLenum target, GLuint texture)
 {
-	struct egl_image *img = image;
-	return (*_glEGLImageTargetTexture2DOES)(target, img ? img->egl_image : NULL);
+	(*_glBindTexture)(target, texture);
 }
 
 void glBlendColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
-	return (*_glBlendColor)(red, green, blue, alpha);
+	(*_glBlendColor)(red, green, blue, alpha);
 }
 
-void glVertexAttrib4f (GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+void glBlendEquation ( GLenum mode )
 {
-	return (*_glVertexAttrib4f)(indx, x, y, z, w);
+	(*_glBlendEquation)(mode);
 }
 
-void glVertexAttrib2f (GLuint indx, GLfloat x, GLfloat y)
+void glBlendEquationSeparate (GLenum modeRGB, GLenum modeAlpha)
 {
-	return (*_glVertexAttrib2f)(indx, x, y);
+	(*_glBlendEquationSeparate)(modeRGB, modeAlpha);
 }
 
-void glVertexAttrib3f (GLuint indx, GLfloat x, GLfloat y, GLfloat z)
+void glBlendFunc (GLenum sfactor, GLenum dfactor)
 {
-	return (*_glVertexAttrib3f)(indx, x, y, z);
+	(*_glBlendFunc)(sfactor, dfactor);
 }
 
-
-void glVertexAttrib1f (GLuint indx, GLfloat x)
+void glBlendFuncSeparate (GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha)
 {
-	return (*_glVertexAttrib1f)(indx, x);
+	(*_glBlendFuncSeparate)(srcRGB, dstRGB, srcAlpha, dstAlpha);
 }
 
-void glUniform4f (GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+void glBufferData (GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage)
 {
-	return (*_glUniform4f)(location, x, y, z, w);
+	(*_glBufferData)(target, size, data, usage);
 }
 
-void glUniform3f (GLint location, GLfloat x, GLfloat y, GLfloat z)
+void glBufferSubData (GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data)
 {
-	return (*_glUniform3f)(location, x, y, z);
+	(*_glBufferSubData)(target, offset, size, data);
 }
 
-void glUniform2f (GLint location, GLfloat x, GLfloat y)
+GLenum glCheckFramebufferStatus (GLenum target)
 {
-	return (*_glUniform2f)(location, x, y);
+	return (*_glCheckFramebufferStatus)(target);
 }
 
-void glUniform1f (GLint location, GLfloat x)
+void glClear (GLbitfield mask)
 {
-	return (*_glUniform1f)(location, x);
+	(*_glClear)(mask);
 }
-
-void glTexParameterf (GLenum target, GLenum pname, GLfloat param)
-{
-	return (*_glTexParameterf)(target, pname, param);
-}
-
-void glSampleCoverage (GLclampf value, GLboolean invert)
-{
-	return (*_glSampleCoverage)(value, invert);
-}
-void glPolygonOffset (GLfloat factor, GLfloat units)
-{
-	return (*_glPolygonOffset)(factor, units);
-}
-void glDepthRangef (GLclampf zNear, GLclampf zFar)
-{
-	return (*_glDepthRangef)(zNear, zFar);
-}
-
 
 void glClearColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
-	return (*_glClearColor)(red, green, blue, alpha);
+	(*_glClearColor)(red, green, blue, alpha);
 }
 
 void glClearDepthf (GLclampf depth)
 {
-	return (*_glClearDepthf)(depth);
-}
-void glLineWidth (GLfloat width)
-{
-	return (*_glLineWidth)(width);
+	(*_glClearDepthf)(depth);
 }
 
-const GLubyte *glGetString(GLenum name)
+void glClearStencil (GLint s)
 {
-    // Return 2.0 even though drivers might actually support 3.0 or higher,
-    // because libhybris does not provide any 3.0+ symbols.
-    if (name == GL_VERSION) {
-        static GLubyte glGetString_versionString[64];
-        snprintf(glGetString_versionString, sizeof(glGetString_versionString), "OpenGL ES 2.0 (%s)", (*_glGetString)(name));
-        return glGetString_versionString;
-    }
+	(*_glClearStencil)(s);
+}
+
+void glColorMask (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha)
+{
+	(*_glColorMask)(red, green, blue, alpha);
+}
+
+void glCompileShader (GLuint shader)
+{
+	(*_glCompileShader)(shader);
+}
+
+void glCompressedTexImage2D (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid* data)
+{
+	(*_glCompressedTexImage2D)(target, level, internalformat, width, height, border, imageSize, data);
+}
+
+void glCompressedTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* data)
+{
+	(*_glCompressedTexSubImage2D)(target, level, xoffset, yoffset, width, height, format, imageSize, data);
+}
+
+void glCopyTexImage2D (GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border)
+{
+	(*_glCopyTexImage2D)(target, level, internalformat, x, y, width, height, border);
+}
+
+void glCopyTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height)
+{
+	(*_glCopyTexSubImage2D)(target, level, xoffset, yoffset, x, y, width, height);
+}
+
+GLuint glCreateProgram (void)
+{
+	return (*_glCreateProgram)();
+}
+
+GLuint glCreateShader (GLenum type)
+{
+	return (*_glCreateShader)(type);
+}
+
+void glCullFace (GLenum mode)
+{
+	(*_glCullFace)(mode);
+}
+
+void glDeleteBuffers (GLsizei n, const GLuint* buffers)
+{
+	(*_glDeleteBuffers)(n, buffers);
+}
+
+void glDeleteFramebuffers (GLsizei n, const GLuint* framebuffers)
+{
+	(*_glDeleteFramebuffers)(n, framebuffers);
+}
+
+void glDeleteProgram (GLuint program)
+{
+	(*_glDeleteProgram)(program);
+}
+
+void glDeleteRenderbuffers (GLsizei n, const GLuint* renderbuffers)
+{
+	(*_glDeleteRenderbuffers)(n, renderbuffers);
+}
+
+void glDeleteShader (GLuint shader)
+{
+	(*_glDeleteShader)(shader);
+}
+
+void glDeleteTextures (GLsizei n, const GLuint* textures)
+{
+	(*_glDeleteTextures)(n, textures);
+}
+
+void glDepthFunc (GLenum func)
+{
+	(*_glDepthFunc)(func);
+}
+
+void glDepthMask (GLboolean flag)
+{
+	(*_glDepthMask)(flag);
+}
+
+void glDepthRangef (GLclampf zNear, GLclampf zFar)
+{
+	(*_glDepthRangef)(zNear, zFar);
+}
+
+void glDetachShader (GLuint program, GLuint shader)
+{
+	(*_glDetachShader)(program, shader);
+}
+
+void glDisable (GLenum cap)
+{
+	(*_glDisable)(cap);
+}
+
+void glDisableVertexAttribArray (GLuint index)
+{
+	(*_glDisableVertexAttribArray)(index);
+}
+
+void glDrawArrays (GLenum mode, GLint first, GLsizei count)
+{
+	(*_glDrawArrays)(mode, first, count);
+}
+
+void glDrawElements (GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)
+{
+	(*_glDrawElements)(mode, count, type, indices);
+}
+
+void glEnable (GLenum cap)
+{
+	(*_glEnable)(cap);
+}
+
+void glEnableVertexAttribArray (GLuint index)
+{
+	(*_glEnableVertexAttribArray)(index);
+}
+
+void glFinish (void)
+{
+	(*_glFinish)();
+}
+
+void glFlush (void)
+{
+	(*_glFlush)();
+}
+
+void glFramebufferRenderbuffer (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer)
+{
+	(*_glFramebufferRenderbuffer)(target, attachment, renderbuffertarget, renderbuffer);
+}
+
+void glFramebufferTexture2D (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level)
+{
+	(*_glFramebufferTexture2D)(target, attachment, textarget, texture, level);
+}
+
+void glFrontFace (GLenum mode)
+{
+	(*_glFrontFace)(mode);
+}
+
+void glGenBuffers (GLsizei n, GLuint* buffers)
+{
+	(*_glGenBuffers)(n, buffers);
+}
+
+void glGenerateMipmap (GLenum target)
+{
+	(*_glGenerateMipmap)(target);
+}
+
+void glGenFramebuffers (GLsizei n, GLuint* framebuffers)
+{
+	(*_glGenFramebuffers)(n, framebuffers);
+}
+
+void glGenRenderbuffers (GLsizei n, GLuint* renderbuffers)
+{
+	(*_glGenRenderbuffers)(n, renderbuffers);
+}
+
+void glGenTextures (GLsizei n, GLuint* textures)
+{
+	(*_glGenTextures)(n, textures);
+}
+
+void glGetActiveAttrib (GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, GLchar* name)
+{
+	(*_glGetActiveAttrib)(program, index, bufsize, length, size, type, name);
+}
+
+void glGetActiveUniform (GLuint program, GLuint index, GLsizei bufsize, GLsizei* length, GLint* size, GLenum* type, GLchar* name)
+{
+	(*_glGetActiveUniform)(program, index, bufsize, length, size, type, name);
+}
+
+void glGetAttachedShaders (GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders)
+{
+	(*_glGetAttachedShaders)(program, maxcount, count, shaders);
+}
+
+int glGetAttribLocation (GLuint program, const GLchar* name)
+{
+	return (*_glGetAttribLocation)(program, name);
+}
+
+void glGetBooleanv (GLenum pname, GLboolean* params)
+{
+	(*_glGetBooleanv)(pname, params);
+}
+
+void glGetBufferParameteriv (GLenum target, GLenum pname, GLint* params)
+{
+	(*_glGetBufferParameteriv)(target, pname, params);
+}
+
+GLenum glGetError (void)
+{
+	return (*_glGetError)();
+}
+
+void glGetFloatv (GLenum pname, GLfloat* params)
+{
+	(*_glGetFloatv)(pname, params);
+}
+
+void glGetFramebufferAttachmentParameteriv (GLenum target, GLenum attachment, GLenum pname, GLint* params)
+{
+	(*_glGetFramebufferAttachmentParameteriv)(target, attachment, pname, params);
+}
+
+void glGetIntegerv (GLenum pname, GLint* params)
+{
+	(*_glGetIntegerv)(pname, params);
+}
+
+void glGetProgramiv (GLuint program, GLenum pname, GLint* params)
+{
+	(*_glGetProgramiv)(program, pname, params);
+}
+
+void glGetProgramInfoLog (GLuint program, GLsizei bufsize, GLsizei* length, GLchar* infolog)
+{
+	(*_glGetProgramInfoLog)(program, bufsize, length, infolog);
+}
+
+void glGetRenderbufferParameteriv (GLenum target, GLenum pname, GLint* params)
+{
+	(*_glGetRenderbufferParameteriv)(target, pname, params);
+}
+
+void glGetShaderiv (GLuint shader, GLenum pname, GLint* params)
+{
+	(*_glGetShaderiv)(shader, pname, params);
+}
+
+void glGetShaderInfoLog (GLuint shader, GLsizei bufsize, GLsizei* length, GLchar* infolog)
+{
+	(*_glGetShaderInfoLog)(shader, bufsize, length, infolog);
+}
+
+void glGetShaderPrecisionFormat (GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision)
+{
+	(*_glGetShaderPrecisionFormat)(shadertype, precisiontype, range, precision);
+}
+
+void glGetShaderSource (GLuint shader, GLsizei bufsize, GLsizei* length, GLchar* source)
+{
+	(*_glGetShaderSource)(shader, bufsize, length, source);
+}
+
+const GLubyte* glGetString (GLenum name)
+{
+	// Return 2.0 even though drivers might actually support 3.0 or higher,
+	// because libhybris does not provide any 3.0+ symbols.
+	if (name == GL_VERSION) {
+		static GLubyte glGetString_versionString[64];
+		snprintf((char *)glGetString_versionString, sizeof(glGetString_versionString), "OpenGL ES 2.0 (%s)", (*_glGetString)(name));
+		return glGetString_versionString;
+	}
+
 	return (*_glGetString)(name);
 }
+
+void glGetTexParameterfv (GLenum target, GLenum pname, GLfloat* params)
+{
+	(*_glGetTexParameterfv)(target, pname, params);
+}
+
+void glGetTexParameteriv (GLenum target, GLenum pname, GLint* params)
+{
+	(*_glGetTexParameteriv)(target, pname, params);
+}
+
+void glGetUniformfv (GLuint program, GLint location, GLfloat* params)
+{
+	(*_glGetUniformfv)(program, location, params);
+}
+
+void glGetUniformiv (GLuint program, GLint location, GLint* params)
+{
+	(*_glGetUniformiv)(program, location, params);
+}
+
+int glGetUniformLocation (GLuint program, const GLchar* name)
+{
+	return (*_glGetUniformLocation)(program, name);
+}
+
+void glGetVertexAttribfv (GLuint index, GLenum pname, GLfloat* params)
+{
+	(*_glGetVertexAttribfv)(index, pname, params);
+}
+
+void glGetVertexAttribiv (GLuint index, GLenum pname, GLint* params)
+{
+	(*_glGetVertexAttribiv)(index, pname, params);
+}
+
+void glGetVertexAttribPointerv (GLuint index, GLenum pname, GLvoid** pointer)
+{
+	(*_glGetVertexAttribPointerv)(index, pname, pointer);
+}
+
+void glHint (GLenum target, GLenum mode)
+{
+	(*_glHint)(target, mode);
+}
+
+GLboolean glIsBuffer (GLuint buffer)
+{
+	return (*_glIsBuffer)(buffer);
+}
+
+GLboolean glIsEnabled (GLenum cap)
+{
+	return (*_glIsEnabled)(cap);
+}
+
+GLboolean glIsFramebuffer (GLuint framebuffer)
+{
+	return (*_glIsFramebuffer)(framebuffer);
+}
+
+GLboolean glIsProgram (GLuint program)
+{
+	return (*_glIsProgram)(program);
+}
+
+GLboolean glIsRenderbuffer (GLuint renderbuffer)
+{
+	return (*_glIsRenderbuffer)(renderbuffer);
+}
+
+GLboolean glIsShader (GLuint shader)
+{
+	return (*_glIsShader)(shader);
+}
+
+GLboolean glIsTexture (GLuint texture)
+{
+	return (*_glIsTexture)(texture);
+}
+
+void glLineWidth (GLfloat width)
+{
+	(*_glLineWidth)(width);
+}
+
+void glLinkProgram (GLuint program)
+{
+	(*_glLinkProgram)(program);
+}
+
+void glPixelStorei (GLenum pname, GLint param)
+{
+	(*_glPixelStorei)(pname, param);
+}
+
+void glPolygonOffset (GLfloat factor, GLfloat units)
+{
+	(*_glPolygonOffset)(factor, units);
+}
+
+void glReadPixels (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid* pixels)
+{
+	(*_glReadPixels)(x, y, width, height, format, type, pixels);
+
+}
+
+void glReleaseShaderCompiler (void)
+{
+	(*_glReleaseShaderCompiler)();
+}
+
+void glRenderbufferStorage (GLenum target, GLenum internalformat, GLsizei width, GLsizei height)
+{
+	(*_glRenderbufferStorage)(target, internalformat, width, height);
+}
+
+void glSampleCoverage (GLclampf value, GLboolean invert)
+{
+	(*_glSampleCoverage)(value, invert);
+}
+
+void glScissor (GLint x, GLint y, GLsizei width, GLsizei height)
+{
+	(*_glScissor)(x, y, width, height);
+}
+
+void glShaderBinary (GLsizei n, const GLuint* shaders, GLenum binaryformat, const GLvoid* binary, GLsizei length)
+{
+	(*_glShaderBinary)(n, shaders, binaryformat, binary, length);
+}
+
+void glShaderSource (GLuint shader, GLsizei count, const GLchar** string, const GLint* length)
+{
+	(*_glShaderSource)(shader, count, string, length);
+}
+
+void glStencilFunc (GLenum func, GLint ref, GLuint mask)
+{
+	(*_glStencilFunc)(func, ref, mask);
+}
+
+void glStencilFuncSeparate (GLenum face, GLenum func, GLint ref, GLuint mask)
+{
+	(*_glStencilFuncSeparate)(face, func, ref, mask);
+}
+
+void glStencilMask (GLuint mask)
+{
+	(*_glStencilMask)(mask);
+}
+
+void glStencilMaskSeparate (GLenum face, GLuint mask)
+{
+	(*_glStencilMaskSeparate)(face, mask);
+}
+
+void glStencilOp (GLenum fail, GLenum zfail, GLenum zpass)
+{
+	(*_glStencilOp)(fail, zfail, zpass);
+}
+
+void glStencilOpSeparate (GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
+{
+	(*_glStencilOpSeparate)(face, fail, zfail, zpass);
+}
+
+void glTexImage2D (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels)
+{
+	(*_glTexImage2D)(target, level, internalformat, width, height, border, format, type, pixels);
+}
+
+void glTexParameterf (GLenum target, GLenum pname, GLfloat param)
+{
+	(*_glTexParameterf)(target, pname, param);
+}
+
+void glTexParameterfv (GLenum target, GLenum pname, const GLfloat* params)
+{
+	(*_glTexParameterfv)(target, pname, params);
+}
+
+void glTexParameteri (GLenum target, GLenum pname, GLint param)
+{
+	(*_glTexParameteri)(target, pname, param);
+}
+
+void glTexParameteriv (GLenum target, GLenum pname, const GLint* params)
+{
+	(*_glTexParameteriv)(target, pname, params);
+}
+
+void glTexSubImage2D (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels)
+{
+	(*_glTexSubImage2D)(target, level, xoffset, yoffset, width, height, format, type, pixels);
+}
+
+void glUniform1f (GLint location, GLfloat x)
+{
+	(*_glUniform1f)(location, x);
+}
+
+void glUniform1fv (GLint location, GLsizei count, const GLfloat* v)
+{
+	(*_glUniform1fv)(location, count, v);
+}
+
+void glUniform1i (GLint location, GLint x)
+{
+	(*_glUniform1i)(location, x);
+}
+
+void glUniform1iv (GLint location, GLsizei count, const GLint* v)
+{
+	(*_glUniform1iv)(location, count, v);
+}
+
+void glUniform2f (GLint location, GLfloat x, GLfloat y)
+{
+	(*_glUniform2f)(location, x, y);
+}
+
+void glUniform2fv (GLint location, GLsizei count, const GLfloat* v)
+{
+	(*_glUniform2fv)(location, count, v);
+}
+
+void glUniform2i (GLint location, GLint x, GLint y)
+{
+	(*_glUniform2i)(location, x, y);
+}
+
+void glUniform2iv (GLint location, GLsizei count, const GLint* v)
+{
+	(*_glUniform2iv)(location, count, v);
+}
+
+void glUniform3f (GLint location, GLfloat x, GLfloat y, GLfloat z)
+{
+	(*_glUniform3f)(location, x, y, z);
+}
+
+void glUniform3fv (GLint location, GLsizei count, const GLfloat* v)
+{
+	(*_glUniform3fv)(location, count, v);
+}
+
+void glUniform3i (GLint location, GLint x, GLint y, GLint z)
+{
+	(*_glUniform3i)(location, x, y, z);
+}
+
+void glUniform3iv (GLint location, GLsizei count, const GLint* v)
+{
+	(*_glUniform3iv)(location, count, v);
+}
+
+void glUniform4f (GLint location, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+	(*_glUniform4f)(location, x, y, z, w);
+}
+
+void glUniform4fv (GLint location, GLsizei count, const GLfloat* v)
+{
+	(*_glUniform4fv)(location, count, v);
+}
+
+void glUniform4i (GLint location, GLint x, GLint y, GLint z, GLint w)
+{
+	(*_glUniform4i)(location, x, y, z, w);
+}
+
+void glUniform4iv (GLint location, GLsizei count, const GLint* v)
+{
+	(*_glUniform4iv)(location, count, v);
+}
+
+void glUniformMatrix2fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+{
+	(*_glUniformMatrix2fv)(location, count, transpose, value);
+}
+
+void glUniformMatrix3fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+{
+	(*_glUniformMatrix3fv)(location, count, transpose, value);
+}
+
+void glUniformMatrix4fv (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value)
+{
+	(*_glUniformMatrix4fv)(location, count, transpose, value);
+}
+
+void glUseProgram (GLuint program)
+{
+	(*_glUseProgram)(program);
+}
+
+void glValidateProgram (GLuint program)
+{
+	(*_glValidateProgram)(program);
+}
+
+void glVertexAttrib1f (GLuint indx, GLfloat x)
+{
+	(*_glVertexAttrib1f)(indx, x);
+}
+
+void glVertexAttrib1fv (GLuint indx, const GLfloat* values)
+{
+	(*_glVertexAttrib1fv)(indx, values);
+}
+
+void glVertexAttrib2f (GLuint indx, GLfloat x, GLfloat y)
+{
+	(*_glVertexAttrib2f)(indx, x, y);
+}
+
+void glVertexAttrib2fv (GLuint indx, const GLfloat* values)
+{
+	(*_glVertexAttrib2fv)(indx, values);
+}
+
+void glVertexAttrib3f (GLuint indx, GLfloat x, GLfloat y, GLfloat z)
+{
+	(*_glVertexAttrib3f)(indx, x, y, z);
+}
+
+void glVertexAttrib3fv (GLuint indx, const GLfloat* values)
+{
+	(*_glVertexAttrib3fv)(indx, values);
+}
+
+void glVertexAttrib4f (GLuint indx, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+	(*_glVertexAttrib4f)(indx, x, y, z, w);
+}
+
+void glVertexAttrib4fv (GLuint indx, const GLfloat* values)
+{
+	(*_glVertexAttrib4fv)(indx, values);
+}
+
+void glVertexAttribPointer (GLuint indx, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* ptr)
+{
+	(*_glVertexAttribPointer)(indx, size, type, normalized, stride, ptr);
+}
+
+void glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
+{
+	(*_glViewport)(x, y, width, height);
+}
+
+void glEGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
+{
+	(*_glEGLImageTargetTexture2DOES)(target, image);
+}
+
+

@@ -75,7 +75,6 @@ char *hybris_propcache_find(const char *key)
 	if (prop)
 		return prop->value;
 
-out:
 	return ret;
 }
 
@@ -99,7 +98,6 @@ static void cache_update()
 {
 	struct stat st;
 	FILE *f = fopen("/system/build.prop", "r");
-	char *ret = NULL;
 
 	if (!f)
 		return;

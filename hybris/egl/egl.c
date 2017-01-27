@@ -15,10 +15,10 @@
  *
  */
 
+#include "config.h"
+
 /* EGL function pointers */
 #define EGL_EGLEXT_PROTOTYPES
-/* For RTLD_DEFAULT */
-#define _GNU_SOURCE
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
@@ -244,8 +244,11 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 
 	HYBRIS_TRACE_BEGIN("native-egl", "eglCreateWindowSurface", "");
 	EGLSurface result = (*_eglCreateWindowSurface)(dpy, config, win, attrib_list);
+
 	HYBRIS_TRACE_END("native-egl", "eglCreateWindowSurface", "");
-	egl_helper_push_mapping(result, win);
+
+	if (result != EGL_NO_SURFACE)
+		egl_helper_push_mapping(result, win);
 
 	HYBRIS_TRACE_END("hybris-egl", "eglCreateWindowSurface", "");
 	return result;
@@ -284,7 +287,6 @@ EGLBoolean eglSwapInterval(EGLDisplay dpy, EGLint interval)
 {
 	EGLBoolean ret;
 	EGLSurface surface;
-	EGLNativeWindowType win;
 	HYBRIS_TRACE_BEGIN("hybris-egl", "eglSwapInterval", "=%d", interval);
 
 	/* Some egl implementations don't pass through the setSwapInterval

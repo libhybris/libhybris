@@ -104,6 +104,12 @@ print """
         name##_handle = android_dlopen(path, RTLD_LAZY); \\
     }
 
+#define HYBRIS_LIRBARY_CHECK_SYMBOL(name) \\
+    bool hybris_##name##_check_for_symbol(const char *sym) \\
+    { \\
+        return android_dlsym(name##_handle, sym) != NULL; \\
+    }
+
 """
 
 for count in range(MAX_ARGS):

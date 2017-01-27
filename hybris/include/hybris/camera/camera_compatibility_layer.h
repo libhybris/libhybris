@@ -37,6 +37,12 @@ extern "C" {
         FRONT_FACING_CAMERA_TYPE
     } CameraType;
 
+    typedef enum
+    {
+        PREVIEW_CALLBACK_DISABLED,
+        PREVIEW_CALLBACK_ENABLED
+    } PreviewCallbackMode;
+
     struct CameraControl;
 
     typedef void (*on_msg_error)(void* context);
@@ -47,6 +53,7 @@ extern "C" {
     typedef void (*on_data_raw_image)(void* data, uint32_t data_size, void* context);
     typedef void (*on_data_compressed_image)(void* data, uint32_t data_size, void* context);
     typedef void (*on_preview_texture_needs_update)(void* context);
+    typedef void (*on_preview_frame)(void* data, uint32_t data_size, void* context);
 
     struct CameraControlListener
     {
@@ -73,10 +80,14 @@ extern "C" {
         on_preview_texture_needs_update on_preview_texture_needs_update_cb;
 
         void* context;
+
+        // Called when there is a new preview frame
+        on_preview_frame on_preview_frame_cb;
     };
 
     // Initializes a connection to the camera, returns NULL on error.
     struct CameraControl* android_camera_connect_to(CameraType camera_type, struct CameraControlListener* listener);
+    struct CameraControl* android_camera_connect_by_id(int32_t camera_id, struct CameraControlListener* listener);
 
     // Disconnects the camera and deletes the pointer
     void android_camera_disconnect(struct CameraControl* control);
@@ -134,6 +145,9 @@ extern "C" {
     // preview needs to be restarted after the picture operation has
     // completed. Ideally, this is done from the raw data callback.
     void android_camera_take_snapshot(struct CameraControl* control);
+
+    // Enable or disable the preview callback for clients that want software frames
+    int android_camera_set_preview_callback_mode(struct CameraControl* control, PreviewCallbackMode mode);
 
 #ifdef __cplusplus
 }

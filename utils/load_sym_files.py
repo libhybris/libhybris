@@ -37,19 +37,22 @@ class LoadSymFiles(gdb.Command):
         symdir = "/system/symbols"
         libdir = "/system/lib"
 
-        if len(arg_list) == 1:
+        if len(arg_list) >= 1:
             symdir = arg_list[0]
+
         if not os.path.isdir(symdir):
-            print "error: invalid symbol directory(%s)"%symdir
-            print "usage: load-sym-files [symbols-dir] [lib-dir]"
+            print("error: invalid symbol directory '%s'" % symdir)
+            print("usage: load-sym-files [symbols-dir] [lib-dir]")
             return
 
         if len(arg_list) == 2:
             libdir = arg_list[1]
+
         if not os.path.isdir(libdir):
-            print "error: invalid library directory(%s)"%libdir
-            print "usage: load-sym-files [symbols-dir] [lib-dir]"
+            print("error: invalid library directory '%s'" % libdir)
+            print("usage: load-sym-files [symbols-dir] [lib-dir]")
             return
+
         try:
             pid = gdb.selected_inferior().pid
         except AttributeError:
@@ -59,34 +62,38 @@ class LoadSymFiles(gdb.Command):
             if len(gdb.inferiors()) == 1:
                 pid = gdb.inferiors()[0].pid
             else:
-                print "error: no gdb support for more than 1 inferior"
+                print("error: no gdb support for more than 1 inferior")
                 return
 
         if pid == 0:
-            print "error: debugee not started yet"
+            print("error: debugee not started yet")
             return
 
         maps = open("/proc/%d/maps"%pid,"rb")
         for line in maps:
             # b7fc9000-b7fcf000 r-xp 00000000 08:01 1311443    /system/lib/liblog.so
-            m = re.match("([0-9A-Fa-f]+)-[0-9A-Fa-f]+\s+r-xp.*(%s.*)"%libdir,line)
+            # m = re.match("([0-9A-Fa-f]+)-[0-9A-Fa-f]+\s+r-xp.*(%s.*)" % libdir, str(line))
+            m = re.match("([0-9A-Fa-f]+)-[0-9A-Fa-f]+\sr-xp\s.*\s(.*)\\n", line.decode('ascii'))
             if not m:
                 continue
 
-            start_addr = int(m.group(1),16)
+            start_addr = int(m.group(1), 16)
             lib        = m.group(2)
             text_addr  = 0
 
-            p = subprocess.Popen("objdump -h "+lib , shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            for header in  p.stdout.read().split("\n"):
+            if not lib.startswith(libdir):
+                continue
+
+            p = subprocess.Popen("objdump -h " + lib , shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+            for header in p.stdout.read().decode('ascii').split("\n"):
                 #6 .text         00044ef7  00017f80  00017f80  00017f80  2**4
-                t = re.match("\s*[0-9]+\s+\.text\s+([0-9A-Fa-f]+\s+){3}([0-9A-Fa-f]+)",header)
+                t = re.match("\s*[0-9]+\s+\.text\s+([0-9A-Fa-f]+\s+){3}([0-9A-Fa-f]+)", header)
                 if t:
                     text_addr = int(t.group(2),16)
                     break
+
             symfile = symdir + lib
             if os.path.isfile(symfile):
                 gdb.execute("add-symbol-file %s 0x%X" % (symfile, start_addr+text_addr))
-
 
 LoadSymFiles()

@@ -65,6 +65,20 @@ propertiesincludedir = $(includedir)/hybris/properties
 propertiesinclude_HEADERS = \
 	hybris/properties/properties.h
 
+mediaincludedir = $(includedir)/hybris/media
+mediainclude_HEADERS = \
+	hybris/media/media_compatibility_layer.h \
+	hybris/media/media_codec_layer.h \
+	hybris/media/media_codec_list.h \
+	hybris/media/media_format_layer.h \
+	hybris/media/media_recorder_layer.h \
+	hybris/media/surface_texture_client_hybris.h \
+	hybris/media/recorder_compatibility_layer.h \
+	hybris/media/media_codec_source_layer.h \
+	hybris/media/media_message_layer.h \
+	hybris/media/media_buffer_layer.h \
+	hybris/media/media_meta_data_layer.h
+
 dlfcnincludedir = $(includedir)/hybris/dlfcn
 dlfcninclude_HEADERS = \
 	hybris/dlfcn/dlfcn.h
@@ -73,4 +87,5 @@ commonincludedir = $(includedir)/hybris/common
 commoninclude_HEADERS = \
 	hybris/common/binding.h \
 	hybris/common/floating_point_abi.h \
-	hybris/common/dlfcn.h
+	hybris/common/dlfcn.h \
+	hybris/common/hooks.h

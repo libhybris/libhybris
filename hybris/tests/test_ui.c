@@ -53,8 +53,10 @@ int main(int argc, char **argv)
 	graphic_buffer_lock(buffer, GRALLOC_USAGE_HW_RENDER, &vaddr);
 	graphic_buffer_unlock(buffer);
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 	graphic_buffer_set_index(buffer, 11);
 	assert(graphic_buffer_get_index(buffer) == 11);
+#endif
 
 	graphic_buffer_free(buffer);
 

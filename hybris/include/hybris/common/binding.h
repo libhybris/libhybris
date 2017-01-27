@@ -32,7 +32,6 @@ const char *android_dlerror(void);
 int android_dladdr(const void *addr, void *info);
 
 
-
 /**
  *         XXX AUTO-GENERATED FILE XXX
  *
@@ -41,7 +40,7 @@ int android_dladdr(const void *addr, void *info);
  * an updated version of this header file:
  *
  *    python utils/generate_wrapper_macros.py > \
- *       hybris/include/hybris/common/binding.h
+ *       hybris/include/hybris/internal/binding.h
  *
  * If you need macros with more arguments, just customize the
  * MAX_ARGS variable in generate_wrapper_macros.py.
@@ -63,6 +62,12 @@ int android_dladdr(const void *addr, void *info);
     void hybris_##name##_initialize() \
     { \
         name##_handle = android_dlopen(path, RTLD_LAZY); \
+    }
+
+#define HYBRIS_LIRBARY_CHECK_SYMBOL(name) \
+    bool hybris_##name##_check_for_symbol(const char *sym) \
+    { \
+        return android_dlsym(name##_handle, sym) != NULL; \
     }
 
 
@@ -435,7 +440,7 @@ int android_dladdr(const void *addr, void *info);
  * an updated version of this header file:
  *
  *    python utils/generate_wrapper_macros.py > \
- *       hybris/include/hybris/common/binding.h
+ *       hybris/include/hybris/internal/binding.h
  *
  * If you need macros with more arguments, just customize the
  * MAX_ARGS variable in generate_wrapper_macros.py.
