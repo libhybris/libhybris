@@ -3299,6 +3299,19 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
     g_ld_debug_verbosity = atoi(LD_DEBUG);
   }
 
+  const char* ldpath_env = nullptr;
+  const char* ldpreload_env = nullptr;
+  if (!getauxval(AT_SECURE)) {
+    ldpath_env = getenv("HYBRIS_LD_LIBRARY_PATH");
+    ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
+  }
+
+  if (DEFAULT_HYBRIS_LD_LIBRARY_PATH)
+    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
+  else
+    parse_LD_LIBRARY_PATH(ldpath_env);
+  parse_LD_PRELOAD(ldpreload_env);
+
   if (sdk_version > 0)
     set_application_target_sdk_version(sdk_version);
 

@@ -356,6 +356,9 @@ static void* _hybris_hook_pthread_getspecific(pthread_key_t key)
 {
     TRACE_HOOK("key %d", key);
 
+    // see android_bionic/tests/pthread_test.cpp, test static_pthread_key_used_before_creation
+    if(!key) return NULL;
+
     return pthread_getspecific(key);
 }
 
@@ -2664,6 +2667,7 @@ static struct _hook hooks_common[] = {
     {"setlinebuf", _hybris_hook_setlinebuf},
     {"__errno", __errno_location},
     {"__set_errno", _hybris_hook_set_errno},
+    {"__progname", &program_invocation_name},
     /* net specifics, to avoid __res_get_state */
     {"getaddrinfo", _hybris_hook_getaddrinfo},
     {"freeaddrinfo", _hybris_hook_freeaddrinfo},
