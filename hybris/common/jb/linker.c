@@ -623,6 +623,13 @@ static int open_library(const char *name)
     if(name == 0) return -1;
     if(strlen(name) > 256) return -1;
 
+    if ((name[0] == '/') && (getenv("HYBRIS_LINKER_FORCE_BASENAME") != NULL))
+    {
+        const char *bname = strrchr(name, '/');
+        if ((bname != NULL) && ((fd = open_library(bname+1)) >= 0))
+            return fd;
+    }
+
     if ((name[0] == '/') && ((fd = _open_lib(name)) >= 0))
         return fd;
 
