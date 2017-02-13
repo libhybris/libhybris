@@ -21,6 +21,10 @@ jb_la_CFLAGS = \
 	-I$(top_srcdir)/common \
 	-DDEFAULT_HYBRIS_LD_LIBRARY_PATH="\"@DEFAULT_HYBRIS_LD_LIBRARY_PATH@\"" \
 	$(ARCHFLAGS)
+if WANT_INITIALIZE_BIONIC
+jb_la_CFLAGS += -DWANT_INITIALIZE_BIONIC
+endif
+
 jb_la_LDFLAGS = \
 	-module \
 	-avoid-version

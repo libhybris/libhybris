@@ -2177,10 +2177,12 @@ void soinfo::call_constructors() {
     return;
   }
 
+#ifndef WANT_INITIALIZE_BIONIC
   if (strcmp(soname_, "libc.so") == 0) {
     DEBUG("HYBRIS: =============> Skipping libc.so\n");
     return;
   }
+#endif
 
   // We set constructors_called before actually calling the constructors, otherwise it doesn't
   // protect against recursive constructor calls. One simple example of constructor recursion

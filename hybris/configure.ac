@@ -48,6 +48,12 @@ AC_ARG_ENABLE(experimental,
   [experimental="no"])
 AM_CONDITIONAL( [WANT_EXPERIMENTAL], [test x"$experimental" = x"yes"])
 
+AC_ARG_ENABLE(initialize_bionic,
+  [  --enable-initialize-bionic     Enable initialization of bionic libc.so (default=disabled)],
+  [initialize_bionic=$enableval],
+  [initialize_bionic="no"])
+AM_CONDITIONAL( [WANT_INITIALIZE_BIONIC], [test x"$initialize_bionic" = x"yes"])
+
 AC_ARG_ENABLE(trace,
   [  --enable-trace            Enable TRACE statements (default=disabled)],
   [trace=$enableval],
