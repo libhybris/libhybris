@@ -2165,7 +2165,7 @@ int _hybris_hook_prctl(int option, unsigned long arg2, unsigned long arg3,
 
 static char* _hybris_hook_basename(const char *path)
 {
-    static __thread char buf[PATH_MAX];
+    char buf[PATH_MAX];
 
     TRACE_HOOK("path '%s'", path);
 
@@ -2181,7 +2181,7 @@ static char* _hybris_hook_basename(const char *path)
 
 static char* _hybris_hook_dirname(char *path)
 {
-    static __thread char buf[PATH_MAX];
+    char buf[PATH_MAX];
 
     TRACE_HOOK("path '%s'", path);
 
