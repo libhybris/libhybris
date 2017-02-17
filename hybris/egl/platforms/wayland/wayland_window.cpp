@@ -900,6 +900,13 @@ ServerWaylandBuffer::~ServerWaylandBuffer()
     m_gralloc->unregisterBuffer(m_gralloc, handle);
     native_handle_close(handle);
     native_handle_delete(const_cast<native_handle_t *>(handle));
+
+    int *fd = (int *)fds.data;
+    int *end = (int *)((char *)fds.data + fds.size);
+
+    for (; fd < end; ++fd)
+        close(*fd);
+
     wl_array_release(&ints);
     wl_array_release(&fds);
 }
