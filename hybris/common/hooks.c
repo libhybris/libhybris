@@ -350,6 +350,9 @@ static int _hybris_hook_pthread_setspecific(pthread_key_t key, const void *ptr)
 {
     TRACE_HOOK("key %d ptr %" PRIdPTR, key, (intptr_t) ptr);
 
+    // see android_bionic/tests/pthread_test.cpp, test static_pthread_key_used_before_creation
+    if(!key) return EINVAL;
+
     return pthread_setspecific(key, ptr);
 }
 
@@ -361,6 +364,16 @@ static void* _hybris_hook_pthread_getspecific(pthread_key_t key)
     if(!key) return NULL;
 
     return pthread_getspecific(key);
+}
+
+static int _hybris_hook_pthread_key_delete(pthread_key_t key)
+{
+    TRACE_HOOK("key %d", key);
+
+    // see android_bionic/tests/pthread_test.cpp, test static_pthread_key_used_before_creation
+    if(!key) return EINVAL;
+
+    return pthread_key_delete(key);
 }
 
 /*
@@ -2544,11 +2557,11 @@ static struct _hook hooks_common[] = {
     HOOK_TO(pthread_cond_timedwait_monotonic, _hybris_hook_pthread_cond_timedwait),
     HOOK_TO(pthread_cond_timedwait_monotonic_np, _hybris_hook_pthread_cond_timedwait),
     HOOK_INDIRECT(pthread_cond_timedwait_relative_np),
-    HOOK_DIRECT_NO_DEBUG(pthread_key_delete),
+    HOOK_INDIRECT(pthread_key_delete),
     HOOK_INDIRECT(pthread_setname_np),
     HOOK_DIRECT_NO_DEBUG(pthread_once),
     HOOK_DIRECT_NO_DEBUG(pthread_key_create),
-    HOOK_DIRECT(pthread_setspecific),
+    HOOK_INDIRECT(pthread_setspecific),
     HOOK_INDIRECT(pthread_getspecific),
     HOOK_INDIRECT(pthread_attr_init),
     HOOK_INDIRECT(pthread_attr_destroy),
@@ -2700,11 +2713,11 @@ static struct _hook hooks_common[] = {
     HOOK_TO(pthread_cond_timedwait_monotonic, _hybris_hook_pthread_cond_timedwait),
     HOOK_TO(pthread_cond_timedwait_monotonic_np, _hybris_hook_pthread_cond_timedwait),
     HOOK_INDIRECT(pthread_cond_timedwait_relative_np),
-    HOOK_DIRECT_NO_DEBUG(pthread_key_delete),
+    HOOK_INDIRECT(pthread_key_delete),
     HOOK_INDIRECT(pthread_setname_np),
     HOOK_DIRECT_NO_DEBUG(pthread_once),
     HOOK_DIRECT_NO_DEBUG(pthread_key_create),
-    HOOK_DIRECT(pthread_setspecific),
+    HOOK_INDIRECT(pthread_setspecific),
     HOOK_INDIRECT(pthread_getspecific),
     HOOK_INDIRECT(pthread_attr_init),
     HOOK_INDIRECT(pthread_attr_destroy),
