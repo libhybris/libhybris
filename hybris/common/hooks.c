@@ -2155,13 +2155,6 @@ static int _hybris_hook_posix_memalign(void **memptr, size_t alignment, size_t s
     return posix_memalign(memptr, alignment, size);
 }
 
-static pid_t _hybris_hook_fork(void)
-{
-    TRACE_HOOK("");
-
-    return fork();
-}
-
 static locale_t _hybris_hook_newlocale(int category_mask, const char *locale, locale_t base)
 {
     TRACE_HOOK("category mask %i locale '%s'", category_mask, locale);
@@ -2313,6 +2306,13 @@ static wint_t _hybris_hook_getwc(FILE *stream)
 }
 
 #endif // WANT_INITIALIZE_BIONIC
+
+static pid_t _hybris_hook_fork(void)
+{
+    TRACE_HOOK("");
+
+    return fork();
+}
 
 static void *_hybris_hook_dlopen(const char *filename, int flag)
 {
@@ -2499,6 +2499,8 @@ static struct _hook hooks_common[] = {
     HOOK_DIRECT_NO_DEBUG(sbrk),
     HOOK_DIRECT_NO_DEBUG(clone),
     HOOK_TO(__errno, __errno_location),
+
+    HOOK_DIRECT(fork),
 
     /* pthread.h */
     HOOK_DIRECT_NO_DEBUG(getauxval),
