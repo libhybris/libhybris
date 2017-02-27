@@ -48,17 +48,30 @@ static void process_event(sensors_event_t *data)
     }
 }
 
+void float_to_char(float f,char * buffer, int maxChars){
+    int beforeDot = (int)f;
+    int afterDot = (int)((f-beforeDot)*1e6); /* rounding is not perfect, but that'll do */
+    snprintf(buffer, maxChars, "%d.%d", beforeDot, afterDot);
+}
+
 static void print_sensor_info(int i, struct sensor_t const *s)
 {
+    char numStr[32];
+
     printf("=== Sensor %d ==\n", i);
     printf("Name: %s\n", s->name);
     printf("Vendor: %s\n", s->vendor);
     printf("Version: 0x%x\n", s->version);
     printf("Handle: 0x%x\n", s->handle);
     printf("Type: %d\n", s->type);
-    printf("maxRange: %.f\n", s->maxRange);
-    printf("resolution: %.f\n", s->resolution);
-    printf("power: %.f mA\n", s->power);
+    // once the hw module is loaded, printf with %f will crash, so use integers
+    float_to_char(s->maxRange, numStr, 30);
+    printf("maxRange: %s\n", numStr);
+    float_to_char(s->resolution, numStr, 30);
+    printf("resolution: %s\n", numStr);
+    float_to_char(s->power, numStr, 30);
+    printf("power: %s mA\n", numStr);
+
     printf("minDelay: %d\n", s->minDelay);
     //printf("fifoReservedEventCount: %d\n", s->fifoReservedEventCount);
     //printf("fifoMaxEventCount: %d\n", s->fifoMaxEventCount);
