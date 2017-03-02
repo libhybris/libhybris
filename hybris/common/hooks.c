@@ -1983,34 +1983,6 @@ static long int _hybris_hook_strtol(const char* str, char** endptr, int base)
     return strtol(str, endptr, base);
 }
 
-char *_hybris_hook_getenv(const char *name)
-{
-    TRACE_HOOK("name '%s'", name);
-
-    return getenv(name);
-}
-
-int _hybris_hook_setenv(const char *name, const char *value, int overwrite)
-{
-    TRACE_HOOK("name '%s' value '%s' overwrite %d", name, value, overwrite);
-
-    return setenv(name, value, overwrite);
-}
-
-int _hybris_hook_putenv(char *string)
-{
-    TRACE_HOOK("string '%s'", string);
-
-    return putenv(string);
-}
-
-int _hybris_hook_clearenv(void)
-{
-    TRACE_HOOK("");
-
-    return clearenv();
-}
-
 extern int __cxa_atexit(void (*)(void*), void*, void*);
 extern void __cxa_finalize(void * d);
 
@@ -2477,6 +2449,34 @@ static pid_t _hybris_hook_gettid(void)
     return syscall(__NR_gettid);
 }
 
+char *_hybris_hook_getenv(const char *name)
+{
+    TRACE_HOOK("name '%s'", name);
+
+    return getenv(name);
+}
+
+int _hybris_hook_setenv(const char *name, const char *value, int overwrite)
+{
+    TRACE_HOOK("name '%s' value '%s' overwrite %d", name, value, overwrite);
+
+    return setenv(name, value, overwrite);
+}
+
+int _hybris_hook_putenv(char *string)
+{
+    TRACE_HOOK("string '%s'", string);
+
+    return putenv(string);
+}
+
+int _hybris_hook_clearenv(void)
+{
+    TRACE_HOOK("");
+
+    return clearenv();
+}
+
 // hook to print messages from bionic libc, useful for debugging
 static int _hybris_hook_my_printf(const char *tmp, ...)
 {
@@ -2606,6 +2606,11 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(dlsym),
     HOOK_INDIRECT(dladdr),
     HOOK_INDIRECT(dlclose),
+
+    HOOK_DIRECT(getenv),
+    HOOK_DIRECT(setenv),
+    HOOK_DIRECT(putenv),
+    HOOK_DIRECT(clearenv),
 #else
     HOOK_DIRECT(property_get),
     HOOK_DIRECT(property_set),
