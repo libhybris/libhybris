@@ -174,6 +174,14 @@ if [ $MAJOR -ge 4 -a $MINOR -ge 1 -o $MAJOR -ge 5 ]; then
         hardware/libhardware_legacy/include/hardware_legacy/audio_policy_conf.h
 fi
 
+if [ $MAJOR -ge 6 ]; then
+	extract_headers_to hardware_legacy \
+	    hardware/libhardware_legacy/include/hardware_legacy/wifi.h
+
+	extract_headers_to system \
+	    system/media/audio/include/system/audio.h
+fi
+
 extract_headers_to cutils \
     system/core/include/cutils
 
@@ -197,7 +205,7 @@ if [ $MAJOR -eq 4 -a $MINOR -ge 1 ]; then
 
     extract_headers_to sync \
         system/core/include/sync
-elif [ $MAJOR -eq 5 ]; then
+elif [ $MAJOR -ge 5 ]; then
     extract_headers_to linux \
         bionic/libc/kernel/uapi/linux/sync.h \
         bionic/libc/kernel/uapi/linux/sw_sync.h
