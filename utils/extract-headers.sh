@@ -299,6 +299,7 @@ install:
 	cp -r sync \$(DESTDIR)/\$(INCLUDEDIR)
 	cp -r libnfc-nxp \$(DESTDIR)/\$(INCLUDEDIR)
 	cp -r private \$(DESTDIR)/\$(INCLUDEDIR)
+    cp -r log \$(DESTDIR)/\$(INCLUDEDIR)
 EOF
 
 find "$HEADERPATH" -type f -exec chmod 0644 {} \;
