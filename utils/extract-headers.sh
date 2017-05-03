@@ -171,13 +171,11 @@ extract_headers_to hardware_legacy \
     hardware/libhardware_legacy/include/hardware_legacy/vibrator.h
 if [ $MAJOR -ge 4 -a $MINOR -ge 1 -o $MAJOR -ge 5 ]; then
     extract_headers_to hardware_legacy \
-        hardware/libhardware_legacy/include/hardware_legacy/audio_policy_conf.h
+        hardware/libhardware_legacy/include/hardware_legacy/audio_policy_conf.h \
+        hardware/libhardware_legacy/include/hardware_legacy/wifi.h
 fi
 
 if [ $MAJOR -ge 6 ]; then
-	extract_headers_to hardware_legacy \
-	    hardware/libhardware_legacy/include/hardware_legacy/wifi.h
-
 	extract_headers_to system \
 	    system/media/audio/include/system/audio.h
 fi
