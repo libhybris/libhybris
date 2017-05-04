@@ -97,6 +97,7 @@ static std::vector<std::string> g_ld_preload_names;
 static std::vector<soinfo*> g_ld_preloads;
 
 int g_ld_debug_verbosity = 0;
+int g_ld_debug_stdout = 0;
 
 abort_msg_t* g_abort_message = nullptr; // For debuggerd.
 
@@ -341,7 +342,7 @@ static bool realpath_fd(int fd, std::string* realpath) {
 // Intended to be called by libc's __gnu_Unwind_Find_exidx().
 //
 // This function is exposed via dlfcn.cpp and libdl.so.
-_Unwind_Ptr dl_unwind_find_exidx(_Unwind_Ptr pc, int* pcount) {
+_Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int* pcount) {
   uintptr_t addr = reinterpret_cast<uintptr_t>(pc);
 
   for (soinfo* si = solist; si != 0; si = si->next) {
@@ -879,12 +880,12 @@ class LoadTask {
 
 LoadTask::deleter_t LoadTask::deleter;
 
-template <typename T>
-using linked_list_t = LinkedList<T, TypeBasedAllocator<LinkedListEntry<T>>>;
+//template <typename T>
+//using linked_list_t = LinkedList<T, TypeBasedAllocator<LinkedListEntry<T>>>;
 
-typedef linked_list_t<soinfo> SoinfoLinkedList;
-typedef linked_list_t<const char> StringLinkedList;
-typedef linked_list_t<LoadTask> LoadTaskList;
+typedef LinkedList<soinfo, TypeBasedAllocator<LinkedListEntry<soinfo>>> SoinfoLinkedList;
+typedef LinkedList<const char, TypeBasedAllocator<LinkedListEntry<const char>>> StringLinkedList;
+typedef LinkedList<LoadTask, TypeBasedAllocator<LinkedListEntry<LoadTask>>> LoadTaskList;
 
 
 // This function walks down the tree of soinfo dependencies
@@ -3293,6 +3294,19 @@ static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf) {
 }
 
 extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) {
+#if TRACE_DEBUG
+    /* Has to be set via init_library as we don't get called via the
+     * traditional android init library path  */
+    const char* env;
+    env = getenv("HYBRIS_LINKER_DEBUG");
+    if (env)
+        g_ld_debug_verbosity = atoi(env);
+    if (getenv("HYBRIS_LINKER_STDOUT"))
+        g_ld_debug_stdout = 1;
+
+    INFO("[ HYBRIS: linker debug initialized]\n");
+#endif
+
   // Get a few environment variables.
   const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
   if (LD_DEBUG != nullptr) {

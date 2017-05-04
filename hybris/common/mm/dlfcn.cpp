@@ -33,10 +33,10 @@
 
 /* This file hijacks the symbols stubbed out in libdl.so. */
 
-static pthread_mutex_t g_dl_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+static __thread const char *dl_err_str;
+char __thread dlerror_buffer[__BIONIC_DLERROR_BUFFER_SIZE];
 
-static char dl_err_buf[1024];
-static const char *dl_err_str;
+static pthread_mutex_t g_dl_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
 static const char* __bionic_set_dlerror(char* new_value) {
 #ifdef DISABLED_FOR_HYBRIS_SUPPORT
@@ -46,9 +46,10 @@ static const char* __bionic_set_dlerror(char* new_value) {
   *dlerror_slot = new_value;
   return old_value;
 #else
-  char *dlerror_slot = dl_err_buf;
-  const char *old_value = dlerror_slot;
-  dlerror_slot = new_value;
+  const char *old_value = dl_err_str;
+
+  dl_err_str = new_value;
+
   return old_value;
 #endif
 }
@@ -57,7 +58,7 @@ static void __bionic_format_dlerror(const char* msg, const char* detail) {
 #ifdef DISABLED_FOR_HYBRIS_SUPPORT
   char* buffer = __get_thread()->dlerror_buffer;
 #else
-  char* buffer = dl_err_buf;
+  char* buffer = dlerror_buffer;
 #endif
   strlcpy(buffer, msg, __BIONIC_DLERROR_BUFFER_SIZE);
   if (detail != nullptr) {
@@ -174,7 +175,7 @@ extern "C" int android_dlclose(void* handle) {
   return 0;
 }
 
-int dl_iterate_phdr(int (*cb)(dl_phdr_info* info, size_t size, void* data), void* data) {
+int android_dl_iterate_phdr(int (*cb)(dl_phdr_info* info, size_t size, void* data), void* data) {
   ScopedPthreadMutexLocker locker(&g_dl_mutex);
   return do_dl_iterate_phdr(cb, data);
 }
@@ -241,12 +242,12 @@ static ElfW(Sym) g_libdl_symtab[] = {
   ELFW(SYM_INITIALIZER)( 29, &android_dladdr, 1),
   ELFW(SYM_INITIALIZER)( 36, &android_update_LD_LIBRARY_PATH, 1),
   ELFW(SYM_INITIALIZER)( 67, &android_get_LD_LIBRARY_PATH, 1),
-  ELFW(SYM_INITIALIZER)( 95, &dl_iterate_phdr, 1),
+  ELFW(SYM_INITIALIZER)( 95, &android_dl_iterate_phdr, 1),
   ELFW(SYM_INITIALIZER)(111, &android_dlopen_ext, 1),
   ELFW(SYM_INITIALIZER)(130, &android_set_application_target_sdk_version, 1),
   ELFW(SYM_INITIALIZER)(173, &android_get_application_target_sdk_version, 1),
 #if defined(__arm__)
-  ELFW(SYM_INITIALIZER)(216, &dl_unwind_find_exidx, 1),
+  ELFW(SYM_INITIALIZER)(216, &android_dl_unwind_find_exidx, 1),
 #endif
 };
 
