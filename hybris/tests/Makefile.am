@@ -3,6 +3,7 @@ bin_PROGRAMS = \
 	test_egl \
 	test_egl_configs \
 	test_glesv2 \
+	test_sf \
 	test_sensors \
 	test_input \
 	test_lights \
