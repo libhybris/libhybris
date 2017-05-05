@@ -39,6 +39,8 @@ HYBRIS_IMPLEMENT_FUNCTION1(sf, EGLDisplay, sf_client_get_egl_display,
 	struct SfClient*);
 HYBRIS_IMPLEMENT_FUNCTION1(sf, EGLConfig, sf_client_get_egl_config,
 	struct SfClient*);
+HYBRIS_IMPLEMENT_FUNCTION1(sf, EGLContext, sf_client_get_egl_context,
+	struct SfClient*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(sf, sf_client_begin_transaction,
 	struct SfClient*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(sf, sf_client_end_transaction,

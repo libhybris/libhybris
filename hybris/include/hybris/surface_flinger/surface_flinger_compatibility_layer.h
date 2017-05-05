@@ -71,6 +71,7 @@ extern "C" {
 
 	EGLDisplay sf_client_get_egl_display(struct SfClient* display);
 	EGLConfig sf_client_get_egl_config(struct SfClient* client);
+	EGLContext sf_client_get_egl_context(struct SfClient* client);
 	void sf_client_begin_transaction(struct SfClient*);
 	void sf_client_end_transaction(struct SfClient*);
 

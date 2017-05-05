@@ -277,6 +277,19 @@ EGLConfig sf_client_get_egl_config(SfClient* client)
 	}
 }
 
+EGLContext sf_client_get_egl_context(SfClient* client)
+{
+	assert(client);
+
+	if (client->egl_support)
+		return client->egl_context;
+	else {
+		fprintf(stderr, "Warning: sf_client_get_egl_context not supported, EGL "
+				"support disabled\n");
+		return NULL;
+	}
+}
+
 void sf_client_begin_transaction(SfClient* client)
 {
 	assert(client);
