@@ -48,6 +48,12 @@ AC_ARG_ENABLE(experimental,
   [experimental="no"])
 AM_CONDITIONAL( [WANT_EXPERIMENTAL], [test x"$experimental" = x"yes"])
 
+AC_ARG_ENABLE(adreno_quirks,
+  [  --enable-adreno-quirks     Enable adreno quirks (default=disabled)],
+  [adreno_quirks=$enableval],
+  [adreno_quirks="no"])
+AM_CONDITIONAL( [WANT_ADRENO_QUIRKS], [test x"$adreno_quirks" = x"yes"])
+
 AC_ARG_ENABLE(initialize_bionic,
   [  --enable-initialize-bionic     Enable initialization of bionic libc.so (default=disabled)],
   [initialize_bionic=$enableval],

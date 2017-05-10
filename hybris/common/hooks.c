@@ -1849,31 +1849,13 @@ static int _hybris_hook_scandir(const char *dir,
 }
 
 /*
- * utils, such as malloc, memcpy
+ * utils, such as memcpy
  *
  * Useful to handle hacks such as the one applied for Nvidia, and to
  * avoid crashes. Also we need to hook all memory allocation related
  * ones to make sure all are using the same allocator implementation.
  *
  * */
-
-static void *_hybris_hook_malloc(size_t size)
-{
-    TRACE_HOOK("size %zu", size);
-
-    void *res = malloc(size);
-
-    TRACE_HOOK("res %p", res);
-
-    return res;
-}
-
-static size_t _hybris_hook_malloc_usable_size (void *ptr)
-{
-    TRACE_HOOK("ptr %p", ptr);
-
-    return malloc_usable_size(ptr);
-}
 
 static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
 {
@@ -2477,6 +2459,29 @@ int _hybris_hook_clearenv(void)
     return clearenv();
 }
 
+static void *_hybris_hook_malloc(size_t size)
+{
+    TRACE_HOOK("size %zu", size);
+
+#ifdef WANT_ADRENO_QUIRKS
+    if(size == 4) size = 5;
+#endif
+
+    void *res = malloc(size);
+
+    TRACE_HOOK("res %p", res);
+
+    return res;
+}
+
+static size_t _hybris_hook_malloc_usable_size (void *ptr)
+{
+    TRACE_HOOK("ptr %p", ptr);
+
+    return malloc_usable_size(ptr);
+}
+
+
 // hook to print messages from bionic libc, useful for debugging
 static int _hybris_hook_my_printf(const char *tmp, ...)
 {
@@ -2514,6 +2519,20 @@ static struct _hook hooks_common[] = {
     HOOK_TO(__errno, __errno_location),
 
     HOOK_DIRECT(fork),
+
+    HOOK_INDIRECT(malloc),
+    HOOK_DIRECT_NO_DEBUG(mallinfo),
+    HOOK_DIRECT(malloc_usable_size),
+    HOOK_DIRECT_NO_DEBUG(posix_memalign),
+    // TODO: get_malloc_leak_info, free_malloc_leak_info
+    HOOK_DIRECT_NO_DEBUG(calloc),
+    HOOK_DIRECT_NO_DEBUG(realloc),
+    HOOK_DIRECT_NO_DEBUG(valloc),
+    HOOK_DIRECT_NO_DEBUG(pvalloc),
+    HOOK_DIRECT_NO_DEBUG(free),
+    HOOK_DIRECT_NO_DEBUG(memalign),
+    HOOK_DIRECT_NO_DEBUG(malloc_usable_size),
+    HOOK_DIRECT_NO_DEBUG(malloc_info),
 
     /* pthread.h */
     HOOK_DIRECT_NO_DEBUG(getauxval),
