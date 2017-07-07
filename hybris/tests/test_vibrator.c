@@ -20,14 +20,33 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#if (ANDROID_VERSION_MAJOR >= 7)
+#include <hardware/vibrator.h>
+#else
 #include <hardware_legacy/vibrator.h>
+#endif
 
 int main(int argc, char **argv)
 {
 	// Android mistakenly reports that vibrator does not exist:
 	//assert(vibrator_exists() != 0);
 
-	if (vibrator_on(1000) < 0) {
+#if (ANDROID_VERSION_MAJOR >= 7)
+        struct hw_module_t *hwmod;
+        vibrator_device_t *dev;
+
+        hw_get_module(VIBRATOR_HARDWARE_MODULE_ID, (const hw_module_t **)(&hwmod));
+        assert(hwmod != NULL);
+
+        if (vibrator_open(hwmod, &dev) < 0) {
+                printf("ERROR: failed to open vibrator device\n");
+                exit(1);
+        }
+
+        if (dev->vibrator_on(dev, 1000) < 0) {
+#else
+        if (vibrator_on(1000) < 0) {
+#endif
 		printf("ERROR: vibrator failed to vibrate\n");
 		exit(1);
 	}
