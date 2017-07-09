@@ -23,6 +23,8 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include "hybris_compat.h"
+
 MappedFileFragment::MappedFileFragment() : map_start_(nullptr), map_size_(0),
                                            data_(nullptr), size_ (0)
 { }

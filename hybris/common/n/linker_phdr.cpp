@@ -41,6 +41,8 @@
 
 #include "private/bionic_prctl.h"
 
+#include "hybris_compat.h"
+
 static int GetTargetElfMachine() {
 #if defined(__arm__)
   return EM_ARM;

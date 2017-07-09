@@ -17,6 +17,8 @@
 #include "linker_utils.h"
 #include "linker_debug.h"
 
+#include "hybris_compat.h"
+
 bool normalize_path(const char* path, std::string* normalized_path) {
   // Input should be an absolute path
   if (path[0] != '/') {

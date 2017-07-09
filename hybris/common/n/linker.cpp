@@ -38,10 +38,14 @@
 #include <sys/param.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <new>
 #include <string>
 #include <unordered_map>
+#include <sstream>
 #include <vector>
+
+#include "hybris_compat.h"
 
 // Private C library headers.
 #include "private/bionic_globals.h"
@@ -64,13 +68,17 @@
 #include "linker_non_pie.h"
 #endif
 
-#include "android-base/strings.h"
-#include "ziparchive/zip_archive.h"
+//#include "android-base/strings.h"
+//#include "ziparchive/zip_archive.h"
 
 extern void __libc_init_globals(KernelArgumentBlock&);
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
 extern void __libc_init_AT_SECURE(KernelArgumentBlock&);
+#endif
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
 extern "C" void _start();
+#endif
 
 // Override macros to use C++ style casts.
 #undef ELF_ST_TYPE
@@ -154,8 +162,8 @@ static LinkerTypeAllocator<LinkedListEntry<soinfo>> g_soinfo_links_allocator;
 static LinkerTypeAllocator<android_namespace_t> g_namespace_allocator;
 static LinkerTypeAllocator<LinkedListEntry<android_namespace_t>> g_namespace_list_allocator;
 
-static soinfo* solist;
-static soinfo* sonext;
+static soinfo* solist = get_libdl_info();
+static soinfo* sonext = get_libdl_info();
 static soinfo* somain; // main process, always the one after libdl_info
 
 #if defined(__LP64__)
@@ -183,6 +191,29 @@ static const char* const kAsanDefaultLdPaths[] = {
   kVendorLibDir,
   nullptr
 };
+
+std::vector<std::string> split(const std::string &text, const std::string &sep) {
+  std::vector<std::string> tokens;
+  std::size_t start = 0, end = 0;
+  while ((end = text.find(sep, start)) != std::string::npos) {
+    tokens.push_back(text.substr(start, end - start));
+    start = end + 1;
+  }
+  tokens.push_back(text.substr(start));
+  return tokens;
+}
+
+std::string join(const std::vector<std::string>& things, char separator) {
+  if (things.empty()) {
+    return "";
+  }
+  std::ostringstream result;
+  result << *things.begin();
+  for (auto it = std::next(things.begin()); it != things.end(); ++it) {
+    result << separator << *it;
+  }
+  return result.str();
+}
 
 // Is ASAN enabled?
 static bool g_is_asan = false;
@@ -269,9 +300,9 @@ static std::vector<soinfo*> g_ld_preloads;
 static bool g_public_namespace_initialized;
 static soinfo::soinfo_list_t g_public_namespace;
 
-__LIBC_HIDDEN__ int g_ld_debug_verbosity;
+int g_ld_debug_verbosity;
 
-__LIBC_HIDDEN__ abort_msg_t* g_abort_message = nullptr; // For debuggerd.
+abort_msg_t* g_abort_message = nullptr; // For debuggerd.
 
 static std::string dirname(const char *path) {
   const char* last_slash = strrchr(path, '/');
@@ -299,6 +330,8 @@ void count_relocation(RelocationKind) {
 #if COUNT_PAGES
 uint32_t bitmask[4096];
 #endif
+
+static void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 
 static char __linker_dl_err_buf[768];
 
@@ -492,7 +525,7 @@ static void resolve_paths(std::vector<std::string>& paths,
 static void split_path(const char* path, const char* delimiters,
                        std::vector<std::string>* paths) {
   if (path != nullptr && path[0] != 0) {
-    *paths = android::base::Split(path, delimiters);
+    *paths = split(path, delimiters);
   }
 }
 
@@ -552,7 +585,7 @@ static void parse_LD_PRELOAD(const char* path) {
   g_ld_preload_names.clear();
   if (path != nullptr) {
     // We have historically supported ':' as well as ' ' in LD_PRELOAD.
-    g_ld_preload_names = android::base::Split(path, " :");
+    g_ld_preload_names = split(path, " :");
     std::remove_if(g_ld_preload_names.begin(),
                    g_ld_preload_names.end(),
                    [] (const std::string& s) { return s.empty(); });
@@ -561,7 +594,7 @@ static void parse_LD_PRELOAD(const char* path) {
 
 static bool realpath_fd(int fd, std::string* realpath) {
   std::vector<char> buf(PATH_MAX), proc_self_fd(PATH_MAX);
-  __libc_format_buffer(&proc_self_fd[0], proc_self_fd.size(), "/proc/self/fd/%d", fd);
+  snprintf(&proc_self_fd[0], proc_self_fd.size(), "/proc/self/fd/%d", fd);
   if (readlink(&proc_self_fd[0], &buf[0], buf.size()) == -1) {
     PRINT("readlink(\"%s\") failed: %s [fd=%d]", &proc_self_fd[0], strerror(errno), fd);
     return false;
@@ -880,7 +913,6 @@ bool soinfo::elf_lookup(SymbolName& symbol_name,
 soinfo::soinfo(android_namespace_t* ns, const char* realpath,
                const struct stat* file_stat, off64_t file_offset,
                int rtld_flags) {
-  memset(this, 0, sizeof(*this));
 
   if (realpath != nullptr) {
     realpath_ = realpath;
@@ -1261,7 +1293,7 @@ static void reset_g_active_shim_libs(void) {
 static void parse_shim_libs(const char* path) {
   if (path != nullptr) {
     // We have historically supported ':' as well as ' ' in LD_SHIM_LIBS.
-    for (const auto& pair : android::base::Split(path, " :")) {
+    for (const auto& pair : split(path, " :")) {
       size_t pos = pair.find('|');
       if (pos > 0 && pos < pair.length() - 1) {
         auto desc = std::pair<std::string, std::string>(pair.substr(0, pos), pair.substr(pos + 1));
@@ -1517,13 +1549,14 @@ class ZipArchiveCache {
   ZipArchiveCache() {}
   ~ZipArchiveCache();
 
-  bool get_or_open(const char* zip_path, ZipArchiveHandle* handle);
+  //bool get_or_open(const char* zip_path, ZipArchiveHandle* handle);
  private:
   DISALLOW_COPY_AND_ASSIGN(ZipArchiveCache);
 
-  std::unordered_map<std::string, ZipArchiveHandle> cache_;
+  //std::unordered_map<std::string, ZipArchiveHandle> cache_;
 };
 
+/*
 bool ZipArchiveCache::get_or_open(const char* zip_path, ZipArchiveHandle* handle) {
   std::string key(zip_path);
 
@@ -1548,13 +1581,16 @@ bool ZipArchiveCache::get_or_open(const char* zip_path, ZipArchiveHandle* handle
   cache_[key] = *handle;
   return true;
 }
+*/
 
 ZipArchiveCache::~ZipArchiveCache() {
+/*
   for (const auto& it : cache_) {
     CloseArchive(it.second);
   }
+*/
 }
-
+/*
 static int open_library_in_zipfile(ZipArchiveCache* zip_archive_cache,
                                    const char* const input_path,
                                    off64_t* file_offset, std::string* realpath) {
@@ -1623,9 +1659,10 @@ static int open_library_in_zipfile(ZipArchiveCache* zip_archive_cache,
 
   return fd;
 }
+*/
 
 static bool format_path(char* buf, size_t buf_size, const char* path, const char* name) {
-  int n = __libc_format_buffer(buf, buf_size, "%s/%s", path, name);
+  int n = snprintf(buf, buf_size, "%s/%s", path, name);
   if (n < 0 || n >= static_cast<int>(buf_size)) {
     PRINT("Warning: ignoring very long library path: %s/%s", path, name);
     return false;
@@ -1645,10 +1682,11 @@ static int open_library_on_paths(ZipArchiveCache* zip_archive_cache,
     }
 
     int fd = -1;
+/*
     if (strstr(buf, kZipFileSeparator) != nullptr) {
       fd = open_library_in_zipfile(zip_archive_cache, buf, file_offset, realpath);
     }
-
+*/
     if (fd == -1) {
       fd = TEMP_FAILURE_RETRY(open(buf, O_RDONLY | O_CLOEXEC));
       if (fd != -1) {
@@ -1677,11 +1715,11 @@ static int open_library(android_namespace_t* ns,
   // If the name contains a slash, we should attempt to open it directly and not search the paths.
   if (strchr(name, '/') != nullptr) {
     int fd = -1;
-
+/*
     if (strstr(name, kZipFileSeparator) != nullptr) {
       fd = open_library_in_zipfile(zip_archive_cache, name, file_offset, realpath);
     }
-
+*/
     if (fd == -1) {
       fd = TEMP_FAILURE_RETRY(open(name, O_RDONLY | O_CLOEXEC));
       if (fd != -1) {
@@ -1721,7 +1759,8 @@ static int open_library(android_namespace_t* ns,
   return fd;
 }
 
-static const char* fix_dt_needed(const char* dt_needed, const char* sopath __unused) {
+static const char* fix_dt_needed(const char* dt_needed, const char* sopath) {
+  (void) sopath;
 #if !defined(__LP64__)
   // Work around incorrect DT_NEEDED entries for old apps: http://b/21364029
   if (get_application_target_sdk_version() <= 22) {
@@ -1850,9 +1889,9 @@ static bool load_library(android_namespace_t* ns,
             name, realpath.c_str(),
             needed_or_dlopened_by,
             ns->get_name(),
-            android::base::Join(ns->get_ld_library_paths(), ':').c_str(),
-            android::base::Join(ns->get_default_library_paths(), ':').c_str(),
-            android::base::Join(ns->get_permitted_paths(), ':').c_str());
+            join(ns->get_ld_library_paths(), ':').c_str(),
+            join(ns->get_default_library_paths(), ':').c_str(),
+            join(ns->get_permitted_paths(), ':').c_str());
       return false;
     }
   }
@@ -2059,6 +2098,7 @@ static soinfo::soinfo_list_t get_shared_group(android_namespace_t* ns) {
   return shared_group;
 }
 
+/*
 static void shuffle(std::vector<LoadTask*>* v) {
   for (size_t i = 0, size = v->size(); i < size; ++i) {
     size_t n = size - i;
@@ -2066,6 +2106,7 @@ static void shuffle(std::vector<LoadTask*>* v) {
     std::swap((*v)[n-1], (*v)[r]);
   }
 }
+*/
 
 // add_as_children - add first-level loaded libraries (i.e. library_names[], but
 // not their transitive dependencies) as children of the start_with library.
@@ -2168,7 +2209,7 @@ static bool find_libraries(android_namespace_t* ns,
       load_list.push_back(task);
     }
   }
-  shuffle(&load_list);
+  //shuffle(&load_list);
 
   for (auto&& task : load_list) {
     if (!task->load()) {
@@ -2590,7 +2631,7 @@ bool init_namespaces(const char* public_ns_sonames, const char* anon_ns_library_
     return false;
   }
 
-  std::vector<std::string> sonames = android::base::Split(public_ns_sonames, ":");
+  std::vector<std::string> sonames = split(public_ns_sonames, ":");
 
   ProtectedDataGuard guard;
 
@@ -2800,7 +2841,7 @@ bool soinfo::lookup_version_info(const VersionTracker& version_tracker, ElfW(Wor
 
 #if !defined(__mips__)
 #if defined(USE_RELA)
-static ElfW(Addr) get_addend(ElfW(Rela)* rela, ElfW(Addr) reloc_addr __unused) {
+static ElfW(Addr) get_addend(ElfW(Rela)* rela, ElfW(Addr) reloc_addr) {
   return rela->r_addend;
 }
 #else
@@ -2842,15 +2883,18 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
     if (sym != 0) {
       sym_name = get_string(symtab_[sym].st_name);
 
-      if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
-        return false;
+      sym_addr = reinterpret_cast<ElfW(Addr)>(_get_hooked_symbol(sym_name, get_realpath()));
+      if (!sym_addr) {
+        if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
+          return false;
+        }
+
+        if (!soinfo_do_lookup(this, sym_name, vi, &lsi, global_group, local_group, &s)) {
+          return false;
+        }
       }
 
-      if (!soinfo_do_lookup(this, sym_name, vi, &lsi, global_group, local_group, &s)) {
-        return false;
-      }
-
-      if (s == nullptr) {
+      if (sym_addr == 0 && s == nullptr) {
         // We only allow an undefined symbol if this is a weak reference...
         s = &symtab_[sym];
         if (ELF_ST_BIND(s->st_info) != STB_WEAK) {
@@ -2906,7 +2950,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
             DL_ERR("unknown weak reloc type %d @ %p (%zu)", type, rel, idx);
             return false;
         }
-      } else { // We got a definition.
+      } else if (sym_addr == 0) { // We got a definition.
 #if !defined(__LP64__)
         // When relocating dso with text_relocation .text segment is
         // not executable. We need to restore elf flags before resolving
@@ -3000,14 +3044,14 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_ABS64:
         count_relocation(kRelocAbsolute);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO ABS64 %16llx <- %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO ABS64 %16" PRIx64 " <- %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, sym_name);
         *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend;
         break;
       case R_AARCH64_ABS32:
         count_relocation(kRelocAbsolute);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO ABS32 %16llx <- %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO ABS32 %16" PRIx64 " <- %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, sym_name);
         {
           const ElfW(Addr) min_value = static_cast<ElfW(Addr)>(INT32_MIN);
@@ -3016,7 +3060,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((sym_addr + addend) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend;
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%016" PRIx64 " out of range 0x%016" PRIx64 " to 0x%016" PRIx64,
                    sym_addr + addend, min_value, max_value);
             return false;
           }
@@ -3025,7 +3069,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_ABS16:
         count_relocation(kRelocAbsolute);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO ABS16 %16llx <- %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO ABS16 %16" PRIx64 " <- %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, sym_name);
         {
           const ElfW(Addr) min_value = static_cast<ElfW(Addr)>(INT16_MIN);
@@ -3034,7 +3078,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((sym_addr + addend) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) = (sym_addr + addend);
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%016" PRIx64 " out of range 0x%016" PRIx64 " to 0x%016" PRIx64,
                    sym_addr + addend, min_value, max_value);
             return false;
           }
@@ -3043,14 +3087,14 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_PREL64:
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO REL64 %16llx <- %16llx - %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO REL64 %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, rel->r_offset, sym_name);
         *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend - rel->r_offset;
         break;
       case R_AARCH64_PREL32:
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO REL32 %16llx <- %16llx - %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO REL32 %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, rel->r_offset, sym_name);
         {
           const ElfW(Addr) min_value = static_cast<ElfW(Addr)>(INT32_MIN);
@@ -3059,7 +3103,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((sym_addr + addend - rel->r_offset) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend - rel->r_offset;
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%016" PRIx64 " out of range 0x%016" PRIx64 " to 0x%016" PRIx64,
                    sym_addr + addend - rel->r_offset, min_value, max_value);
             return false;
           }
@@ -3068,7 +3112,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_PREL16:
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO REL16 %16llx <- %16llx - %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO REL16 %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, rel->r_offset, sym_name);
         {
           const ElfW(Addr) min_value = static_cast<ElfW(Addr)>(INT16_MIN);
@@ -3077,7 +3121,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((sym_addr + addend - rel->r_offset) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend - rel->r_offset;
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%016" PRIx64 " out of range 0x%016" PRIx64 " to 0x%016" PRIx64,
                    sym_addr + addend - rel->r_offset, min_value, max_value);
             return false;
           }
@@ -3097,11 +3141,11 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
         DL_ERR("%s R_AARCH64_COPY relocations are not supported", get_realpath());
         return false;
       case R_AARCH64_TLS_TPREL64:
-        TRACE_TYPE(RELO, "RELO TLS_TPREL64 *** %16llx <- %16llx - %16llx\n",
+        TRACE_TYPE(RELO, "RELO TLS_TPREL64 *** %16" PRIx64 " <- %16" PRIx64 " - %16llx\n",
                    reloc, (sym_addr + addend), rel->r_offset);
         break;
       case R_AARCH64_TLS_DTPREL32:
-        TRACE_TYPE(RELO, "RELO TLS_DTPREL32 *** %16llx <- %16llx - %16llx\n",
+        TRACE_TYPE(RELO, "RELO TLS_DTPREL32 *** %16" PRIx64 " <- %16" PRIx64 " - %16llx\n",
                    reloc, (sym_addr + addend), rel->r_offset);
         break;
 #elif defined(__x86_64__)
@@ -3212,7 +3256,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
 }
 #endif  // !defined(__mips__)
 
-void soinfo::call_array(const char* array_name __unused, linker_function_t* functions,
+void soinfo::call_array(const char* array_name, linker_function_t* functions,
                         size_t count, bool reverse) {
   if (functions == nullptr) {
     return;
@@ -3232,7 +3276,7 @@ void soinfo::call_array(const char* array_name __unused, linker_function_t* func
   TRACE("[ Done calling %s for \"%s\" ]", array_name, get_realpath());
 }
 
-void soinfo::call_function(const char* function_name __unused, linker_function_t function) {
+void soinfo::call_function(const char* function_name, linker_function_t function) {
   if (function == nullptr || reinterpret_cast<uintptr_t>(function) == static_cast<uintptr_t>(-1)) {
     return;
   }
@@ -3250,6 +3294,11 @@ void soinfo::call_pre_init_constructors() {
 
 void soinfo::call_constructors() {
   if (constructors_called) {
+    return;
+  }
+
+  if (strcmp(soname_, "libc.so") == 0) {
+    DEBUG("HYBRIS: =============> Skipping libc.so\n");
     return;
   }
 
@@ -3589,7 +3638,8 @@ void soinfo::generate_handle() {
   // Make sure the handle is unique and does not collide
   // with special values which are RTLD_DEFAULT and RTLD_NEXT.
   do {
-    arc4random_buf(&handle_, sizeof(handle_));
+    handle_ = rand();
+    //arc4random_buf(&handle_, sizeof(handle_));
     // the least significant bit for the handle is always 1
     // making it easy to test the type of handle passed to
     // dl* functions.
@@ -4204,7 +4254,7 @@ bool soinfo::protect_relro() {
  * It helps to stack unwinding through signal handlers.
  * Also, it makes bionic more like glibc.
  */
-static void add_vdso(KernelArgumentBlock& args __unused) {
+static void add_vdso(KernelArgumentBlock& args) {
 #if defined(AT_SYSINFO_EHDR)
   ElfW(Ehdr)* ehdr_vdso = reinterpret_cast<ElfW(Ehdr)*>(args.getauxval(AT_SYSINFO_EHDR));
   if (ehdr_vdso == nullptr) {
@@ -4309,16 +4359,20 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   gettimeofday(&t0, 0);
 #endif
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   // Sanitize the environment.
   __libc_init_AT_SECURE(args);
 
   // Initialize system properties
   __system_properties_init(); // may use 'environ'
+#endif
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   debuggerd_init();
+#endif
 
   // Get a few environment variables.
-  const char* LD_DEBUG = getenv("LD_DEBUG");
+  const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
   if (LD_DEBUG != nullptr) {
     g_ld_debug_verbosity = atoi(LD_DEBUG);
   }
@@ -4335,11 +4389,11 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   const char* ldpreload_env = nullptr;
   const char* ldshim_libs_env = nullptr;
   if (!getauxval(AT_SECURE)) {
-    ldpath_env = getenv("LD_LIBRARY_PATH");
+    ldpath_env = getenv("HYBRIS_LD_LIBRARY_PATH");
     if (ldpath_env != nullptr) {
       INFO("[ LD_LIBRARY_PATH set to \"%s\" ]", ldpath_env);
     }
-    ldpreload_env = getenv("LD_PRELOAD");
+    ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
     if (ldpreload_env != nullptr) {
       INFO("[ LD_PRELOAD set to \"%s\" ]", ldpreload_env);
     }
@@ -4401,7 +4455,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
 #endif
   ElfW(Ehdr)* elf_hdr = reinterpret_cast<ElfW(Ehdr)*>(si->base);
   if (elf_hdr->e_type != ET_DYN) {
-    __libc_fatal("\"%s\": error: only position independent executables (PIE) are supported.",
+    fprintf(stderr, "\"%s\": error: only position independent executables (PIE) are supported.",
                  args.argv[0]);
   }
 #ifdef ENABLE_NON_PIE_SUPPORT
@@ -4409,7 +4463,10 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
 #endif
 
   // Use LD_LIBRARY_PATH and LD_PRELOAD (but only if we aren't setuid/setgid).
-  parse_LD_LIBRARY_PATH(ldpath_env);
+  if (DEFAULT_HYBRIS_LD_LIBRARY_PATH)
+    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
+  else
+    parse_LD_LIBRARY_PATH(ldpath_env);
   parse_LD_PRELOAD(ldpreload_env);
   parse_LD_SHIM_LIBS(ldshim_libs_env);
 
@@ -4418,7 +4475,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   init_default_namespace();
 
   if (!si->prelink_image()) {
-    __libc_fatal("CANNOT LINK EXECUTABLE \"%s\": %s", args.argv[0], linker_get_error_buffer());
+    fprintf(stderr, "CANNOT LINK EXECUTABLE \"%s\": %s", args.argv[0], linker_get_error_buffer());
   }
 
   // add somain to global group
@@ -4449,10 +4506,10 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
       !find_libraries(&g_default_namespace, si, needed_library_names, needed_libraries_count,
                       nullptr, &g_ld_preloads, ld_preloads_count, RTLD_GLOBAL, nullptr,
                       /* add_as_children */ true)) {
-    __libc_fatal("CANNOT LINK EXECUTABLE \"%s\": %s", args.argv[0], linker_get_error_buffer());
+    fprintf(stderr, "CANNOT LINK EXECUTABLE \"%s\": %s", args.argv[0], linker_get_error_buffer());
   } else if (needed_libraries_count == 0) {
     if (!si->link_image(g_empty_list, soinfo::soinfo_list_t::make_list(si), nullptr)) {
-      __libc_fatal("CANNOT LINK EXECUTABLE \"%s\": %s", args.argv[0], linker_get_error_buffer());
+      fprintf(stderr, "CANNOT LINK EXECUTABLE \"%s\": %s", args.argv[0], linker_get_error_buffer());
     }
     si->increment_ref_count();
   }
@@ -4546,6 +4603,33 @@ static void __linker_cannot_link(KernelArgumentBlock& args) {
   __libc_fatal("CANNOT LINK EXECUTABLE \"%s\": %s", args.argv[0], linker_get_error_buffer());
 }
 
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) {
+  // Get a few environment variables.
+  const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
+  if (LD_DEBUG != nullptr) {
+    g_ld_debug_verbosity = atoi(LD_DEBUG);
+  }
+
+  const char* ldpath_env = nullptr;
+  const char* ldpreload_env = nullptr;
+  if (!getauxval(AT_SECURE)) {
+    ldpath_env = getenv("HYBRIS_LD_LIBRARY_PATH");
+    ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
+  }
+
+  if (DEFAULT_HYBRIS_LD_LIBRARY_PATH)
+    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
+  else
+    parse_LD_LIBRARY_PATH(ldpath_env);
+  parse_LD_PRELOAD(ldpreload_env);
+
+  if (sdk_version > 0)
+    set_application_target_sdk_version(sdk_version);
+
+  _get_hooked_symbol = get_hooked_symbol;
+}
+
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
 /*
  * This is the entry point for the linker, called from begin.S. This
  * method is responsible for fixing the linker's own relocations, and
@@ -4636,3 +4720,5 @@ extern "C" ElfW(Addr) __linker_init(void* raw_args) {
   // Return the address that the calling assembly stub should jump to.
   return start_address;
 }
+
+#endif

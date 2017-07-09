@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2012 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-#include "linker_allocator.h"
+#ifndef SCOPED_PTHREAD_MUTEX_LOCKER_H
+#define SCOPED_PTHREAD_MUTEX_LOCKER_H
 
-#include <stdlib.h>
+#include <pthread.h>
 
-#if DISABLED_FOR_HYBRIS_SUPPORT
-static LinkerMemoryAllocator g_linker_allocator;
+#include "bionic_macros.h"
 
-void* malloc(size_t byte_count) {
-  return g_linker_allocator.alloc(byte_count);
-}
+class ScopedPthreadMutexLocker {
+ public:
+  explicit ScopedPthreadMutexLocker(pthread_mutex_t* mu) : mu_(mu) {
+    pthread_mutex_lock(mu_);
+  }
 
-void* calloc(size_t item_count, size_t item_size) {
-  return g_linker_allocator.alloc(item_count*item_size);
-}
+  ~ScopedPthreadMutexLocker() {
+    pthread_mutex_unlock(mu_);
+  }
 
-void* realloc(void* p, size_t byte_count) {
-  return g_linker_allocator.realloc(p, byte_count);
-}
+ private:
+  pthread_mutex_t* mu_;
 
-void free(void* ptr) {
-  g_linker_allocator.free(ptr);
-}
-#endif
+  DISALLOW_IMPLICIT_CONSTRUCTORS(ScopedPthreadMutexLocker);
+};
 
+#endif // SCOPED_PTHREAD_MUTEX_LOCKER_H

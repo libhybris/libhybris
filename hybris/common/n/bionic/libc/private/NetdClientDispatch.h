@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2014 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,23 @@
  * limitations under the License.
  */
 
-#include "linker_allocator.h"
+#ifndef PRIVATE_NETD_CLIENT_DISPATCH_H
+#define PRIVATE_NETD_CLIENT_DISPATCH_H
 
-#include <stdlib.h>
+#include <sys/cdefs.h>
+#include <sys/socket.h>
 
-#if DISABLED_FOR_HYBRIS_SUPPORT
-static LinkerMemoryAllocator g_linker_allocator;
+__BEGIN_DECLS
 
-void* malloc(size_t byte_count) {
-  return g_linker_allocator.alloc(byte_count);
-}
+struct NetdClientDispatch {
+    int (*accept4)(int, struct sockaddr*, socklen_t*, int);
+    int (*connect)(int, const struct sockaddr*, socklen_t);
+    int (*socket)(int, int, int);
+    unsigned (*netIdForResolv)(unsigned);
+};
 
-void* calloc(size_t item_count, size_t item_size) {
-  return g_linker_allocator.alloc(item_count*item_size);
-}
+extern struct NetdClientDispatch __netdClientDispatch;
 
-void* realloc(void* p, size_t byte_count) {
-  return g_linker_allocator.realloc(p, byte_count);
-}
+__END_DECLS
 
-void free(void* ptr) {
-  g_linker_allocator.free(ptr);
-}
-#endif
-
+#endif  // PRIVATE_NETD_CLIENT_DISPATCH_H

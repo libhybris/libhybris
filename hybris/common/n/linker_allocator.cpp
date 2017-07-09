@@ -24,7 +24,11 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <memory.h>
+
 #include "private/bionic_prctl.h"
+
+#include "hybris_compat.h"
 
 //
 // LinkerMemeoryAllocator is general purpose allocator

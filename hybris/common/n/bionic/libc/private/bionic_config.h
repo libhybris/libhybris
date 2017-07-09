@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2014 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,13 @@
  * limitations under the License.
  */
 
-#include "linker_allocator.h"
+#ifndef _BIONIC_CONFIG_H_
+#define _BIONIC_CONFIG_H_
 
-#include <stdlib.h>
-
-#if DISABLED_FOR_HYBRIS_SUPPORT
-static LinkerMemoryAllocator g_linker_allocator;
-
-void* malloc(size_t byte_count) {
-  return g_linker_allocator.alloc(byte_count);
-}
-
-void* calloc(size_t item_count, size_t item_size) {
-  return g_linker_allocator.alloc(item_count*item_size);
-}
-
-void* realloc(void* p, size_t byte_count) {
-  return g_linker_allocator.realloc(p, byte_count);
-}
-
-void free(void* ptr) {
-  g_linker_allocator.free(ptr);
-}
+// valloc(3) and pvalloc(3) were removed from POSIX 2004. We do not include them
+// for LP64, but the symbols remain in LP32 for binary compatibility.
+#if !defined(__LP64__)
+#define HAVE_DEPRECATED_MALLOC_FUNCS 1
 #endif
 
+#endif // _BIONIC_CONFIG_H_

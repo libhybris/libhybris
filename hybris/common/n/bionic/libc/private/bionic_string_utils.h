@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The LineageOS Project
+ * Copyright (C) 2014 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,25 +14,18 @@
  * limitations under the License.
  */
 
-/*
- * linker_non_pie_executables.h syntax:
- *
- * const char* linker_non_pie_executables[] = {
- *     "/path/to/executable1",
- *     "/path/to/executable2",
- * };
- */
+#ifndef _BIONIC_STRING_UTILS_H_
+#define _BIONIC_STRING_UTILS_H_
 
 #include <string.h>
-#include "linker_non_pie_executables.h"
 
-#include "hybris_compat.h"
-
-bool allow_non_pie(const char* executable) {
-    const int array_len = sizeof(linker_non_pie_executables)/sizeof(*linker_non_pie_executables);
-    for (int i = 0; i < array_len; i++) {
-        if (!strcmp(linker_non_pie_executables[i], executable))
-            return true;
-    }
+static inline bool ends_with(const char* s1, const char* s2) {
+  size_t s1_length = strlen(s1);
+  size_t s2_length = strlen(s2);
+  if (s2_length > s1_length) {
     return false;
+  }
+  return memcmp(s1 + (s1_length - s2_length), s2, s2_length) == 0;
 }
+
+#endif // _BIONIC_STRING_UTILS_H_

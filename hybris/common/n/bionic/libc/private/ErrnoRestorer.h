@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2013 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,30 @@
  * limitations under the License.
  */
 
-#include "linker_allocator.h"
+#ifndef ERRNO_RESTORER_H
+#define ERRNO_RESTORER_H
 
-#include <stdlib.h>
+#include <errno.h>
 
-#if DISABLED_FOR_HYBRIS_SUPPORT
-static LinkerMemoryAllocator g_linker_allocator;
+#include "bionic_macros.h"
 
-void* malloc(size_t byte_count) {
-  return g_linker_allocator.alloc(byte_count);
-}
+class ErrnoRestorer {
+ public:
+  explicit ErrnoRestorer() : saved_errno_(errno) {
+  }
 
-void* calloc(size_t item_count, size_t item_size) {
-  return g_linker_allocator.alloc(item_count*item_size);
-}
+  ~ErrnoRestorer() {
+    errno = saved_errno_;
+  }
 
-void* realloc(void* p, size_t byte_count) {
-  return g_linker_allocator.realloc(p, byte_count);
-}
+  void override(int new_errno) {
+    saved_errno_ = new_errno;
+  }
 
-void free(void* ptr) {
-  g_linker_allocator.free(ptr);
-}
-#endif
+ private:
+  int saved_errno_;
 
+  DISALLOW_COPY_AND_ASSIGN(ErrnoRestorer);
+};
+
+#endif // ERRNO_RESTORER_H

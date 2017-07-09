@@ -20,6 +20,8 @@
 
 #include "private/ScopedPthreadMutexLocker.h"
 
+#include "hybris_compat.h"
+
 // This function is an empty stub where GDB locates a breakpoint to get notified
 // about linker activity.
 extern "C"

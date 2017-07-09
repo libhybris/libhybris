@@ -22,6 +22,8 @@
 
 #include "private/bionic_prctl.h"
 
+#include "hybris_compat.h"
+
 // the multiplier should be power of 2
 static constexpr size_t round_up(size_t size, size_t multiplier) {
   return (size + (multiplier - 1)) & ~(multiplier-1);

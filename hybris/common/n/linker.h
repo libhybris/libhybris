@@ -46,17 +46,16 @@
 
 #define DL_ERR(fmt, x...) \
     do { \
-      __libc_format_buffer(linker_get_error_buffer(), linker_get_error_buffer_size(), fmt, ##x); \
+      fprintf(stderr, fmt, ##x); \
+      fprintf(stderr, "\n"); \
       /* If LD_DEBUG is set high enough, log every dlerror(3) message. */ \
       DEBUG("%s\n", linker_get_error_buffer()); \
     } while (false)
 
 #define DL_WARN(fmt, x...) \
     do { \
-      __libc_format_log(ANDROID_LOG_WARN, "linker", fmt, ##x); \
-      __libc_format_fd(2, "WARNING: linker: "); \
-      __libc_format_fd(2, fmt, ##x); \
-      __libc_format_fd(2, "\n"); \
+      fprintf(stderr, "WARNING: linker " fmt, ##x); \
+      fprintf(stderr, "\n"); \
     } while (false)
 
 #define DL_ERR_AND_LOG(fmt, x...) \
@@ -320,8 +319,9 @@ struct soinfo {
   bool can_unload() const;
   bool is_gnu_hash() const;
 
-  bool inline has_min_version(uint32_t min_version __unused) const {
+  bool inline has_min_version(uint32_t min_version) const {
 #if defined(__work_around_b_24465209__)
+    (void) min_version;
     return (flags_ & FLAG_NEW_SOINFO) != 0 && version_ >= min_version;
 #else
     return true;

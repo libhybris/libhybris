@@ -28,20 +28,36 @@
 #include "private/ScopedPthreadMutexLocker.h"
 #include "private/ThreadLocalBuffer.h"
 
+#include "hybris_compat.h"
+
 /* This file hijacks the symbols stubbed out in libdl.so. */
 
 static pthread_mutex_t g_dl_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
+static char dl_err_buf[1024];
+//static const char *dl_err_str;
+
 static const char* __bionic_set_dlerror(char* new_value) {
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   char** dlerror_slot = &reinterpret_cast<char**>(__get_tls())[TLS_SLOT_DLERROR];
 
   const char* old_value = *dlerror_slot;
   *dlerror_slot = new_value;
   return old_value;
+#else
+  char *dlerror_slot = dl_err_buf;
+  const char *old_value = dlerror_slot;
+  dlerror_slot = new_value;
+  return old_value;
+#endif
 }
 
 static void __bionic_format_dlerror(const char* msg, const char* detail) {
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   char* buffer = __get_thread()->dlerror_buffer;
+#else
+  char* buffer = dl_err_buf;
+#endif
   strlcpy(buffer, msg, __BIONIC_DLERROR_BUFFER_SIZE);
   if (detail != nullptr) {
     strlcat(buffer, ": ", __BIONIC_DLERROR_BUFFER_SIZE);
@@ -51,7 +67,7 @@ static void __bionic_format_dlerror(const char* msg, const char* detail) {
   __bionic_set_dlerror(buffer);
 }
 
-const char* dlerror() {
+extern "C" const char* android_dlerror() {
   const char* old_value = __bionic_set_dlerror(nullptr);
   return old_value;
 }
@@ -77,12 +93,12 @@ static void* dlopen_ext(const char* filename, int flags,
   return result;
 }
 
-void* android_dlopen_ext(const char* filename, int flags, const android_dlextinfo* extinfo) {
+extern "C" void* android_dlopen_ext(const char* filename, int flags, const android_dlextinfo* extinfo) {
   void* caller_addr = __builtin_return_address(0);
   return dlopen_ext(filename, flags, extinfo, caller_addr);
 }
 
-void* dlopen(const char* filename, int flags) {
+extern "C" void* android_dlopen(const char* filename, int flags) {
   void* caller_addr = __builtin_return_address(0);
   return dlopen_ext(filename, flags, nullptr, caller_addr);
 }
@@ -98,22 +114,22 @@ void* dlsym_impl(void* handle, const char* symbol, const char* version, void* ca
   return result;
 }
 
-void* dlsym(void* handle, const char* symbol) {
+extern "C" void* android_dlsym(void* handle, const char* symbol) {
   void* caller_addr = __builtin_return_address(0);
   return dlsym_impl(handle, symbol, nullptr, caller_addr);
 }
 
-void* dlvsym(void* handle, const char* symbol, const char* version) {
+extern "C" void* android_dlvsym(void* handle, const char* symbol, const char* version) {
   void* caller_addr = __builtin_return_address(0);
   return dlsym_impl(handle, symbol, version, caller_addr);
 }
 
-int dladdr(const void* addr, Dl_info* info) {
+extern "C" int android_dladdr(const void* addr, Dl_info* info) {
   ScopedPthreadMutexLocker locker(&g_dl_mutex);
   return do_dladdr(addr, info);
 }
 
-int dlclose(void* handle) {
+extern "C" int android_dlclose(void* handle) {
   ScopedPthreadMutexLocker locker(&g_dl_mutex);
   int result = do_dlclose(handle);
   if (result != 0) {
@@ -196,6 +212,10 @@ android_namespace_t* android_create_namespace(const char* name,
       /* st_size */ 0, \
     }
 
+#if defined(__arm__)
+_Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int *pcount);
+#endif
+
 static const char ANDROID_LIBDL_STRTAB[] =
   // 0000000 00011111 111112 22222222 2333333 3333444444444455555555556666666 6667777777777888888888899999 99999
   // 0123456 78901234 567890 12345678 9012345 6789012345678901234567890123456 7890123456789012345678901234 56789
@@ -218,11 +238,11 @@ static ElfW(Sym) g_libdl_symtab[] = {
   // supposed to have st_name == 0, but instead, it points to an index
   // in the strtab with a \0 to make iterating through the symtab easier.
   ELFW(SYM_INITIALIZER)(sizeof(ANDROID_LIBDL_STRTAB) - 1, nullptr, 0),
-  ELFW(SYM_INITIALIZER)(  0, &dlopen, 1),
-  ELFW(SYM_INITIALIZER)(  7, &dlclose, 1),
-  ELFW(SYM_INITIALIZER)( 15, &dlsym, 1),
-  ELFW(SYM_INITIALIZER)( 21, &dlerror, 1),
-  ELFW(SYM_INITIALIZER)( 29, &dladdr, 1),
+  ELFW(SYM_INITIALIZER)(  0, &android_dlopen, 1),
+  ELFW(SYM_INITIALIZER)(  7, &android_dlclose, 1),
+  ELFW(SYM_INITIALIZER)( 15, &android_dlsym, 1),
+  ELFW(SYM_INITIALIZER)( 21, &android_dlerror, 1),
+  ELFW(SYM_INITIALIZER)( 29, &android_dladdr, 1),
   ELFW(SYM_INITIALIZER)( 36, &android_update_LD_LIBRARY_PATH, 1),
   ELFW(SYM_INITIALIZER)( 67, &android_get_LD_LIBRARY_PATH, 1),
   ELFW(SYM_INITIALIZER)( 95, &dl_iterate_phdr, 1),
@@ -231,7 +251,7 @@ static ElfW(Sym) g_libdl_symtab[] = {
   ELFW(SYM_INITIALIZER)(173, &android_get_application_target_sdk_version, 1),
   ELFW(SYM_INITIALIZER)(216, &android_init_namespaces, 1),
   ELFW(SYM_INITIALIZER)(240, &android_create_namespace, 1),
-  ELFW(SYM_INITIALIZER)(265, &dlvsym, 1),
+  ELFW(SYM_INITIALIZER)(265, &android_dlvsym, 1),
   ELFW(SYM_INITIALIZER)(272, &android_dlwarning, 1),
 #if defined(__arm__)
   ELFW(SYM_INITIALIZER)(290, &dl_unwind_find_exidx, 1),
@@ -278,8 +298,10 @@ soinfo* get_libdl_info() {
     __libdl_info->soname_ = "libdl.so";
     __libdl_info->target_sdk_version_ = __ANDROID_API__;
     __libdl_info->generate_handle();
+#if DISABLED_FOR_HYBRIS_SUPPORT
 #if defined(__work_around_b_24465209__)
     strlcpy(__libdl_info->old_name_, __libdl_info->soname_, sizeof(__libdl_info->old_name_));
+#endif
 #endif
   }
 

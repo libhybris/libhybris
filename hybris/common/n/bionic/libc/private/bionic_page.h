@@ -14,27 +14,20 @@
  * limitations under the License.
  */
 
-#include "linker_allocator.h"
+#ifndef _BIONIC_PAGE_H_
+#define _BIONIC_PAGE_H_
 
-#include <stdlib.h>
+// Get PAGE_SIZE and PAGE_MASK.
+#include <sys/user.h>
 
-#if DISABLED_FOR_HYBRIS_SUPPORT
-static LinkerMemoryAllocator g_linker_allocator;
+// Returns the address of the page containing address 'x'.
+#define PAGE_START(x) ((x) & PAGE_MASK)
 
-void* malloc(size_t byte_count) {
-  return g_linker_allocator.alloc(byte_count);
-}
+// Returns the offset of address 'x' in its page.
+#define PAGE_OFFSET(x) ((x) & ~PAGE_MASK)
 
-void* calloc(size_t item_count, size_t item_size) {
-  return g_linker_allocator.alloc(item_count*item_size);
-}
+// Returns the address of the next page after address 'x', unless 'x' is
+// itself at the start of a page.
+#define PAGE_END(x) PAGE_START((x) + (PAGE_SIZE-1))
 
-void* realloc(void* p, size_t byte_count) {
-  return g_linker_allocator.realloc(p, byte_count);
-}
-
-void free(void* ptr) {
-  g_linker_allocator.free(ptr);
-}
-#endif
-
+#endif // _BIONIC_PAGE_H_

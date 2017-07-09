@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2014 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,9 @@
  * limitations under the License.
  */
 
-#include "linker_allocator.h"
+#ifndef _BIONIC_CONSTANTS_H_
+#define _BIONIC_CONSTANTS_H_
 
-#include <stdlib.h>
+#define NS_PER_S 1000000000
 
-#if DISABLED_FOR_HYBRIS_SUPPORT
-static LinkerMemoryAllocator g_linker_allocator;
-
-void* malloc(size_t byte_count) {
-  return g_linker_allocator.alloc(byte_count);
-}
-
-void* calloc(size_t item_count, size_t item_size) {
-  return g_linker_allocator.alloc(item_count*item_size);
-}
-
-void* realloc(void* p, size_t byte_count) {
-  return g_linker_allocator.realloc(p, byte_count);
-}
-
-void free(void* ptr) {
-  g_linker_allocator.free(ptr);
-}
-#endif
-
+#endif // _BIONIC_CONSTANTS_H_
