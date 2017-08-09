@@ -149,18 +149,18 @@ struct android_namespace_t {
   DISALLOW_COPY_AND_ASSIGN(android_namespace_t);
 };
 
-android_namespace_t g_default_namespace;
+static LinkerTypeAllocator<android_namespace_t> g_namespace_allocator;
+static LinkerTypeAllocator<LinkedListEntry<android_namespace_t>> g_namespace_list_allocator;
+
+android_namespace_t *g_default_namespace = new (g_namespace_allocator.alloc()) android_namespace_t();
 
 static std::unordered_map<uintptr_t, soinfo*> g_soinfo_handles_map;
-static android_namespace_t* g_anonymous_namespace = &g_default_namespace;
+static android_namespace_t* g_anonymous_namespace = g_default_namespace;
 
 static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf);
 
 static LinkerTypeAllocator<soinfo> g_soinfo_allocator;
 static LinkerTypeAllocator<LinkedListEntry<soinfo>> g_soinfo_links_allocator;
-
-static LinkerTypeAllocator<android_namespace_t> g_namespace_allocator;
-static LinkerTypeAllocator<LinkedListEntry<android_namespace_t>> g_namespace_list_allocator;
 
 static soinfo* solist = get_libdl_info();
 static soinfo* sonext = get_libdl_info();
@@ -219,7 +219,7 @@ std::string join(const std::vector<std::string>& things, char separator) {
 static bool g_is_asan = false;
 
 static bool is_system_library(const std::string& realpath) {
-  for (const auto& dir : g_default_namespace.get_default_library_paths()) {
+  for (const auto& dir : g_default_namespace->get_default_library_paths()) {
     if (file_is_in_dir(realpath, dir)) {
       return true;
     }
@@ -539,7 +539,7 @@ static void parse_path(const char* path, const char* delimiters,
 static void parse_LD_LIBRARY_PATH(const char* path) {
   std::vector<std::string> ld_libary_paths;
   parse_path(path, ":", &ld_libary_paths);
-  g_default_namespace.set_ld_library_paths(std::move(ld_libary_paths));
+  g_default_namespace->set_ld_library_paths(std::move(ld_libary_paths));
 }
 
 void soinfo::set_dt_runpath(const char* path) {
@@ -1418,7 +1418,7 @@ static const ElfW(Sym)* dlsym_handle_lookup(soinfo* si, soinfo** found,
   // libraries and they are loaded in breath-first (correct) order we can just execute
   // dlsym(RTLD_DEFAULT, ...); instead of doing two stage lookup.
   if (si == somain) {
-    return dlsym_linear_lookup(&g_default_namespace, name, vi, found, nullptr, RTLD_DEFAULT);
+    return dlsym_linear_lookup(g_default_namespace, name, vi, found, nullptr, RTLD_DEFAULT);
   }
 
   SymbolName symbol_name(name);
@@ -1749,10 +1749,10 @@ static int open_library(android_namespace_t* ns,
   }
 
   // TODO(dimitry): workaround for http://b/26394120 (the grey-list)
-  if (fd == -1 && ns != &g_default_namespace && is_greylisted(name, needed_by)) {
+  if (fd == -1 && ns != g_default_namespace && is_greylisted(name, needed_by)) {
     // try searching for it on default_namespace default_library_path
     fd = open_library_on_paths(zip_archive_cache, name, file_offset,
-                               g_default_namespace.get_default_library_paths(), realpath);
+                               g_default_namespace->get_default_library_paths(), realpath);
   }
   // END OF WORKAROUND
 
@@ -1998,7 +1998,7 @@ static bool find_loaded_library_by_soname(android_namespace_t* ns,
       bool is_libdl = si == solist;
       if (is_libdl || (si->get_dt_flags_1() & DF_1_GLOBAL) != 0 ||
           !si->is_linked() || si->get_target_sdk_version() == target_sdk_version ||
-          ns != &g_default_namespace) {
+          ns != g_default_namespace) {
         *candidate = si;
         return false;
       } else if (*candidate == nullptr) {
@@ -2024,7 +2024,7 @@ static bool find_library_internal(android_namespace_t* ns,
     return true;
   }
 
-  if (ns != &g_default_namespace) {
+  if (ns != g_default_namespace) {
     // check public namespace
     candidate = g_public_namespace.find_if([&](soinfo* si) {
       return strcmp(task->get_name(), si->get_soname()) == 0;
@@ -2084,7 +2084,7 @@ static soinfo::soinfo_list_t make_global_group(android_namespace_t* ns) {
 // of RTLD_GLOBAL libraries (which includes the global group from
 // the default namespace).
 static soinfo::soinfo_list_t get_shared_group(android_namespace_t* ns) {
-  if (ns == &g_default_namespace) {
+  if (ns == g_default_namespace) {
     return make_global_group(ns);
   }
 
@@ -2642,7 +2642,7 @@ bool init_namespaces(const char* public_ns_sonames, const char* anon_ns_library_
   for (const auto& soname : sonames) {
     soinfo* candidate = nullptr;
 
-    find_loaded_library_by_soname(&g_default_namespace, soname.c_str(), &candidate);
+    find_loaded_library_by_soname(g_default_namespace, soname.c_str(), &candidate);
 
     if (candidate == nullptr) {
       DL_ERR("error initializing public namespace: a library with soname \"%s\""
@@ -2662,7 +2662,7 @@ bool init_namespaces(const char* public_ns_sonames, const char* anon_ns_library_
   // is still pointing to the default one.
   android_namespace_t* anon_ns =
       create_namespace(nullptr, "(anonymous)", nullptr, anon_ns_library_path,
-                       ANDROID_NAMESPACE_TYPE_REGULAR, nullptr, &g_default_namespace);
+                       ANDROID_NAMESPACE_TYPE_REGULAR, nullptr, g_default_namespace);
 
   if (anon_ns == nullptr) {
     g_public_namespace_initialized = false;
@@ -3524,7 +3524,7 @@ android_namespace_t* soinfo::get_primary_namespace() {
     return primary_namespace_;
   }
 
-  return &g_default_namespace;
+  return g_default_namespace;
 }
 
 void soinfo::add_secondary_namespace(android_namespace_t* secondary_ns) {
@@ -4261,7 +4261,7 @@ static void add_vdso(KernelArgumentBlock& args) {
     return;
   }
 
-  soinfo* si = soinfo_alloc(&g_default_namespace, "[vdso]", nullptr, 0, 0);
+  soinfo* si = soinfo_alloc(g_default_namespace, "[vdso]", nullptr, 0, 0);
 
   si->phdr = reinterpret_cast<ElfW(Phdr)*>(reinterpret_cast<char*>(ehdr_vdso) + ehdr_vdso->e_phoff);
   si->phnum = ehdr_vdso->e_phnum;
@@ -4306,8 +4306,8 @@ static void init_linker_info_for_gdb(ElfW(Addr) linker_base) {
 }
 
 static void init_default_namespace() {
-  g_default_namespace.set_name("(default)");
-  g_default_namespace.set_isolated(false);
+  g_default_namespace->set_name("(default)");
+  g_default_namespace->set_isolated(false);
 
   const char *interp = phdr_table_get_interpreter_name(somain->phdr, somain->phnum,
                                                        somain->load_bias);
@@ -4329,7 +4329,7 @@ static void init_default_namespace() {
     }
   }
 
-  g_default_namespace.set_default_library_paths(std::move(ld_default_paths));
+  g_default_namespace->set_default_library_paths(std::move(ld_default_paths));
 };
 
 extern "C" int __system_properties_init(void);
@@ -4409,7 +4409,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   }
 
   const char* executable_path = get_executable_path();
-  soinfo* si = soinfo_alloc(&g_default_namespace, executable_path, &file_stat, 0, RTLD_GLOBAL);
+  soinfo* si = soinfo_alloc(g_default_namespace, executable_path, &file_stat, 0, RTLD_GLOBAL);
   if (si == nullptr) {
     __libc_fatal("Couldn't allocate soinfo: out of memory?");
   }
@@ -4503,7 +4503,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   needed_library_name_list.copy_to_array(needed_library_names, needed_libraries_count);
 
   if (needed_libraries_count > 0 &&
-      !find_libraries(&g_default_namespace, si, needed_library_names, needed_libraries_count,
+      !find_libraries(g_default_namespace, si, needed_library_names, needed_libraries_count,
                       nullptr, &g_ld_preloads, ld_preloads_count, RTLD_GLOBAL, nullptr,
                       /* add_as_children */ true)) {
     fprintf(stderr, "CANNOT LINK EXECUTABLE \"%s\": %s", args.argv[0], linker_get_error_buffer());
@@ -4708,7 +4708,7 @@ extern "C" ElfW(Addr) __linker_init(void* raw_args) {
   // before get_libdl_info().
   solist = get_libdl_info();
   sonext = get_libdl_info();
-  g_default_namespace.add_soinfo(get_libdl_info());
+  g_default_namespace->add_soinfo(get_libdl_info());
 
   // We have successfully fixed our own relocations. It's safe to run
   // the main part of the linker now.
