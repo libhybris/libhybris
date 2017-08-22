@@ -72,8 +72,12 @@
 #include <hybris/properties/properties.h>
 #include <hybris/common/hooks.h>
 
+#include "pthread_helpers.h"
+
+#ifndef WANT_INITIALIZE_BIONIC
 static locale_t hybris_locale;
 static int locale_inited = 0;
+#endif
 static hybris_hook_cb hook_callback = NULL;
 
 static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) = NULL;
@@ -272,67 +276,6 @@ static pthread_rwlock_t* hybris_alloc_init_rwlock(void)
 }
 
 /*
- * utils, such as malloc, memcpy
- *
- * Useful to handle hacks such as the one applied for Nvidia, and to
- * avoid crashes. Also we need to hook all memory allocation related
- * ones to make sure all are using the same allocator implementation.
- *
- * */
-
-static void *_hybris_hook_malloc(size_t size)
-{
-    TRACE_HOOK("size %zu", size);
-
-    void *res = malloc(size);
-
-    TRACE_HOOK("res %p", res);
-
-    return res;
-}
-
-static size_t _hybris_hook_malloc_usable_size (void *ptr)
-{
-    TRACE_HOOK("ptr %p", ptr);
-
-    return malloc_usable_size(ptr);
-}
-
-static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
-{
-    TRACE_HOOK("dst %p src %p len %zu", dst, src, len);
-
-    if (src == NULL || dst == NULL)
-        return dst;
-
-    return memcpy(dst, src, len);
-}
-
-static int _hybris_hook_memcmp(const void *s1, const void *s2, size_t n)
-{
-    TRACE_HOOK("s1 %p '%s' s2 %p '%s' n %zu", s1, (char*) s1, s2, (char*) s2, n);
-
-    return memcmp(s1, s2, n);
-}
-
-static size_t _hybris_hook_strlen(const char *s)
-{
-    TRACE_HOOK("s '%s'", s);
-
-    if (s == NULL)
-        return -1;
-
-    return strlen(s);
-}
-
-static pid_t _hybris_hook_gettid(void)
-{
-    TRACE_HOOK("");
-
-    return syscall(__NR_gettid);
-}
-
-/*
  * Main pthread functions
  *
  * Custom implementations to workaround difference between Bionic and Glibc.
@@ -340,17 +283,57 @@ static pid_t _hybris_hook_gettid(void)
  *
  * */
 
+struct hybris_start_routine_t {
+    void *(*start_routine)(void*);
+    void *arg;
+    volatile pid_t pid;
+};
+
+void hybris_pthread_start_routine(void *a)
+{
+    struct hybris_start_routine_t *sr = (struct hybris_start_routine*)a;
+    pid_t pid;
+
+    void *(*start_routine)(void*) = sr->start_routine;
+    void *arg = sr->arg;
+
+    pid = sr->pid = syscall(__NR_gettid);
+
+    start_routine(arg);
+
+    // sr is free'd by the thread which created this so use pid here
+    remove_pthread_pid_mapping(pid);
+}
+
 static int _hybris_hook_pthread_create(pthread_t *thread, const pthread_attr_t *__attr,
                              void *(*start_routine)(void*), void *arg)
 {
     pthread_attr_t *realattr = NULL;
+    int ret = 0;
 
     TRACE_HOOK("thread %p attr %p", thread, __attr);
 
     if (__attr != NULL)
         realattr = (pthread_attr_t *) *(uintptr_t *) __attr;
 
-    return pthread_create(thread, realattr, start_routine, arg);
+    struct hybris_start_routine_t *sr = (struct hybris_start_routine_t*)malloc(sizeof(struct hybris_start_routine_t));
+
+    sr->start_routine = start_routine;
+    sr->arg = arg;
+    sr->pid = -1;
+
+    ret = pthread_create(thread, realattr, hybris_pthread_start_routine, sr);
+
+    while(sr->pid == -1)
+    {
+        pthread_yield();
+    }
+
+    add_pthread_pid_mapping(*thread, sr->pid);
+
+    free(sr);
+
+    return ret;
 }
 
 static int _hybris_hook_pthread_kill(pthread_t thread, int sig)
@@ -367,6 +350,9 @@ static int _hybris_hook_pthread_setspecific(pthread_key_t key, const void *ptr)
 {
     TRACE_HOOK("key %d ptr %" PRIdPTR, key, (intptr_t) ptr);
 
+    // see android_bionic/tests/pthread_test.cpp, test static_pthread_key_used_before_creation
+    if(!key) return EINVAL;
+
     return pthread_setspecific(key, ptr);
 }
 
@@ -378,6 +364,16 @@ static void* _hybris_hook_pthread_getspecific(pthread_key_t key)
     if(!key) return NULL;
 
     return pthread_getspecific(key);
+}
+
+static int _hybris_hook_pthread_key_delete(pthread_key_t key)
+{
+    TRACE_HOOK("key %d", key);
+
+    // see android_bionic/tests/pthread_test.cpp, test static_pthread_key_used_before_creation
+    if(!key) return EINVAL;
+
+    return pthread_key_delete(key);
 }
 
 /*
@@ -1265,13 +1261,7 @@ static pid_t _hybris_hook_pthread_gettid_np(pthread_t t)
 {
     TRACE_HOOK("thread %lu", (unsigned long) t);
 
-    // glibc doesn't offer us a way to retrieve the thread id for a
-    // specific thread. However pthread_t is defined as unsigned
-    // long int and is the thread id so we can just copy it over
-    // into a pid_t.
-    pid_t tid;
-    memcpy(&tid, &t, min(sizeof(tid), sizeof(t)));
-    return tid;
+    return get_pid_for_pthread(t);
 }
 
 static int _hybris_hook___set_errno(int oi_errno)
@@ -1295,6 +1285,8 @@ static int _hybris_hook___set_errno(int oi_errno)
  * Therefore we need to set __isthreaded to true, even if we are not in a multi-threaded context.
  */
 static int _hybris_hook___isthreaded = 1;
+
+#ifndef WANT_INITIALIZE_BIONIC
 
 /* "struct __sbuf" from bionic/libc/include/stdio.h */
 #if defined(__LP64__)
@@ -1856,6 +1848,42 @@ static int _hybris_hook_scandir(const char *dir,
     return _hybris_hook_scandirat(AT_FDCWD, dir, namelist, filter, compar);
 }
 
+/*
+ * utils, such as memcpy
+ *
+ * Useful to handle hacks such as the one applied for Nvidia, and to
+ * avoid crashes. Also we need to hook all memory allocation related
+ * ones to make sure all are using the same allocator implementation.
+ *
+ * */
+
+static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
+{
+    TRACE_HOOK("dst %p src %p len %zu", dst, src, len);
+
+    if (src == NULL || dst == NULL)
+        return dst;
+
+    return memcpy(dst, src, len);
+}
+
+static int _hybris_hook_memcmp(const void *s1, const void *s2, size_t n)
+{
+    TRACE_HOOK("s1 %p '%s' s2 %p '%s' n %zu", s1, (char*) s1, s2, (char*) s2, n);
+
+    return memcmp(s1, s2, n);
+}
+
+static size_t _hybris_hook_strlen(const char *s)
+{
+    TRACE_HOOK("s '%s'", s);
+
+    if (s == NULL)
+        return -1;
+
+    return strlen(s);
+}
+
 static inline void swap(void **a, void **b)
 {
     void *tmp = *a;
@@ -1937,127 +1965,6 @@ static long int _hybris_hook_strtol(const char* str, char** endptr, int base)
     return strtol(str, endptr, base);
 }
 
-static int _hybris_hook___system_property_read(const void *pi, char *name, char *value)
-{
-    TRACE_HOOK("pi %p name '%s' value '%s'", pi, name, value);
-
-    return property_get(name, value, NULL);
-}
-
-static int _hybris_hook___system_property_foreach(void (*propfn)(const void *pi, void *cookie), void *cookie)
-{
-    TRACE_HOOK("propfn %p cookie %p", propfn, cookie);
-
-    return 0;
-}
-
-static const void *_hybris_hook___system_property_find(const char *name)
-{
-    TRACE_HOOK("name '%s'", name);
-
-    return NULL;
-}
-
-static unsigned int _hybris_hook___system_property_serial(const void *pi)
-{
-    TRACE_HOOK("pi %p", pi);
-
-    return 0;
-}
-
-static int _hybris_hook___system_property_wait(const void *pi)
-{
-    TRACE_HOOK("pi %p", pi);
-
-    return 0;
-}
-
-static int _hybris_hook___system_property_update(void *pi, const char *value, unsigned int len)
-{
-    TRACE_HOOK("pi %p value '%s' len %d", pi, value, len);
-
-    return 0;
-}
-
-static int _hybris_hook___system_property_add(const char *name, unsigned int namelen, const char *value, unsigned int valuelen)
-{
-    TRACE_HOOK("name '%s' namelen %d value '%s' valuelen %d",
-               name, namelen, value, valuelen);
-    return 0;
-}
-
-static unsigned int _hybris_hook___system_property_wait_any(unsigned int serial)
-{
-    TRACE_HOOK("serial %d", serial);
-
-    return 0;
-}
-
-static const void *_hybris_hook___system_property_find_nth(unsigned n)
-{
-    TRACE_HOOK("n %d", n);
-
-    return NULL;
-}
-
-/**
- * NOTE: Normally we don't have to wrap __system_property_get (libc.so) as it is only used
- * through the property_get (libcutils.so) function. However when property_get is used
- * internally in libcutils.so we don't have any chance to hook our replacement in.
- * Therefore we have to hook __system_property_get too and just replace it with the
- * implementation of our internal property handling
- */
-
-int _hybris_hook___system_property_get(const char *name, const char *value)
-{
-    TRACE_HOOK("name '%s' value '%s'", name, value);
-
-    return property_get(name, (char*) value, NULL);
-}
-
-int _hybris_hook_property_get(const char *key, char *value, const char *default_value)
-{
-    TRACE_HOOK("key '%s' value '%s' default value '%s'",
-               key, value, default_value);
-
-    return property_get(key, value, default_value);
-}
-
-int _hybris_hook_property_set(const char *key, const char *value)
-{
-    TRACE_HOOK("key '%s' value '%s'", key, value);
-
-    return property_set(key, value);
-}
-
-char *_hybris_hook_getenv(const char *name)
-{
-    TRACE_HOOK("name '%s'", name);
-
-    return getenv(name);
-}
-
-int _hybris_hook_setenv(const char *name, const char *value, int overwrite)
-{
-    TRACE_HOOK("name '%s' value '%s' overwrite %d", name, value, overwrite);
-
-    return setenv(name, value, overwrite);
-}
-
-int _hybris_hook_putenv(char *string)
-{
-    TRACE_HOOK("string '%s'", string);
-
-    return putenv(string);
-}
-
-int _hybris_hook_clearenv(void)
-{
-    TRACE_HOOK("");
-
-    return clearenv();
-}
-
 extern int __cxa_atexit(void (*)(void*), void*, void*);
 extern void __cxa_finalize(void * d);
 
@@ -2126,14 +2033,6 @@ __THROW int _hybris_hook___snprintf_chk (char *__restrict __s, size_t __n, int _
     va_end(args);
 
     return ret;
-}
-
-static __thread void *tls_hooks[16];
-
-static void *_hybris_hook___get_tls_hooks()
-{
-    TRACE_HOOK("");
-    return tls_hooks;
 }
 
 int _hybris_hook_prctl(int option, unsigned long arg2, unsigned long arg3,
@@ -2221,13 +2120,6 @@ static int _hybris_hook_posix_memalign(void **memptr, size_t alignment, size_t s
     TRACE_HOOK("memptr %p alignment %zu size %zu", memptr, alignment, size);
 
     return posix_memalign(memptr, alignment, size);
-}
-
-static pid_t _hybris_hook_fork(void)
-{
-    TRACE_HOOK("");
-
-    return fork();
 }
 
 static locale_t _hybris_hook_newlocale(int category_mask, const char *locale, locale_t base)
@@ -2380,6 +2272,15 @@ static wint_t _hybris_hook_getwc(FILE *stream)
     return getwc(_get_actual_fp(stream));
 }
 
+#endif // WANT_INITIALIZE_BIONIC
+
+static pid_t _hybris_hook_fork(void)
+{
+    TRACE_HOOK("");
+
+    return fork();
+}
+
 static void *_hybris_hook_dlopen(const char *filename, int flag)
 {
     TRACE("filename %s flag %i", filename, flag);
@@ -2415,8 +2316,321 @@ static const char *_hybris_hook_dlerror(void)
     return android_dlerror();
 }
 
-static struct _hook hooks_common[] = {
+static int _hybris_hook___system_property_read(const void *pi, char *name, char *value)
+{
+    TRACE_HOOK("pi %p name '%s' value '%s'", pi, name, value);
 
+    return property_get(name, value, NULL);
+}
+
+static int _hybris_hook___system_property_foreach(void (*propfn)(const void *pi, void *cookie), void *cookie)
+{
+    TRACE_HOOK("propfn %p cookie %p", propfn, cookie);
+
+    return 0;
+}
+
+static const void *_hybris_hook___system_property_find(const char *name)
+{
+    TRACE_HOOK("name '%s'", name);
+
+    return NULL;
+}
+
+static unsigned int _hybris_hook___system_property_serial(const void *pi)
+{
+    TRACE_HOOK("pi %p", pi);
+
+    return 0;
+}
+
+static int _hybris_hook___system_property_wait(const void *pi)
+{
+    TRACE_HOOK("pi %p", pi);
+
+    return 0;
+}
+
+static int _hybris_hook___system_property_update(void *pi, const char *value, unsigned int len)
+{
+    TRACE_HOOK("pi %p value '%s' len %d", pi, value, len);
+
+    return 0;
+}
+
+static int _hybris_hook___system_property_add(const char *name, unsigned int namelen, const char *value, unsigned int valuelen)
+{
+    TRACE_HOOK("name '%s' namelen %d value '%s' valuelen %d",
+               name, namelen, value, valuelen);
+    return 0;
+}
+
+static unsigned int _hybris_hook___system_property_wait_any(unsigned int serial)
+{
+    TRACE_HOOK("serial %d", serial);
+
+    return 0;
+}
+
+static const void *_hybris_hook___system_property_find_nth(unsigned n)
+{
+    TRACE_HOOK("n %d", n);
+
+    return NULL;
+}
+
+/**
+ * NOTE: Normally we don't have to wrap __system_property_get (libc.so) as it is only used
+ * through the property_get (libcutils.so) function. However when property_get is used
+ * internally in libcutils.so we don't have any chance to hook our replacement in.
+ * Therefore we have to hook __system_property_get too and just replace it with the
+ * implementation of our internal property handling
+ */
+
+int _hybris_hook___system_property_get(const char *name, const char *value)
+{
+    TRACE_HOOK("name '%s' value '%s'", name, value);
+
+    return property_get(name, (char*) value, NULL);
+}
+
+int _hybris_hook_property_get(const char *key, char *value, const char *default_value)
+{
+    TRACE_HOOK("key '%s' value '%s' default value '%s'",
+               key, value, default_value);
+
+    return property_get(key, value, default_value);
+}
+
+int _hybris_hook_property_set(const char *key, const char *value)
+{
+    TRACE_HOOK("key '%s' value '%s'", key, value);
+
+    return property_set(key, value);
+}
+
+#ifdef WANT_INITIALIZE_BIONIC
+static void _hybris_hook___system_properties_init(void)
+{
+    // stub
+}
+#endif
+
+static __thread void *tls_hooks[16];
+
+static void *_hybris_hook___get_tls_hooks()
+{
+    TRACE_HOOK("");
+    return tls_hooks;
+}
+
+static pid_t _hybris_hook_gettid(void)
+{
+    TRACE_HOOK("");
+
+    return syscall(__NR_gettid);
+}
+
+char *_hybris_hook_getenv(const char *name)
+{
+    TRACE_HOOK("name '%s'", name);
+
+    return getenv(name);
+}
+
+int _hybris_hook_setenv(const char *name, const char *value, int overwrite)
+{
+    TRACE_HOOK("name '%s' value '%s' overwrite %d", name, value, overwrite);
+
+    return setenv(name, value, overwrite);
+}
+
+int _hybris_hook_putenv(char *string)
+{
+    TRACE_HOOK("string '%s'", string);
+
+    return putenv(string);
+}
+
+int _hybris_hook_clearenv(void)
+{
+    TRACE_HOOK("");
+
+    return clearenv();
+}
+
+static void *_hybris_hook_malloc(size_t size)
+{
+    TRACE_HOOK("size %zu", size);
+
+#ifdef WANT_ADRENO_QUIRKS
+    if(size == 4) size = 5;
+#endif
+
+    void *res = malloc(size);
+
+    TRACE_HOOK("res %p", res);
+
+    return res;
+}
+
+static size_t _hybris_hook_malloc_usable_size (void *ptr)
+{
+    TRACE_HOOK("ptr %p", ptr);
+
+    return malloc_usable_size(ptr);
+}
+
+
+// hook to print messages from bionic libc, useful for debugging
+static int _hybris_hook_my_printf(const char *tmp, ...)
+{
+    char buff[4096];
+    va_list args;
+    va_start(args,tmp);
+    vsnprintf (buff, 4096, tmp, args);
+    va_end(args);
+    return fprintf(stderr, "%d:%s", syscall(__NR_gettid), buff);
+}
+
+static struct _hook hooks_common[] = {
+#ifdef WANT_INITIALIZE_BIONIC
+    HOOK_INDIRECT(my_printf),
+    HOOK_DIRECT(property_get),
+    HOOK_DIRECT(property_set),
+    HOOK_INDIRECT(__system_property_get),
+    HOOK_INDIRECT(__system_property_read),
+    HOOK_TO(__system_property_set, _hybris_hook_property_set),
+    HOOK_INDIRECT(__system_property_foreach),
+    HOOK_INDIRECT(__system_property_find),
+    HOOK_INDIRECT(__system_property_serial),
+    HOOK_INDIRECT(__system_property_wait),
+    HOOK_INDIRECT(__system_property_update),
+    HOOK_INDIRECT(__system_property_add),
+    HOOK_INDIRECT(__system_property_wait_any),
+    HOOK_INDIRECT(__system_property_find_nth),
+    HOOK_INDIRECT(__system_properties_init), // stub
+    HOOK_INDIRECT(__get_tls_hooks),
+    HOOK_DIRECT_NO_DEBUG(getauxval),
+    HOOK_TO(__progname, &program_invocation_name),
+    HOOK_DIRECT_NO_DEBUG(brk),
+    HOOK_DIRECT_NO_DEBUG(sbrk),
+    HOOK_DIRECT_NO_DEBUG(clone),
+    HOOK_TO(__errno, __errno_location),
+
+    HOOK_DIRECT(fork),
+
+    HOOK_INDIRECT(malloc),
+    HOOK_DIRECT_NO_DEBUG(mallinfo),
+    HOOK_DIRECT(malloc_usable_size),
+    HOOK_DIRECT_NO_DEBUG(posix_memalign),
+    // TODO: get_malloc_leak_info, free_malloc_leak_info
+    HOOK_DIRECT_NO_DEBUG(calloc),
+    HOOK_DIRECT_NO_DEBUG(realloc),
+    HOOK_DIRECT_NO_DEBUG(valloc),
+    HOOK_DIRECT_NO_DEBUG(pvalloc),
+    HOOK_DIRECT_NO_DEBUG(free),
+    HOOK_DIRECT_NO_DEBUG(memalign),
+    HOOK_DIRECT_NO_DEBUG(malloc_usable_size),
+    HOOK_DIRECT_NO_DEBUG(malloc_info),
+
+    /* pthread.h */
+    HOOK_DIRECT_NO_DEBUG(getauxval),
+    HOOK_INDIRECT(gettid),
+    HOOK_DIRECT_NO_DEBUG(getpid),
+    HOOK_DIRECT_NO_DEBUG(pthread_atfork),
+    HOOK_INDIRECT(pthread_create),
+    HOOK_INDIRECT(pthread_kill),
+    HOOK_DIRECT_NO_DEBUG(pthread_exit),
+    HOOK_DIRECT_NO_DEBUG(pthread_join),
+    HOOK_DIRECT_NO_DEBUG(pthread_detach),
+    HOOK_DIRECT_NO_DEBUG(pthread_self),
+    HOOK_DIRECT_NO_DEBUG(pthread_equal),
+    HOOK_DIRECT_NO_DEBUG(pthread_getschedparam),
+    HOOK_DIRECT_NO_DEBUG(pthread_setschedparam),
+    HOOK_INDIRECT(pthread_mutex_init),
+    HOOK_INDIRECT(pthread_mutex_destroy),
+    HOOK_INDIRECT(pthread_mutex_lock),
+    HOOK_INDIRECT(pthread_mutex_unlock),
+    HOOK_INDIRECT(pthread_mutex_trylock),
+    HOOK_INDIRECT(pthread_mutex_lock_timeout_np),
+    HOOK_INDIRECT(pthread_mutex_timedlock),
+    HOOK_DIRECT_NO_DEBUG(pthread_mutexattr_init),
+    HOOK_DIRECT_NO_DEBUG(pthread_mutexattr_destroy),
+    HOOK_DIRECT_NO_DEBUG(pthread_mutexattr_gettype),
+    HOOK_DIRECT_NO_DEBUG(pthread_mutexattr_settype),
+    HOOK_DIRECT_NO_DEBUG(pthread_mutexattr_getpshared),
+    HOOK_DIRECT(pthread_mutexattr_setpshared),
+    HOOK_DIRECT_NO_DEBUG(pthread_condattr_init),
+    HOOK_DIRECT_NO_DEBUG(pthread_condattr_getpshared),
+    HOOK_DIRECT_NO_DEBUG(pthread_condattr_setpshared),
+    HOOK_DIRECT_NO_DEBUG(pthread_condattr_destroy),
+    HOOK_DIRECT_NO_DEBUG(pthread_condattr_getclock),
+    HOOK_DIRECT_NO_DEBUG(pthread_condattr_setclock),
+    HOOK_INDIRECT(pthread_cond_init),
+    HOOK_INDIRECT(pthread_cond_destroy),
+    HOOK_INDIRECT(pthread_cond_broadcast),
+    HOOK_INDIRECT(pthread_cond_signal),
+    HOOK_INDIRECT(pthread_cond_wait),
+    HOOK_INDIRECT(pthread_cond_timedwait),
+    HOOK_TO(pthread_cond_timedwait_monotonic, _hybris_hook_pthread_cond_timedwait),
+    HOOK_TO(pthread_cond_timedwait_monotonic_np, _hybris_hook_pthread_cond_timedwait),
+    HOOK_INDIRECT(pthread_cond_timedwait_relative_np),
+    HOOK_INDIRECT(pthread_key_delete),
+    HOOK_INDIRECT(pthread_setname_np),
+    HOOK_DIRECT_NO_DEBUG(pthread_once),
+    HOOK_DIRECT_NO_DEBUG(pthread_key_create),
+    HOOK_INDIRECT(pthread_setspecific),
+    HOOK_INDIRECT(pthread_getspecific),
+    HOOK_INDIRECT(pthread_attr_init),
+    HOOK_INDIRECT(pthread_attr_destroy),
+    HOOK_INDIRECT(pthread_attr_setdetachstate),
+    HOOK_INDIRECT(pthread_attr_getdetachstate),
+    HOOK_INDIRECT(pthread_attr_setschedpolicy),
+    HOOK_INDIRECT(pthread_attr_getschedpolicy),
+    HOOK_INDIRECT(pthread_attr_setschedparam),
+    HOOK_INDIRECT(pthread_attr_getschedparam),
+    HOOK_INDIRECT(pthread_attr_setstacksize),
+    HOOK_INDIRECT(pthread_attr_getstacksize),
+    HOOK_INDIRECT(pthread_attr_setstackaddr),
+    HOOK_INDIRECT(pthread_attr_getstackaddr),
+    HOOK_INDIRECT(pthread_attr_setstack),
+    HOOK_INDIRECT(pthread_attr_getstack),
+    HOOK_INDIRECT(pthread_attr_setguardsize),
+    HOOK_INDIRECT(pthread_attr_getguardsize),
+    HOOK_INDIRECT(pthread_attr_setscope),
+    HOOK_INDIRECT(pthread_attr_getscope),
+    HOOK_INDIRECT(pthread_getattr_np),
+    HOOK_INDIRECT(pthread_rwlockattr_init),
+    HOOK_INDIRECT(pthread_rwlockattr_destroy),
+    HOOK_INDIRECT(pthread_rwlockattr_setpshared),
+    HOOK_INDIRECT(pthread_rwlockattr_getpshared),
+    HOOK_INDIRECT(pthread_rwlock_init),
+    HOOK_INDIRECT(pthread_rwlock_destroy),
+    HOOK_INDIRECT(pthread_rwlock_unlock),
+    HOOK_INDIRECT(pthread_rwlock_wrlock),
+    HOOK_INDIRECT(pthread_rwlock_rdlock),
+    HOOK_INDIRECT(pthread_rwlock_tryrdlock),
+    HOOK_INDIRECT(pthread_rwlock_trywrlock),
+    HOOK_INDIRECT(pthread_rwlock_timedrdlock),
+    HOOK_INDIRECT(pthread_rwlock_timedwrlock),
+    /* bionic-only pthread */
+    HOOK_TO(__pthread_gettid, _hybris_hook_pthread_gettid_np),
+    HOOK_INDIRECT(pthread_gettid_np),
+
+    HOOK_TO(__isthreaded, &_hybris_hook___isthreaded),
+
+    HOOK_INDIRECT(dlopen),
+    HOOK_INDIRECT(dlerror),
+    HOOK_INDIRECT(dlsym),
+    HOOK_INDIRECT(dladdr),
+    HOOK_INDIRECT(dlclose),
+
+    HOOK_DIRECT(getenv),
+    HOOK_DIRECT(setenv),
+    HOOK_DIRECT(putenv),
+    HOOK_DIRECT(clearenv),
+#else
     HOOK_DIRECT(property_get),
     HOOK_DIRECT(property_set),
     HOOK_INDIRECT(__system_property_get),
@@ -2523,11 +2737,11 @@ static struct _hook hooks_common[] = {
     HOOK_TO(pthread_cond_timedwait_monotonic, _hybris_hook_pthread_cond_timedwait),
     HOOK_TO(pthread_cond_timedwait_monotonic_np, _hybris_hook_pthread_cond_timedwait),
     HOOK_INDIRECT(pthread_cond_timedwait_relative_np),
-    HOOK_DIRECT_NO_DEBUG(pthread_key_delete),
+    HOOK_INDIRECT(pthread_key_delete),
     HOOK_INDIRECT(pthread_setname_np),
     HOOK_DIRECT_NO_DEBUG(pthread_once),
     HOOK_DIRECT_NO_DEBUG(pthread_key_create),
-    HOOK_DIRECT(pthread_setspecific),
+    HOOK_INDIRECT(pthread_setspecific),
     HOOK_INDIRECT(pthread_getspecific),
     HOOK_INDIRECT(pthread_attr_init),
     HOOK_INDIRECT(pthread_attr_destroy),
@@ -2691,9 +2905,11 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(__system_property_find_nth),
     /* sys/prctl.h */
     HOOK_INDIRECT(prctl),
+#endif
 };
 
 static struct _hook hooks_mm[] = {
+#ifndef WANT_INITIALIZE_BIONIC
     HOOK_DIRECT(strtol),
     HOOK_DIRECT_NO_DEBUG(strlcat),
     HOOK_DIRECT_NO_DEBUG(strlcpy),
@@ -2794,6 +3010,7 @@ static struct _hook hooks_mm[] = {
     HOOK_INDIRECT(scandir),
     HOOK_INDIRECT(scandirat),
     HOOK_TO(scandir64, _hybris_hook_scandir),
+#endif
 };
 
 
@@ -2937,6 +3154,8 @@ static int linker_initialized = 0;
 static void __hybris_linker_init()
 {
     LOGD("Linker initialization");
+
+    init_pthread_helpers();
 
     int sdk_version = get_android_sdk_version();
 

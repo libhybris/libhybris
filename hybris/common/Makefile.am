@@ -17,12 +17,19 @@ libhybris_common_la_SOURCES = \
 	strlcpy.c \
 	strlcat.c \
 	logging.c \
-	sysconf.c
+	sysconf.c \
+	pthread_helpers.cpp
 libhybris_common_la_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common \
 	-DLINKER_PLUGIN_DIR=\"$(libdir)/libhybris/linker\"
+if WANT_ADRENO_QUIRKS
+libhybris_common_la_CPPFLAGS += -DWANT_ADRENO_QUIRKS
+endif
+if WANT_INITIALIZE_BIONIC
+libhybris_common_la_CPPFLAGS += -DWANT_INITIALIZE_BIONIC
+endif
 if WANT_TRACE
 libhybris_common_la_CPPFLAGS += -DDEBUG
 endif
