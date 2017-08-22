@@ -32,11 +32,14 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION1(sf, sf_blank, size_t);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(sf, sf_unblank, size_t);
 HYBRIS_IMPLEMENT_FUNCTION1(sf, size_t, sf_get_display_width, size_t);
 HYBRIS_IMPLEMENT_FUNCTION1(sf, size_t, sf_get_display_height, size_t);
+HYBRIS_IMPLEMENT_FUNCTION2(sf, size_t, sf_get_display_info, size_t, struct SfDisplayInfo*);
 HYBRIS_IMPLEMENT_FUNCTION1(sf, struct SfClient*, sf_client_create_full, int);
 HYBRIS_IMPLEMENT_FUNCTION0(sf, struct SfClient*, sf_client_create);
 HYBRIS_IMPLEMENT_FUNCTION1(sf, EGLDisplay, sf_client_get_egl_display,
 	struct SfClient*);
 HYBRIS_IMPLEMENT_FUNCTION1(sf, EGLConfig, sf_client_get_egl_config,
+	struct SfClient*);
+HYBRIS_IMPLEMENT_FUNCTION1(sf, EGLContext, sf_client_get_egl_context,
 	struct SfClient*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(sf, sf_client_begin_transaction,
 	struct SfClient*);

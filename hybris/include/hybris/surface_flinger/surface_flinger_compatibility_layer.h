@@ -29,6 +29,25 @@ extern "C" {
 	struct SfClient;
 	struct SfSurface;
 
+        /* see frameworks/native/include/ui/DisplayInfo.h */
+        struct SfDisplayInfo {
+            uint32_t w;
+            uint32_t h;
+            float xdpi;
+            float ydpi;
+            float fps;
+            float density;
+            uint8_t orientation;
+        };
+
+        /* Display orientations as defined in Surface.java and ISurfaceComposer.h. */
+        enum {
+            DISPLAY_ORIENTATION_0 = 0,
+            DISPLAY_ORIENTATION_90 = 1,
+            DISPLAY_ORIENTATION_180 = 2,
+            DISPLAY_ORIENTATION_270 = 3
+        };
+
 	enum
 	{
 		SURFACE_FLINGER_DEFAULT_DISPLAY_ID = 0
@@ -39,6 +58,7 @@ extern "C" {
 
 	size_t sf_get_display_width(size_t display_id);
 	size_t sf_get_display_height(size_t display_id);
+	size_t sf_get_display_info(size_t display_id, struct SfDisplayInfo* info);
 
 	// The egl_support parameter disables the use of EGL inside the
 	// library. sf_client_create() enables the use of EGL by default. When
@@ -51,6 +71,7 @@ extern "C" {
 
 	EGLDisplay sf_client_get_egl_display(struct SfClient* display);
 	EGLConfig sf_client_get_egl_config(struct SfClient* client);
+	EGLContext sf_client_get_egl_context(struct SfClient* client);
 	void sf_client_begin_transaction(struct SfClient*);
 	void sf_client_end_transaction(struct SfClient*);
 

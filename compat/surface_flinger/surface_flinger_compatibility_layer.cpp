@@ -152,6 +152,41 @@ size_t sf_get_display_height(size_t display_id)
 	return info.h;
 }
 
+size_t sf_get_display_info(size_t display_id, SfDisplayInfo* display_info)
+{
+	android::sp<android::IBinder> display;
+
+	if (display_id == 0) {
+		display = android::SurfaceComposerClient::getBuiltInDisplay(
+				android::ISurfaceComposer::eDisplayIdMain);
+	} else if (display_id == 1) {
+		display = android::SurfaceComposerClient::getBuiltInDisplay(
+				android::ISurfaceComposer::eDisplayIdHdmi);
+	} else {
+		fprintf(stderr, "Warning: sf_get_display_info invalid display_id (0 || 1)\n");
+		return -1;
+	}
+
+	android::DisplayInfo info;
+	android::SurfaceComposerClient::getDisplayInfo(display, &info);
+
+        if (display_info == NULL) {
+            fprintf(stderr, "Warning: sf_get_display_info: display_info is null! Please allocate it before \n");
+            return -2;
+        }
+
+        // partial copy
+        display_info->w = info.w;
+        display_info->h = info.h;
+        display_info->xdpi = info.xdpi;
+        display_info->ydpi = info.ydpi;
+        display_info->fps = info.fps;
+        display_info->density = info.density;
+        display_info->orientation = info.orientation;
+
+	return 0;
+}
+
 SfClient* sf_client_create_full(bool egl_support)
 {
 	SfClient* client = new SfClient();
@@ -237,6 +272,19 @@ EGLConfig sf_client_get_egl_config(SfClient* client)
 		return client->egl_config;
 	else {
 		fprintf(stderr, "Warning: sf_client_get_egl_config not supported, EGL "
+				"support disabled\n");
+		return NULL;
+	}
+}
+
+EGLContext sf_client_get_egl_context(SfClient* client)
+{
+	assert(client);
+
+	if (client->egl_support)
+		return client->egl_context;
+	else {
+		fprintf(stderr, "Warning: sf_client_get_egl_context not supported, EGL "
 				"support disabled\n");
 		return NULL;
 	}
