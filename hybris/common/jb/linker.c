@@ -2344,7 +2344,11 @@ unsigned __linker_init(unsigned **elfdata) {
     return __linker_init_post_relocation(elfdata);
 }
 
+#ifdef WANT_ARM_TRACING
+void android_linker_init(int sdk_version, void *(get_hooked_symbol)(const char*, const char*), void *(create_wrapper)(const char*, void*, int)) {
+#else
 void android_linker_init(int sdk_version, void *(get_hooked_symbol)(const char*, const char*)) {
+#endif
    (void) sdk_version;
    _get_hooked_symbol = get_hooked_symbol;
 }
