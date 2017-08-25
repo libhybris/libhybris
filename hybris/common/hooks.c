@@ -65,6 +65,7 @@
 #include <sys/syscall.h>
 #include <sys/auxv.h>
 #include <sys/prctl.h>
+#include <sys/uio.h>
 
 #include <sys/mman.h>
 #include <libgen.h>
@@ -2630,7 +2631,7 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(malloc),
     HOOK_INDIRECT(free),
     HOOK_DIRECT_NO_DEBUG(calloc),
-    HOOK_DIRECT_NO_DEBUG(cfree),
+    HOOK_DIRECT_NO_DEBUG(free),
     HOOK_DIRECT_NO_DEBUG(realloc),
     HOOK_DIRECT_NO_DEBUG(memalign),
     HOOK_DIRECT_NO_DEBUG(valloc),
