@@ -293,6 +293,10 @@ static void *_hybris_hook_malloc(size_t size)
 {
     TRACE_HOOK("size %zu", size);
 
+#ifdef WANT_ADRENO_QUIRKS
+    if(size == 4) size = 5;
+#endif
+
     void *res = malloc(size);
 
     TRACE_HOOK("res %p", res);
@@ -2431,7 +2435,7 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(__system_property_get),
     HOOK_DIRECT(getenv),
     HOOK_DIRECT_NO_DEBUG(printf),
-    HOOK_DIRECT(malloc),
+    HOOK_INDIRECT(malloc),
     HOOK_DIRECT_NO_DEBUG(free),
     HOOK_DIRECT_NO_DEBUG(calloc),
     HOOK_DIRECT_NO_DEBUG(cfree),
