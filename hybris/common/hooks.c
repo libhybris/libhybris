@@ -48,6 +48,7 @@
 #include <signal.h>
 #include <setjmp.h>
 #include <sys/signalfd.h>
+#include <sys/uio.h>
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -2424,6 +2425,10 @@ static const char *_hybris_hook_dlerror(void)
     return android_dlerror();
 }
 
+#if !defined(cfree)
+#define cfree free
+#endif
+
 static struct _hook hooks_common[] = {
 
     HOOK_DIRECT(property_get),
@@ -2956,7 +2961,7 @@ static void __hybris_linker_init()
      * an overview over available SDK version numbers and which
      * Android version they relate to. */
 #if defined(WANT_LINKER_MM)
-    if (sdk_version <= 23)
+    if (sdk_version <= 25)
         name = LINKER_NAME_MM;
 #endif
 #if defined(WANT_LINKER_JB)
