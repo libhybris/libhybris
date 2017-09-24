@@ -31,6 +31,10 @@ libhybris_common_la_CPPFLAGS = \
 	-I$(top_srcdir)/common \
 	-DLINKER_PLUGIN_DIR=\"$(libdir)/libhybris/linker\"
 
+if WANT_ADRENO_QUIRKS
+libhybris_common_la_CPPFLAGS += -DWANT_ADRENO_QUIRKS
+endif
+
 if WANT_ARM_TRACING
 # thumb mode not supported
 libhybris_common_la_CFLAGS = \
