@@ -75,6 +75,7 @@ protected:
 	virtual unsigned int defaultHeight() const = 0;
 	virtual unsigned int queueLength() const = 0;
 	virtual unsigned int transformHint() const = 0;
+	virtual unsigned int getUsage() const = 0;
 	//perform interfaces
 	virtual int setBuffersFormat(int format) = 0;
 	virtual int setBuffersDimensions(int width, int height) = 0;

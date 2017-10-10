@@ -688,6 +688,13 @@ unsigned int WaylandNativeWindow::transformHint() const {
     return 0;
 }
 
+/*
+ * returns the current usage of this window
+ */
+unsigned int WaylandNativeWindow::getUsage() const {
+    return m_usage;
+}
+
 int WaylandNativeWindow::setBuffersFormat(int format) {
     if (format != m_format)
     {
