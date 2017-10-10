@@ -443,7 +443,13 @@ unsigned int FbDevNativeWindow::transformHint() const
     return 0;
 }
 
-
+/*
+ * returns the current usage of this window
+ */
+unsigned int FbDevNativeWindow::getUsage() const
+{
+    return m_usage;
+}
 
 /*
  *  native_window_set_usage(..., usage)

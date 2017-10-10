@@ -69,6 +69,7 @@ protected:
     virtual unsigned int defaultHeight() const;
     virtual unsigned int queueLength() const;
     virtual unsigned int transformHint() const;
+    virtual unsigned int getUsage() const;
     // perform calls
     virtual int setUsage(int usage);
     virtual int setBuffersFormat(int format);

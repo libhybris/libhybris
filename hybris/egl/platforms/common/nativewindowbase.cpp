@@ -1,6 +1,7 @@
 #include <android-config.h>
 #include <string.h>
 #include <system/window.h>
+#include <system/graphics.h>
 #include <hardware/gralloc.h>
 #include "support.h"
 #include <stdarg.h>
@@ -260,6 +261,10 @@ const char *BaseNativeWindow::_native_query_operation(int what)
 #if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=1 || ANDROID_VERSION_MAJOR>=5
 		case NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND: return "NATIVE_WINDOW_CONSUMER_RUNNING_BEHIND";
 #endif
+#if ANDROID_VERSION_MAJOR>=6
+		case NATIVE_WINDOW_DEFAULT_DATASPACE: return "NATIVE_WINDOW_DEFAULT_DATASPACE";
+		case NATIVE_WINDOW_CONSUMER_USAGE_BITS: return "NATIVE_WINDOW_CONSUMER_USAGE_BITS";
+#endif
 		default: return "NATIVE_UNKNOWN_QUERY";
 	}
 }
@@ -296,6 +301,14 @@ int BaseNativeWindow::_query(const struct ANativeWindow* window, int what, int* 
 		case NATIVE_WINDOW_MIN_UNDEQUEUED_BUFFERS:
 			*value = 1;
 			return NO_ERROR;
+#if ANDROID_VERSION_MAJOR>=6
+		case NATIVE_WINDOW_DEFAULT_DATASPACE:
+			*value = HAL_DATASPACE_UNKNOWN;
+			return NO_ERROR;
+		case NATIVE_WINDOW_CONSUMER_USAGE_BITS:
+			*value = self->getUsage();
+			return NO_ERROR;
+#endif
 	}
 	TRACE("EGL error: unkown window attribute! %i", what);
 	*value = 0;
