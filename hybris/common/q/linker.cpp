@@ -2441,7 +2441,7 @@ bool do_dlsym(void* handle,
     return false;
   }
 
-  DL_ERR("undefined symbol: %s", symbol_display_name(sym_name, sym_ver).c_str());
+  DL_ERR_NO_PRINT("undefined symbol: %s", symbol_display_name(sym_name, sym_ver).c_str());
   return false;
 }
 

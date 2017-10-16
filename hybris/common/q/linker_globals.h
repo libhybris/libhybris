@@ -44,6 +44,10 @@
       fprintf(stderr, "\n"); \
     } while (false)
 
+#define DL_ERR_NO_PRINT(fmt, x...) \
+    do { \
+    } while (false)
+
 #define DL_WARN(fmt, x...) \
     do { \
       fprintf(stderr, "WARNING: linker " fmt, ##x); \
