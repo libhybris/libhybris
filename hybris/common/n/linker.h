@@ -52,6 +52,12 @@
       DEBUG("%s\n", linker_get_error_buffer()); \
     } while (false)
 
+#define DL_ERR_NO_PRINT(fmt, x...) \
+    do { \
+      /* If LD_DEBUG is set high enough, log every dlerror(3) message. */ \
+      DEBUG("%s\n", linker_get_error_buffer()); \
+    } while (false)
+
 #define DL_WARN(fmt, x...) \
     do { \
       fprintf(stderr, "WARNING: linker " fmt, ##x); \
