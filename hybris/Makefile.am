@@ -6,7 +6,7 @@ endif
 if HAS_ANDROID_5_0_0
 SUBDIRS += libsync
 endif
-SUBDIRS += egl glesv1 glesv2 ui sf input camera vibrator media wifi opencl
+SUBDIRS += egl glesv1 glesv2 glesv3 ui sf input camera vibrator media wifi opencl
 
 if HAS_LIBNFC_NXP_HEADERS
 SUBDIRS += libnfc_nxp libnfc_ndef_nxp
