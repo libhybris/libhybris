@@ -7,7 +7,7 @@ if !WANT_ARCH_ARM64
 SUBDIRS += jb
 endif
 
-if WANT_EXPERIMENTAL
+if HAS_ANDROID_6_0_0
 SUBDIRS += mm
 endif
 
@@ -62,7 +62,7 @@ endif
 if !WANT_ARCH_ARM64
 libhybris_common_la_CPPFLAGS += -DWANT_LINKER_JB
 endif
-if WANT_EXPERIMENTAL
+if HAS_ANDROID_6_0_0
 libhybris_common_la_CPPFLAGS += -DWANT_LINKER_MM
 endif
 if WANT_ARM_TRACING
