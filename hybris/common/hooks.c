@@ -73,6 +73,8 @@
 #include <hybris/properties/properties.h>
 #include <hybris/common/hooks.h>
 
+#include <android-config.h>
+
 #ifdef WANT_ARM_TRACING
 #include "wrappers.h"
 #endif
