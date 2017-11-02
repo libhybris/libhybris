@@ -42,6 +42,7 @@ static void *egl_handle = NULL;
 static void *glesv2_handle = NULL;
 static void *_hybris_libgles1 = NULL;
 static void *_hybris_libgles2 = NULL;
+static void *_hybris_libgles3 = NULL;
 static int _egl_context_client_version = 1;
 
 static EGLint  (*_eglGetError)(void) = NULL;
@@ -431,7 +432,10 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 			ret = _hybris_libgles2 ? dlsym(_hybris_libgles2, procname) : NULL;
 			break;
 		case 3:  // OpenGL ES 3.x API
-			// TODO: Load from libGLESv3.so once we have OpenGL ES 3.0/3.1 support
+			if (_hybris_libgles3 == NULL) {
+				_hybris_libgles3 = (void *) dlopen(getenv("HYBRIS_LIBGLESV3") ?: "libGLESv3.so.3", RTLD_LAZY);
+			}
+			ret = _hybris_libgles3 ? dlsym(_hybris_libgles3, procname) : NULL;
 			break;
 		default:
 			HYBRIS_WARN("Unknown EGL context client version: %d", _egl_context_client_version);
