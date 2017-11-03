@@ -73,6 +73,8 @@
 #include <hybris/properties/properties.h>
 #include <hybris/common/hooks.h>
 
+#include <android-config.h>
+
 #ifdef WANT_ARM_TRACING
 #include "wrappers.h"
 #endif
@@ -89,6 +91,7 @@ static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(
 
 static void* (*_android_dlopen)(const char *filename, int flags) = NULL;
 static void* (*_android_dlsym)(void *handle, const char *symbol) = NULL;
+static void* (*_android_dlvsym)(void *handle, const char *symbol, const char* version) = NULL;
 static void* (*_android_dladdr)(void *addr, Dl_info *info) = NULL;
 static int (*_android_dlclose)(void *handle) = NULL;
 static const char* (*_android_dlerror)(void) = NULL;
@@ -2408,6 +2411,13 @@ static void *_hybris_hook_dlsym(void *handle, const char *symbol)
     return _android_dlsym(handle,symbol);
 }
 
+static void *_hybris_hook_dlvsym(void *handle, const char *symbol, const char* version)
+{
+    TRACE("handle %p symbol %s version %s", handle, symbol, version);
+
+    return _android_dlvsym(handle,symbol,version);
+}
+
 static void* _hybris_hook_dladdr(void *addr, Dl_info *info)
 {
     TRACE("addr %p info %p", addr, info);
@@ -2653,6 +2663,7 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(dlopen),
     HOOK_INDIRECT(dlerror),
     HOOK_INDIRECT(dlsym),
+    HOOK_INDIRECT(dlvsym),
     HOOK_INDIRECT(dladdr),
     HOOK_INDIRECT(dlclose),
     /* dirent.h */
@@ -2892,6 +2903,10 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
 
     /* Allow newer hooks to override those which are available for all versions */
     key.name = sym;
+#if defined(WANT_LINKER_N)
+    if (get_android_sdk_version() > 21)
+        found = bsearch(&key, hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
+#endif
 #if defined(WANT_LINKER_MM)
     if (get_android_sdk_version() > 21)
         found = bsearch(&key, hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
@@ -2943,8 +2958,11 @@ static void* __hybris_load_linker(const char *path)
 
 #define LINKER_NAME_JB "jb"
 #define LINKER_NAME_MM "mm"
+#define LINKER_NAME_N "n"
 
-#if defined(WANT_LINKER_JB)
+#if defined(WANT_LINKER_N)
+#define LINKER_NAME_DEFAULT LINKER_NAME_N
+#elif defined(WANT_LINKER_JB)
 #define LINKER_NAME_DEFAULT LINKER_NAME_JB
 #elif defined(WANT_LINKER_MM)
 #define LINKER_NAME_DEFAULT LINKER_NAME_MM
@@ -2964,8 +2982,12 @@ static void __hybris_linker_init()
     /* See https://source.android.com/source/build-numbers.html for
      * an overview over available SDK version numbers and which
      * Android version they relate to. */
-#if defined(WANT_LINKER_MM)
+#if defined(WANT_LINKER_N)
     if (sdk_version <= 25)
+        name = LINKER_NAME_N;
+#endif
+#if defined(WANT_LINKER_MM)
+    if (sdk_version <= 23)
         name = LINKER_NAME_MM;
 #endif
 #if defined(WANT_LINKER_JB)
@@ -2990,6 +3012,7 @@ static void __hybris_linker_init()
     _android_linker_init = dlsym(linker_handle, "android_linker_init");
     _android_dlopen = dlsym(linker_handle, "android_dlopen");
     _android_dlsym = dlsym(linker_handle, "android_dlsym");
+    _android_dlvsym = dlsym(linker_handle, "android_dlvsym");
     _android_dladdr = dlsym(linker_handle, "android_dladdr");
     _android_dlclose = dlsym(linker_handle, "android_dlclose");
     _android_dlerror = dlsym(linker_handle, "android_dlerror");
@@ -3030,6 +3053,16 @@ void *android_dlsym(void *handle, const char *symbol)
         return NULL;
 
     return _android_dlsym(handle,symbol);
+}
+
+void *android_dlvsym(void *handle, const char *symbol, const char* version)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dlvsym)
+        return NULL;
+
+    return _android_dlvsym(handle,symbol, version);
 }
 
 int android_dlclose(void *handle)
