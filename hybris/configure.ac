@@ -137,9 +137,9 @@ AC_ARG_WITH(default-egl-platform,
 AC_SUBST(DEFAULT_EGL_PLATFORM)
 
 if test "x$arch" = "xarm" -o "x$arch" = "xx86"; then
-  DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib:/system/lib"
+  DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib:/system/lib:/odm/lib"
 else
-  DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib64:/system/lib64"
+  DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib64:/system/lib64:/odm/lib64"
 fi
 AC_ARG_WITH(default-hybris-ld-library-path,
   [  --with-default-hybris-ld-library-path=PATH1:PATH2:...     Use PATH1:PATH2 for default HYBRIS_LD_LIBRARY_PATH if not specified by environment ],

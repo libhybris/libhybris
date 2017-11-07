@@ -85,9 +85,11 @@ static const char* const kDefaultLdPaths[] = {
 #if defined(__LP64__)
   "/vendor/lib64",
   "/system/lib64",
+  "/odm/lib64",
 #else
   "/vendor/lib",
   "/system/lib",
+  "/odm/lib",
 #endif
   nullptr
 };
