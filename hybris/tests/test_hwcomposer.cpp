@@ -218,7 +218,11 @@ int main(int argc, char **argv)
 
 	int counter = 0;
 	for (; counter < HWC_NUM_DISPLAY_TYPES; counter++)
-		mList[counter] = list;
+		mList[counter] = NULL;
+
+	// Assign the layer list only to the first display,
+	// otherwise HWC might freeze if others are disconnected
+	mList[0] = list;
 
 	hwc_layer_1_t *layer = &list->hwLayers[0];
 	memset(layer, 0, sizeof(hwc_layer_1_t));
