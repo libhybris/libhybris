@@ -68,6 +68,14 @@
 #include "linker_non_pie.h"
 #endif
 
+// Stay compatible with newer glibc
+#ifndef R_AARCH64_TLS_TPREL64
+#define R_AARCH64_TLS_TPREL64 R_AARCH64_TLS_TPREL
+#endif
+#ifndef R_AARCH64_TLS_DTPREL32
+#define R_AARCH64_TLS_DTPREL32 R_AARCH64_TLS_DTPREL
+#endif
+
 //#include "android-base/strings.h"
 //#include "ziparchive/zip_archive.h"
 
