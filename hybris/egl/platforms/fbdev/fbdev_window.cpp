@@ -24,6 +24,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
+extern "C" {
+#include <sync/sync.h>
+};
+#endif
+
 #define FRAMEBUFFER_PARTITIONS 2
 
 static pthread_cond_t _cond = PTHREAD_COND_INITIALIZER;
@@ -260,6 +266,16 @@ int FbDevNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
     fbnb->busy = 2;
 
     pthread_mutex_unlock(&_mutex);
+
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
+    HYBRIS_TRACE_BEGIN("fbdev-platform", "queueBuffer_waiting_for_fence", "-%p", fbnb);
+    if (fenceFd >= 0)
+    {
+        sync_wait(fenceFd, -1);
+        close(fenceFd);
+    }
+    HYBRIS_TRACE_END("fbdev-platform", "queueBuffer_waiting_for_fence", "-%p", fbnb);
+#endif
 
     HYBRIS_TRACE_BEGIN("fbdev-platform", "queueBuffer-post", "-%p", fbnb);
 
