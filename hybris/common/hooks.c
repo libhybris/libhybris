@@ -1900,11 +1900,13 @@ static int _hybris_hook_getaddrinfo(const char *hostname, const char *servname,
     if (fixed_hints)
         free(fixed_hints);
 
-    // fix bionic <- glibc missmatch
-    struct addrinfo *it = *res;
-    while (it) {
-        swap((void**) &(it->ai_canonname), (void**) &(it->ai_addr));
-        it = it->ai_next;
+    if(result == 0) {
+        // fix bionic <- glibc missmatch
+        struct addrinfo *it = *res;
+        while (it) {
+            swap((void**) &(it->ai_canonname), (void**) &(it->ai_addr));
+            it = it->ai_next;
+        }
     }
 
     return result;
