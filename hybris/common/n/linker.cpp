@@ -3318,6 +3318,10 @@ void soinfo::call_constructors() {
     return;
   }
 
+  if (soname_ == nullptr) {
+    soname_ = basename(realpath_.c_str());
+  }
+
   if (strcmp(soname_, "libc.so") == 0) {
     DEBUG("HYBRIS: =============> Skipping libc.so\n");
     return;
