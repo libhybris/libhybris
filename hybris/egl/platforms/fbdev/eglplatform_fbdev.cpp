@@ -29,13 +29,6 @@ extern "C" void fbdevws_init_module(struct ws_egl_interface *egl_iface)
 		assert(0);
 	}
 
-	err = framebuffer_open((hw_module_t *) gralloc, &framebuffer);
-	if (err) {
-		fprintf(stderr, "ERROR: failed to open framebuffer: (%s)\n",strerror(-err));
-		assert(0);
-	}
-	TRACE("** framebuffer_open: status=(%s) format=x%x", strerror(-err), framebuffer->format);
-
 	err = gralloc_open((const hw_module_t *) gralloc, &alloc);
 	if (err) {
 		fprintf(stderr, "ERROR: failed to open gralloc: (%s)\n",strerror(-err));
@@ -65,6 +58,16 @@ extern "C" EGLNativeWindowType fbdevws_CreateWindow(EGLNativeWindowType win, _EG
 {
 	assert (gralloc != NULL);
 	assert (_nativewindow == NULL);
+
+	if (framebuffer)
+		framebuffer_close(framebuffer);
+
+	int err = framebuffer_open((hw_module_t *) gralloc, &framebuffer);
+	if (err) {
+		fprintf(stderr, "ERROR: failed to open framebuffer: (%s)\n",strerror(-err));
+		assert(0);
+	}
+	TRACE("** framebuffer_open: status=(%s) format=x%x", strerror(-err), framebuffer->format);
 
 	_nativewindow = new FbDevNativeWindow(alloc, framebuffer);
 	_nativewindow->common.incRef(&_nativewindow->common);
