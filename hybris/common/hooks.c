@@ -1425,6 +1425,10 @@ static int _hybris_hook_fflush(FILE *fp)
 {
     TRACE_HOOK("fp %p", fp);
 
+    if(fileno(_get_actual_fp(fp)) < 0) {
+        return 0;
+    }
+
     return fflush(_get_actual_fp(fp));
 }
 
