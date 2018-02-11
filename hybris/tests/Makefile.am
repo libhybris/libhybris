@@ -12,6 +12,7 @@ bin_PROGRAMS = \
 	test_media \
 	test_recorder \
 	test_gps \
+	test_opencl \
 	test_wifi
 
 if HAS_ANDROID_4_2_0
@@ -216,4 +217,12 @@ test_wifi_CFLAGS = \
 	$(ANDROID_HEADERS_CFLAGS)
 test_wifi_LDADD = \
 	$(top_builddir)/wifi/libwifi.la
+
+test_opencl_SOURCES = test_opencl.c
+test_opencl_CFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS)
+test_opencl_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/opencl/libOpenCL.la
 

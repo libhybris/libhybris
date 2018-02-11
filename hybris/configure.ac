@@ -281,6 +281,8 @@ AC_CONFIG_FILES([
 	utils/Makefile
 	sf/Makefile
 	sf/libsf.pc
+	opencl/Makefile
+	opencl/OpenCL.pc
 	tests/Makefile
 ])
 
