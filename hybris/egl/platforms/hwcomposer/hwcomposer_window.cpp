@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 extern "C" {
 #include <sync/sync.h>
@@ -411,7 +412,11 @@ unsigned int HWComposerNativeWindow::type() const
 unsigned int HWComposerNativeWindow::transformHint() const
 {
     TRACE("");
-    return 0;
+    char* transform_rot = getenv("HYBRIS_HAL_TRANSFORM_ROT");
+    if (transform_rot)
+        return atoi(transform_rot);
+    else
+        return 0;
 }
 
 /*
