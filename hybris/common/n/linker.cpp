@@ -210,7 +210,7 @@ static const char* const kAsanDefaultLdPaths[] = {
 std::vector<std::string> split(const std::string &text, const std::string &sep) {
   std::vector<std::string> tokens;
   std::size_t start = 0, end = 0;
-  while ((end = text.find(sep, start)) != std::string::npos) {
+  while ((end = text.find_first_of(sep, start)) != std::string::npos) {
     tokens.push_back(text.substr(start, end - start));
     start = end + 1;
   }
