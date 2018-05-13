@@ -140,7 +140,7 @@ static const wl_callback_listener callback_listener = {
 extern "C" _EGLDisplay *waylandws_GetDisplay(EGLNativeDisplayType display)
 {
 	WaylandDisplay *wdpy = new WaylandDisplay;
-	wdpy->wl_dpy = (wl_display *)display;
+	wdpy->wl_dpy = display ? (wl_display *)display : wl_display_connect(NULL);
 	wdpy->wlegl = NULL;
 	wdpy->queue = wl_display_create_queue(wdpy->wl_dpy);
 	wdpy->registry = wl_display_get_registry(wdpy->wl_dpy);
