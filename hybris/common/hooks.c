@@ -3098,8 +3098,8 @@ static void* __hybris_load_linker(const char *path)
 {
     void *handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
     if (!handle) {
-        fprintf(stderr, "ERROR: Failed to load hybris linker for Android SDK version %d\n",
-                get_android_sdk_version());
+        fprintf(stderr, "ERROR: Failed to load hybris linker for Android SDK version %d: %s\n",
+                get_android_sdk_version(), dlerror());
         return NULL;
     }
     return handle;
