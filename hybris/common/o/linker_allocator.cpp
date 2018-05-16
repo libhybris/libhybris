@@ -28,6 +28,7 @@
 
 #include "linker_allocator.h"
 #include "linker_debug.h"
+#include "linker_utils.h"
 #include "linker.h"
 
 #include <algorithm>
@@ -39,7 +40,11 @@
 
 #include <async_safe/log.h>
 
+#include <memory.h>
+
 #include "private/bionic_prctl.h"
+
+#include "hybris_compat.h"
 
 //
 // LinkerMemeoryAllocator is general purpose allocator

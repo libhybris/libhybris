@@ -35,11 +35,16 @@
 #include <unistd.h>
 
 #include <async_safe/log.h>
+#include <android/api-level.h>
 
 #include "linker_debug.h"
 #include "linker_globals.h"
 #include "linker_logger.h"
 #include "linker_utils.h"
+
+#include "hybris_compat.h"
+
+#define ELF_ST_TYPE(x) ((x) & 0xf)
 
 // TODO(dimitry): These functions are currently located in linker.cpp - find a better place for it
 bool find_verdef_version_index(const soinfo* si, const version_info* vi, ElfW(Versym)* versym);
@@ -49,7 +54,6 @@ uint32_t get_application_target_sdk_version();
 soinfo::soinfo(android_namespace_t* ns, const char* realpath,
                const struct stat* file_stat, off64_t file_offset,
                int rtld_flags) {
-  memset(this, 0, sizeof(*this));
 
   if (realpath != nullptr) {
     realpath_ = realpath;
@@ -331,9 +335,10 @@ ElfW(Sym)* soinfo::elf_addr_lookup(const void* addr) {
   return nullptr;
 }
 
-static void call_function(const char* function_name __unused,
+static void call_function(const char* function_name,
                           linker_ctor_function_t function,
-                          const char* realpath __unused) {
+                          const char* realpath) {
+  (void)realpath;
   if (function == nullptr || reinterpret_cast<uintptr_t>(function) == static_cast<uintptr_t>(-1)) {
     return;
   }
@@ -343,9 +348,11 @@ static void call_function(const char* function_name __unused,
   TRACE("[ Done calling c-tor %s @ %p for '%s' ]", function_name, function, realpath);
 }
 
-static void call_function(const char* function_name __unused,
+static void call_function(const char* function_name,
                           linker_dtor_function_t function,
-                          const char* realpath __unused) {
+                          const char* realpath) {
+  (void)function_name;
+  (void)realpath;
   if (function == nullptr || reinterpret_cast<uintptr_t>(function) == static_cast<uintptr_t>(-1)) {
     return;
   }
@@ -356,7 +363,7 @@ static void call_function(const char* function_name __unused,
 }
 
 template <typename F>
-static void call_array(const char* array_name __unused,
+static void call_array(const char* array_name,
                        F* functions,
                        size_t count,
                        bool reverse,
@@ -385,8 +392,16 @@ void soinfo::call_pre_init_constructors() {
   call_array("DT_PREINIT_ARRAY", preinit_array_, preinit_array_count_, false, get_realpath());
 }
 
+// Defined somewhere else in this linker.
+extern "C" void* android_dlsym(void* handle, const char* symbol);
+
 void soinfo::call_constructors() {
   if (constructors_called) {
+    return;
+  }
+
+  if (soname_ != nullptr && strcmp(soname_, "libc.so") == 0) {
+    DEBUG("HYBRIS: =============> Skipping libc.so\n");
     return;
   }
 
@@ -615,7 +630,7 @@ android_namespace_t* soinfo::get_primary_namespace() {
     return primary_namespace_;
   }
 
-  return &g_default_namespace;
+  return g_default_namespace;
 }
 
 void soinfo::add_secondary_namespace(android_namespace_t* secondary_ns) {
@@ -733,7 +748,8 @@ void soinfo::generate_handle() {
   // Make sure the handle is unique and does not collide
   // with special values which are RTLD_DEFAULT and RTLD_NEXT.
   do {
-    arc4random_buf(&handle_, sizeof(handle_));
+    handle_ = rand();
+    //arc4random_buf(&handle_, sizeof(handle_));
     // the least significant bit for the handle is always 1
     // making it easy to test the type of handle passed to
     // dl* functions.

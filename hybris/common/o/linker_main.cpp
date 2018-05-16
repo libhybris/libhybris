@@ -26,6 +26,8 @@
  * SUCH DAMAGE.
  */
 
+#include "hybris_compat.h"
+
 #include "linker_main.h"
 
 #include "linker_debug.h"
@@ -50,9 +52,13 @@
 #include <vector>
 
 extern void __libc_init_globals(KernelArgumentBlock&);
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
 extern void __libc_init_AT_SECURE(KernelArgumentBlock&);
+#endif
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
 extern "C" void _start();
+#endif
 
 static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf);
 
@@ -121,14 +127,14 @@ static void parse_path(const char* path, const char* delimiters,
 static void parse_LD_LIBRARY_PATH(const char* path) {
   std::vector<std::string> ld_libary_paths;
   parse_path(path, ":", &ld_libary_paths);
-  g_default_namespace.set_ld_library_paths(std::move(ld_libary_paths));
+  g_default_namespace->set_ld_library_paths(std::move(ld_libary_paths));
 }
 
 static void parse_LD_PRELOAD(const char* path) {
   g_ld_preload_names.clear();
   if (path != nullptr) {
     // We have historically supported ':' as well as ' ' in LD_PRELOAD.
-    g_ld_preload_names = android::base::Split(path, " :");
+    g_ld_preload_names = split(path, " :");
     std::remove_if(g_ld_preload_names.begin(),
                    g_ld_preload_names.end(),
                    [] (const std::string& s) { return s.empty(); });
@@ -144,7 +150,7 @@ static void add_vdso(KernelArgumentBlock& args) {
     return;
   }
 
-  soinfo* si = soinfo_alloc(&g_default_namespace, "[vdso]", nullptr, 0, 0);
+  soinfo* si = soinfo_alloc(g_default_namespace, "[vdso]", nullptr, 0, 0);
 
   si->phdr = reinterpret_cast<ElfW(Phdr)*>(reinterpret_cast<char*>(ehdr_vdso) + ehdr_vdso->e_phoff);
   si->phnum = ehdr_vdso->e_phnum;
@@ -216,6 +222,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args) {
   gettimeofday(&t0, 0);
 #endif
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   // Sanitize the environment.
   __libc_init_AT_SECURE(args);
 
@@ -232,11 +239,12 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args) {
   };
   debuggerd_init(&callbacks);
 #endif
+#endif
 
   g_linker_logger.ResetState();
 
   // Get a few environment variables.
-  const char* LD_DEBUG = getenv("LD_DEBUG");
+  const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
   if (LD_DEBUG != nullptr) {
     g_ld_debug_verbosity = atoi(LD_DEBUG);
   }
@@ -252,11 +260,11 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args) {
   const char* ldpath_env = nullptr;
   const char* ldpreload_env = nullptr;
   if (!getauxval(AT_SECURE)) {
-    ldpath_env = getenv("LD_LIBRARY_PATH");
+    ldpath_env = getenv("HYBRIS_LD_LIBRARY_PATH");
     if (ldpath_env != nullptr) {
       INFO("[ LD_LIBRARY_PATH set to \"%s\" ]", ldpath_env);
     }
-    ldpreload_env = getenv("LD_PRELOAD");
+    ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
     if (ldpreload_env != nullptr) {
       INFO("[ LD_PRELOAD set to \"%s\" ]", ldpreload_env);
     }
@@ -271,7 +279,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args) {
   }
 
   const char* executable_path = get_executable_path();
-  soinfo* si = soinfo_alloc(&g_default_namespace, executable_path, &file_stat, 0, RTLD_GLOBAL);
+  soinfo* si = soinfo_alloc(g_default_namespace, executable_path, &file_stat, 0, RTLD_GLOBAL);
   if (si == nullptr) {
     async_safe_fatal("Couldn't allocate soinfo: out of memory?");
   }
@@ -324,7 +332,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args) {
     // tombstone for them. The tombstone never provided any detail relevant to
     // fixing the problem anyway, and the utility of drawing extra attention
     // to the problem is non-existent at this late date.
-    async_safe_format_fd(STDERR_FILENO,
+    fprintf(stderr,
                      "\"%s\": error: Android 5.0 and later only support "
                      "position-independent executables (-fPIE).\n",
                      g_argv[0]);
@@ -332,7 +340,10 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args) {
   }
 
   // Use LD_LIBRARY_PATH and LD_PRELOAD (but only if we aren't setuid/setgid).
-  parse_LD_LIBRARY_PATH(ldpath_env);
+  if (DEFAULT_HYBRIS_LD_LIBRARY_PATH)
+    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
+  else
+    parse_LD_LIBRARY_PATH(ldpath_env);
   parse_LD_PRELOAD(ldpreload_env);
 
   somain = si;
@@ -347,7 +358,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args) {
   si->set_dt_flags_1(si->get_dt_flags_1() | DF_1_GLOBAL);
   // ... and add it to all other linked namespaces
   for (auto linked_ns : namespaces) {
-    if (linked_ns != &g_default_namespace) {
+    if (linked_ns != g_default_namespace) {
       linked_ns->add_soinfo(somain);
       somain->add_secondary_namespace(linked_ns);
     }
@@ -373,7 +384,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args) {
   // don't need to re-load elf headers.
   std::unordered_map<const soinfo*, ElfReader> readers_map;
   if (needed_libraries_count > 0 &&
-      !find_libraries(&g_default_namespace,
+      !find_libraries(g_default_namespace,
                       si,
                       needed_library_names,
                       needed_libraries_count,
@@ -386,10 +397,10 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args) {
                       true /* search_linked_namespaces */,
                       readers_map,
                       &namespaces)) {
-    async_safe_fatal("CANNOT LINK EXECUTABLE \"%s\": %s", g_argv[0], linker_get_error_buffer());
+    fprintf(stderr, "CANNOT LINK EXECUTABLE \"%s\": %s", g_argv[0], linker_get_error_buffer());
   } else if (needed_libraries_count == 0) {
     if (!si->link_image(g_empty_list, soinfo_list_t::make_list(si), nullptr)) {
-      async_safe_fatal("CANNOT LINK EXECUTABLE \"%s\": %s", g_argv[0], linker_get_error_buffer());
+      fprintf(stderr, "CANNOT LINK EXECUTABLE \"%s\": %s", g_argv[0], linker_get_error_buffer());
     }
     si->increment_ref_count();
   }
@@ -397,7 +408,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args) {
   add_vdso(args);
 
   if (!get_cfi_shadow()->InitialLinkDone(solist)) {
-    async_safe_fatal("CANNOT LINK EXECUTABLE \"%s\": %s", g_argv[0], linker_get_error_buffer());
+    fprintf(stderr, "CANNOT LINK EXECUTABLE \"%s\": %s", g_argv[0], linker_get_error_buffer());
   }
 
   si->call_pre_init_constructors();
@@ -484,6 +495,39 @@ static void __linker_cannot_link(const char* argv0) {
   async_safe_fatal("CANNOT LINK EXECUTABLE \"%s\": %s", argv0, linker_get_error_buffer());
 }
 
+void* (*_get_hooked_symbol)(const char *sym, const char *requester);
+
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) {
+  // Get a few environment variables.
+  const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
+  if (LD_DEBUG != nullptr) {
+    g_ld_debug_verbosity = atoi(LD_DEBUG);
+  }
+
+  const char* ldpath_env = nullptr;
+  const char* ldpreload_env = nullptr;
+  if (!getauxval(AT_SECURE)) {
+    ldpath_env = getenv("HYBRIS_LD_LIBRARY_PATH");
+    ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
+  }
+
+  if (DEFAULT_HYBRIS_LD_LIBRARY_PATH)
+    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
+  else
+    parse_LD_LIBRARY_PATH(ldpath_env);
+  parse_LD_PRELOAD(ldpreload_env);
+
+  if (sdk_version > 0)
+    set_application_target_sdk_version(sdk_version);
+
+  _get_hooked_symbol = get_hooked_symbol;
+
+  sonext = solist = get_libdl_info(kLinkerPath, linker_link_map);
+
+  init_default_namespaces(get_executable_path());
+}
+
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
 /*
  * This is the entry point for the linker, called from begin.S. This
  * method is responsible for fixing the linker's own relocations, and
@@ -584,7 +628,7 @@ extern "C" ElfW(Addr) __linker_init(void* raw_args) {
   // get correct libdl_info we need to call constructors
   // before get_libdl_info().
   sonext = solist = get_libdl_info(kLinkerPath, linker_link_map);
-  g_default_namespace.add_soinfo(solist);
+  g_default_namespace->add_soinfo(solist);
 
   // We have successfully fixed our own relocations. It's safe to run
   // the main part of the linker now.
@@ -596,3 +640,4 @@ extern "C" ElfW(Addr) __linker_init(void* raw_args) {
   // Return the address that the calling assembly stub should jump to.
   return start_address;
 }
+#endif

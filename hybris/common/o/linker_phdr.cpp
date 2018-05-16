@@ -26,6 +26,8 @@
  * SUCH DAMAGE.
  */
 
+#include "hybris_compat.h"
+
 #include "linker_phdr.h"
 
 #include <errno.h>
@@ -41,6 +43,7 @@
 #include "linker_debug.h"
 #include "linker_utils.h"
 
+#include <android/api-level.h>
 #include "private/bionic_prctl.h"
 #include "private/CFIShadow.h" // For kLibraryAlignment
 
@@ -539,7 +542,7 @@ static void* ReserveAligned(void* hint, size_t size, size_t align) {
 
   uint8_t* first = align_up(mmap_ptr, align);
   uint8_t* last = align_down(mmap_ptr + mmap_size, align) - size;
-  size_t n = arc4random_uniform((last - first) / PAGE_SIZE + 1);
+  size_t n = rand() % ((last - first) / PAGE_SIZE + 1);
   uint8_t* start = first + n * PAGE_SIZE;
   munmap(mmap_ptr, start - mmap_ptr);
   munmap(start + size, mmap_ptr + mmap_size - (start + size));

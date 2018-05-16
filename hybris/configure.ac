@@ -247,6 +247,7 @@ AC_CONFIG_FILES([
 	common/stub/Makefile
 	common/mm/Makefile
 	common/n/Makefile
+	common/o/Makefile
 	egl/egl.pc
 	egl/Makefile
 	egl/platforms/Makefile

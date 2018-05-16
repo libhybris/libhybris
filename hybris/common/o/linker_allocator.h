@@ -33,6 +33,8 @@
 #include <sys/cdefs.h>
 #include <sys/mman.h>
 #include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include <vector>
