@@ -226,8 +226,9 @@ struct soinfo {
   bool can_unload() const;
   bool is_gnu_hash() const;
 
-  bool inline has_min_version(uint32_t min_version __unused) const {
+  bool inline has_min_version(uint32_t min_version) const {
 #if defined(__work_around_b_24465209__)
+    (void) min_version;
     return (flags_ & FLAG_NEW_SOINFO) != 0 && version_ >= min_version;
 #else
     return true;

@@ -34,6 +34,7 @@
 
 #include <algorithm>
 
+#include "hybris_compat.h"
 #include "private/CFIShadow.h"
 
 // This class keeps the contents of CFI shadow up-to-date with the current set of loaded libraries.

@@ -34,6 +34,7 @@
 
 #include <async_safe/log.h>
 
+#if DISABLED_FOR_HYBRIS_SUPPORT
 static LinkerMemoryAllocator g_linker_allocator;
 static pid_t fallback_tid = 0;
 
@@ -83,3 +84,4 @@ void free(void* ptr) {
   get_allocator().free(ptr);
 }
 
+#endif

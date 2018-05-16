@@ -32,6 +32,8 @@
 
 #include <string>
 
+#include "hybris_compat.h"
+
 static std::string current_msg;
 
 void add_dlwarning(const char* sopath, const char* message, const char* value) {

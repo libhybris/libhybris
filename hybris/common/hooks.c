@@ -75,6 +75,9 @@
 
 #include <android-config.h>
 
+// this is also used in bionic:
+#define bool int
+
 #ifdef WANT_ARM_TRACING
 #include "wrappers.h"
 #endif
@@ -89,12 +92,29 @@ static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(
 static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) = NULL;
 #endif
 
-static void* (*_android_dlopen)(const char *filename, int flags) = NULL;
-static void* (*_android_dlsym)(void *handle, const char *symbol) = NULL;
-static void* (*_android_dlvsym)(void *handle, const char *symbol, const char* version) = NULL;
-static void* (*_android_dladdr)(void *addr, Dl_info *info) = NULL;
-static int (*_android_dlclose)(void *handle) = NULL;
-static const char* (*_android_dlerror)(void) = NULL;
+void *(*_android_dlopen)(const char* filename, int flag) = NULL;
+char *(*_android_dlerror)() = NULL;
+void *(*_android_dlsym)(void* handle, const char* symbol) = NULL;
+void *(*_android_dlvsym)(void* handle, const char* symbol, const char* version) = NULL;
+int (*_android_dladdr)(const void* addr, void* info) = NULL;
+int (*_android_dlclose)(void* handle) = NULL;
+void *(*_android_dl_unwind_find_exidx)(void *pc, int* pcount) = NULL;
+int (*_android_dl_iterate_phdr)(int (*cb)(void* info, size_t size, void* data), void* data) = NULL;
+void (*_android_get_LD_LIBRARY_PATH)(char* buffer, size_t buffer_size) = NULL;
+void (*_android_update_LD_LIBRARY_PATH)(const char* ld_library_path) = NULL;
+void *(*_android_dlopen_ext)(const char* filename, int flag, const void* extinfo) = NULL;
+void (*_android_set_application_target_sdk_version)(uint32_t target) = NULL;
+uint32_t (*_android_get_application_target_sdk_version)() = NULL;
+void *(*_android_create_namespace)(const char* name,
+                                 const char* ld_library_path,
+                                 const char* default_library_path,
+                                 uint64_t type,
+                                 const char* permitted_when_isolated_path,
+                                 void* parent) = NULL;
+bool (*_android_init_anonymous_namespace)(const char* shared_libs_sonames,
+                                      const char* library_search_path) = NULL;
+void (*_android_dlwarning)(void* obj, void (*f)(void*, const char*)) = NULL;
+void *(*_android_get_exported_namespace)(const char* name) = NULL;
 
 /* TODO:
 *  - Check if the int arguments at attr_set/get match the ones at Android
@@ -2445,6 +2465,89 @@ static const char *_hybris_hook_dlerror(void)
     return android_dlerror();
 }
 
+void *_hybris_hook_dl_unwind_find_exidx(void* pc, int* pcount)
+{
+    TRACE("pc %p, pcount %p", pc, pcount);
+
+    return _android_dl_unwind_find_exidx(pc, pcount);
+}
+
+int _hybris_hook_dl_iterate_phdr(int (*cb)(void* info, size_t size, void* data), void* data)
+{
+    TRACE("cb %p, data %p", cb, data);
+
+    return _android_dl_iterate_phdr(cb, data);
+}
+
+void _hybris_hook_android_get_LD_LIBRARY_PATH(char* buffer, size_t buffer_size)
+{
+    TRACE("buffer %p, buffer_size %zu\n", buffer_size);
+
+    _android_get_LD_LIBRARY_PATH(buffer, buffer_size);
+}
+
+void _hybris_hook_android_update_LD_LIBRARY_PATH(const char* ld_library_path)
+{
+    TRACE("ld_library_path %s", ld_library_path);
+
+    _android_update_LD_LIBRARY_PATH(ld_library_path);
+}
+
+void* _hybris_hook_android_dlopen_ext(const char* filename, int flag, const void* extinfo)
+{
+    TRACE("filename %s, flag %d, extinfo %s", filename, flag, extinfo);
+
+    return _android_dlopen_ext(filename, flag, extinfo);
+}
+
+void _hybris_hook_android_set_application_target_sdk_version(uint32_t target)
+{
+    TRACE("target %d", target);
+
+    android_set_application_target_sdk_version(target);
+}
+
+uint32_t _hybris_hook_android_get_application_target_sdk_version()
+{
+    TRACE("");
+
+    return _android_get_application_target_sdk_version();
+}
+
+void* _hybris_hook_android_create_namespace(const char* name,
+                                                     const char* ld_library_path,
+                                                     const char* default_library_path,
+                                                     uint64_t type,
+                                                     const char* permitted_when_isolated_path,
+                                                     void* parent)
+{
+    TRACE("name %s, ld_library_path %s, default_library_path %s, type %" PRIu64 ", permitted_when_isolated_path %s, parent %p", name, ld_library_path, default_library_path, type, permitted_when_isolated_path, parent);
+
+    return _android_create_namespace(name, ld_library_path, default_library_path, type, permitted_when_isolated_path, parent);
+}
+
+bool _hybris_hook_android_init_anonymous_namespace(const char* shared_libs_sonames,
+                                      const char* library_search_path)
+{
+    TRACE("shared_libs_sonames %s, library_search_path %s", shared_libs_sonames, library_search_path);
+
+    return _android_init_anonymous_namespace(shared_libs_sonames, library_search_path);
+}
+
+void _hybris_hook_android_dlwarning(void* obj, void (*f)(void*, const char*))
+{
+    TRACE("obj %p, f %p", obj, f);
+
+    _android_dlwarning(obj, f);
+}
+
+void* _hybris_hook_android_get_exported_namespace(const char* name)
+{
+    TRACE("name %s", name);
+
+    return _android_get_exported_namespace(name);
+}
+
 #if !defined(cfree)
 #define cfree free
 #endif
@@ -2672,6 +2775,17 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(dlvsym),
     HOOK_INDIRECT(dladdr),
     HOOK_INDIRECT(dlclose),
+    HOOK_INDIRECT(dl_unwind_find_exidx),
+    HOOK_INDIRECT(dl_iterate_phdr),
+    HOOK_INDIRECT(android_get_LD_LIBRARY_PATH),
+    HOOK_INDIRECT(android_update_LD_LIBRARY_PATH),
+    HOOK_INDIRECT(android_dlopen_ext),
+    HOOK_INDIRECT(android_set_application_target_sdk_version),
+    HOOK_INDIRECT(android_get_application_target_sdk_version),
+    HOOK_INDIRECT(android_create_namespace),
+    HOOK_INDIRECT(android_init_anonymous_namespace),
+    HOOK_INDIRECT(android_dlwarning),
+    HOOK_INDIRECT(android_get_exported_namespace),
     /* dirent.h */
     HOOK_DIRECT_NO_DEBUG(opendir),
     HOOK_DIRECT_NO_DEBUG(fdopendir),
@@ -2909,11 +3023,7 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
 
     /* Allow newer hooks to override those which are available for all versions */
     key.name = sym;
-#if defined(WANT_LINKER_N)
-    if (get_android_sdk_version() > 21)
-        found = bsearch(&key, hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
-#endif
-#if defined(WANT_LINKER_MM)
+#if defined(WANT_LINKER_MM) || defined(WANT_LINKER_N) || defined(WANT_LINKER_O)
     if (get_android_sdk_version() > 21)
         found = bsearch(&key, hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
 #endif
@@ -2965,10 +3075,13 @@ static void* __hybris_load_linker(const char *path)
 #define LINKER_NAME_JB "jb"
 #define LINKER_NAME_MM "mm"
 #define LINKER_NAME_N "n"
+#define LINKER_NAME_O "o"
 
 // These should be in order, such that we don't use for example the jellybean
 // linker for sdk_version > 25 (see __hybris_linker_init below).
-#if defined(WANT_LINKER_N)
+#if defined(WANT_LINKER_O)
+#define LINKER_NAME_DEFAULT LINKER_NAME_O
+#elif defined(WANT_LINKER_N)
 #define LINKER_NAME_DEFAULT LINKER_NAME_N
 #elif defined(WANT_LINKER_MM)
 #define LINKER_NAME_DEFAULT LINKER_NAME_MM
@@ -2990,6 +3103,10 @@ static void __hybris_linker_init()
     /* See https://source.android.com/source/build-numbers.html for
      * an overview over available SDK version numbers and which
      * Android version they relate to. */
+#if defined(WANT_LINKER_O)
+    if (sdk_version <= 27)
+        name = LINKER_NAME_O;
+#endif
 #if defined(WANT_LINKER_N)
     if (sdk_version <= 25)
         name = LINKER_NAME_N;
@@ -3019,11 +3136,22 @@ static void __hybris_linker_init()
     /* Load all necessary symbols we need from the linker */
     _android_linker_init = dlsym(linker_handle, "android_linker_init");
     _android_dlopen = dlsym(linker_handle, "android_dlopen");
+    _android_dlerror = dlsym(linker_handle, "android_dlerror");
     _android_dlsym = dlsym(linker_handle, "android_dlsym");
     _android_dlvsym = dlsym(linker_handle, "android_dlvsym");
     _android_dladdr = dlsym(linker_handle, "android_dladdr");
     _android_dlclose = dlsym(linker_handle, "android_dlclose");
-    _android_dlerror = dlsym(linker_handle, "android_dlerror");
+    _android_dl_unwind_find_exidx = dlsym(linker_handle, "android_dl_unwind_find_exidx");
+    _android_dl_iterate_phdr = dlsym(linker_handle, "android_dl_iterate_phdr");
+    _android_get_LD_LIBRARY_PATH = dlsym(linker_handle, "android_get_LD_LIBRARY_PATH");
+    _android_update_LD_LIBRARY_PATH = dlsym(linker_handle, "android_update_LD_LIBRARY_PATH");
+    _android_dlopen_ext = dlsym(linker_handle, "android_dlopen_ext");
+    _android_set_application_target_sdk_version = dlsym(linker_handle, "android_set_application_target_sdk_version");
+    _android_get_application_target_sdk_version = dlsym(linker_handle, "android_get_application_target_sdk_version");
+    _android_create_namespace = dlsym(linker_handle, "android_create_namespace");
+    _android_init_anonymous_namespace = dlsym(linker_handle, "android_init_anonymous_namespace");
+    _android_dlwarning = dlsym(linker_handle, "android_dlwarning");
+    _android_get_exported_namespace = dlsym(linker_handle, "android_get_exported_namespace");
 
     /* Now its time to setup the linker itself */
 #ifdef WANT_ARM_TRACING
@@ -3043,72 +3171,287 @@ static void __hybris_linker_init()
  * but several users are using android_* functions directly we
  * have to export them here. */
 
-void *android_dlopen(const char *filename, int flag)
+void* android_dlopen(const char* filename, int flag)
 {
     ENSURE_LINKER_IS_LOADED();
 
-    if (!_android_dlopen)
+    if (!_android_dlopen) {
         return NULL;
+    }
 
-    return _android_dlopen(filename,flag);
+    return _android_dlopen(filename, flag);
 }
 
-void *android_dlsym(void *handle, const char *symbol)
+char* android_dlerror()
 {
     ENSURE_LINKER_IS_LOADED();
 
-    if (!_android_dlsym)
+    if (!_android_dlerror) {
         return NULL;
-
-    return _android_dlsym(handle,symbol);
-}
-
-void *android_dlvsym(void *handle, const char *symbol, const char* version)
-{
-    ENSURE_LINKER_IS_LOADED();
-
-    if (!_android_dlvsym)
-        return NULL;
-
-    return _android_dlvsym(handle,symbol, version);
-}
-
-int android_dlclose(void *handle)
-{
-    ENSURE_LINKER_IS_LOADED();
-
-    if (!_android_dlclose)
-        return -1;
-
-    return _android_dlclose(handle);
-}
-
-const char *android_dlerror(void)
-{
-    ENSURE_LINKER_IS_LOADED();
-
-    if (!_android_dlerror)
-        return NULL;
+    }
 
     return _android_dlerror();
 }
 
-void *hybris_dlopen(const char *filename, int flag)
+void* android_dlsym(void* handle, const char* symbol)
 {
-    return android_dlopen(filename,flag);
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dlsym) {
+        return NULL;
+    }
+
+    return _android_dlsym(handle, symbol);
 }
 
-void *hybris_dlsym(void *handle, const char *symbol)
+void* android_dlvsym(void* handle, const char* symbol, const char* version)
 {
-    return android_dlsym(handle,symbol);
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dlvsym) {
+        return NULL;
+    }
+
+    return _android_dlvsym(handle, symbol, version);
 }
 
-int hybris_dlclose(void *handle)
+int android_dladdr(const void* addr, void* info)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dladdr) {
+        return 0;
+    }
+
+    return _android_dladdr(addr, info);
+}
+
+int android_dlclose(void* handle)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dlclose) {
+        return 0;
+    }
+
+    return _android_dlclose(handle);
+}
+
+void *android_dl_unwind_find_exidx(void *pc, int* pcount)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dl_unwind_find_exidx) {
+        return NULL;
+    }
+
+    return _android_dl_unwind_find_exidx(pc, pcount);
+}
+
+int android_dl_iterate_phdr(int (*cb)(void* info, size_t size, void* data), void* data)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dl_iterate_phdr) {
+        return 0;
+    }
+
+    return _android_dl_iterate_phdr(cb, data);
+}
+
+void android_get_LD_LIBRARY_PATH(char* buffer, size_t buffer_size)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_get_LD_LIBRARY_PATH) {
+        return;
+    }
+
+    _android_get_LD_LIBRARY_PATH(buffer, buffer_size);
+}
+
+void android_update_LD_LIBRARY_PATH(const char* ld_library_path)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_update_LD_LIBRARY_PATH) {
+        return;
+    }
+
+    _android_update_LD_LIBRARY_PATH(ld_library_path);
+}
+
+void* android_dlopen_ext(const char* filename, int flag, const void* extinfo)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dlopen_ext) {
+        return NULL;
+    }
+
+    return _android_dlopen_ext(filename, flag, extinfo);
+}
+
+void android_set_application_target_sdk_version(uint32_t target)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_set_application_target_sdk_version) {
+        return;
+    }
+
+    _android_set_application_target_sdk_version(target);
+}
+
+uint32_t android_get_application_target_sdk_version()
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_get_application_target_sdk_version) {
+        return 0;
+    }
+
+    return _android_get_application_target_sdk_version();
+}
+
+struct android_namespace_t* android_create_namespace(const char* name,
+                                                     const char* ld_library_path,
+                                                     const char* default_library_path,
+                                                     uint64_t type,
+                                                     const char* permitted_when_isolated_path,
+                                                     struct android_namespace_t* parent)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_create_namespace) {
+        return NULL;
+    }
+
+    return _android_create_namespace(name, ld_library_path, default_library_path, type, permitted_when_isolated_path, parent);
+}
+
+bool android_init_anonymous_namespace(const char* shared_libs_sonames,
+                                      const char* library_search_path)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_init_anonymous_namespace) {
+        return 0;
+    }
+
+    return _android_init_anonymous_namespace(shared_libs_sonames, library_search_path);
+}
+
+void android_dlwarning(void* obj, void (*f)(void*, const char*))
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_dlwarning) {
+        return;
+    }
+
+    _android_dlwarning(obj, f);
+}
+
+struct android_namespace_t* android_get_exported_namespace(const char* name)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_get_exported_namespace) {
+        return NULL;
+    }
+
+    return _android_get_exported_namespace(name);
+}
+
+void* hybris_dlopen(const char* filename, int flag)
+{
+    return android_dlopen(filename, flag);
+}
+
+char* hybris_dlerror()
+{
+    return android_dlerror();
+}
+
+void* hybris_dlsym(void* handle, const char* symbol)
+{
+    return android_dlsym(handle, symbol);
+}
+
+void* hybris_dlvsym(void* handle, const char* symbol, const char* version)
+{
+    return android_dlvsym(handle, symbol, version);
+}
+
+int hybris_dladdr(const void* addr, void* info)
+{
+    return android_dladdr(addr, info);
+}
+
+int hybris_dlclose(void* handle)
 {
     return android_dlclose(handle);
 }
 
-const char *hybris_dlerror(void)
+void *hybris_dl_unwind_find_exidx(void *pc, int* pcount)
 {
-    return android_dlerror();
+    return android_dl_unwind_find_exidx(pc, pcount);
 }
+
+int hybris_dl_iterate_phdr(int (*cb)(void* info, size_t size, void* data), void* data)
+{
+    return android_dl_iterate_phdr(cb, data);
+}
+
+void hybris_get_LD_LIBRARY_PATH(char* buffer, size_t buffer_size)
+{
+    android_get_LD_LIBRARY_PATH(buffer, buffer_size);
+}
+
+void hybris_update_LD_LIBRARY_PATH(const char* ld_library_path)
+{
+    android_update_LD_LIBRARY_PATH(ld_library_path);
+}
+
+void* hybris_dlopen_ext(const char* filename, int flag, const void* extinfo)
+{
+    return android_dlopen_ext(filename, flag, extinfo);
+}
+
+void hybris_set_application_target_sdk_version(uint32_t target)
+{
+    android_set_application_target_sdk_version(target);
+}
+
+uint32_t hybris_get_application_target_sdk_version()
+{
+    return android_get_application_target_sdk_version();
+}
+
+void* hybris_create_namespace(const char* name,
+                                                     const char* ld_library_path,
+                                                     const char* default_library_path,
+                                                     uint64_t type,
+                                                     const char* permitted_when_isolated_path,
+                                                     void* parent)
+{
+    return android_create_namespace(name, ld_library_path, default_library_path, type, permitted_when_isolated_path, parent);
+}
+
+bool hybris_init_anonymous_namespace(const char* shared_libs_sonames,
+                                      const char* library_search_path)
+{
+    return android_init_anonymous_namespace(shared_libs_sonames, library_search_path);
+}
+
+void hybris_dlwarning(void* obj, void (*f)(void*, const char*))
+{
+    android_dlwarning(obj, f);
+}
+
+void* hybris_get_exported_namespace(const char* name)
+{
+    return android_get_exported_namespace(name);
+}
+

@@ -29,10 +29,15 @@
 #ifndef __LINKER_UTILS_H
 #define __LINKER_UTILS_H
 
+#include <cstdarg>
 #include <string>
 #include <vector>
 
 extern const char* const kZipFileSeparator;
+
+std::string trim(const std::string& s);
+std::vector<std::string> split(const std::string &text, const std::string &sep);
+std::string join(const std::vector<std::string>& things, char separator);
 
 void format_string(std::string* str, const std::vector<std::pair<std::string, std::string>>& params);
 
@@ -56,5 +61,21 @@ std::string dirname(const char* path);
 off64_t page_start(off64_t offset);
 size_t page_offset(off64_t offset);
 bool safe_add(off64_t* out, off64_t a, size_t b);
+
+void stringAppendV(std::string* dst, const char* format, va_list ap);
+std::string stringPrintf(const char* fmt, ...);
+void stringAppendF(std::string* dst, const char* format, ...);
+
+#define CHECK(predicate) \
+  do { \
+    if (!(predicate)) { \
+      fprintf(stderr, "%s:%d: %s CHECK '" #predicate "' failed", \
+          __FILE__, __LINE__, __FUNCTION__); \
+    } \
+  } while(0)
+
+bool readFileToString(const std::string& path, std::string* content, bool follow_symlinks = false);
+
+bool startsWith(const std::string& s, const char* prefix);
 
 #endif

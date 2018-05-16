@@ -38,16 +38,21 @@
 
 #define DL_ERR(fmt, x...) \
     do { \
-      async_safe_format_buffer(linker_get_error_buffer(), linker_get_error_buffer_size(), fmt, ##x); \
+      fprintf(stderr, fmt, ##x); \
+      fprintf(stderr, "\n"); \
       /* If LD_DEBUG is set high enough, log every dlerror(3) message. */ \
+    } while (false)
+
+#define DL_ERR_NO_PRINT(fmt, x...) \
+    do { \
+      /* If LD_DEBUG is set high enough, log every dlerror(3) message. */ \
+      DEBUG("%s\n", linker_get_error_buffer()); \
     } while (false)
 
 #define DL_WARN(fmt, x...) \
     do { \
-      async_safe_format_log(ANDROID_LOG_WARN, "linker", fmt, ##x); \
-      async_safe_format_fd(2, "WARNING: linker: "); \
-      async_safe_format_fd(2, fmt, ##x); \
-      async_safe_format_fd(2, "\n"); \
+      fprintf(stderr, "WARNING: linker " fmt, ##x); \
+      fprintf(stderr, "\n"); \
     } while (false)
 
 #define DL_ERR_AND_LOG(fmt, x...) \
@@ -67,12 +72,14 @@ extern char** g_envp;
 struct soinfo;
 struct android_namespace_t;
 
-extern android_namespace_t g_default_namespace;
+extern android_namespace_t *g_default_namespace;
 
 extern std::unordered_map<uintptr_t, soinfo*> g_soinfo_handles_map;
 
 // Error buffer "variable"
 char* linker_get_error_buffer();
 size_t linker_get_error_buffer_size();
+
+extern void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 
 #endif  /* __LINKER_GLOBALS_H */

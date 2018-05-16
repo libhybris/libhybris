@@ -37,7 +37,7 @@
 // By default, traces are sent to logcat, with the "linker" tag. You can
 // change this to go to stdout instead by setting the definition of
 // LINKER_DEBUG_TO_LOG to 0.
-#define LINKER_DEBUG_TO_LOG  1
+#define LINKER_DEBUG_TO_LOG  0
 
 #define TRACE_DEBUG          1
 #define DO_TRACE_LOOKUP      1
@@ -58,19 +58,12 @@
 
 #include <async_safe/log.h>
 
-__LIBC_HIDDEN__ extern int g_ld_debug_verbosity;
+extern int g_ld_debug_verbosity;
 
-#if LINKER_DEBUG_TO_LOG
 #define _PRINTVF(v, x...) \
     do { \
-      if (g_ld_debug_verbosity > (v)) async_safe_format_log(5-(v), "linker", x); \
+      if (g_ld_debug_verbosity > (v)) { fprintf(stderr, x); fprintf(stderr, "\n"); } \
     } while (0)
-#else /* !LINKER_DEBUG_TO_LOG */
-#define _PRINTVF(v, x...) \
-    do { \
-      if (g_ld_debug_verbosity > (v)) { async_safe_format_fd(1, x); write(1, "\n", 1); } \
-    } while (0)
-#endif /* !LINKER_DEBUG_TO_LOG */
 
 #define PRINT(x...)          _PRINTVF(-1, x)
 #define INFO(x...)           _PRINTVF(0, x)

@@ -36,12 +36,14 @@
 #include <android-base/scopeguard.h>
 #include <android-base/strings.h>
 
-#include <async_safe/log.h>
+#include <stdio.h>
 
 #include <stdlib.h>
 
 #include <string>
 #include <unordered_map>
+
+#include "hybris_compat.h"
 
 class ConfigParser {
  public:
@@ -66,7 +68,7 @@ class ConfigParser {
     std::string line;
     while(NextLine(&line)) {
       size_t found = line.find('#');
-      line = android::base::Trim(line.substr(0, found));
+      line = trim(line.substr(0, found));
 
       if (line.empty()) {
         continue;
@@ -85,8 +87,8 @@ class ConfigParser {
         return kError;
       }
 
-      *name = android::base::Trim(line.substr(0, found));
-      *value = android::base::Trim(line.substr(found + 1));
+      *name = trim(line.substr(0, found));
+      *value = trim(line.substr(found + 1));
       return kProperty;
     }
 
@@ -151,7 +153,7 @@ static std::string create_error_msg(const char* file,
                                     size_t lineno,
                                     const std::string& msg) {
   char buf[1024];
-  async_safe_format_buffer(buf, sizeof(buf), "%s:%zu: error: %s", file, lineno, msg.c_str());
+  snprintf(buf, sizeof(buf), "%s:%zu: error: %s", file, lineno, msg.c_str());
 
   return std::string(buf);
 }
@@ -161,7 +163,7 @@ static bool parse_config_file(const char* ld_config_file_path,
                               std::unordered_map<std::string, PropertyValue>* properties,
                               std::string* error_msg) {
   std::string content;
-  if (!android::base::ReadFileToString(ld_config_file_path, &content)) {
+  if (!readFileToString(ld_config_file_path, &content)) {
     if (errno != ENOENT) {
       *error_msg = std::string("error reading file \"") +
                    ld_config_file_path + "\": " + strerror(errno);
@@ -192,7 +194,7 @@ static bool parse_config_file(const char* ld_config_file_path,
     }
 
     if (result == ConfigParser::kProperty) {
-      if (!android::base::StartsWith(name, "dir.")) {
+      if (!startsWith(name, "dir.")) {
         DL_WARN("error parsing %s:%zd: unexpected property name \"%s\", "
                 "expected format dir.<section_name> (ignoring this line)",
                 ld_config_file_path,
@@ -297,10 +299,10 @@ class Properties {
       return std::vector<std::string>();
     }
 
-    std::vector<std::string> strings = android::base::Split(it->second.value(), ",");
+    std::vector<std::string> strings = split(it->second.value(), ",");
 
     for (size_t i = 0; i < strings.size(); ++i) {
-      strings[i] = android::base::Trim(strings[i]);
+      strings[i] = trim(strings[i]);
     }
 
     return strings;
@@ -330,7 +332,7 @@ class Properties {
     params.push_back({ "LIB", kLibParamValue });
     if (target_sdk_version_ != 0) {
       char buf[16];
-      async_safe_format_buffer(buf, sizeof(buf), "%d", target_sdk_version_);
+      snprintf(buf, sizeof(buf), "%d", target_sdk_version_);
       params.push_back({ "SDK_VER", buf });
     }
 
@@ -400,14 +402,14 @@ bool Config::read_binary_config(const char* ld_config_file_path,
   if (versioning_enabled) {
     std::string version_file = dirname(binary_realpath) + "/.version";
     std::string content;
-    if (!android::base::ReadFileToString(version_file, &content)) {
+    if (!readFileToString(version_file, &content)) {
       if (errno != ENOENT) {
         *error_msg = std::string("error reading version file \"") +
                      version_file + "\": " + strerror(errno);
         return false;
       }
     } else {
-      content = android::base::Trim(content);
+      content = trim(content);
       errno = 0;
       char* end = nullptr;
       const char* content_str = content.c_str();

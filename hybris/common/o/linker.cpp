@@ -44,6 +44,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "hybris_compat.h"
+
 #include <android-base/scopeguard.h>
 
 #include <async_safe/log.h>
@@ -66,35 +68,52 @@
 #include "linker_reloc_iterators.h"
 #include "linker_utils.h"
 
-#include "android-base/strings.h"
-#include "android-base/stringprintf.h"
-#include "ziparchive/zip_archive.h"
+//#include "android-base/strings.h"
+//#include "android-base/stringprintf.h"
+//#include "ziparchive/zip_archive.h"
+
+// Stay compatible with newer glibc
+#ifndef R_AARCH64_TLS_TPREL64
+#define R_AARCH64_TLS_TPREL64 R_AARCH64_TLS_TPREL
+#endif
+#ifndef R_AARCH64_TLS_DTPREL32
+#define R_AARCH64_TLS_DTPREL32 R_AARCH64_TLS_DTPREL
+#endif
+
+#define TMPFS_MAGIC 0x01021994
+
+#define DF_1_PIE        0x08000000
 
 // Override macros to use C++ style casts.
 #undef ELF_ST_TYPE
 #define ELF_ST_TYPE(x) (static_cast<uint32_t>(x) & 0xf)
 
-static android_namespace_t* g_anonymous_namespace = &g_default_namespace;
+static LinkerTypeAllocator<android_namespace_t> g_namespace_allocator;
+static LinkerTypeAllocator<LinkedListEntry<android_namespace_t>> g_namespace_list_allocator;
+android_namespace_t *g_default_namespace = new (g_namespace_allocator.alloc()) android_namespace_t();
+
+static android_namespace_t* g_anonymous_namespace = g_default_namespace;
 static std::unordered_map<std::string, android_namespace_t*> g_exported_namespaces;
 
 static LinkerTypeAllocator<soinfo> g_soinfo_allocator;
 static LinkerTypeAllocator<LinkedListEntry<soinfo>> g_soinfo_links_allocator;
-
-static LinkerTypeAllocator<android_namespace_t> g_namespace_allocator;
-static LinkerTypeAllocator<LinkedListEntry<android_namespace_t>> g_namespace_list_allocator;
 
 static const char* const kLdConfigFilePath = "/system/etc/ld.config.txt";
 
 #if defined(__LP64__)
 static const char* const kSystemLibDir     = "/system/lib64";
 static const char* const kVendorLibDir     = "/vendor/lib64";
+static const char* const kOdmLibDir        = "/odm/lib64";
 static const char* const kAsanSystemLibDir = "/data/asan/system/lib64";
 static const char* const kAsanVendorLibDir = "/data/asan/vendor/lib64";
+static const char* const kAsanOdmLibDir    = "/data/asan/odm/lib64";
 #else
 static const char* const kSystemLibDir     = "/system/lib";
 static const char* const kVendorLibDir     = "/vendor/lib";
+static const char* const kOdmLibDir        = "/odm/lib";
 static const char* const kAsanSystemLibDir = "/data/asan/system/lib";
 static const char* const kAsanVendorLibDir = "/data/asan/vendor/lib";
+static const char* const kAsanOdmLibDir    = "/data/asan/odm/lib";
 #endif
 
 static const char* const kAsanLibDirPrefix = "/data/asan";
@@ -102,6 +121,7 @@ static const char* const kAsanLibDirPrefix = "/data/asan";
 static const char* const kDefaultLdPaths[] = {
   kSystemLibDir,
   kVendorLibDir,
+  kOdmLibDir,
   nullptr
 };
 
@@ -110,6 +130,8 @@ static const char* const kAsanDefaultLdPaths[] = {
   kSystemLibDir,
   kAsanVendorLibDir,
   kVendorLibDir,
+  kAsanOdmLibDir,
+  kOdmLibDir,
   nullptr
 };
 
@@ -123,7 +145,7 @@ CFIShadowWriter* get_cfi_shadow() {
 }
 
 static bool is_system_library(const std::string& realpath) {
-  for (const auto& dir : g_default_namespace.get_default_library_paths()) {
+  for (const auto& dir : g_default_namespace->get_default_library_paths()) {
     if (file_is_in_dir(realpath, dir)) {
       return true;
     }
@@ -341,12 +363,12 @@ static void parse_path(const char* path, const char* delimiters,
 static void parse_LD_LIBRARY_PATH(const char* path) {
   std::vector<std::string> ld_libary_paths;
   parse_path(path, ":", &ld_libary_paths);
-  g_default_namespace.set_ld_library_paths(std::move(ld_libary_paths));
+  g_default_namespace->set_ld_library_paths(std::move(ld_libary_paths));
 }
 
 static bool realpath_fd(int fd, std::string* realpath) {
   std::vector<char> buf(PATH_MAX), proc_self_fd(PATH_MAX);
-  async_safe_format_buffer(&proc_self_fd[0], proc_self_fd.size(), "/proc/self/fd/%d", fd);
+  snprintf(&proc_self_fd[0], proc_self_fd.size(), "/proc/self/fd/%d", fd);
   if (readlink(&proc_self_fd[0], &buf[0], buf.size()) == -1) {
     PRINT("readlink(\"%s\") failed: %s [fd=%d]", &proc_self_fd[0], strerror(errno), fd);
     return false;
@@ -798,7 +820,7 @@ static const ElfW(Sym)* dlsym_handle_lookup(soinfo* si,
   // libraries and they are loaded in breath-first (correct) order we can just execute
   // dlsym(RTLD_DEFAULT, ...); instead of doing two stage lookup.
   if (si == solist_get_somain()) {
-    return dlsym_linear_lookup(&g_default_namespace, name, vi, found, nullptr, RTLD_DEFAULT);
+    return dlsym_linear_lookup(g_default_namespace, name, vi, found, nullptr, RTLD_DEFAULT);
   }
 
   SymbolName symbol_name(name);
@@ -889,18 +911,20 @@ soinfo* find_containing_library(const void* p) {
   return nullptr;
 }
 
+
 class ZipArchiveCache {
  public:
   ZipArchiveCache() {}
   ~ZipArchiveCache();
 
-  bool get_or_open(const char* zip_path, ZipArchiveHandle* handle);
+  //bool get_or_open(const char* zip_path, ZipArchiveHandle* handle);
  private:
   DISALLOW_COPY_AND_ASSIGN(ZipArchiveCache);
 
-  std::unordered_map<std::string, ZipArchiveHandle> cache_;
+  //std::unordered_map<std::string, ZipArchiveHandle> cache_;
 };
 
+/*
 bool ZipArchiveCache::get_or_open(const char* zip_path, ZipArchiveHandle* handle) {
   std::string key(zip_path);
 
@@ -925,13 +949,17 @@ bool ZipArchiveCache::get_or_open(const char* zip_path, ZipArchiveHandle* handle
   cache_[key] = *handle;
   return true;
 }
+*/
 
 ZipArchiveCache::~ZipArchiveCache() {
+/*
   for (const auto& it : cache_) {
     CloseArchive(it.second);
   }
+*/
 }
 
+/*
 static int open_library_in_zipfile(ZipArchiveCache* zip_archive_cache,
                                    const char* const input_path,
                                    off64_t* file_offset, std::string* realpath) {
@@ -1000,9 +1028,10 @@ static int open_library_in_zipfile(ZipArchiveCache* zip_archive_cache,
 
   return fd;
 }
+*/
 
 static bool format_path(char* buf, size_t buf_size, const char* path, const char* name) {
-  int n = async_safe_format_buffer(buf, buf_size, "%s/%s", path, name);
+  int n = snprintf(buf, buf_size, "%s/%s", path, name);
   if (n < 0 || n >= static_cast<int>(buf_size)) {
     PRINT("Warning: ignoring very long library path: %s/%s", path, name);
     return false;
@@ -1022,10 +1051,11 @@ static int open_library_on_paths(ZipArchiveCache* zip_archive_cache,
     }
 
     int fd = -1;
+/*
     if (strstr(buf, kZipFileSeparator) != nullptr) {
       fd = open_library_in_zipfile(zip_archive_cache, buf, file_offset, realpath);
     }
-
+*/
     if (fd == -1) {
       fd = TEMP_FAILURE_RETRY(open(buf, O_RDONLY | O_CLOEXEC));
       if (fd != -1) {
@@ -1054,11 +1084,11 @@ static int open_library(android_namespace_t* ns,
   // If the name contains a slash, we should attempt to open it directly and not search the paths.
   if (strchr(name, '/') != nullptr) {
     int fd = -1;
-
+/*
     if (strstr(name, kZipFileSeparator) != nullptr) {
       fd = open_library_in_zipfile(zip_archive_cache, name, file_offset, realpath);
     }
-
+*/
     if (fd == -1) {
       fd = TEMP_FAILURE_RETRY(open(name, O_RDONLY | O_CLOEXEC));
       if (fd != -1) {
@@ -1091,14 +1121,15 @@ static int open_library(android_namespace_t* ns,
   if (fd == -1 && ns->is_greylist_enabled() && is_greylisted(ns, name, needed_by)) {
     // try searching for it on default_namespace default_library_path
     fd = open_library_on_paths(zip_archive_cache, name, file_offset,
-                               g_default_namespace.get_default_library_paths(), realpath);
+                               g_default_namespace->get_default_library_paths(), realpath);
   }
   // END OF WORKAROUND
 
   return fd;
 }
 
-const char* fix_dt_needed(const char* dt_needed, const char* sopath __unused) {
+const char* fix_dt_needed(const char* dt_needed, const char* sopath) {
+  (void) sopath;
 #if !defined(__LP64__)
   // Work around incorrect DT_NEEDED entries for old apps: http://b/21364029
   if (get_application_target_sdk_version() < __ANDROID_API_M__) {
@@ -1265,9 +1296,9 @@ static bool load_library(android_namespace_t* ns,
               name, realpath.c_str(),
               needed_or_dlopened_by,
               ns->get_name(),
-              android::base::Join(ns->get_ld_library_paths(), ':').c_str(),
-              android::base::Join(ns->get_default_library_paths(), ':').c_str(),
-              android::base::Join(ns->get_permitted_paths(), ':').c_str());
+              join(ns->get_ld_library_paths(), ':').c_str(),
+              join(ns->get_default_library_paths(), ':').c_str(),
+              join(ns->get_permitted_paths(), ':').c_str());
       }
       return false;
     }
@@ -1482,6 +1513,7 @@ static bool find_library_internal(android_namespace_t* ns,
 static void soinfo_unload(soinfo* si);
 static void soinfo_unload(soinfo* soinfos[], size_t count);
 
+/*
 static void shuffle(std::vector<LoadTask*>* v) {
   for (size_t i = 0, size = v->size(); i < size; ++i) {
     size_t n = size - i;
@@ -1489,6 +1521,7 @@ static void shuffle(std::vector<LoadTask*>* v) {
     std::swap((*v)[n-1], (*v)[r]);
   }
 }
+*/
 
 // add_as_children - add first-level loaded libraries (i.e. library_names[], but
 // not their transitive dependencies) as children of the start_with library.
@@ -1602,7 +1635,7 @@ bool find_libraries(android_namespace_t* ns,
       load_list.push_back(task);
     }
   }
-  shuffle(&load_list);
+  //shuffle(&load_list);
 
   for (auto&& task : load_list) {
     if (!task->load()) {
@@ -1886,7 +1919,7 @@ void do_android_get_LD_LIBRARY_PATH(char* buffer, size_t buffer_size) {
   // See b/17302493 for further details.
   // Once the above bug is fixed, this code can be modified to use
   // snprintf again.
-  const auto& default_ld_paths = g_default_namespace.get_default_library_paths();
+  const auto& default_ld_paths = g_default_namespace->get_default_library_paths();
 
   size_t required_size = 0;
   for (const auto& path : default_ld_paths) {
@@ -1914,7 +1947,7 @@ static std::string android_dlextinfo_to_string(const android_dlextinfo* info) {
     return "(null)";
   }
 
-  return android::base::StringPrintf("[flags=0x%" PRIx64 ","
+  return stringPrintf("[flags=0x%" PRIx64 ","
                                      " reserved_addr=%p,"
                                      " reserved_size=0x%zx,"
                                      " relro_fd=%d,"
@@ -2140,7 +2173,7 @@ bool do_dlsym(void* handle,
     return false;
   }
 
-  DL_ERR("undefined symbol: %s", symbol_display_name(sym_name, sym_ver).c_str());
+  DL_ERR_NO_PRINT("undefined symbol: %s", symbol_display_name(sym_name, sym_ver).c_str());
   return false;
 }
 
@@ -2176,13 +2209,13 @@ bool init_anonymous_namespace(const char* shared_lib_sonames, const char* librar
                        library_search_path,
                        ANDROID_NAMESPACE_TYPE_ISOLATED,
                        nullptr,
-                       &g_default_namespace);
+                       g_default_namespace);
 
   if (anon_ns == nullptr) {
     return false;
   }
 
-  if (!link_namespaces(anon_ns, &g_default_namespace, shared_lib_sonames)) {
+  if (!link_namespaces(anon_ns, g_default_namespace, shared_lib_sonames)) {
     return false;
   }
 
@@ -2265,7 +2298,7 @@ bool link_namespaces(android_namespace_t* namespace_from,
                      android_namespace_t* namespace_to,
                      const char* shared_lib_sonames) {
   if (namespace_to == nullptr) {
-    namespace_to = &g_default_namespace;
+    namespace_to = g_default_namespace;
   }
 
   if (namespace_from == nullptr) {
@@ -2279,7 +2312,7 @@ bool link_namespaces(android_namespace_t* namespace_from,
     return false;
   }
 
-  auto sonames = android::base::Split(shared_lib_sonames, ":");
+  auto sonames = split(shared_lib_sonames, ":");
   std::unordered_set<std::string> sonames_set(sonames.begin(), sonames.end());
 
   ProtectedDataGuard guard;
@@ -2481,7 +2514,7 @@ bool soinfo::lookup_version_info(const VersionTracker& version_tracker, ElfW(Wor
 
 #if !defined(__mips__)
 #if defined(USE_RELA)
-static ElfW(Addr) get_addend(ElfW(Rela)* rela, ElfW(Addr) reloc_addr __unused) {
+static ElfW(Addr) get_addend(ElfW(Rela)* rela, ElfW(Addr) reloc_addr) {
   return rela->r_addend;
 }
 #else
@@ -2523,15 +2556,18 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       sym_name = get_string(symtab_[sym].st_name);
       const version_info* vi = nullptr;
 
-      if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
-        return false;
+      sym_addr = reinterpret_cast<ElfW(Addr)>(_get_hooked_symbol(sym_name, get_realpath()));
+      if (!sym_addr) {
+        if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
+          return false;
+        }
+
+        if (!soinfo_do_lookup(this, sym_name, vi, &lsi, global_group, local_group, &s)) {
+          return false;
+        }
       }
 
-      if (!soinfo_do_lookup(this, sym_name, vi, &lsi, global_group, local_group, &s)) {
-        return false;
-      }
-
-      if (s == nullptr) {
+      if (sym_addr == 0 && s == nullptr) {
         // We only allow an undefined symbol if this is a weak reference...
         s = &symtab_[sym];
         if (ELF_ST_BIND(s->st_info) != STB_WEAK) {
@@ -2587,7 +2623,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
             DL_ERR("unknown weak reloc type %d @ %p (%zu)", type, rel, idx);
             return false;
         }
-      } else { // We got a definition.
+      } else if (sym_addr == 0) { // We got a definition.
 #if !defined(__LP64__)
         // When relocating dso with text_relocation .text segment is
         // not executable. We need to restore elf flags before resolving
@@ -2681,14 +2717,14 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_ABS64:
         count_relocation(kRelocAbsolute);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO ABS64 %16llx <- %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO ABS64 %16" PRIx64 " <- %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, sym_name);
         *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend;
         break;
       case R_AARCH64_ABS32:
         count_relocation(kRelocAbsolute);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO ABS32 %16llx <- %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO ABS32 %16" PRIx64 " <- %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, sym_name);
         {
           const ElfW(Addr) min_value = static_cast<ElfW(Addr)>(INT32_MIN);
@@ -2697,7 +2733,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((sym_addr + addend) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend;
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%016" PRIx64 " out of range 0x%016" PRIx64 " to 0x%016" PRIx64,
                    sym_addr + addend, min_value, max_value);
             return false;
           }
@@ -2706,7 +2742,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_ABS16:
         count_relocation(kRelocAbsolute);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO ABS16 %16llx <- %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO ABS16 %16" PRIx64 " <- %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, sym_name);
         {
           const ElfW(Addr) min_value = static_cast<ElfW(Addr)>(INT16_MIN);
@@ -2715,7 +2751,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((sym_addr + addend) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) = (sym_addr + addend);
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%16" PRIx64 "out of range 0x%16" PRIx64 "to 0x%16" PRIx64,
                    sym_addr + addend, min_value, max_value);
             return false;
           }
@@ -2724,14 +2760,14 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_PREL64:
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO REL64 %16llx <- %16llx - %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO REL64 %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, rel->r_offset, sym_name);
         *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend - rel->r_offset;
         break;
       case R_AARCH64_PREL32:
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO REL32 %16llx <- %16llx - %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO REL32 %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, rel->r_offset, sym_name);
         {
           const ElfW(Addr) min_value = static_cast<ElfW(Addr)>(INT32_MIN);
@@ -2740,7 +2776,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((sym_addr + addend - rel->r_offset) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend - rel->r_offset;
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%016" PRIx64 " out of range 0x%016" PRIx64 " to 0x%016" PRIx64,
                    sym_addr + addend - rel->r_offset, min_value, max_value);
             return false;
           }
@@ -2749,7 +2785,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       case R_AARCH64_PREL16:
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
-        TRACE_TYPE(RELO, "RELO REL16 %16llx <- %16llx - %16llx %s\n",
+        TRACE_TYPE(RELO, "RELO REL16 %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 " %s\n",
                    reloc, sym_addr + addend, rel->r_offset, sym_name);
         {
           const ElfW(Addr) min_value = static_cast<ElfW(Addr)>(INT16_MIN);
@@ -2758,7 +2794,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
               ((sym_addr + addend - rel->r_offset) <= max_value)) {
             *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend - rel->r_offset;
           } else {
-            DL_ERR("0x%016llx out of range 0x%016llx to 0x%016llx",
+            DL_ERR("0x%016" PRIx64 " out of range 0x%016" PRIx64 " to 0x%016" PRIx64,
                    sym_addr + addend - rel->r_offset, min_value, max_value);
             return false;
           }
@@ -2778,11 +2814,11 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
         DL_ERR("%s R_AARCH64_COPY relocations are not supported", get_realpath());
         return false;
       case R_AARCH64_TLS_TPREL64:
-        TRACE_TYPE(RELO, "RELO TLS_TPREL64 *** %16llx <- %16llx - %16llx\n",
+        TRACE_TYPE(RELO, "RELO TLS_TPREL64 *** %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 "\n",
                    reloc, (sym_addr + addend), rel->r_offset);
         break;
       case R_AARCH64_TLS_DTPREL32:
-        TRACE_TYPE(RELO, "RELO TLS_DTPREL32 *** %16llx <- %16llx - %16llx\n",
+        TRACE_TYPE(RELO, "RELO TLS_DTPREL32 *** %16" PRIx64 " <- %16" PRIx64 " - %16" PRIx64 "\n",
                    reloc, (sym_addr + addend), rel->r_offset);
         break;
 #elif defined(__x86_64__)
@@ -3457,7 +3493,7 @@ bool soinfo::protect_relro() {
 }
 
 static std::vector<android_namespace_t*> init_default_namespace_no_config(bool is_asan) {
-  g_default_namespace.set_isolated(false);
+  g_default_namespace->set_isolated(false);
   auto default_ld_paths = is_asan ? kAsanDefaultLdPaths : kDefaultLdPaths;
 
   char real_path[PATH_MAX];
@@ -3470,16 +3506,17 @@ static std::vector<android_namespace_t*> init_default_namespace_no_config(bool i
     }
   }
 
-  g_default_namespace.set_default_library_paths(std::move(ld_default_paths));
+  g_default_namespace->set_default_library_paths(std::move(ld_default_paths));
 
   std::vector<android_namespace_t*> namespaces;
-  namespaces.push_back(&g_default_namespace);
+  namespaces.push_back(g_default_namespace);
   return namespaces;
 }
 
 std::vector<android_namespace_t*> init_default_namespaces(const char* executable_path) {
-  g_default_namespace.set_name("(default)");
+  g_default_namespace->set_name("(default)");
 
+#if DISABLED_FOR_HYRBIS_SUPPORT
   soinfo* somain = solist_get_somain();
 
   const char *interp = phdr_table_get_interpreter_name(somain->phdr, somain->phnum,
@@ -3489,6 +3526,8 @@ std::vector<android_namespace_t*> init_default_namespaces(const char* executable
   g_is_asan = bname != nullptr &&
               (strcmp(bname, "linker_asan") == 0 ||
                strcmp(bname, "linker_asan64") == 0);
+#endif
+  g_is_asan = 0;
 
   const Config* config = nullptr;
 
@@ -3528,13 +3567,13 @@ std::vector<android_namespace_t*> init_default_namespaces(const char* executable
   // 1. Initialize default namespace
   const NamespaceConfig* default_ns_config = config->default_namespace_config();
 
-  g_default_namespace.set_isolated(default_ns_config->isolated());
-  g_default_namespace.set_default_library_paths(default_ns_config->search_paths());
-  g_default_namespace.set_permitted_paths(default_ns_config->permitted_paths());
+  g_default_namespace->set_isolated(default_ns_config->isolated());
+  g_default_namespace->set_default_library_paths(default_ns_config->search_paths());
+  g_default_namespace->set_permitted_paths(default_ns_config->permitted_paths());
 
-  namespaces[default_ns_config->name()] = &g_default_namespace;
+  namespaces[default_ns_config->name()] = g_default_namespace;
   if (default_ns_config->visible()) {
-    g_exported_namespaces[default_ns_config->name()] = &g_default_namespace;
+    g_exported_namespaces[default_ns_config->name()] = g_default_namespace;
   }
 
   // 2. Initialize other namespaces
@@ -3568,6 +3607,7 @@ std::vector<android_namespace_t*> init_default_namespaces(const char* executable
       link_namespaces(namespace_from, namespace_to, ns_link.shared_libs().c_str());
     }
   }
+
   // we can no longer rely on the fact that libdl.so is part of default namespace
   // this is why we want to add ld-android.so to all namespaces from ld.config.txt
   soinfo* ld_android_so = solist_get_head();
@@ -3583,6 +3623,7 @@ std::vector<android_namespace_t*> init_default_namespaces(const char* executable
   for (auto kv : namespaces) {
     created_namespaces.push_back(kv.second);
   }
+
   return created_namespaces;
 }
 
