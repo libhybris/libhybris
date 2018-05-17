@@ -395,13 +395,22 @@ void soinfo::call_pre_init_constructors() {
 // Defined somewhere else in this linker.
 extern "C" void* android_dlsym(void* handle, const char* symbol);
 
+void (*bionic___system_properties_init)(void) = NULL;
+
 void soinfo::call_constructors() {
   if (constructors_called) {
     return;
   }
 
   if (soname_ != nullptr && strcmp(soname_, "libc.so") == 0) {
-    DEBUG("HYBRIS: =============> Skipping libc.so\n");
+    DEBUG("HYBRIS: =============> Skipping libc.so (but initializing properties)\n");
+    bionic___system_properties_init = (void(*)())android_dlsym(this, "__system_properties_init");
+    if (!bionic___system_properties_init) {
+        fprintf(stderr, "Could not initialize android system properties!\n");
+        abort();
+    }
+    bionic___system_properties_init();
+    constructors_called = true;
     return;
   }
 
@@ -440,7 +449,7 @@ void soinfo::call_constructors() {
 }
 
 void soinfo::call_destructors() {
-  if (!constructors_called) {
+  if (!constructors_called || (soname_ != nullptr && (strcmp(soname_, "libc.so") == 0))) {
     return;
   }
 

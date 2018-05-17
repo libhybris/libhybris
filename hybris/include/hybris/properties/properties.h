@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <stdint.h>
 
+#include <android-config.h>
+
 /* Based on Android */
 #define PROP_SERVICE_NAME "property_service"
 
@@ -33,6 +35,9 @@
 
 /* Only SETPROP is defined by Android, for GETPROP and LISTPROP to work
  * an extended Android init service needs to be in place */
+/* Starting from android 8 getprop and listprop are handled in libhybris
+ * via bionic, thus the init service does not need to be patched for this
+ * anymore */
 #define PROP_MSG_SETPROP 1
 #define PROP_MSG_GETPROP 2
 #define PROP_MSG_LISTPROP 3
@@ -41,15 +46,9 @@
 extern "C" {
 #endif
 
-	typedef struct prop_msg_s {
-		unsigned cmd;
-		char name[PROP_NAME_MAX];
-		char value[PROP_VALUE_MAX];
-	} prop_msg_t;
-
-	int property_set(const char *key, const char *value);
-	int property_get(const char *key, char *value, const char *default_value);
-	int property_list(void (*propfn)(const char *key, const char *value, void *cookie), void *cookie);
+int property_set(const char *key, const char *value);
+int property_get(const char *key, char *value, const char *default_value);
+int property_list(void (*propfn)(const char *key, const char *value, void *cookie), void *cookie);
 
 #ifdef __cplusplus
 }

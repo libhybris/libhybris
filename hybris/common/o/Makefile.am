@@ -1,7 +1,7 @@
 bionic = $(top_srcdir)/common/o/bionic
 bionic_libc = $(bionic)/libc
 
-modlibexecdir = $(libdir)/linker
+modlibexecdir = $(libdir)/libhybris/linker
 modlibexec_LTLIBRARIES = o.la
 
 ARCH_FLAGS =
