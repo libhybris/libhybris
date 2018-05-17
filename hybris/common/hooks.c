@@ -71,6 +71,12 @@
 #include <mntent.h>
 
 #include <hybris/properties/properties.h>
+
+// using private implementations
+extern int my_property_set(const char *key, const char *value);
+extern int my_property_get(const char *key, char *value, const char *default_value);
+extern int my_property_list(void (*propfn)(const char *key, const char *value, void *cookie), void *cookie);
+
 #include <hybris/common/hooks.h>
 
 #include <android-config.h>
@@ -1984,7 +1990,7 @@ static int _hybris_hook___system_property_read(const void *pi, char *name, char 
 {
     TRACE_HOOK("pi %p name '%s' value '%s'", pi, name, value);
 
-    return property_get(name, value, NULL);
+    return my_property_get(name, value, NULL);
 }
 
 static int _hybris_hook___system_property_foreach(void (*propfn)(const void *pi, void *cookie), void *cookie)
@@ -2055,7 +2061,7 @@ int _hybris_hook___system_property_get(const char *name, const char *value)
 {
     TRACE_HOOK("name '%s' value '%s'", name, value);
 
-    return property_get(name, (char*) value, NULL);
+    return my_property_get(name, (char*) value, NULL);
 }
 
 int _hybris_hook_property_get(const char *key, char *value, const char *default_value)
@@ -2063,14 +2069,14 @@ int _hybris_hook_property_get(const char *key, char *value, const char *default_
     TRACE_HOOK("key '%s' value '%s' default value '%s'",
                key, value, default_value);
 
-    return property_get(key, value, default_value);
+    return my_property_get(key, value, default_value);
 }
 
 int _hybris_hook_property_set(const char *key, const char *value)
 {
     TRACE_HOOK("key '%s' value '%s'", key, value);
 
-    return property_set(key, value);
+    return my_property_set(key, value);
 }
 
 char *_hybris_hook_getenv(const char *name)
@@ -2552,11 +2558,25 @@ void* _hybris_hook_android_get_exported_namespace(const char* name)
 #define cfree free
 #endif
 
+// old property hooks for pre-android 8 approach
+static struct _hook hooks_properties[] = {
+    HOOK_INDIRECT(property_get),
+    HOOK_INDIRECT(property_set),
+    HOOK_INDIRECT(__system_property_get),
+    HOOK_INDIRECT(__system_property_read),
+    HOOK_TO(__system_property_set, _hybris_hook_property_set),
+    HOOK_INDIRECT(__system_property_foreach),
+    HOOK_INDIRECT(__system_property_find),
+    HOOK_INDIRECT(__system_property_serial),
+    HOOK_INDIRECT(__system_property_wait),
+    HOOK_INDIRECT(__system_property_update),
+    HOOK_INDIRECT(__system_property_add),
+    HOOK_INDIRECT(__system_property_wait_any),
+    HOOK_INDIRECT(__system_property_find_nth),
+};
+
 static struct _hook hooks_common[] = {
 
-    HOOK_DIRECT(property_get),
-    HOOK_DIRECT(property_set),
-    HOOK_INDIRECT(__system_property_get),
     HOOK_DIRECT(getenv),
     HOOK_DIRECT_NO_DEBUG(printf),
     HOOK_INDIRECT(malloc),
@@ -2828,16 +2848,6 @@ static struct _hook hooks_common[] = {
     HOOK_DIRECT_NO_DEBUG(getgrgid),
     HOOK_DIRECT_NO_DEBUG(__cxa_atexit),
     HOOK_DIRECT_NO_DEBUG(__cxa_finalize),
-    HOOK_INDIRECT(__system_property_read),
-    HOOK_TO(__system_property_set, _hybris_hook_property_set),
-    HOOK_INDIRECT(__system_property_foreach),
-    HOOK_INDIRECT(__system_property_find),
-    HOOK_INDIRECT(__system_property_serial),
-    HOOK_INDIRECT(__system_property_wait),
-    HOOK_INDIRECT(__system_property_update),
-    HOOK_INDIRECT(__system_property_add),
-    HOOK_INDIRECT(__system_property_wait_any),
-    HOOK_INDIRECT(__system_property_find_nth),
     /* sys/prctl.h */
     HOOK_INDIRECT(prctl),
 };
@@ -2956,6 +2966,30 @@ void hybris_set_hook_callback(hybris_hook_cb callback)
     hook_callback = callback;
 }
 
+#define LINKER_NAME_JB "jb"
+#define LINKER_NAME_MM "mm"
+#define LINKER_NAME_N "n"
+#define LINKER_NAME_O "o"
+
+#if defined(WANT_LINKER_O)
+#define LINKER_VERSION_DEFAULT 27
+#define LINKER_NAME_DEFAULT LINKER_NAME_O
+#elif defined(WANT_LINKER_N)
+#define LINKER_VERSION_DEFAULT 25
+#define LINKER_NAME_DEFAULT LINKER_NAME_N
+#elif defined(WANT_LINKER_MM)
+#define LINKER_VERSION_DEFAULT 23
+#define LINKER_NAME_DEFAULT LINKER_NAME_MM
+#elif defined(WANT_LINKER_JB)
+#define LINKER_VERSION_DEFAULT 18
+#define LINKER_NAME_DEFAULT LINKER_NAME_JB
+#endif
+
+// create string version of default linker for get_android_sdk_version
+#define QUOTE(x) #x
+#define STRINGIFY(x) QUOTE(x)
+#define LINKER_VERSION_DEFAULT_STRING STRINGIFY(LINKER_VERSION_DEFAULT)
+
 static int get_android_sdk_version()
 {
     static int sdk_version = -1;
@@ -2963,12 +2997,20 @@ static int get_android_sdk_version()
     if (sdk_version > 0)
         return sdk_version;
 
+    // in case android-init is patched we can use my_property_get. in case it
+    // is not use the default linker. this is such that we don't need the
+    // properties patch in android >=8, because properties are read via bionic
+    // libc.so starting from android 8, since it is much easier to use the
+    // bionic implementation and avoid having to implement all the fancy bionic
+    // property features which are mandatory now and cannot be stubbed as
+    // previously.
     char value[PROP_VALUE_MAX];
-    property_get("ro.build.version.sdk", value, "19");
+    my_property_get("ro.build.version.sdk", value, LINKER_VERSION_DEFAULT_STRING);
 
-    sdk_version = 19;
-    if (strlen(value) > 0)
+    sdk_version = LINKER_VERSION_DEFAULT;
+    if (strlen(value) > 0) {
         sdk_version = atoi(value);
+    }
 
 #ifdef UBUNTU_LINKER_OVERRIDES
     /* We override both frieza and turbo here until they are ready to be
@@ -3004,6 +3046,7 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
     static intptr_t counter = -1;
     void *found = NULL;
     struct _hook key;
+    int sdk_version = -1;
 
     /* First check if we have a callback registered which could
      * give us a context specific hook implementation */
@@ -3016,6 +3059,7 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
 
     if (!sorted)
     {
+        qsort(hooks_properties, HOOKS_SIZE(hooks_properties), sizeof(hooks_properties[0]), hook_cmp);
         qsort(hooks_common, HOOKS_SIZE(hooks_common), sizeof(hooks_common[0]), hook_cmp);
         qsort(hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
         sorted = 1;
@@ -3023,9 +3067,18 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
 
     /* Allow newer hooks to override those which are available for all versions */
     key.name = sym;
+    sdk_version = get_android_sdk_version();
+
 #if defined(WANT_LINKER_MM) || defined(WANT_LINKER_N) || defined(WANT_LINKER_O)
-    if (get_android_sdk_version() > 21)
+    if (sdk_version > 21)
         found = bsearch(&key, hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
+#endif
+    // make sure to skip the property hooks only when o.so is actually loaded
+    // since for testing and we sometimes set things like 99 as sdk version.
+    // The o linker is loaded when sdk_version >= 27 and exists.
+#if defined(WANT_LINKER_O)
+    if (sdk_version < 27)
+        found = bsearch(&key, hooks_properties, HOOKS_SIZE(hooks_properties), sizeof(hooks_properties[0]), hook_cmp);
 #endif
     if (!found)
         found = bsearch(&key, hooks_common, HOOKS_SIZE(hooks_common), sizeof(hooks_common[0]), hook_cmp);
@@ -3071,23 +3124,6 @@ static void* __hybris_load_linker(const char *path)
     }
     return handle;
 }
-
-#define LINKER_NAME_JB "jb"
-#define LINKER_NAME_MM "mm"
-#define LINKER_NAME_N "n"
-#define LINKER_NAME_O "o"
-
-// These should be in order, such that we don't use for example the jellybean
-// linker for sdk_version > 25 (see __hybris_linker_init below).
-#if defined(WANT_LINKER_O)
-#define LINKER_NAME_DEFAULT LINKER_NAME_O
-#elif defined(WANT_LINKER_N)
-#define LINKER_NAME_DEFAULT LINKER_NAME_N
-#elif defined(WANT_LINKER_MM)
-#define LINKER_NAME_DEFAULT LINKER_NAME_MM
-#elif defined(WANT_LINKER_JB)
-#define LINKER_NAME_DEFAULT LINKER_NAME_JB
-#endif
 
 static int linker_initialized = 0;
 
