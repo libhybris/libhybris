@@ -172,7 +172,7 @@ static const struct wl_callback_listener frame_listener = {
     wayland_frame_callback
 };
 
-WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, android_wlegl *wlegl, alloc_device_t* alloc_device, gralloc_module_t *gralloc)
+WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, android_wlegl *wlegl)
     : m_android_wlegl(wlegl)
 {
     int wayland_ok;
@@ -195,9 +195,6 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
 	const_cast<int&>(ANativeWindow::maxSwapInterval) = 1;
     // This is the default as per the EGL documentation
     this->m_swap_interval = 1;
-
-    this->m_alloc = alloc_device;
-    m_gralloc = gralloc;
 
     m_usage=GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
     pthread_mutex_init(&mutex, NULL);
@@ -748,10 +745,10 @@ WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
     WaylandNativeWindowBuffer *wnb;
 
 #ifndef HYBRIS_NO_SERVER_SIDE_BUFFERS
-    wnb = new ServerWaylandBuffer(m_width, m_height, m_format, m_usage, m_gralloc, m_android_wlegl, wl_queue);
+    wnb = new ServerWaylandBuffer(m_width, m_height, m_format, m_usage, m_android_wlegl, wl_queue);
     wayland_roundtrip(this);
 #else
-    wnb = new ClientWaylandBuffer(m_alloc, m_width, m_height, m_format, m_usage);
+    wnb = new ClientWaylandBuffer(m_width, m_height, m_format, m_usage);
 #endif
     m_bufList.push_back(wnb);
     ++m_freeBufs;
@@ -866,7 +863,7 @@ static void ssb_buffer(void *data, android_wlegl_server_buffer_handle *, wl_buff
     wsb->format = format;
     wsb->stride = stride;
 
-    int ret = wsb->m_gralloc->registerBuffer(wsb->m_gralloc, wsb->handle);
+    int ret = hybris_gralloc_retain(wsb->handle);
     if (ret) {
         fprintf(stderr,"failed to register buffer\n");
         return;
@@ -882,13 +879,12 @@ static const struct android_wlegl_server_buffer_handle_listener server_handle_li
     ssb_buffer,
 };
 
-ServerWaylandBuffer::ServerWaylandBuffer(unsigned int w, unsigned int h, int f, int u, gralloc_module_t *gralloc, android_wlegl *android_wlegl, struct wl_event_queue *queue)
+ServerWaylandBuffer::ServerWaylandBuffer(unsigned int w, unsigned int h, int f, int u, android_wlegl *android_wlegl, struct wl_event_queue *queue)
                    : WaylandNativeWindowBuffer()
                    , m_buf(0)
 {
     ANativeWindowBuffer::width = w;
     ANativeWindowBuffer::height = h;
-    m_gralloc = gralloc;
     usage = u;
 
     wl_array_init(&ints);
@@ -904,9 +900,7 @@ ServerWaylandBuffer::~ServerWaylandBuffer()
     if (m_buf)
         wl_buffer_destroy(m_buf);
 
-    m_gralloc->unregisterBuffer(m_gralloc, handle);
-    native_handle_close(handle);
-    native_handle_delete(const_cast<native_handle_t *>(handle));
+    hybris_gralloc_release(handle, 1);
     wl_array_release(&ints);
     wl_array_release(&fds);
 }

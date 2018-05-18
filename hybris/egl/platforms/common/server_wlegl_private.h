@@ -23,7 +23,6 @@
 #ifndef SERVER_WLEGL_PRIVATE_H
 #define SERVER_WLEGL_PRIVATE_H
 
-#include <hardware/gralloc.h>
 #include <wayland-server.h>
 
 #include "server_wlegl.h"
@@ -32,9 +31,6 @@ struct server_wlegl {
 	struct wl_display *display;
 
 	struct wl_global *global;
-
-	const gralloc_module_t *gralloc;
-        alloc_device_t *alloc;
 };
 
 #endif /* SERVER_WLEGL_PRIVATE_H */

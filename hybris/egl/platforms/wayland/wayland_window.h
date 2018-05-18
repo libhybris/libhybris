@@ -28,7 +28,9 @@
 #define Wayland_WINDOW_H
 #include "nativewindowbase.h"
 #include <linux/fb.h>
-#include <hardware/gralloc.h>
+
+#include <hybris/gralloc/gralloc.h>
+
 extern "C" {
 
 #include <wayland-client.h>
@@ -36,6 +38,7 @@ extern "C" {
 #include "wayland-android-client-protocol.h"
 #include <pthread.h>
 }
+
 #include <list>
 #include <deque>
 
@@ -80,11 +83,9 @@ class ClientWaylandBuffer : public WaylandNativeWindowBuffer
 friend class WaylandNativeWindow;
 protected:
     ClientWaylandBuffer()
-        : m_alloc(0)
-    {}
+        : {}
 
-    ClientWaylandBuffer(alloc_device_t* alloc_device,
-                            unsigned int width,
+    ClientWaylandBuffer(    unsigned int width,
                             unsigned int height,
                             unsigned int format,
                             unsigned int usage)
@@ -98,9 +99,7 @@ protected:
         this->creation_callback = NULL;
         this->busy = 0;
         this->other = NULL;
-        this->m_alloc = alloc_device;
-        int alloc_ok = this->m_alloc->alloc(this->m_alloc,
-                this->width ? this->width : 1, this->height ? this->height : 1,
+        int alloc_ok = hybris_gralloc_allocate(this->width ? this->width : 1, this->height ? this->height : 1,
                 this->format, this->usage,
                 &this->handle, &this->stride);
         assert(alloc_ok == 0);
@@ -110,8 +109,7 @@ protected:
 
     ~ClientWaylandBuffer()
     {
-        if (this->m_alloc)
-             m_alloc->free(m_alloc, this->handle);
+        hybris_gralloc_release(this->handle, 1);
     }
 
     void init(struct android_wlegl *android_wlegl,
@@ -120,7 +118,6 @@ protected:
 
 protected:
     void* vaddr;
-    alloc_device_t* m_alloc;
 
 public:
 
@@ -131,7 +128,7 @@ public:
 class ServerWaylandBuffer : public WaylandNativeWindowBuffer
 {
 public:
-    ServerWaylandBuffer(unsigned int w, unsigned int h, int format, int usage, gralloc_module_t *gralloc, android_wlegl *android_wlegl, struct wl_event_queue *queue);
+    ServerWaylandBuffer(unsigned int w, unsigned int h, int format, int usage, android_wlegl *android_wlegl, struct wl_event_queue *queue);
     ~ServerWaylandBuffer();
     void init(struct android_wlegl *android_wlegl,
                                      struct wl_display *display,
@@ -139,7 +136,6 @@ public:
 
     struct wl_array ints;
     struct wl_array fds;
-    gralloc_module_t *m_gralloc;
     wl_buffer *m_buf;
 };
 
@@ -147,7 +143,7 @@ public:
 
 class WaylandNativeWindow : public BaseNativeWindow {
 public:
-    WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, android_wlegl *wlegl, alloc_device_t* alloc_device, gralloc_module_t *gralloc);
+    WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, android_wlegl *wlegl);
     ~WaylandNativeWindow();
 
     void lock();
@@ -210,7 +206,6 @@ private:
     unsigned int m_defaultHeight;
     unsigned int m_usage;
     struct android_wlegl *m_android_wlegl;
-    alloc_device_t* m_alloc;
     pthread_mutex_t mutex;
     pthread_cond_t cond;
     int m_queueReads;
@@ -219,7 +214,6 @@ private:
     struct wl_callback *frame_callback;
     int m_swap_interval;
     static int wayland_roundtrip(WaylandNativeWindow *display);
-    gralloc_module_t *m_gralloc;
 };
 
 #endif

@@ -27,6 +27,8 @@
 #include "server_wlegl_buffer.h"
 #include "server_wlegl_private.h"
 
+#include <hybris/gralloc/gralloc.h>
+
 static void
 destroy(struct wl_client *client, struct wl_resource *resource)
 {
@@ -69,14 +71,14 @@ server_wlegl_buffer_create(wl_client *client,
 	buffer->resource = wl_resource_create(client, &wl_buffer_interface, 1, id);
 	wl_resource_set_implementation(buffer->resource, &server_wlegl_buffer_impl, buffer, server_wlegl_buffer_dtor);
 
-	ret = wlegl->gralloc->registerBuffer(wlegl->gralloc, handle);
+	ret = hybris_gralloc_retain(handle);
 	if (ret) {
 		delete buffer;
 		return NULL;
 	}
 
 	buffer->buf = new RemoteWindowBuffer(
-	        width, height, stride, format, usage, handle, wlegl->gralloc, NULL);
+	        width, height, stride, format, usage, handle);
 	buffer->buf->common.incRef(&buffer->buf->common);
 	return buffer;
 }
@@ -92,14 +94,13 @@ server_wlegl_buffer_create_server(wl_client *client,
 			   server_wlegl *wlegl)
 {
 	server_wlegl_buffer *buffer = new server_wlegl_buffer;
-	int ret;
 
 	buffer->wlegl = wlegl;
 	buffer->resource = wl_resource_create(client, &wl_buffer_interface, 1, 0);
 	wl_resource_set_implementation(buffer->resource, &server_wlegl_buffer_impl, buffer, server_wlegl_buffer_dtor);
 
 	buffer->buf = new RemoteWindowBuffer(
-	        width, height, stride, format, usage, handle, wlegl->gralloc, wlegl->alloc);
+	        width, height, stride, format, usage, handle);
 	buffer->buf->setAllocated(true);
 	buffer->buf->common.incRef(&buffer->buf->common);
 	return buffer;

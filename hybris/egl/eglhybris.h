@@ -18,7 +18,6 @@
 #ifndef EGL_HYBRIS_H_
 #define EGL_HYBRIS_H_
 
-#include <hardware/gralloc.h>
 /* Needed for ICS window.h */
 #include <string.h>
 #include <system/window.h>
@@ -27,8 +26,6 @@
 extern "C" {
 #endif
 
-int hybris_register_buffer_handle(buffer_handle_t handle);
-int hybris_unregister_buffer_handle(buffer_handle_t handle);
 void hybris_dump_buffer_to_file(struct ANativeWindowBuffer *buf);
 
 void *hybris_android_egl_dlsym(const char *symbol);
