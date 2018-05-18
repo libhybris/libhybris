@@ -7,9 +7,7 @@
 #include <hybris/common/binding.h>
 #include <eglplatformcommon.h>
 #include "logging.h"
-
-static gralloc_module_t *gralloc = 0;
-static alloc_device_t *alloc = 0;
+#include <hybris/gralloc/gralloc.h>
 
 #pragma GCC visibility push(hidden)
 HYBRIS_LIBRARY_INITIALIZE(nullui, "/system/lib/libui.so");
@@ -19,12 +17,8 @@ static HYBRIS_IMPLEMENT_FUNCTION0(nullui, EGLNativeWindowType, android_createDis
 
 static void nullws_init_module(struct ws_egl_interface *egl_iface)
 {
-	int err;
-	hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
-	err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-	TRACE("++ %lu wayland: got gralloc %p err:%s", pthread_self(), gralloc, strerror(-err));
-	eglplatformcommon_init(egl_iface, gralloc, alloc);
-
+        hybris_gralloc_initialize(0);
+	eglplatformcommon_init(egl_iface);
 }
 
 static struct _EGLDisplay *nullws_GetDisplay(EGLNativeDisplayType display)

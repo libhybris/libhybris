@@ -29,13 +29,12 @@ libhybris_common_la_SOURCES = \
 	legacy_properties/properties.c \
 	legacy_properties/cache.c
 
-libhybris_common_la_CFLAGS =
-
 if WANT_RUNTIME_PROPERTY_CACHE
 libhybris_common_la_SOURCES += \
         legacy_properties/runtime_cache.c
+libhybris_common_la_CFLAGS =
 else
-libhybris_common_la_CFLAGS += -DNO_RUNTIME_PROPERTY_CACHE
+libhybris_common_la_CFLAGS = -DNO_RUNTIME_PROPERTY_CACHE
 endif
 if WANT_ARM_TRACING
 libhybris_common_la_SOURCES += \

@@ -151,12 +151,14 @@ AC_ARG_WITH(android-headers,
   [  --with-android-headers=DIR     Use android headers available in DIR. See utils/extract-headers.sh ],
   [
     AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test -f $withval/libnfc-nxp/phLibNfc.h])
+    AM_CONDITIONAL([HAS_GRALLOC1_HEADER], [test -f $withval/hardware/gralloc1.h])
     AS_IF([test -f $withval/libnfc-nxp/phLibNfc.h], [ANDROID_HEADERS_CFLAGS="-I$withval -I$withval/libnfc-nxp"],[ANDROID_HEADERS_CFLAGS="-I$withval"])
     AC_SUBST([ANDROID_HEADERS_CFLAGS])
   ],
   [
     PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit)
     AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [false])
+    AM_CONDITIONAL([HAS_GRALLOC1_HEADER], [false])
   ]
 )
 CPPFLAGS="$CPPFLAGS $ANDROID_HEADERS_CFLAGS"
@@ -264,6 +266,8 @@ AC_CONFIG_FILES([
 	glesv2/Makefile
 	hardware/Makefile
 	hardware/libhardware.pc
+	gralloc/Makefile
+	gralloc/libgralloc.pc
 	libnfc_nxp/Makefile
 	libnfc_nxp/libnfc_nxp.pc
 	libnfc_ndef_nxp/Makefile
