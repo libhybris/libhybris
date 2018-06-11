@@ -2966,12 +2966,14 @@ static void* __hybris_load_linker(const char *path)
 #define LINKER_NAME_MM "mm"
 #define LINKER_NAME_N "n"
 
+// These should be in order, such that we don't use for example the jellybean
+// linker for sdk_version > 25 (see __hybris_linker_init below).
 #if defined(WANT_LINKER_N)
 #define LINKER_NAME_DEFAULT LINKER_NAME_N
-#elif defined(WANT_LINKER_JB)
-#define LINKER_NAME_DEFAULT LINKER_NAME_JB
 #elif defined(WANT_LINKER_MM)
 #define LINKER_NAME_DEFAULT LINKER_NAME_MM
+#elif defined(WANT_LINKER_JB)
+#define LINKER_NAME_DEFAULT LINKER_NAME_JB
 #endif
 
 static int linker_initialized = 0;
