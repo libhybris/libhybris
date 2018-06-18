@@ -26,6 +26,8 @@
 
 #include <hybris/common/binding.h>
 
+#include "../egl/ws.h"
+
 #define GLESV1_CM_LIBRARY_PATH "libGLESv1_CM.so"
 
 HYBRIS_LIBRARY_INITIALIZE(glesv1_cm, GLESV1_CM_LIBRARY_PATH);
@@ -187,7 +189,6 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv1_cm, glDrawTexivOES, const GLint *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv1_cm, glDrawTexxvOES, const GLfixed *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv1_cm, glDrawTexfOES, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv1_cm, glDrawTexfvOES, const GLfloat *);
-HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv1_cm, glEGLImageTargetTexture2DOES, GLenum, GLeglImageOES);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv1_cm, glEGLImageTargetRenderbufferStorageOES, GLenum, GLeglImageOES);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv1_cm, glAlphaFuncxOES, GLenum, GLclampx);
 HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv1_cm, glClearColorxOES, GLclampx, GLclampx, GLclampx, GLclampx);
@@ -304,3 +305,11 @@ HYBRIS_IMPLEMENT_FUNCTION1(glesv1_cm, GLboolean, glExtIsProgramBinaryQCOM, GLuin
 HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv1_cm, glExtGetProgramBinarySourceQCOM, GLuint, GLenum, GLchar *, GLint *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv1_cm, glStartTilingQCOM, GLuint, GLuint, GLuint, GLuint, GLbitfield);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv1_cm, glEndTilingQCOM, GLbitfield);
+
+void glEGLImageTargetTexture2DOES(GLenum target, GLeglImageOES image)
+{
+    static void (*_glEGLImageTargetTexture2DOES)(GLenum, GLeglImageOES) FP_ATTRIB = NULL;
+    HYBRIS_DLSYSM(glesv1_cm, &_glEGLImageTargetTexture2DOES, "glEGLImageTargetTexture2DOES");
+    struct egl_image *img = image;
+    _glEGLImageTargetTexture2DOES(target, img ? img->egl_image : NULL);
+}
