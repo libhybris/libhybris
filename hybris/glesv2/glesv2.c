@@ -25,6 +25,8 @@
 
 #include <hybris/common/binding.h>
 
+#include "../egl/ws.h"
+
 static void *_libglesv2 = NULL;
 
 static void         (*_glActiveTexture)(GLenum texture) = NULL;
@@ -1044,7 +1046,8 @@ void glViewport (GLint x, GLint y, GLsizei width, GLsizei height)
 
 void glEGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
 {
-	(*_glEGLImageTargetTexture2DOES)(target, image);
+       struct egl_image *img = image;
+       (*_glEGLImageTargetTexture2DOES)(target, img ? img->egl_image : NULL);
 }
 
 
