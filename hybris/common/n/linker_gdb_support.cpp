@@ -31,28 +31,46 @@ r_debug _r_debug =
     {1, nullptr, reinterpret_cast<uintptr_t>(&rtld_db_dlactivity), r_debug::RT_CONSISTENT, 0};
 
 static pthread_mutex_t g__r_debug_mutex = PTHREAD_MUTEX_INITIALIZER;
-static link_map* r_debug_tail = nullptr;
+static link_map* r_debug_head = nullptr;
 
 void insert_link_map_into_debug_map(link_map* map) {
   // Stick the new library at the end of the list.
   // gdb tends to care more about libc than it does
   // about leaf libraries, and ordering it this way
   // reduces the back-and-forth over the wire.
-  if (r_debug_tail != nullptr) {
-    r_debug_tail->l_next = map;
-    map->l_prev = r_debug_tail;
-    map->l_next = nullptr;
+
+  ///// PATCHED: we don't want libhybris modifying glibc's
+  /////          link_map objects, which should not be linked
+  /////          to bionic's stripped link_map objects.
+  /////        ==> make a copy of the whole chain
+  if(r_debug_head == nullptr && _r_debug.r_map != nullptr) {
+    link_map *glibc_link_map = new link_map(*_r_debug.r_map);
+    r_debug_head = glibc_link_map;
+      
+    while(glibc_link_map->l_next != nullptr) {
+      link_map *copy_next_link_map = new link_map(*glibc_link_map->l_next);
+      glibc_link_map->l_next = copy_next_link_map;
+      copy_next_link_map->l_prev = glibc_link_map;
+      
+      glibc_link_map = copy_next_link_map;
+    }
+  }
+  
+  if (r_debug_head != nullptr) {
+    r_debug_head->l_prev = map;
+    map->l_next = r_debug_head;
+    map->l_prev = nullptr;
   } else {
     _r_debug.r_map = map;
     map->l_prev = nullptr;
     map->l_next = nullptr;
   }
-  r_debug_tail = map;
+  _r_debug.r_map = r_debug_head = map;
 }
 
 void remove_link_map_from_debug_map(link_map* map) {
-  if (r_debug_tail == map) {
-    r_debug_tail = map->l_prev;
+  if (r_debug_head == map) {
+    r_debug_head = map->l_next;
   }
 
   if (map->l_prev) {
