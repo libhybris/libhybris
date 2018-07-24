@@ -2656,6 +2656,7 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(setlinebuf),
     HOOK_TO(__errno, __errno_location),
     HOOK_INDIRECT(__set_errno),
+    HOOK_TO(__set_errno_internal, _hybris_hook___set_errno),
     HOOK_TO(__progname, &program_invocation_name),
     /* net specifics, to avoid __res_get_state */
     HOOK_INDIRECT(getaddrinfo),
