@@ -6,7 +6,8 @@
 #include "support.h"
 #include <stdarg.h>
 
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
+#if (ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5) \
+    && ANDROID_VERSION_MAJOR < 7
 extern "C" {
 #include <sync/sync.h>
 }
@@ -165,7 +166,8 @@ int BaseNativeWindow::_dequeueBuffer_DEPRECATED(ANativeWindow* window, ANativeWi
 
 	*buffer = static_cast<ANativeWindowBuffer*>(temp);
 
-#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5
+#if ANDROID_VERSION_MAJOR>=4 && ANDROID_VERSION_MINOR>=2 || ANDROID_VERSION_MAJOR>=5 \
+    && ANDROID_VERSION_MAJOR < 7
 	if (fenceFd >= 0)
 	{
 		sync_wait(fenceFd, -1);
