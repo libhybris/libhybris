@@ -17,8 +17,7 @@
  */
 
 /**
- * Bindings generated using:
- * https://github.com/thp/libhybris-nfc-wrapper-generator
+ * Bindings generated using scripts in: utils/generate_nfc
  **/
 
 #include <libnfc-nxp/phNfcStatus.h>
