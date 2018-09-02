@@ -1,0 +1,19 @@
+Clone to folder:
+    android_platform_frameworks_native
+URL:
+    https://android.googlesource.com/platform/frameworks/native
+
+Clone to folder:
+    android_platform_hardware_libhardware
+URL:
+    https://android.googlesource.com/platform/hardware/libhardware/
+
+Clone to folder:
+    android_platform_system_core
+URL:
+    https://android.googlesource.com/platform/system/core
+
+Clone to folder:
+    android_platform_external_libnfc-nxp
+URL:
+    https://android.googlesource.com/platform/external/libnfc-nxp

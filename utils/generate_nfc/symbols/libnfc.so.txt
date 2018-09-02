@@ -1,0 +1,603 @@
+
+libnfc.so:     file format elf32-little
+
+DYNAMIC SYMBOL TABLE:
+0000790c g    DF .text	00000020 phLibNfc_Mgt_ConfigureDriver
+0003d120 g    DF .text	00000394 phDal4Nfc_Config
+00000000      DF *UND*	00000000 __aeabi_unwind_cpp_pr0
+0000792c g    DF .text	00000020 phLibNfc_Mgt_UnConfigureDriver
+0003d018 g    DF .text	00000108 phDal4Nfc_ConfigRelease
+0000794c g    DF .text	00000020 phLibNfc_HW_Reset
+0003d630 g    DF .text	00000020 phDal4Nfc_Reset
+00000000      DF *UND*	00000000 __aeabi_unwind_cpp_pr1
+0000796c g    DF .text	00000004 phLibNfc_Download_Mode
+0003d650 g    DF .text	0000002c phDal4Nfc_Download
+00007970 g    DF .text	00000004 phLibNfc_Load_Firmware_Image
+0000f3ec g    DF .text	000000fc dlopen_firmware
+00007974 g    DF .text	00000024 phLibNfc_Mgt_Recovery
+00000000      DF *UND*	00000000 usleep
+00007998 g    DF .text	00000018 phLibNfc_SetIsoXchgTimeout
+0004102e g    DO .data	00000001 nxp_nfc_isoxchg_timeout
+000079b0 g    DF .text	00000014 phLibNfc_GetIsoXchgTimeout
+000079c4 g    DF .text	00000018 phLibNfc_SetHciTimeout
+00041028 g    DO .data	00000004 nxp_nfc_hci_response_timeout
+000079dc g    DF .text	00000014 phLibNfc_GetHciTimeout
+000079f0 g    DF .text	00000018 phLibNfc_SetFelicaTimeout
+00041021 g    DO .data	00000001 nxp_nfc_felica_timeout
+00007a08 g    DF .text	00000014 phLibNfc_GetFelicaTimeout
+00007a1c g    DF .text	00000018 phLibNfc_SetMifareRawTimeout
+0004102d g    DO .data	00000001 nxp_nfc_mifareraw_timeout
+00007a34 g    DF .text	00000014 phLibNfc_GetMifareRawTimeout
+00007a48 g    DF .text	000000f4 phLibNfc_Mgt_DeInitialize
+0000fa30 g    DF .text	000000ac phHal4Nfc_Close
+0000fadc g    DF .text	00000130 phHal4Nfc_Hal4Reset
+0003c0ec g    DF .text	0000000c phOsalNfc_FreeMemory
+0000c370 g    DF .text	000000cc phLibNfc_Ndef_DeInit
+00007b3c g    DF .text	00000030 phLibNfc_Pending_Shutdown
+00007b6c g    DF .text	000003c8 phLibNfc_Mgt_Reset
+00000000      DF *UND*	00000000 memset
+00041058 g    DO .bss	00000004 pNdefRecord
+00041498 g    DO .bss	00000014 NdefInfo
+00007f34 g    DF .text	000000ec phLibNfc_UpdateNextState
+00008020 g    DF .text	000000fc phLibNfc_Mgt_Initialize
+0003c0e8 g    DF .text	00000004 phOsalNfc_GetMemory
+0000f4e8 g    DF .text	00000278 phHal4Nfc_Open
+0000c1f8 g    DF .text	00000178 phLibNfc_Ndef_Init
+0000811c g    DF .text	00000064 phLibNfc_UpdateCurState
+0000e4b8 g    DF .text	000000c4 phHal4Nfc_RegisterNotification
+00041480 g    DO .bss	00000018 sSecuredElementInfo
+0003c0fc g    DF .text	00000014 phOsalNfc_RaiseException
+00008424 g    DF .text	00000180 phLibNfc_Mgt_GetstackCapabilities
+0000fc0c g    DF .text	000000b8 phHal4Nfc_GetDeviceCapabilities
+00000000      DF *UND*	00000000 memcpy
+00000000      DF *UND*	00000000 memcmp
+00000000      DF *UND*	00000000 __android_log_print
+000410a0 g    DO .bss	00000004 nxp_nfc_full_version
+000085a4 g    DF .text	000001c4 phLibNfc_Mgt_ConfigureTestMode
+00041040 g    DO .bss	00000004 gpphLibContext
+00008814 g    DF .text	000000b8 phLibNfc_config_discovery_cb
+000088cc g    DF .text	000000e8 phLibNfc_Mgt_ConfigureDiscovery
+0000db9c g    DF .text	000001a0 phHal4Nfc_ConfigureDiscovery
+000089b4 g    DF .text	00000130 phLibNfc_RemoteDev_CheckPresence
+0001130c g    DF .text	000000cc phHal4Nfc_PresenceCheck
+00010bb8 g    DF .text	0000059c phHal4Nfc_Transceive
+000109a8 g    DF .text	00000210 phHal4Nfc_Connect
+0000ac0c g    DF .text	00000140 phLibNfc_Reconnect_Mifare_Cb
+0000929c g    DF .text	000000c0 phLibNfc_RemoteDev_NtfRegister
+0000935c g    DF .text	00000078 phLibNfc_RemoteDev_NtfUnregister
+0000e57c g    DF .text	000000c8 phHal4Nfc_UnregisterNotification
+000093d4 g    DF .text	0000015c phLibNfc_RemoteDev_ReConnect
+00009530 g    DF .text	00000164 phLibNfc_RemoteDev_Connect
+00009694 g    DF .text	0000012c phLibNfc_RemoteDev_Disconnect
+0001120c g    DF .text	00000100 phHal4Nfc_Disconnect
+000097c0 g    DF .text	00000264 phLibNfc_RemoteDev_Transceive
+00009a24 g    DF .text	00000128 phLibNfc_Mgt_SetP2P_ConfigParams
+0000da58 g    DF .text	00000144 phHal4Nfc_ConfigParameters
+00000000      DF *UND*	00000000 __stack_chk_fail
+00000000      DO *UND*	00000000 __stack_chk_guard
+0002541c g    DF .text	000000bc phFriNfc_LlcpTransport_CloseAll
+00009d44 g    DF .text	0000018c phLibNfc_Mgt_SetLlcp_ConfigParams
+00023708 g    DF .text	00000154 phFriNfc_Llcp_EncodeLinkParams
+00023be8 g    DF .text	000000f0 phFriNfc_Llcp_Reset
+00024a6c g    DF .text	00000188 phFriNfc_LlcpTransport_Reset
+00009ed0 g    DF .text	0000010c phLibNfc_Llcp_CheckLlcp
+00023cd8 g    DF .text	00000060 phFriNfc_Llcp_ChkLlcp
+00009fdc g    DF .text	00000058 phLibNfc_Llcp_Activate
+00023d38 g    DF .text	0000002c phFriNfc_Llcp_Activate
+0000a034 g    DF .text	00000058 phLibNfc_Llcp_Deactivate
+00023d64 g    DF .text	00000084 phFriNfc_Llcp_Deactivate
+0000a08c g    DF .text	0000004c phLibNfc_Llcp_GetLocalInfo
+00023de8 g    DF .text	0000003c phFriNfc_Llcp_GetLocalInfo
+0000a0d8 g    DF .text	00000064 phLibNfc_Llcp_GetRemoteInfo
+00023e24 g    DF .text	0000003c phFriNfc_Llcp_GetRemoteInfo
+0000a13c g    DF .text	000000d8 phLibNfc_Llcp_DiscoverServices
+000250a4 g    DF .text	0000004c phFriNfc_LlcpTransport_DiscoverServices
+0000a214 g    DF .text	0000008c phLibNfc_Llcp_Socket
+000250f0 g    DF .text	00000300 phFriNfc_LlcpTransport_Socket
+0000a2a0 g    DF .text	00000034 phLibNfc_Llcp_Close
+000253f0 g    DF .text	0000002c phFriNfc_LlcpTransport_Close
+0000a2d4 g    DF .text	00000040 phLibNfc_Llcp_SocketGetLocalOptions
+00025034 g    DF .text	00000038 phFriNfc_LlcpTransport_SocketGetLocalOptions
+0000a314 g    DF .text	00000060 phLibNfc_Llcp_SocketGetRemoteOptions
+0002506c g    DF .text	00000038 phFriNfc_LlcpTransport_SocketGetRemoteOptions
+0000a374 g    DF .text	00000044 phLibNfc_Llcp_Bind
+000254d8 g    DF .text	00000218 phFriNfc_LlcpTransport_Bind
+0000a3b8 g    DF .text	00000048 phLibNfc_Llcp_Listen
+000256f0 g    DF .text	00000054 phFriNfc_LlcpTransport_Listen
+0000a400 g    DF .text	0000007c phLibNfc_Llcp_Accept
+00025744 g    DF .text	000000d0 phFriNfc_LlcpTransport_Accept
+0000a47c g    DF .text	00000068 phLibNfc_Llcp_Reject
+00025814 g    DF .text	00000034 phFriNfc_LlcpTransport_Reject
+0000a4e4 g    DF .text	0000006c phLibNfc_Llcp_Connect
+00025848 g    DF .text	000000cc phFriNfc_LlcpTransport_Connect
+0000a550 g    DF .text	00000070 phLibNfc_Llcp_ConnectByUri
+00025914 g    DF .text	000000c0 phFriNfc_LlcpTransport_ConnectByUri
+0000a5c0 g    DF .text	00000068 phLibNfc_Llcp_Disconnect
+000259d4 g    DF .text	00000038 phFriNfc_LlcpTransport_Disconnect
+0000a628 g    DF .text	00000070 phLibNfc_Llcp_Recv
+00025a84 g    DF .text	00000060 phFriNfc_LlcpTransport_Recv
+0000a698 g    DF .text	00000070 phLibNfc_Llcp_RecvFrom
+00025bbc g    DF .text	00000064 phFriNfc_LlcpTransport_RecvFrom
+0000a708 g    DF .text	00000070 phLibNfc_Llcp_Send
+00025a0c g    DF .text	00000078 phFriNfc_LlcpTransport_Send
+0000a778 g    DF .text	00000084 phLibNfc_Llcp_SendTo
+00025ae4 g    DF .text	000000d8 phFriNfc_LlcpTransport_SendTo
+0000a930 g    DF .text	000002dc phLibNfc_Mgt_IoCtl
+0000f760 g    DF .text	000002d0 phHal4Nfc_Ioctl
+0000fe6c g    DF .text	000000e8 phHal4Nfc_Switch_Swp_Mode
+00000000      DF *UND*	00000000 phFriNfc_NdefRecord_GetRecords
+00037da8 g    DF .text	00000044 phFriNfc_NdefReg_DispatchPacket
+00037e14 g    DF .text	00000564 phFriNfc_NdefReg_Process
+00037d04 g    DF .text	000000a4 phFriNfc_NdefReg_RmCb
+00000000      DF *UND*	00000000 phFriNfc_NdefRecord_Parse
+000378b4 g    DF .text	00000238 phFriNfc_NdefMap_GetContainerSize
+0003bf2c g    DF .text	00000070 phOsalNfc_Timer_Stop
+0003c0a0 g    DF .text	00000048 phOsalNfc_Timer_Delete
+0000bc40 g    DF .text	0000030c phLibNfc_Ndef_Read
+00037338 g    DF .text	00000040 phFriNfc_NdefMap_SetCompletionRoutine
+00037378 g    DF .text	00000150 phFriNfc_NdefMap_RdNdef
+0000bf4c g    DF .text	000002ac phLibNfc_Ndef_Write
+00037850 g    DF .text	00000064 phFriNfc_NdefMap_EraseNdef
+000374c8 g    DF .text	00000180 phFriNfc_NdefMap_WrNdef
+0000c43c g    DF .text	000001c0 phLibNfc_Ndef_CheckNdef
+0003715c g    DF .text	000001dc phFriNfc_NdefMap_Reset
+000376a0 g    DF .text	000000f4 phFriNfc_NdefMap_ChkNdef
+0003be58 g    DF .text	000000d4 phOsalNfc_Timer_Start
+0003bdac g    DF .text	000000ac phOsalNfc_Timer_Create
+0000c5fc g    DF .text	000001f4 phLibNfc_RemoteDev_FormatNdef
+0003b188 g    DF .text	000000cc phFriNfc_NdefSmtCrd_Reset
+0003b254 g    DF .text	00000044 phFriNfc_NdefSmtCrd_SetCR
+0003b2f8 g    DF .text	000000f0 phFriNfc_NdefSmtCrd_Format
+0000c7f0 g    DF .text	000002f0 phLibNfc_ConvertToReadOnlyNdef
+00037648 g    DF .text	00000058 phFriNfc_NdefMap_ConvertToReadOnly
+0003b298 g    DF .text	00000060 phFriNfc_NdefSmtCrd_ConvertToReadOnly
+0002ebec g    DF .text	00000130 phFriNfc_MifareStdMap_ConvertToReadOnly
+0000cae0 g    DF .text	00000268 phLibNfc_Ndef_SearchNdefContent
+00037c14 g    DF .text	0000007c phFriNfc_NdefReg_Reset
+00037c90 g    DF .text	00000074 phFriNfc_NdefReg_AddCb
+0000d0d0 g    DF .text	0000008c phLibNfc_SE_NtfRegister
+0000d15c g    DF .text	00000070 phLibNfc_SE_NtfUnregister
+0000d1cc g    DF .text	00000100 phLibNfc_SE_GetSecureElementList
+0000d2cc g    DF .text	00000320 phLibNfc_SE_SetMode
+0000fd0c g    DF .text	00000160 phHal4Nfc_Switch_SMX_Mode
+0000d780 g    DF .text	00000124 phLibNfc_RemoteDev_Receive
+000101b4 g    DF .text	00000158 phHal4Nfc_Receive
+0000d8a4 g    DF .text	000001b4 phLibNfc_RemoteDev_Send
+0000ffe8 g    DF .text	000001cc phHal4Nfc_Send
+00014484 g    DF .text	00000180 phHciNfc_Configure
+00014604 g    DF .text	00000088 phHciNfc_Config_Discovery
+0001468c g    DF .text	00000120 phHciNfc_Restart_Discovery
+0000dd3c g    DF .text	000000b4 phHal4Nfc_ConfigureComplete
+000116f8 g    DF .text	00000180 phHal4Nfc_DisconnectComplete
+0000ddf0 g    DF .text	000006c8 phHal4Nfc_TargetDiscoveryComplete
+000148ec g    DF .text	00000068 phHciNfc_Select_Next_Target
+000414b8 g    DO .bss	00000004 gpphHal4Nfc_Hwref
+0000fcc4 g    DF .text	00000048 phHal4Nfc_HandleEmulationEvent
+00011878 g    DF .text	00000128 phHal4Nfc_TransceiveComplete
+0001030c g    DF .text	0000024c phHal4Nfc_SendCompleteHandler
+000114e8 g    DF .text	00000060 phHal4Nfc_ReactivationComplete
+000113d8 g    DF .text	00000110 phHal4Nfc_PresenceChkComplete
+00011548 g    DF .text	000001b0 phHal4Nfc_ConnectComplete
+00010558 g    DF .text	000001ac phHal4Nfc_RecvCompleteHandler
+000143b0 g    DF .text	000000d4 phHciNfc_Release
+00010830 g    DF .text	0000013c phHal4Nfc_HandleP2PDeActivate
+00010704 g    DF .text	0000012c phHal4Nfc_P2PActivateComplete
+00000000      DF *UND*	00000000 dlopen
+00000000      DF *UND*	00000000 dlsym
+000141e0 g    DF .text	000001d0 phHciNfc_Initialise
+0003cf04 g    DF .text	00000114 phDal4Nfc_Register
+00020850 g    DF .text	0000011c phLlcNfc_Register
+00015008 g    DF .text	00000080 phHciNfc_System_Get_Info
+00014edc g    DF .text	000000b4 phHciNfc_System_Test
+00014f90 g    DF .text	00000078 phHciNfc_System_Configure
+00014e60 g    DF .text	0000007c phHciNfc_PRBS_Test
+000133bc g    DF .text	00000378 phDnldNfc_Upgrade
+00013338 g    DF .text	00000084 phDnldNfc_Run_Check
+00041080 g    DO .bss	00000004 nxp_nfc_fw
+0001482c g    DF .text	000000c0 phHciNfc_Switch_SmxMode
+000147ac g    DF .text	00000080 phHciNfc_Switch_SwpMode
+00014cd4 g    DF .text	000000d8 phHciNfc_Send_Data
+00011154 g    DF .text	000000b8 phHal4Nfc_Disconnect_Execute
+0001096c g    DF .text	0000003c phHal4Nfc_Felica_RePoll
+000414b4 g    DO .bss	00000004 gpHal4Ctxt
+00014a14 g    DF .text	00000104 phHciNfc_Reactivate
+0003c36c g    DF .text	0000004c phOsalNfc_MemCompare
+00014954 g    DF .text	000000c0 phHciNfc_Connect
+00014bf0 g    DF .text	000000e4 phHciNfc_Exchange_Data
+00014b18 g    DF .text	000000d8 phHciNfc_Disconnect
+00014dac g    DF .text	000000b4 phHciNfc_Presence_Check
+0003cb70 g    DF .text	00000044 phDal4Nfc_Unregister
+00017534 g    DF .text	00000018 phHciNfc_Build_HCPFrame
+00017584 g    DF .text	000001b0 phHciNfc_Send_HCP
+0001afa0 g    DF .text	00000214 phHciNfc_Update_PipeInfo
+00013b10 g    DF .text	00000058 phHciNfc_Admin_Release
+0001b3b0 g    DF .text	00000050 phHciNfc_Close_Pipe
+00013b68 g    DF .text	000000b8 phHciNfc_Send_Admin_Event
+00013c74 g    DF .text	00000134 phHciNfc_Send_Admin_Cmd
+00013da8 g    DF .text	00000438 phHciNfc_Admin_Initialise
+00017214 g    DF .text	0000003c phHciNfc_Allocate_Resource
+0001acc0 g    DF .text	0000028c phHciNfc_Create_All_Pipes
+0001b360 g    DF .text	00000050 phHciNfc_Open_Pipe
+00017734 g    DF .text	0000011c phHciNfc_Send_Generic_Cmd
+00017850 g    DF .text	00000054 phHciNfc_Set_Param
+0001b1b4 g    DF .text	000001ac phHciNfc_Update_Pipe
+0001e180 g    DF .text	00000034 phHciNfc_FSM_Update
+0001e1f8 g    DF .text	0000002c phHciNfc_FSM_Rollback
+000178a4 g    DF .text	0000018c phHciNfc_Send_Complete
+00017a30 g    DF .text	0000049c phHciNfc_Receive_Complete
+00018048 g    DF .text	00000314 phHciNfc_Notify_Event
+0001e728 g    DF .text	00000250 phHciNfc_Release_Sequence
+000174d4 g    DF .text	00000030 phHciNfc_Release_Lower
+00017250 g    DF .text	00000284 phHciNfc_Release_Resources
+0001a82c g    DF .text	0000009c phHciNfc_NfcIP_SetATRInfo
+0001fd18 g    DF .text	00000078 phHciNfc_SWP_Protection
+0001fe8c g    DF .text	0000007c phHciNfc_SWP_Update_Sequence
+0001f02c g    DF .text	00000094 phHciNfc_EmulationCfg_Sequence
+00016880 g    DF .text	00000098 phHciNfc_Emulation_Cfg
+0001edcc g    DF .text	00000260 phHciNfc_PollLoop_Sequence
+0001d170 g    DF .text	00000130 phHciNfc_ReaderMgmt_Deselect
+0001fd90 g    DF .text	000000fc phHciNfc_SWP_Configure_Mode
+0001f0c0 g    DF .text	000001c4 phHciNfc_SmartMx_Mode_Sequence
+0001d93c g    DF .text	000000c8 phHciNfc_ReaderMgmt_Activate_Next
+0001de60 g    DF .text	000001b0 phHciNfc_ReaderMgmt_Select
+0001da04 g    DF .text	0000015c phHciNfc_ReaderMgmt_Reactivate
+0001f530 g    DF .text	00000110 phHciNfc_Disconnect_Sequence
+0001d6e0 g    DF .text	0000025c phHciNfc_ReaderMgmt_Exchange_Data
+0001a278 g    DF .text	0000010c phHciNfc_NfcIP_Send_Data
+0001db60 g    DF .text	00000210 phHciNfc_ReaderMgmt_Presence_Check
+00015da8 g    DF .text	000000b4 phHciNfc_DevMgmt_Test
+000156f4 g    DF .text	0000009c phHciNfc_DevMgmt_Get_Info
+00015658 g    DF .text	0000009c phHciNfc_DevMgmt_Configure
+00015088 g    DF .text	0000005c phHciNfc_Get_Link_Status
+00019930 g    DF .text	0000004c phHciNfc_LinkMgmt_Open
+0001754c g    DF .text	00000038 phHciNfc_Append_HCPFrame
+000154f8 g    DF .text	00000068 phHciNfc_DevMgmt_Init_Resources
+00015560 g    DF .text	00000040 phHciNfc_DevMgmt_Get_PipeID
+000155a0 g    DF .text	00000034 phHciNfc_DevMgmt_Get_Test_Result
+000155d4 g    DF .text	00000024 phHciNfc_DevMgmt_Set_Test_Result
+000155f8 g    DF .text	00000060 phHciNfc_DevMgmt_Update_PipeInfo
+00015790 g    DF .text	00000494 phHciNfc_DevMgmt_Initialise
+00015c24 g    DF .text	00000108 phHciNfc_DevMgmt_Release
+00015d2c g    DF .text	0000007c phHciNfc_DevMgmt_Update_Sequence
+00016104 g    DF .text	000000dc phHciNfc_Uicc_Connectivity
+000161e0 g    DF .text	0000002c phHciNfc_Uicc_Get_PipeID
+0001620c g    DF .text	0000005c phHciNfc_Uicc_Update_PipeInfo
+00016268 g    DF .text	0000009c phHciNfc_EmuMgmt_Update_Seq
+00016304 g    DF .text	0000008c phHciNfc_Uicc_Connect_Status
+0001fc9c g    DF .text	00000048 phHciNfc_SWP_Get_Status
+00016390 g    DF .text	00000394 phHciNfc_EmuMgmt_Initialise
+00020378 g    DF .text	000000fc phHciNfc_WI_Configure_Mode
+0001a648 g    DF .text	00000084 phHciNfc_NfcIP_SetMode
+0001fce4 g    DF .text	00000034 phHciNfc_SWP_Get_Bitrate
+0001ab74 g    DF .text	00000078 phHciNfc_NfcIP_SetMergeSak
+0001fc24 g    DF .text	00000078 phHciNfc_SWP_Configure_Default
+000202b0 g    DF .text	00000070 phHciNfc_WI_Configure_Default
+00020474 g    DF .text	00000080 phHciNfc_WI_Configure_Notifications
+00016724 g    DF .text	0000015c phHciNfc_EmuMgmt_Release
+0001ff08 g    DF .text	00000098 phHciNfc_SWP_Config_Sequence
+0001cb14 g    DF .text	000000d8 phHciNfc_ReaderMgmt_Update_Sequence
+00016d0c g    DF .text	0000002c phHciNfc_Felica_Get_PipeID
+00016d38 g    DF .text	0000006c phHciNfc_Felica_Init_Resources
+00016da4 g    DF .text	00000054 phHciNfc_Felica_Update_PipeInfo
+00016df8 g    DF .text	00000060 phHciNfc_Felica_Update_Info
+00016e58 g    DF .text	00000120 phHciNfc_Felica_Info_Sequence
+00017ef0 g    DF .text	0000007c phHciNfc_Tag_Notify
+00016f78 g    DF .text	00000148 phHciNfc_Send_Felica_Command
+000170c0 g    DF .text	00000088 phHciNfc_Felica_Request_Mode
+00017504 g    DF .text	00000030 phHciNfc_Receive
+0001f640 g    DF .text	000003a4 phHciNfc_Resume_Sequence
+0001e978 g    DF .text	00000454 phHciNfc_Error_Sequence
+00017ecc g    DF .text	00000024 phHciNfc_Notify
+0001e1b4 g    DF .text	00000044 phHciNfc_FSM_Complete
+00017f6c g    DF .text	00000088 phHciNfc_Target_Select_Notify
+00017ff4 g    DF .text	00000054 phHciNfc_Release_Notify
+000185b4 g    DF .text	0000006c phHciNfc_IDMgmt_Init_Resources
+00018620 g    DF .text	0000002c phHciNfc_IDMgmt_Get_PipeID
+0001864c g    DF .text	00000090 phHciNfc_IDMgmt_Update_Sequence
+000186dc g    DF .text	00000058 phHciNfc_IDMgmt_Initialise
+00018734 g    DF .text	00000164 phHciNfc_IDMgmt_Info_Sequence
+00018898 g    DF .text	00000030 phHciNfc_IDMgmt_Release
+000188c8 g    DF .text	0000004c phHciNfc_IDMgmt_Update_PipeInfo
+00018b94 g    DF .text	00000064 phHciNfc_ISO15693_Init_Resources
+00018bf8 g    DF .text	00000030 phHciNfc_ISO15693_Get_PipeID
+00018c28 g    DF .text	00000068 phHciNfc_ISO15693_Update_PipeInfo
+00018c90 g    DF .text	00000060 phHciNfc_ISO15693_Update_Info
+00018cf0 g    DF .text	000000f8 phHciNfc_ISO15693_Info_Sequence
+00018de8 g    DF .text	000000f4 phHciNfc_Send_ISO15693_Command
+00018edc g    DF .text	0000007c phHciNfc_ISO15693_Set_AFI
+000192e8 g    DF .text	0000002c phHciNfc_Jewel_Get_PipeID
+00019314 g    DF .text	0000006c phHciNfc_Jewel_Init_Resources
+00019380 g    DF .text	00000054 phHciNfc_Jewel_Update_PipeInfo
+000193d4 g    DF .text	00000060 phHciNfc_Jewel_Update_Info
+00019434 g    DF .text	000000f4 phHciNfc_Send_Jewel_Command
+00019528 g    DF .text	000000f4 phHciNfc_Jewel_Info_Sequence
+0001961c g    DF .text	00000084 phHciNfc_Jewel_GetRID
+0001979c g    DF .text	00000194 phHciNfc_LinkMgmt_Initialise
+0001997c g    DF .text	00000030 phHciNfc_LinkMgmt_Release
+00019fe8 g    DF .text	0000006c phHciNfc_Initiator_Init_Resources
+0001a054 g    DF .text	00000030 phHciNfc_Initiator_Get_PipeID
+0001a084 g    DF .text	00000054 phHciNfc_Initiator_Update_PipeInfo
+0001a0d8 g    DF .text	000000b4 phHciNfc_NfcIP_Presence_Check
+0001a18c g    DF .text	00000068 phHciNfc_Target_Init_Resources
+0001a1f4 g    DF .text	00000030 phHciNfc_Target_Get_PipeID
+0001a224 g    DF .text	00000054 phHciNfc_Target_Update_PipeInfo
+0001a384 g    DF .text	000002c4 phHciNfc_NfcIP_Info_Sequence
+0001a6cc g    DF .text	0000007c phHciNfc_NfcIP_SetNAD
+0001a748 g    DF .text	00000070 phHciNfc_NfcIP_SetDID
+0001a7b8 g    DF .text	00000074 phHciNfc_NfcIP_SetOptions
+0001a8c8 g    DF .text	00000070 phHciNfc_NfcIP_SetPSL1
+0001a938 g    DF .text	00000070 phHciNfc_NfcIP_SetPSL2
+0001a9a8 g    DF .text	0000005c phHciNfc_NfcIP_GetStatus
+0001aa04 g    DF .text	0000005c phHciNfc_NfcIP_GetParam
+0001aa60 g    DF .text	000000b0 phHciNfc_Initiator_Cont_Activate
+0001ab10 g    DF .text	00000064 phHciNfc_NfcIP_GetATRInfo
+0001ac78 g    DF .text	00000048 phHciNfc_Delete_Pipe
+0001fb60 g    DF .text	00000068 phHciNfc_SWP_Init_Resources
+0001b5b8 g    DF .text	00000070 phHciNfc_PollLoop_Init_Resources
+0001bd5c g    DF .text	0000006c phHciNfc_ReaderA_Init_Resources
+0001c770 g    DF .text	0000006c phHciNfc_ReaderB_Init_Resources
+000201c0 g    DF .text	00000068 phHciNfc_WI_Init_Resources
+0001af4c g    DF .text	00000054 phHciNfc_Delete_All_Pipes
+0001b8a8 g    DF .text	0000005c phHciNfc_PollLoop_Update_PipeInfo
+00020254 g    DF .text	0000005c phHciNfc_WI_Update_PipeInfo
+0001fbc8 g    DF .text	0000005c phHciNfc_SWP_Update_PipeInfo
+0001c83c g    DF .text	00000054 phHciNfc_ReaderB_Update_PipeInfo
+0001bdc8 g    DF .text	0000005c phHciNfc_ReaderA_Update_PipeInfo
+0001cbec g    DF .text	000002a4 phHciNfc_ReaderMgmt_Initialise
+0001b58c g    DF .text	0000002c phHciNfc_PollLoop_Get_PipeID
+0001b628 g    DF .text	00000048 phHciNfc_PollLoop_Initialise
+0001b670 g    DF .text	0000005c phHciNfc_PollLoop_Release
+0001b6cc g    DF .text	000001dc phHciNfc_PollLoop_Cfg
+0001bd30 g    DF .text	0000002c phHciNfc_ReaderA_Get_PipeID
+0001be24 g    DF .text	00000130 phHciNfc_ReaderA_Info_Sequence
+0001bf54 g    DF .text	00000078 phHciNfc_ReaderA_Auto_Activate
+0001bfcc g    DF .text	0000006c phHciNfc_ReaderA_Set_DataRateMax
+0001c038 g    DF .text	0000020c phHciNfc_Send_ReaderA_Command
+0001c244 g    DF .text	00000044 phHciNfc_ReaderA_Cont_Activate
+0001c288 g    DF .text	00000064 phHciNfc_ReaderA_Update_Info
+0001c2ec g    DF .text	0000006c phHciNfc_ReaderA_App_Data
+0001c358 g    DF .text	0000006c phHciNfc_ReaderA_Fwi_Sfgt
+0001c744 g    DF .text	0000002c phHciNfc_ReaderB_Get_PipeID
+0001c7dc g    DF .text	00000060 phHciNfc_ReaderB_Update_Info
+0001c890 g    DF .text	00000170 phHciNfc_ReaderB_Info_Sequence
+0001ca00 g    DF .text	0000007c phHciNfc_ReaderB_Set_AFI
+0001ca7c g    DF .text	00000098 phHciNfc_ReaderB_Set_LayerData
+0001ce90 g    DF .text	00000110 phHciNfc_ReaderMgmt_Info_Sequence
+0001cfa0 g    DF .text	000000e0 phHciNfc_ReaderMgmt_Release
+0001d080 g    DF .text	000000f0 phHciNfc_Send_RFReader_Event
+0001d2a0 g    DF .text	000000e4 phHciNfc_ReaderMgmt_Disable_Discovery
+0001d384 g    DF .text	00000188 phHciNfc_ReaderMgmt_Enable_Discovery
+0001d50c g    DF .text	000001d4 phHciNfc_Send_RFReader_Command
+0001dd70 g    DF .text	000000f0 phHciNfc_ReaderMgmt_UICC_Dispatch
+0001e048 g    DF .text	00000138 phHciNfc_FSM_Validate
+0001e378 g    DF .text	000003b0 phHciNfc_Initialise_Sequence
+0001f3dc g    DF .text	00000154 phHciNfc_Connect_Sequence
+0001fb34 g    DF .text	0000002c phHciNfc_SWP_Get_PipeID
+00020228 g    DF .text	0000002c phHciNfc_WI_Get_PipeID
+00020320 g    DF .text	00000058 phHciNfc_WI_Get_Default
+000204f4 g    DF .text	000000a0 phLlcNfc_Release
+00023094 g    DF .text	00000084 phLlcNfc_TimerUnInit
+00020c80 g    DF .text	00000018 phLlcNfc_H_Frame_DeInit
+000414bc g    DO .bss	00000001 g_release_flag
+00021c28 g    DF .text	00000094 phLlcNfc_Interface_Read
+00021208 g    DF .text	000000b8 phLlcNfc_H_CreateIFramePayload
+000213c8 g    DF .text	00000098 phLlcNfc_H_StoreIFrame
+0002254c g    DF .text	000000b4 phLlcNfc_Interface_Write
+00022820 g    DF .text	00000144 phLlcNfc_StartTimers
+00020c3c g    DF .text	00000044 phLlcNfc_H_Frame_Init
+00021bf4 g    DF .text	00000034 phLlcNfc_Interface_Init
+000227b0 g    DF .text	00000038 phLlcNfc_TimerInit
+000227e8 g    DF .text	00000038 phLlcNfc_CreateTimers
+0002130c g    DF .text	000000bc phLlcNfc_H_CreateUFramePayload
+00021b54 g    DF .text	000000a0 phLlcNfc_Interface_Register
+00020c98 g    DF .text	00000060 phLlcNfc_H_ComputeCrc
+00020cf8 g    DF .text	000001e8 phLlcNfc_H_SendTimedOutIFrame
+00020ee0 g    DF .text	0000014c phLlcNfc_H_SendUserIFrame
+0002102c g    DF .text	000001dc phLlcNfc_H_SendRejectedIFrame
+000212c0 g    DF .text	0000004c phLlcNfc_H_CreateSFramePayload
+00021460 g    DF .text	000000bc phLlcNfc_H_SendRSETFrame
+0002151c g    DF .text	000000a0 phLlcNfc_H_WriteWaitCall
+000215bc g    DF .text	00000250 phLlcNfc_H_ProcessIFrame
+00022964 g    DF .text	000001ac phLlcNfc_StopTimers
+00022600 g    DF .text	000000e0 phLlcNfc_H_SendInfo
+0002180c g    DF .text	00000348 phLlcNfc_H_ProRecvFrame
+00022d6c g    DF .text	00000064 phLlcNfc_StopAllTimers
+000226e0 g    DF .text	000000d0 phLlcNfc_H_ChangeState
+000411d0 g    DO .bss	00000004 libnfc_llc_error_count
+00023048 g    DF .text	0000004c phLlcNfc_DeleteTimer
+00024308 g    DF .text	0000003c phFriNfc_Llcp_Header2Buffer
+00024344 g    DF .text	0000001c phFriNfc_Llcp_Sequence2Buffer
+00028054 g    DF .text	0000003c phFriNfc_LlcpMac_Send
+00028034 g    DF .text	00000020 phFriNfc_LlcpMac_Deactivate
+00024360 g    DF .text	00000058 phFriNfc_Llcp_Buffer2Header
+00023f78 g    DF .text	00000088 phFriNfc_Llcp_DecodeTLV
+00024000 g    DF .text	000000b0 phFriNfc_Llcp_EncodeTLV
+00028090 g    DF .text	0000003c phFriNfc_LlcpMac_Receive
+00027f20 g    DF .text	00000048 phFriNfc_LlcpMac_Reset
+00027f68 g    DF .text	000000ac phFriNfc_LlcpMac_ChkLlcp
+00028014 g    DF .text	00000020 phFriNfc_LlcpMac_Activate
+00023e60 g    DF .text	000000ec phFriNfc_Llcp_Send
+00023f4c g    DF .text	0000002c phFriNfc_Llcp_Recv
+000240b0 g    DF .text	00000090 phFriNfc_Llcp_AppendTLV
+00024140 g    DF .text	00000018 phFriNfc_Llcp_EncodeMIUX
+00024158 g    DF .text	00000010 phFriNfc_Llcp_EncodeRW
+00024168 g    DF .text	00000020 phFriNfc_Llcp_CyclicFifoInit
+00024188 g    DF .text	00000018 phFriNfc_Llcp_CyclicFifoClear
+000241a0 g    DF .text	0000006c phFriNfc_Llcp_CyclicFifoWrite
+0002420c g    DF .text	00000070 phFriNfc_Llcp_CyclicFifoFifoRead
+0002427c g    DF .text	0000004c phFriNfc_Llcp_CyclicFifoUsage
+000242c8 g    DF .text	00000040 phFriNfc_Llcp_CyclicFifoAvailable
+000243b8 g    DF .text	00000034 phFriNfc_Llcp_Buffer2Sequence
+00027098 g    DF .text	00000e88 Handle_ConnectionOriented_IncommingFrame
+00025cd0 g    DF .text	000000f8 Handle_Connectionless_IncommingFrame
+00024bf4 g    DF .text	0000006c phFriNfc_LlcpTransport_LinkSend
+00024c60 g    DF .text	00000180 phFriNfc_LlcpTransport_SendFrameReject
+00026cf8 g    DF .text	000000b8 phFriNfc_LlcpTransport_ConnectionOriented_Close
+00024de0 g    DF .text	000000b0 phFriNfc_LlcpTransport_SendDisconnectMode
+00026540 g    DF .text	0000025c phFriNfc_LlcpTransport_ConnectionOriented_HandlePendingOperations
+00025c48 g    DF .text	00000088 phFriNfc_LlcpTransport_Connectionless_HandlePendingOperations
+0002679c g    DF .text	0000001c phFriNfc_LlcpTransport_ConnectionOriented_SocketGetLocalOptions
+000267b8 g    DF .text	0000001c phFriNfc_LlcpTransport_ConnectionOriented_SocketGetRemoteOptions
+00000000      DF *UND*	00000000 __aeabi_uidiv
+00025dc8 g    DF .text	000000f0 phFriNfc_LlcpTransport_Connectionless_Close
+000267d4 g    DF .text	00000024 phFriNfc_LlcpTransport_ConnectionOriented_Listen
+000267f8 g    DF .text	0000021c phFriNfc_LlcpTransport_ConnectionOriented_Accept
+00026a14 g    DF .text	0000003c phLibNfc_LlcpTransport_ConnectionOriented_Reject
+00026a50 g    DF .text	0000018c phFriNfc_LlcpTransport_ConnectionOriented_Connect
+00026bdc g    DF .text	0000011c phLibNfc_LlcpTransport_ConnectionOriented_Disconnect
+00026db0 g    DF .text	000000ac phFriNfc_LlcpTransport_ConnectionOriented_Send
+00026e5c g    DF .text	0000023c phFriNfc_LlcpTransport_ConnectionOriented_Recv
+00025eb8 g    DF .text	000000a4 phFriNfc_LlcpTransport_Connectionless_SendTo
+00025f5c g    DF .text	000000bc phLibNfc_LlcpTransport_Connectionless_RecvFrom
+00000000      DF *UND*	00000000 __aeabi_uidivmod
+00026510 g    DF .text	00000030 phFriNfc_LlcpConnTransport_Send
+00028678 g    DF .text	0000006c phFriNfc_LlcpMac_Nfcip_Register
+0003b9d8 g    DF .text	00000164 phFriNfc_OvrHal_Transceive
+0003bb3c g    DF .text	0000008c phFriNfc_OvrHal_Receive
+0003bbc8 g    DF .text	00000088 phFriNfc_OvrHal_Send
+00037794 g    DF .text	000000bc phFriNfc_NdefMap_Process
+00029cac g    DF .text	00000a30 phFriNfc_Felica_Process
+000316f0 g    DF .text	00000090 phFriNfc_MapTool_ChkSpcVer
+00031644 g    DF .text	000000ac phFriNfc_MapTool_SetCardState
+0002a6dc g    DF .text	00000108 phFriNfc_Felica_RdNdef
+0002a7e4 g    DF .text	00000064 phFriNfc_Felica_WrNdef
+0002a848 g    DF .text	0000004c phFriNfc_Felica_EraseNdef
+0002a894 g    DF .text	000000c4 phFriNfc_Felica_ChkNdef
+0002c7f0 g    DF .text	00002158 phFriNfc_MifareStdMap_Process
+0002c588 g    DF .text	000000e0 phFriNfc_MifareStdMap_H_Reset
+0002c668 g    DF .text	00000188 phFriNfc_MifareStdMap_ChkNdef
+0003bc50 g    DF .text	00000064 phFriNfc_OvrHal_Reconnect
+0003bcb4 g    DF .text	00000068 phFriNfc_OvrHal_Connect
+0002e948 g    DF .text	0000011c phFriNfc_MifareStdMap_RdNdef
+0002ea64 g    DF .text	00000188 phFriNfc_MifareStdMap_WrNdef
+0002fca4 g    DF .text	0000149c phFriNfc_MifareUL_Process
+00031140 g    DF .text	000000c4 phFriNfc_MifareUL_H_Reset
+00031204 g    DF .text	00000200 phFriNfc_MifareUL_RdNdef
+00031404 g    DF .text	0000016c phFriNfc_MifareUL_WrNdef
+00031570 g    DF .text	000000d4 phFriNfc_MifareUL_ChkNdef
+00031f78 g    DF .text	00000994 phFriNfc_TopazMap_Process
+00031b68 g    DF .text	00000068 phFriNfc_TopazMap_H_Reset
+00031bd0 g    DF .text	00000054 phFriNfc_TopazMap_ChkNdef
+00031c24 g    DF .text	0000002c phFriNfc_TopazMap_ConvertToReadOnly
+00031c50 g    DF .text	00000174 phFriNfc_TopazMap_RdNdef
+00031dc4 g    DF .text	000000fc phFriNfc_TopazMap_WrNdef
+00031ec0 g    DF .text	00000028 phFriNfc_Tpz_H_ChkSpcVer
+00032f58 g    DF .text	00001b30 phFriNfc_TopazDynamicMap_Process
+00034a88 g    DF .text	00000098 phFriNfc_TopazDynamicMap_ChkNdef
+00034b20 g    DF .text	00000250 phFriNfc_TopazDynamicMap_RdNdef
+00034d70 g    DF .text	00000058 phFriNfc_TopazDynamicMap_ConvertToReadOnly
+00034dc8 g    DF .text	000000cc phFriNfc_TopazDynamicMap_WrNdef
+00035598 g    DF .text	00000780 phFriNfc_Desfire_Process
+00035d18 g    DF .text	0000006c phFriNfc_Desfire_RdNdef
+00035d84 g    DF .text	0000006c phFriNfc_Desfire_WrNdef
+00035df0 g    DF .text	00000014 phFriNfc_Desfire_ChkNdef
+000363d8 g    DF .text	00000a30 phFriNfc_ISO15693_Process
+00036e08 g    DF .text	000000f4 phFriNfc_ISO15693_ChkNdef
+00036efc g    DF .text	00000134 phFriNfc_ISO15693_RdNdef
+00037030 g    DF .text	000000fc phFriNfc_ISO15693_WrNdef
+0003712c g    DF .text	00000030 phFriNfc_ISO15693_ConvertToReadOnly
+00037aec g    DF .text	00000060 phFriNfc_NdefMap_SetCardState
+00037b4c g    DF .text	00000030 phFriNfc_NdefMap_CheckSpecVersion
+00037b7c g    DF .text	00000098 phFriNfc_NdefReg_Strnicmp
+00037dec g    DF .text	00000028 phFriNfc_NdefReg_DispatchRecord
+00000000      DF *UND*	00000000 phFriNfc_NdefRecord_GetLength
+00000000      DF *UND*	00000000 strncmp
+0003b3e8 g    DF .text	0000009c phFriNfc_NdefSmtCrd_Process
+00038a60 g    DF .text	00000038 phFriNfc_Desfire_Reset
+00038a98 g    DF .text	0000002c phFriNfc_Desfire_Format
+00038ac4 g    DF .text	00000028 phFriNfc_Desfire_ConvertToReadOnly
+00038aec g    DF .text	00000650 phFriNfc_Desf_Process
+0003b16c g    DF .text	0000001c phFriNfc_SmtCrdFmt_HCrHandler
+000395c0 g    DF .text	0000005c phFriNfc_MfUL_Reset
+0003961c g    DF .text	0000005c phFriNfc_MfUL_Format
+00039678 g    DF .text	0000001c phFriNfc_MfUL_ConvertToReadOnly
+00039694 g    DF .text	00000928 phFriNfc_MfUL_Process
+0003a790 g    DF .text	000000dc phFriNfc_MfStd_Reset
+0003a86c g    DF .text	00000058 phFriNfc_MfStd_Format
+0003a8c4 g    DF .text	000008a8 phFriNfc_MfStd_Process
+0003b858 g    DF .text	0000002c phFriNfc_ISO15693_FmtReset
+0003b884 g    DF .text	0000003c phFriNfc_ISO15693_Format
+0003b5f8 g    DF .text	00000260 phFriNfc_ISO15693_FmtProcess
+0003bd20 g    DF .text	0000008c phOsalNfc_Timer_DeferredCall
+00000000      DF *UND*	00000000 printf
+00000000      DF *UND*	00000000 timer_create
+00000000      DF *UND*	00000000 timer_settime
+0003ddb0 g    DF .text	000000d0 phDal4Nfc_msgsnd
+000413b8 g    DO .bss	00000004 nDeferedCallMessageQueueId
+00000000      DF *UND*	00000000 timer_delete
+00000000      DF *UND*	00000000 malloc
+00000000      DF *UND*	00000000 free
+0003c0f8 g    DF .text	00000004 phOsalNfc_DbgString
+0003c0f8 g    DF .text	00000004 phOsalNfc_DbgTrace
+00000000      DF *UND*	00000000 abort
+0003c110 g    DF .text	0000025c phOsalNfc_PrintData
+00000000      DF *UND*	00000000 snprintf
+00000000      DF *UND*	00000000 strcmp
+000414ac g    DO .bss	00000008 phOsalNfc_Exception
+0003c3b8 g    DF .text	00000018 phDal4Nfc_uart_initialize
+0003c3d0 g    DF .text	00000020 phDal4Nfc_uart_set_open_from_handle
+0003c3f0 g    DF .text	00000014 phDal4Nfc_uart_is_opened
+0003c404 g    DF .text	00000018 phDal4Nfc_uart_flush
+00000000      DF *UND*	00000000 ioctl
+0003c41c g    DF .text	00000034 phDal4Nfc_uart_close
+00000000      DF *UND*	00000000 close
+0003c450 g    DF .text	0000010c phDal4Nfc_uart_open_and_configure
+00000000      DF *UND*	00000000 time
+00000000      DF *UND*	00000000 srand48
+00000000      DF *UND*	00000000 open
+00000000      DF *UND*	00000000 fcntl
+0003c55c g    DF .text	000003c0 phDal4Nfc_uart_read
+00000000      DF *UND*	00000000 property_get
+00000000      DF *UND*	00000000 atoi
+00000000      DF *UND*	00000000 clock_gettime
+00000000      DF *UND*	00000000 select
+00000000      DF *UND*	00000000 read
+00000000      DF *UND*	00000000 lrand48
+00000000      DF *UND*	00000000 __errno
+0003c91c g    DF .text	00000078 phDal4Nfc_uart_write
+00000000      DF *UND*	00000000 write
+0003c994 g    DF .text	00000178 phDal4Nfc_uart_reset
+00000000      DF *UND*	00000000 strerror
+000413ac g    DO .bss	00000004 property_error_rate
+0003cb0c g    DF .text	00000040 phDal4Nfc_Shutdown
+0003cb4c g    DF .text	00000008 phDal4Nfc_ReadWait
+0003cb54 g    DF .text	0000001c phDal4Nfc_ReadWaitCancel
+00000000      DF *UND*	00000000 sem_post
+0003ce70 g    DF .text	00000094 phDal4Nfc_Read
+0003d4b4 g    DF .text	0000017c phDal4Nfc_Init
+0003d950 g    DF .text	000000e4 phDal4Nfc_Write
+00000000      DF *UND*	00000000 pthread_join
+00000000      DF *UND*	00000000 hw_get_module
+00000000      DF *UND*	00000000 sem_init
+00000000      DF *UND*	00000000 pthread_create
+0003d6f8 g    DF .text	00000258 phDal4Nfc_ReaderThread
+0003da34 g    DF .text	0000001c phDal4Nfc_i2c_initialize
+0003da50 g    DF .text	00000020 phDal4Nfc_i2c_set_open_from_handle
+0003da70 g    DF .text	00000014 phDal4Nfc_i2c_is_opened
+0003da84 g    DF .text	00000004 phDal4Nfc_i2c_flush
+0003da88 g    DF .text	00000034 phDal4Nfc_i2c_close
+0003dabc g    DF .text	0000004c phDal4Nfc_i2c_open_and_configure
+0003db08 g    DF .text	000000e8 phDal4Nfc_i2c_read
+0003dbf0 g    DF .text	00000078 phDal4Nfc_i2c_write
+0003dc68 g    DF .text	0000001c phDal4Nfc_i2c_reset
+0003d67c g    DF .text	0000007c phDal4Nfc_DeferredCall
+00000000      DF *UND*	00000000 pthread_self
+00000000      DF *UND*	00000000 pthread_setname_np
+00000000      DF *UND*	00000000 sem_wait
+0003dc84 g    DF .text	00000088 phDal4Nfc_msgget
+00000000      DF *UND*	00000000 pthread_mutex_init
+0003dd0c g    DF .text	000000a4 phDal4Nfc_msgctl
+00000000      DF *UND*	00000000 pthread_mutex_lock
+00000000      DF *UND*	00000000 pthread_mutex_unlock
+00000000      DF *UND*	00000000 pthread_mutex_destroy
+0003de80 g    DF .text	0000007c phDal4Nfc_msgrcv
+0003defc g    DF .text	0000000c __on_dlclose
+00000000      DF *UND*	00000000 __cxa_finalize
+00041470 g    D  .bss	00000000 __dso_handle
+00040d50 g    D  .init_array	00000000 __INIT_ARRAY__
+00040d58 g    D  .fini_array	00000000 __FINI_ARRAY__
+00041040 g    D  *ABS*	00000000 _edata
+00041040 g    D  *ABS*	00000000 __bss_start
+000414bd g    D  *ABS*	00000000 _end
+
+

@@ -1,0 +1,18 @@
+libnfc wrapper generator scripts for libhybris
+==============================================
+
+These scripts generate libhybris wrapper libraries for Android libnfc.
+There are actually two different libnfc implementations in Android:
+
+  - libnfc-nxp
+  - libnfc-nci
+
+These scripts currently generate wrappers for libnfc-nxp, but could be
+adapted to generate wrappers for libnfc-nci as well.
+
+Usage:
+
+    git submodule init
+    git submodule update
+    sh -x generate.sh
+

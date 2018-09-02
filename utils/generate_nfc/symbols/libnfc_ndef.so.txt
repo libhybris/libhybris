@@ -1,0 +1,19 @@
+
+libnfc_ndef.so:     file format elf32-little
+
+DYNAMIC SYMBOL TABLE:
+00000000      DF *UND*	00000000 __aeabi_unwind_cpp_pr0
+000004a7 g    DF .text	000001ee phFriNfc_NdefRecord_GetRecords
+00000695 g    DF .text	00000050 phFriNfc_NdefRecord_GetLength
+000006e5 g    DF .text	000000e8 phFriNfc_NdefRecord_Parse
+000007cd g    DF .text	00000146 phFriNfc_NdefRecord_Generate
+00000914 g    DF .text	0000000c __on_dlclose
+00000000      DF *UND*	00000000 __cxa_finalize
+00002000 g    D  .bss	00000000 __dso_handle
+00001ed4 g    D  .init_array	00000000 __INIT_ARRAY__
+00001edc g    D  .fini_array	00000000 __FINI_ARRAY__
+00002000 g    D  *ABS*	00000000 _edata
+00002000 g    D  *ABS*	00000000 __bss_start
+00002010 g    D  *ABS*	00000000 _end
+
+
