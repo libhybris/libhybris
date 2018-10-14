@@ -254,8 +254,10 @@ struct MediaPlayerWrapper : public android::MediaPlayer
 
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 			surfaceTexture->getBufferQueue()->setBufferCount(5);
-#else
+#elif ANDROID_VERSION_MAJOR<7
 			bq->setBufferCount(5);
+#else
+			bq->setMaxDequeuedBufferCount(5);
 #endif
 			texture = surfaceTexture;
 			texture->setFrameAvailableListener(frame_listener);

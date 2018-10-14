@@ -351,11 +351,16 @@ bool media_codec_source_read(MediaCodecSourceWrapper *source, MediaBufferWrapper
 
 bool media_codec_source_request_idr_frame(MediaCodecSourceWrapper *source)
 {
+#if ANDROID_VERSION_MAJOR < 7
     MediaCodecSourcePrivate *d = MediaCodecSourcePrivate::toPrivate(source);
     if (!d || !d->codec.get())
         return false;
 
     android::status_t err = d->codec->requestIDRFrame();
+#else
+    // requestIDRFrame is done in start
+    android::status_t err = android::OK;
+#endif
     if (err != android::OK)
         return false;
 

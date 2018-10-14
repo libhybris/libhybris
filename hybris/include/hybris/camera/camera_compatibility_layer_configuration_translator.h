@@ -28,6 +28,8 @@
 extern "C" {
 #endif
 
+#pragma GCC diagnostic ignored "-Wreturn-type-c-linkage"
+
     static const char* effect_modes[] =
     {
         android::CameraParameters::EFFECT_NONE,

@@ -52,9 +52,13 @@ MediaRecorderClient::~MediaRecorderClient()
     REPORT_FUNCTION();
     release();
 }
-
+#if ANDROID_VERSION_MAJOR >= 7
+status_t MediaRecorderClient::setCamera(const sp<android::hardware::ICamera>& camera,
+        const sp<ICameraRecordingProxy>& proxy)
+#else
 status_t MediaRecorderClient::setCamera(const sp<android::ICamera>& camera,
         const sp<ICameraRecordingProxy>& proxy)
+#endif
 {
     REPORT_FUNCTION();
     Mutex::Autolock lock(recorder_lock);

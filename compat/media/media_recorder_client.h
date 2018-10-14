@@ -32,6 +32,13 @@ class MediaRecorderBase;
 class Mutex;
 class BpMediaRecorderObserver;
 
+#if ANDROID_VERSION_MAJOR >= 7
+namespace hardware {
+class ICamera;
+}
+#else
+class ICamera;
+#endif
 /*!
  * \brief The MediaRecorderClient struct wraps the service side of the MediaRecorder class
  */
@@ -41,8 +48,13 @@ public:
     MediaRecorderClient();
     virtual ~MediaRecorderClient();
 
+#if ANDROID_VERSION_MAJOR>=7
+    virtual status_t setCamera(const sp<android::hardware::ICamera>& camera,
+            const sp<ICameraRecordingProxy>& proxy);
+#else
     virtual status_t setCamera(const sp<ICamera>& camera,
             const sp<ICameraRecordingProxy>& proxy);
+#endif
     virtual status_t setPreviewSurface(const sp<IGraphicBufferProducer>& surface);
     virtual status_t setVideoSource(int vs);
     virtual status_t setAudioSource(int as);
@@ -64,10 +76,10 @@ public:
     virtual status_t getMaxAmplitude(int* max);
     virtual status_t start();
     virtual status_t stop();
-#ifdef BOARD_HAS_MEDIA_RECORDER_PAUSE
+#if defined(BOARD_HAS_MEDIA_RECORDER_PAUSE) || ANDROID_VERSION_MAJOR>=7
     virtual status_t pause();
 #endif
-#ifdef BOARD_HAS_MEDIA_RECORDER_RESUME
+#if defined(BOARD_HAS_MEDIA_RECORDER_RESUME) || ANDROID_VERSION_MAJOR>=7
     virtual status_t resume();
 #endif
     virtual status_t reset();

@@ -67,13 +67,13 @@ public:
 					ct,
 					SkAlphaType::kPremul_SkAlphaType),
 				0);
-#elif ANDROID_VERSION_MAJOR==6
-bitmap.setInfo(
-    SkImageInfo::Make(bitmap_width,
-      bitmap_height,
-      kRGBA_8888_SkColorType,
-      SkAlphaType::kPremul_SkAlphaType),
-    0);
+#elif ANDROID_VERSION_MAJOR>=6
+                bitmap.setInfo(
+                    SkImageInfo::Make(bitmap_width,
+                                      bitmap_height,
+                                      kRGBA_8888_SkColorType,
+                                      SkAlphaType::kPremul_SkAlphaType),
+                    0);
 
 #endif
 		bitmap.allocPixels();
@@ -106,6 +106,17 @@ bitmap.setInfo(
 		outResources->spotTouch = spotTouchIcon.copy();
 		outResources->spotAnchor = spotAnchorIcon.copy();
 	}
+
+#if ANDROID_VERSION_MAJOR >= 7
+        void loadPointerIcon(android::SpriteIcon*)
+        {
+        }
+
+        void loadAdditionalMouseResources(std::map<int32_t, android::SpriteIcon>* /*coutResources*/,
+                                          std::map<int32_t, android::PointerAnimation>* /*outAnimationResources*/) {}
+        int32_t getDefaultPointerIconId() { return 0; }
+        int32_t getCustomPointerIconId() { return 0; }
+#endif
 
 	android::SpriteIcon spotHoverIcon;
 	android::SpriteIcon spotTouchIcon;
@@ -365,14 +376,24 @@ void android_input_stack_loop_once()
 
 void android_input_stack_start()
 {
+#if ANDROID_VERSION_MAJOR >= 7
+	global_state->input_reader_thread->run("input");
+	global_state->looper_thread->run("loop");
+#else
 	global_state->input_reader_thread->run();
 	global_state->looper_thread->run();
+#endif
 }
 
 void android_input_stack_start_waiting_for_flag(bool* flag)
 {
+#if ANDROID_VERSION_MAJOR >= 7
+	global_state->input_reader_thread->run("input");
+	global_state->looper_thread->run("loop");
+#else
 	global_state->input_reader_thread->run();
 	global_state->looper_thread->run();
+#endif
 
 	while (!*flag) {
 		global_state->wait_condition.waitRelative(

@@ -34,7 +34,13 @@ namespace android {
 class Surface;
 class IMediaRecorder;
 class IMediaRecorderFactory;
+#if ANDROID_VERSION_MAJOR >= 7
+namespace hardware {
 class ICamera;
+}
+#else
+class ICamera;
+#endif
 class ICameraRecordingProxy;
 class IGraphicBufferProducer;
 class Surface;
@@ -214,7 +220,11 @@ public:
 
     void        died();
     status_t    initCheck();
+#if ANDROID_VERSION_MAJOR>=7
+    status_t    setCamera(const sp<hardware::ICamera>& camera, const sp<ICameraRecordingProxy>& proxy);
+#else
     status_t    setCamera(const sp<ICamera>& camera, const sp<ICameraRecordingProxy>& proxy);
+#endif
     status_t    setPreviewSurface(const sp<IGraphicBufferProducer>& surface);
     status_t    setVideoSource(int vs);
     status_t    setAudioSource(int as);
