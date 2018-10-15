@@ -12,6 +12,10 @@ if !HAS_ANDROID_8_0_0
 SUBDIRS += wifi
 endif
 
+if HAS_ANDROID_8_0_0
+SUBDIRS += hwc2
+endif
+
 if HAS_LIBNFC_NXP_HEADERS
 SUBDIRS += libnfc_nxp libnfc_ndef_nxp
 endif

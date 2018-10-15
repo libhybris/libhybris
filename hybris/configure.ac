@@ -287,6 +287,8 @@ AC_CONFIG_FILES([
 	utils/Makefile
 	sf/Makefile
 	sf/libsf.pc
+	hwc2/Makefile
+	hwc2/libhwc2.pc
 	opencl/Makefile
 	opencl/OpenCL.pc
 	tests/Makefile
