@@ -27,6 +27,9 @@ if HAS_ANDROID_5_0_0
 bin_PROGRAMS += test_hwcomposer
 endif
 
+if HAS_ANDROID_8_0_0
+bin_PROGRAMS += test_hwc2
+endif
 
 if HAS_LIBNFC_NXP_HEADERS
 # test_nfc depends on NFC hardware HAL interface, which is only
@@ -229,4 +232,24 @@ test_opencl_CFLAGS = \
 test_opencl_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/opencl/libOpenCL.la
+
+test_hwc2_SOURCES = test_hwc2.cpp
+test_hwc2_CXXFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS) \
+	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/egl/platforms/common \
+	-I$(top_srcdir)/egl/platforms/hwcomposer \
+	-I$(top_srcdir)/libsync \
+	-std=gnu++11
+
+test_hwc2_LDADD = \
+	-lm \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/egl/platforms/hwcomposer/libhybris-hwcomposerwindow.la \
+	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
+	$(top_builddir)/egl/libEGL.la \
+	$(top_builddir)/glesv2/libGLESv2.la \
+	$(top_builddir)/libsync/libsync.la \
+	$(top_builddir)/hwc2/libhwc2.la
 
