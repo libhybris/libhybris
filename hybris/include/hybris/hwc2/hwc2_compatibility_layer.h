@@ -28,18 +28,24 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	typedef void (*on_vsync_received_callback)(int32_t sequenceId, hwc2_display_t display,
-                    int64_t timestamp);
-	typedef void (*on_hotplug_received_callback)(int32_t sequenceId, hwc2_display_t display,
-                    bool connected, bool primaryDisplay);
-    typedef void (*on_refresh_received_callback)(int32_t sequenceId, hwc2_display_t display);
+    struct HWC2EventListener;
+    typedef struct HWC2EventListener HWC2EventListener;
 
-    typedef struct HWC2EventListener
+    typedef void (*on_vsync_received_callback)(HWC2EventListener* self,
+                    int32_t sequenceId, hwc2_display_t display,
+                    int64_t timestamp);
+    typedef void (*on_hotplug_received_callback)(HWC2EventListener* self,
+                    int32_t sequenceId, hwc2_display_t display,
+                    bool connected, bool primaryDisplay);
+    typedef void (*on_refresh_received_callback)(HWC2EventListener* self,
+                    int32_t sequenceId, hwc2_display_t display);
+
+    struct HWC2EventListener
     {
         on_vsync_received_callback on_vsync_received;
         on_hotplug_received_callback on_hotplug_received;
         on_refresh_received_callback on_refresh_received;
-    } HWC2EventListener;
+    };
 
     typedef struct HWC2DisplayConfig {
         hwc2_config_t id;
@@ -86,7 +92,8 @@ extern "C" {
                                            hwc2_compat_layer_t* layer);
 
     hwc2_error_t hwc2_compat_display_get_release_fences(
-                                        hwc2_compat_display_t* display,                                                hwc2_compat_out_fences_t** outFences);
+                                        hwc2_compat_display_t* display,
+                                        hwc2_compat_out_fences_t** outFences);
 
     hwc2_error_t hwc2_compat_display_present(hwc2_compat_display_t* display,
                                      int32_t* outPresentFence);
@@ -125,7 +132,7 @@ extern "C" {
     hwc2_error_t hwc2_compat_layer_set_plane_alpha(hwc2_compat_layer_t* layer,
                                            float alpha);
     hwc2_error_t hwc2_compat_layer_set_sideband_stream(hwc2_compat_layer_t* layer,
-                                               const native_handle_t* stream);
+                                               native_handle_t* stream);
     hwc2_error_t hwc2_compat_layer_set_source_crop(hwc2_compat_layer_t* layer,
                                            float left, float top,
                                            float right, float bottom);
@@ -143,4 +150,4 @@ extern "C" {
 }
 #endif
 
-#endif // UI_COMPATIBILITY_LAYER_H_
+#endif // HWC2_COMPATIBILITY_LAYER_H_

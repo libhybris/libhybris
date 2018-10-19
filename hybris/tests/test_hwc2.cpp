@@ -183,14 +183,14 @@ void HWComposer::present(HWComposerNativeWindowBuffer *buffer)
     lastPresentFence = presentFence;
 }
 
-void onVsyncReceived(int32_t sequenceId, hwc2_display_t display,
-                            int64_t timestamp)
+void onVsyncReceived(HWC2EventListener* listener, int32_t sequenceId,
+                     hwc2_display_t display, int64_t timestamp)
 {
 }
 
-void onHotplugReceived(int32_t sequenceId, hwc2_display_t display,
-                            bool connected,
-                            bool primaryDisplay)
+void onHotplugReceived(HWC2EventListener* listener, int32_t sequenceId,
+                       hwc2_display_t display, bool connected,
+                       bool primaryDisplay)
 {
     HYBRIS_INFO("onHotplugReceived(%d, %" PRIu64 ", %s, %s)",
         sequenceId, display,
@@ -201,7 +201,8 @@ void onHotplugReceived(int32_t sequenceId, hwc2_display_t display,
     hwc2_compat_device_on_hotplug(hwcDevice, display, connected);
 }
 
-void onRefreshReceived(int32_t sequenceId, hwc2_display_t display)
+void onRefreshReceived(HWC2EventListener* listener,
+                       int32_t sequenceId, hwc2_display_t display)
 {
 }
 
