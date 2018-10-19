@@ -77,6 +77,9 @@ HYBRIS_IMPLEMENT_FUNCTION5(hwc2, hwc2_error_t, hwc2_compat_display_present_or_va
                            hwc2_compat_display_t*, uint32_t*, uint32_t*,
                            int32_t*, uint32_t*);
 
+HYBRIS_IMPLEMENT_FUNCTION4(hwc2, hwc2_error_t, hwc2_compat_layer_set_buffer,
+                           hwc2_compat_layer_t*, uint32_t,
+                           ANativeWindowBuffer_t*, int32_t);
 HYBRIS_IMPLEMENT_FUNCTION2(hwc2, hwc2_error_t, hwc2_compat_layer_set_blend_mode,
                            hwc2_compat_layer_t*, int);
 HYBRIS_IMPLEMENT_FUNCTION2(hwc2, hwc2_error_t, hwc2_compat_layer_set_color,
