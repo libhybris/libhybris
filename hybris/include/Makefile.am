@@ -47,6 +47,10 @@ surface_flingerincludedir = $(includedir)/hybris/surface_flinger
 surface_flingerinclude_HEADERS = \
 	hybris/surface_flinger/surface_flinger_compatibility_layer.h
 
+hwc2includedir = $(includedir)/hybris/hwc2
+hwc2include_HEADERS = \
+	hybris/hwc2/hwc2_compatibility_layer.h
+
 inputincludedir = $(includedir)/hybris/input
 inputinclude_HEADERS = \
 	hybris/input/input_stack_compatibility_layer_codes_key.h \
