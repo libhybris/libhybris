@@ -267,6 +267,7 @@ const char *BaseNativeWindow::_native_query_operation(int what)
 #endif
 #if ANDROID_VERSION_MAJOR>=8
                 case NATIVE_WINDOW_IS_VALID: return "NATIVE_WINDOW_IS_VALID";
+                case NATIVE_WINDOW_BUFFER_AGE: return "NATIVE_WINDOW_BUFFER_AGE";
 #endif
 		default: return "NATIVE_UNKNOWN_QUERY";
 	}
@@ -316,6 +317,10 @@ int BaseNativeWindow::_query(const struct ANativeWindow* window, int what, int* 
 		case NATIVE_WINDOW_IS_VALID:
 			// sure :)
 			*value = 1;
+			return NO_ERROR;
+		case NATIVE_WINDOW_BUFFER_AGE:
+			// sure :)
+			*value = 2;
 			return NO_ERROR;
 #endif
 	}
