@@ -6,6 +6,7 @@ eglplatform_wayland_la_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/egl \
 	-I$(top_srcdir)/egl/platforms/common \
+	-I$(top_builddir)/egl/platforms/common \
 	$(ANDROID_HEADERS_CFLAGS) \
 	$(WAYLAND_CLIENT_CFLAGS)
 
