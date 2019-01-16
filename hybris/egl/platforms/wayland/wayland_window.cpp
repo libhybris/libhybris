@@ -371,12 +371,12 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
     HYBRIS_TRACE_END("wayland-platform", "dequeueBuffer_wait_for_buffer", "");
 
     /* If the buffer doesn't match the window anymore, re-allocate */
-    if (wnb->width != m_window->width || wnb->height != m_window->height
+    if (wnb->width != m_width || wnb->height != m_height
         || wnb->format != m_format || wnb->usage != m_usage)
     {
         TRACE("wnb:%p,win:%p %i,%i %i,%i x%x,x%x x%x,x%x",
             wnb,m_window,
-            wnb->width,m_window->width, wnb->height,m_window->height,
+            wnb->width,m_width, wnb->height,m_height,
             wnb->format,m_format, wnb->usage,m_usage);
         destroyBuffer(wnb);
         m_bufList.erase(it);
