@@ -102,7 +102,11 @@ void WaylandNativeWindow::resize_callback(struct wl_egl_window *egl_window, void
 
 void WaylandNativeWindow::free_callback(struct wl_egl_window *egl_window, void *)
 {
-    ((WaylandNativeWindow*)(egl_window->nativewindow))->m_window = 0;
+    WaylandNativeWindow *native = (WaylandNativeWindow*)egl_window->nativewindow;
+
+    native->lock();
+    native->m_window = 0;
+    native->unlock();
 }
 
 void WaylandNativeWindow::lock()
@@ -218,7 +222,7 @@ WaylandNativeWindow::~WaylandNativeWindow()
     if (frame_callback)
         wl_callback_destroy(frame_callback);
     wl_event_queue_destroy(wl_queue);
-   if (m_window) {
+    if (m_window) {
 	    m_window->nativewindow = NULL;
 	    m_window->resize_callback = NULL;
 	    m_window->free_callback = NULL;
@@ -507,6 +511,10 @@ void WaylandNativeWindow::finishSwap()
 {
     int ret = 0;
     lock();
+    if (!m_window) {
+        unlock();
+        return;
+    }
 
     WaylandNativeWindowBuffer *wnb = queue.front();
     if (!wnb) {
@@ -526,6 +534,7 @@ void WaylandNativeWindow::finishSwap()
     }
     if (ret < 0) {
         HYBRIS_TRACE_END("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
+        unlock();
         return;
     }
 
