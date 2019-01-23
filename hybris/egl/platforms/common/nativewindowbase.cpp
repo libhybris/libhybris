@@ -1,4 +1,11 @@
+
+#ifndef ANDROID_BUILD
 #include <android-config.h>
+#include "logging.h"
+#else
+#define TRACE(message, ...)
+#endif
+
 #include <string.h>
 #include <system/window.h>
 #include <system/graphics.h>
@@ -12,14 +19,13 @@ extern "C" {
 }
 #endif
 
+#ifdef ANDROID_BUILD
+#define TRACE(...)
+#define HYBRIS_TRACE_BEGIN(...)
+#define HYBRIS_TRACE_END(...)
+#endif
 
 #include "nativewindowbase.h"
-
-#include "logging.h"
-
-#define TRACE(message, ...) HYBRIS_DEBUG_LOG(EGL, message, ##__VA_ARGS__)
-
-
 
 BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 {

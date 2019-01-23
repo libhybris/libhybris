@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <grallocusage/GrallocUsageConversion.h>
+#include <hybris/grallocusage/GrallocUsageConversion.h>
 
 #include <hardware/gralloc.h>
 #include <hardware/gralloc1.h>

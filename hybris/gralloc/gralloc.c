@@ -9,14 +9,20 @@
 #endif
 #include <hardware/fb.h>
 
+#ifdef ANDROID_BUILD
+#include "hybris-gralloc.h"
+#else
 #include <hybris/gralloc/gralloc.h>
 #include <hybris/common/binding.h>
+#endif
 
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <assert.h>
+
+#include <dlfcn.h>
 
 static int version = -1;
 static hw_module_t *gralloc_hardware_module = NULL;
@@ -135,7 +141,11 @@ void hybris_gralloc_deinitialize(void)
     gralloc1_device = NULL;
 #endif
 
+#ifdef ANDROID_BUILD
+    if (gralloc_hardware_module) dlclose(gralloc_hardware_module->dso);
+#else
     if (gralloc_hardware_module) android_dlclose(gralloc_hardware_module->dso);
+#endif
     gralloc_hardware_module = NULL;
 }
 

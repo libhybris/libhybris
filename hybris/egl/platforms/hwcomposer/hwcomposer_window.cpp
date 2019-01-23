@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
+#ifndef ANDROID_BUILD
 #include <android-config.h>
+#include "logging.h"
+#endif
+
 #include "hwcomposer_window.h"
 #include "hwcomposer.h"
-#include "logging.h"
 
 #include <errno.h>
 #include <assert.h>
@@ -31,7 +34,14 @@ extern "C" {
 #include <sync/sync.h>
 };
 
+#ifdef ANDROID_BUILD
+#define TRACE(...)
+#define HYBRIS_TRACE_BEGIN(...)
+#define HYBRIS_TRACE_END(...)
+#include "hybris-gralloc.h"
+#else
 #include <hybris/gralloc/gralloc.h> 
+#endif
 
 extern "C" struct ANativeWindow *HWCNativeWindowCreate(unsigned int width, unsigned int height, unsigned int format, HWCPresentCallback present, void *cb_data)
 {
