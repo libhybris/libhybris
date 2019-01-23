@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#if HAS_HWCOMPOSER2_HEADERS
+
 #include <dlfcn.h>
 #include <stddef.h>
 
@@ -107,3 +109,6 @@ HYBRIS_IMPLEMENT_FUNCTION2(hwc2, int32_t, hwc2_compat_out_fences_get_fence,
                            hwc2_compat_out_fences_t*, hwc2_compat_layer_t*);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(hwc2, hwc2_compat_out_fences_destroy,
                                 hwc2_compat_out_fences_t*);
+
+#endif
+

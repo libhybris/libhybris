@@ -16,6 +16,8 @@
  *
  */
 
+#if HAS_HWCOMPOSER2_HEADERS
+
 #include <assert.h>
 #include <stdio.h>
 #include <math.h>
@@ -343,3 +345,14 @@ int main()
 
     return 0;
 }
+
+#else
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+    printf("test_hwc2 is not supported in this build\n");
+    return 0;
+}
+#endif
+

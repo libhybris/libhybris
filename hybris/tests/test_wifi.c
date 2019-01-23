@@ -19,7 +19,9 @@
 #include <string.h>
 
 #include <android-config.h>
-#include <hardware_legacy/wifi.h>
+
+int wifi_load_driver();
+int wifi_unload_driver();
 
 #define COMMAND_LOAD_WIFI "1"
 #define COMMAND_UNLOAD_WIFI "0"
@@ -49,7 +51,6 @@ int main(int argc, char **argv)
 	}
 
 	fprintf(stdout, "WiFi driver load state: %d\n", is_wifi_driver_loaded());
-
 	return 0;
 }
 

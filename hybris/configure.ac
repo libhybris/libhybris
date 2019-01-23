@@ -151,14 +151,20 @@ AC_ARG_WITH(android-headers,
   [  --with-android-headers=DIR     Use android headers available in DIR. See utils/extract-headers.sh ],
   [
     AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test -f $withval/libnfc-nxp/phLibNfc.h])
+    AM_CONDITIONAL([HAS_WIFI_LEGACY_HEADERS], [test -f $withval/hardware_legacy/wifi.h])
+    AM_CONDITIONAL([HAS_HWCOMPOSER2_HEADERS], [test -f $withval/hardware/hwcomposer2.h])
     AM_CONDITIONAL([HAS_GRALLOC1_HEADER], [test -f $withval/hardware/gralloc1.h])
+    AM_CONDITIONAL([HAS_VIBRATOR_HEADER], [test -f $withval/hardware_legacy/vibrator.h])
     AS_IF([test -f $withval/libnfc-nxp/phLibNfc.h], [ANDROID_HEADERS_CFLAGS="-I$withval -I$withval/libnfc-nxp"],[ANDROID_HEADERS_CFLAGS="-I$withval"])
     AC_SUBST([ANDROID_HEADERS_CFLAGS])
   ],
   [
     PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit)
     AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [false])
+    AM_CONDITIONAL([HAS_WIFI_LEGACY_HEADERS], [false])
+    AM_CONDITIONAL([HAS_HWCOMPOSER2_HEADERS], [false])
     AM_CONDITIONAL([HAS_GRALLOC1_HEADER], [false])
+    AM_CONDITIONAL([HAS_VIBRATOR_HEADER], [false])
   ]
 )
 CPPFLAGS="$CPPFLAGS $ANDROID_HEADERS_CFLAGS"

@@ -9,6 +9,13 @@ endif
 if WANT_DEBUG
 libhwc2_la_CFLAGS += -ggdb -O0
 endif
+if HAS_HWCOMPOSER2_HEADERS
+libhwc2_la_CFLAGS += \
+        -DHAS_HWCOMPOSER2_HEADERS=1
+else
+libhwc2_la_CFLAGS += \
+        -DHAS_HWCOMPOSER2_HEADERS=0
+endif
 libhwc2_la_LDFLAGS = \
 	$(top_builddir)/common/libhybris-common.la \
 	-version-info "1":"0":"0"

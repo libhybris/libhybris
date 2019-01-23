@@ -7,6 +7,14 @@ libnfc_ndef_nxp_la_CFLAGS = \
 	$(ANDROID_HEADERS_CFLAGS) \
 	-Wno-error=unused-function
 
+if HAS_LIBNFC_NXP_HEADERS
+libnfc_ndef_nxp_la_CFLAGS += \
+        -DHAS_LIBNFC_NXP_HEADERS=1
+else
+libnfc_ndef_nxp_la_CFLAGS += \
+        -DHAS_LIBNFC_NXP_HEADERS=0
+endif
+
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libnfc_ndef_nxp.pc
 

@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include <hardware/hardware.h>
 
 #include <hardware/gralloc.h>
