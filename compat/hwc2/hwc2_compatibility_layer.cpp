@@ -220,7 +220,7 @@ hwc2_error_t hwc2_compat_display_present(hwc2_compat_display_t* display,
 
 hwc2_error_t hwc2_compat_display_set_client_target(hwc2_compat_display_t* display,
                                             uint32_t slot,
-                                            ANativeWindowBuffer* buffer,
+                                            struct ANativeWindowBuffer* buffer,
                                             const int32_t acquireFenceFd,
                                             android_dataspace_t dataspace)
 {
@@ -266,7 +266,7 @@ hwc2_error_t hwc2_compat_display_validate(hwc2_compat_display_t* display,
 
 hwc2_error_t hwc2_compat_layer_set_buffer(hwc2_compat_layer_t* layer,
                                           uint32_t slot,
-                                          ANativeWindowBuffer* buffer,
+                                          struct ANativeWindowBuffer* buffer,
                                           const int32_t acquireFenceFd)
 {
     android::sp<android::GraphicBuffer> target(
