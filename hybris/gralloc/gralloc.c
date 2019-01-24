@@ -53,8 +53,10 @@ static GRALLOC1_PFN_GET_NUM_FLEX_PLANES gralloc1_get_num_flex_planes = NULL;
 static GRALLOC1_PFN_LOCK gralloc1_lock = NULL;
 static GRALLOC1_PFN_LOCK_FLEX gralloc1_lock_flex = NULL;
 static GRALLOC1_PFN_UNLOCK gralloc1_unlock = NULL;
+#ifdef GRALLOC1_PFN_SET_LAYER_COUNT
 static GRALLOC1_PFN_SET_LAYER_COUNT gralloc1_set_layer_count = NULL;
 static GRALLOC1_PFN_GET_LAYER_COUNT gralloc1_get_layer_count = NULL;
+#endif
 
 static void gralloc1_init(void);
 #endif
@@ -190,8 +192,10 @@ static void gralloc1_init(void)
     gralloc1_lock = (GRALLOC1_PFN_LOCK)gralloc1_device->getFunction(gralloc1_device, GRALLOC1_FUNCTION_LOCK);
     gralloc1_lock_flex = (GRALLOC1_PFN_LOCK_FLEX)gralloc1_device->getFunction(gralloc1_device, GRALLOC1_FUNCTION_LOCK_FLEX);
     gralloc1_unlock = (GRALLOC1_PFN_UNLOCK)gralloc1_device->getFunction(gralloc1_device, GRALLOC1_FUNCTION_UNLOCK);
+#ifdef GRALLOC1_PFN_SET_LAYER_COUNT
     gralloc1_set_layer_count = (GRALLOC1_PFN_SET_LAYER_COUNT)gralloc1_device->getFunction(gralloc1_device, GRALLOC1_FUNCTION_SET_LAYER_COUNT);
     gralloc1_get_layer_count = (GRALLOC1_PFN_GET_LAYER_COUNT)gralloc1_device->getFunction(gralloc1_device, GRALLOC1_FUNCTION_GET_LAYER_COUNT);
+#endif
 }
 #endif
 
