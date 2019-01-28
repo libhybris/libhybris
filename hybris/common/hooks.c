@@ -2102,6 +2102,14 @@ int _hybris_hook_property_get(const char *key, char *value, const char *default_
     return my_property_get(key, value, default_value);
 }
 
+int _hybris_hook_property_list(void (*propfn)(const char *key, const char *value, void *cookie), void *cookie)
+{
+    TRACE_HOOK("propfn '%p' cookie '%p'",
+               propfn, cookie);
+
+    return my_property_list(propfn, cookie);
+}
+
 int _hybris_hook_property_set(const char *key, const char *value)
 {
     TRACE_HOOK("key '%s' value '%s'", key, value);
@@ -2592,6 +2600,7 @@ void* _hybris_hook_android_get_exported_namespace(const char* name)
 static struct _hook hooks_properties[] = {
     HOOK_INDIRECT(property_get),
     HOOK_INDIRECT(property_set),
+    HOOK_INDIRECT(property_list),
     HOOK_INDIRECT(__system_property_get),
     HOOK_INDIRECT(__system_property_read),
     HOOK_TO(__system_property_set, _hybris_hook_property_set),
@@ -3050,7 +3059,7 @@ static int get_android_sdk_version()
      * upgraded to the newer linker. */
     char device_name[PROP_VALUE_MAX];
     memset(device_name, 0, sizeof(device_name));
-    property_get("ro.build.product", device_name, "");
+    my_property_get("ro.build.product", device_name, "");
     if (strlen(device_name) > 0) {
         /* Force SDK version for both frieza/cooler and turbo for the time being */
         if (strcmp(device_name, "frieza") == 0 ||
