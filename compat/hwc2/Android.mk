@@ -13,8 +13,7 @@ LOCAL_SRC_FILES := HWC2.cpp ComposerHal.cpp hwc2_compatibility_layer.cpp
 LOCAL_C_INCLUDES := ../hybris/include
 
 LOCAL_STATIC_LIBRARIES := \
-    libhwcomposer-command-buffer \
-    libhwcnativewindow libhybris-gralloc
+    libhwcomposer-command-buffer
 
 LOCAL_SHARED_LIBRARIES := \
     android.frameworks.vr.composer@1.0 \
@@ -37,8 +36,7 @@ LOCAL_SHARED_LIBRARIES := \
     libui \
     libgui \
     libsync \
-    libbase \
-    libnativewindow
+    libbase
 
 LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := \
     android.hardware.graphics.allocator@2.0 \
