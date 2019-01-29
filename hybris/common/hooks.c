@@ -3274,6 +3274,19 @@ void* android_dlsym(void* handle, const char* symbol)
 {
     ENSURE_LINKER_IS_LOADED();
 
+    // do not use hybris properties for older linkers
+    if (get_android_sdk_version() < 27) {
+        if (!strcmp(symbol, "property_list")) {
+            return my_property_list;
+        }
+        if (!strcmp(symbol, "property_get")) {
+            return my_property_get;
+        }
+        if (!strcmp(symbol, "property_set")) {
+            return my_property_set;
+        }
+    }
+
     if (!_android_dlsym) {
         return NULL;
     }
