@@ -3118,7 +3118,7 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
     // make sure to skip the property hooks only when o.so is actually loaded
     // since for testing and we sometimes set things like 99 as sdk version.
     // The o linker is loaded when sdk_version >= 27 and exists.
-    if (!found && sdk_version < 27)
+    if (!found && sdk_version < 24)
         found = bsearch(&key, hooks_properties, HOOKS_SIZE(hooks_properties), sizeof(hooks_properties[0]), hook_cmp);
 
     if (!found)
@@ -3275,7 +3275,7 @@ void* android_dlsym(void* handle, const char* symbol)
     ENSURE_LINKER_IS_LOADED();
 
     // do not use hybris properties for older linkers
-    if (get_android_sdk_version() < 27) {
+    if (get_android_sdk_version() < 24) {
         if (!strcmp(symbol, "property_list")) {
             return my_property_list;
         }
