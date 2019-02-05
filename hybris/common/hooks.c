@@ -3118,7 +3118,7 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
     // make sure to skip the property hooks only when o.so is actually loaded
     // since for testing and we sometimes set things like 99 as sdk version.
     // The o linker is loaded when sdk_version >= 27 and exists.
-    if (sdk_version < 27)
+    if (!found && sdk_version < 27)
         found = bsearch(&key, hooks_properties, HOOKS_SIZE(hooks_properties), sizeof(hooks_properties[0]), hook_cmp);
 
     if (!found)
