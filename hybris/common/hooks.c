@@ -2576,6 +2576,15 @@ void* _hybris_hook_android_get_exported_namespace(const char* name)
     return _android_get_exported_namespace(name);
 }
 
+/* this was added while debugging in the hopes to get a backtrace from a double
+ * free crash. Unfortunately it fixes the problem so we cannot get a proper
+ * backtrace to fix the underlying problem. */
+void _hybris_hook_free(void *ptr)
+{
+    if (ptr) ((char*)ptr)[0] = 0;
+    free(ptr);
+}
+
 #if !defined(cfree)
 #define cfree free
 #endif
@@ -2603,7 +2612,7 @@ static struct _hook hooks_common[] = {
     HOOK_DIRECT(getenv),
     HOOK_DIRECT_NO_DEBUG(printf),
     HOOK_INDIRECT(malloc),
-    HOOK_DIRECT_NO_DEBUG(free),
+    HOOK_INDIRECT(free),
     HOOK_DIRECT_NO_DEBUG(calloc),
     HOOK_DIRECT_NO_DEBUG(cfree),
     HOOK_DIRECT_NO_DEBUG(realloc),
