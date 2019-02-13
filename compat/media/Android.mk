@@ -121,6 +121,7 @@ LOCAL_C_INCLUDES := \
 	frameworks/av/media/libstagefright/include \
 	frameworks/av/include \
 	frameworks/native/include \
+	frameworks/native/include/media/hardware \
 	system/media/audio_utils/include \
 	frameworks/av/services/camera/libcameraservice
 

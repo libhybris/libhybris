@@ -38,7 +38,9 @@ typedef void* EGLSyncKHR;
 #include <gui/IGraphicBufferProducer.h>
 #include <gui/IGraphicBufferConsumer.h>
 #include <gui/Surface.h>
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 #include <gui/NativeBufferAlloc.h>
+#endif
 
 namespace android {
 
