@@ -61,3 +61,9 @@ else
 o_la_CPPFLAGS += \
 	-DTRACE_DEBUG=1
 endif
+
+if WANT_ARM_TRACING
+o_la_CPPFLAGS += \
+	-DWANT_ARM_TRACING
+endif
+
