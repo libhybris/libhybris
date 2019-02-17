@@ -18,6 +18,14 @@ gles2include_HEADERS = \
 	GLES2/gl2ext.h \
 	GLES2/gl2platform.h
 
+gles3includedir = $(includedir)/GLES3
+gles3include_HEADERS = \
+	GLES3/gl3.h \
+	GLES3/gl31.h \
+	GLES3/gl32.h \
+	GLES3/gl3ext.h \
+	GLES3/gl3platform.h
+
 khrincludedir = $(includedir)/KHR
 khrinclude_HEADERS = \
 	KHR/khrplatform.h
