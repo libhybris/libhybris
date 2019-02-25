@@ -16,6 +16,8 @@
  *
  */
 
+#if HAS_VIBRATOR_HEADER
+
 #include <android-config.h>
 #include <assert.h>
 #include <stdio.h>
@@ -53,5 +55,15 @@ int main(int argc, char **argv)
 
 	return 0;
 }
+
+#else
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+    printf("test_vibrator is not supported in this build");
+    return 0;
+}
+#endif
 
 // vim:ts=4:sw=4:noexpandtab

@@ -20,6 +20,8 @@
  * Bindings generated using scripts in: utils/generate_nfc
  **/
 
+#if HAS_LIBNFC_NXP_HEADERS
+
 #include <android-config.h>
 
 #include <libnfc-nxp/phNfcTypes.h>
@@ -593,3 +595,5 @@ HYBRIS_IMPLEMENT_FUNCTION2(libnfc_so, int, phDal4Nfc_msgget, key_t, int);
 HYBRIS_IMPLEMENT_FUNCTION3(libnfc_so, int, phDal4Nfc_msgctl, int, int, void *);
 HYBRIS_IMPLEMENT_FUNCTION5(libnfc_so, int, phDal4Nfc_msgrcv, int, void *, size_t, long, int);
 /* XXX No prototype for exported symbol: __on_dlclose */
+#endif
+

@@ -28,7 +28,7 @@ endif
 libhybris_hwcomposerwindow_la_LDFLAGS = \
 	-version-info "1":"0":"0" \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
-	$(top_builddir)/hardware/libhardware.la
+	$(top_builddir)/gralloc/libgralloc.la
 
 if HAS_ANDROID_4_2_0
 libhybris_hwcomposerwindow_la_LDFLAGS += $(top_builddir)/libsync/libsync.la
@@ -58,5 +58,5 @@ eglplatform_hwcomposer_la_LIBADD = libhybris-hwcomposerwindow.la
 eglplatform_hwcomposer_la_LDFLAGS = \
 	-avoid-version -module -shared -export-dynamic \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
-	$(top_builddir)/hardware/libhardware.la
+	$(top_builddir)/gralloc/libgralloc.la
 

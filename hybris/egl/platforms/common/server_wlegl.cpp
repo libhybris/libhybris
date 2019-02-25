@@ -28,14 +28,17 @@
 
 extern "C" {
 #include <cutils/native_handle.h>
-#include <hardware/gralloc.h>
 }
+
+#include "logging.h"
 
 #include <wayland-server.h>
 #include "wayland-android-server-protocol.h"
 #include "server_wlegl_private.h"
 #include "server_wlegl_handle.h"
 #include "server_wlegl_buffer.h"
+
+#include <hybris/gralloc/gralloc.h>
 
 static inline server_wlegl *
 server_wlegl_from(struct wl_resource *resource)
@@ -127,7 +130,10 @@ server_wlegl_get_server_buffer_handle(wl_client *client, wl_resource *res, uint3
 
 	usage |= GRALLOC_USAGE_HW_COMPOSER;
 
-	int ret = wlegl->alloc->alloc(wlegl->alloc, width, height, format, usage, &_handle, &_stride);
+	int r = hybris_gralloc_allocate(width, height, format, usage, &_handle, (uint32_t*)&_stride);
+        if (r) {
+            HYBRIS_ERROR_LOG(SERVER_WLEGL, "failed to allocate buffer\n");
+        }
 	server_wlegl_buffer *buffer = server_wlegl_buffer_create_server(client, width, height, _stride, format, usage, _handle, wlegl);
 
 	struct wl_array ints;
@@ -165,18 +171,15 @@ server_wlegl_bind(struct wl_client *client, void *data,
 }
 
 server_wlegl *
-server_wlegl_create(struct wl_display *display, gralloc_module_t *gralloc, alloc_device_t *alloc)
+server_wlegl_create(struct wl_display *display)
 {
 	struct server_wlegl *wlegl;
-	int ret;
 
 	wlegl = new server_wlegl;
 
 	wlegl->display = display;
 	wlegl->global = wl_global_create(display, &android_wlegl_interface, 2,
 					      wlegl, server_wlegl_bind);
-	wlegl->gralloc = (const gralloc_module_t *)gralloc;
-	wlegl->alloc = alloc;
 
 	return wlegl;
 }
@@ -185,8 +188,6 @@ void
 server_wlegl_destroy(server_wlegl *wlegl)
 {
 	/* FIXME: server_wlegl_buffer objects may exist */
-
-	/* no way to release wlegl->gralloc */
 
 	/* FIXME: remove global_ */
 

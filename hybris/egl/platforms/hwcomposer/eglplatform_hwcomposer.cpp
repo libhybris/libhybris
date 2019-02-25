@@ -15,31 +15,18 @@ extern "C" {
 
 #include "logging.h"
 
-static gralloc_module_t *gralloc = 0;
-static alloc_device_t *alloc = 0;
+#include <hybris/gralloc/gralloc.h>
+
 static HWComposerNativeWindow *_nativewindow = NULL;
 
 extern "C" void hwcomposerws_init_module(struct ws_egl_interface *egl_iface)
 {
-	int err;
-	err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
-	if (gralloc==NULL) {
-		fprintf(stderr, "failed to get gralloc module: (%s)\n",strerror(-err));
-		assert(0);
-	}
-
-	err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-	if (err) {
-		fprintf(stderr, "ERROR: failed to open gralloc: (%s)\n",strerror(-err));
-		assert(0);
-	}
-	TRACE("** gralloc_open %p status=%s", gralloc, strerror(-err));
-	eglplatformcommon_init(egl_iface, gralloc, alloc);
+    hybris_gralloc_initialize(0);
+	eglplatformcommon_init(egl_iface);
 }
 
 extern "C" _EGLDisplay *hwcomposerws_GetDisplay(EGLNativeDisplayType display)
 {
-	assert (gralloc != NULL);
 	_EGLDisplay *dpy = 0;
 	if (display == EGL_DEFAULT_DISPLAY) {
 		dpy = new _EGLDisplay;
@@ -54,11 +41,9 @@ extern "C" void hwcomposerws_Terminate(_EGLDisplay *dpy)
 
 extern "C" EGLNativeWindowType hwcomposerws_CreateWindow(EGLNativeWindowType win, _EGLDisplay *display)
 {
-	assert (gralloc != NULL);
 	assert (_nativewindow == NULL);
 
 	HWComposerNativeWindow *window = static_cast<HWComposerNativeWindow *>((ANativeWindow *) win);
-	window->setup(gralloc, alloc);
 	_nativewindow = window;
 	_nativewindow->common.incRef(&_nativewindow->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(_nativewindow);

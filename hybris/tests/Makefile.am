@@ -13,34 +13,11 @@ bin_PROGRAMS = \
 	test_recorder \
 	test_gps \
 	test_opencl \
-	test_wifi
+	test_wifi \
+	test_hwc2 \
+	test_hwcomposer \
+	test_nfc
 
-if HAS_ANDROID_4_2_0
-bin_PROGRAMS += test_hwcomposer
-endif
-
-if HAS_ANDROID_5_0_0
-bin_PROGRAMS += test_hwcomposer
-endif
-
-
-if HAS_LIBNFC_NXP_HEADERS
-# test_nfc depends on NFC hardware HAL interface, which is only
-# available until Android API level 15 (v4.0.3, v4.0.4).
-if HAS_ANDROID_4_0_3
-bin_PROGRAMS += test_nfc
-else
-if HAS_ANDROID_4_1_0
-bin_PROGRAMS += test_nfc
-else
-if HAS_ANDROID_5_0_0
-bin_PROGRAMS += test_nfc
-endif
-endif
-endif
-endif
-
-bin_PROGRAMS += test_audio
 test_audio_SOURCES = test_audio.c
 test_audio_CFLAGS = \
 	-I$(top_srcdir)/include \
@@ -98,12 +75,23 @@ endif
 test_hwcomposer_LDADD = \
 	-lm \
 	$(top_builddir)/common/libhybris-common.la \
-	$(top_builddir)/egl/platforms/hwcomposer/libhybris-hwcomposerwindow.la \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/egl/libEGL.la \
 	$(top_builddir)/glesv2/libGLESv2.la \
-	$(top_builddir)/libsync/libsync.la \
 	$(top_builddir)/hardware/libhardware.la
+
+
+if HAS_ANDROID_4_2_0
+test_hwcomposer_LDADD += \
+	$(top_builddir)/libsync/libsync.la \
+	$(top_builddir)/egl/platforms/hwcomposer/libhybris-hwcomposerwindow.la
+else
+if HAS_ANDROID_5_0_0
+test_hwcomposer_LDADD += \
+	$(top_builddir)/libsync/libsync.la \
+	$(top_builddir)/egl/platforms/hwcomposer/libhybris-hwcomposerwindow.la
+endif
+endif
 
 test_sensors_SOURCES = test_sensors.c
 test_sensors_CFLAGS = \
@@ -196,6 +184,15 @@ test_nfc_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
 	-Wno-error=unused-function
+
+if HAS_LIBNFC_NXP_HEADERS
+test_nfc_CFLAGS += \
+        -DHAS_LIBNFC_NXP_HEADERS=1
+else
+test_nfc_CFLAGS += \
+        -DHAS_LIBNFC_NXP_HEADERS=0
+endif
+
 test_nfc_LDFLAGS = -pthread
 test_nfc_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
@@ -206,6 +203,11 @@ test_vibrator_SOURCES = test_vibrator.c
 test_vibrator_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS)
+if HAS_VIBRATOR_HEADER
+test_vibrator_CFLAGS += -DHAS_VIBRATOR_HEADER=1
+else
+test_vibrator_CFLAGS += -DHAS_VIBRATOR_HEADER=0
+endif
 test_vibrator_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/hardware/libhardware.la \
@@ -215,6 +217,15 @@ test_wifi_SOURCES = test_wifi.c
 test_wifi_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS)
+
+if HAS_WIFI_LEGACY_HEADERS
+test_wifi_CFLAGS += \
+        -DHAS_WIFI_LEGACY_HEADERS=1
+else
+test_wifi_CFLAGS += \
+        -DHAS_WIFI_LEGACY_HEADERS=0
+endif
+
 test_wifi_LDADD = \
 	$(top_builddir)/wifi/libwifi.la
 
@@ -225,4 +236,34 @@ test_opencl_CFLAGS = \
 test_opencl_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/opencl/libOpenCL.la
+
+test_hwc2_SOURCES = test_hwc2.cpp
+test_hwc2_CXXFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS) \
+	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/egl/platforms/common \
+	-I$(top_srcdir)/egl/platforms/hwcomposer \
+	-I$(top_srcdir)/libsync \
+	-std=gnu++11
+
+if HAS_HWCOMPOSER2_HEADERS
+test_hwc2_CXXFLAGS += \
+        -DHAS_HWCOMPOSER2_HEADERS=1
+else
+test_hwc2_CXXFLAGS += \
+        -DHAS_HWCOMPOSER2_HEADERS=0
+endif
+
+if HAS_ANDROID_7_0_0
+test_hwc2_LDADD = \
+        -lm \
+        $(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/egl/platforms/hwcomposer/libhybris-hwcomposerwindow.la \
+	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
+	$(top_builddir)/egl/libEGL.la \
+	$(top_builddir)/glesv2/libGLESv2.la \
+	$(top_builddir)/libsync/libsync.la \
+	$(top_builddir)/hwc2/libhwc2.la
+endif
 

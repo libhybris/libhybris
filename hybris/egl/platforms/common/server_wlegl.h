@@ -25,8 +25,8 @@
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#include <hardware/gralloc.h>
 #include <system/window.h>
+
 extern "C" {
 
 struct wl_display;
@@ -37,7 +37,7 @@ struct wl_buffer;
 struct server_wlegl;
 
 server_wlegl *
-server_wlegl_create(struct wl_display *wldpy, gralloc_module_t *gralloc, alloc_device_t *alloc);
+server_wlegl_create(struct wl_display *wldpy);
 
 void
 server_wlegl_destroy(server_wlegl *wlegl);

@@ -38,9 +38,14 @@
 #include <hybris/properties/properties.h>
 #include "properties_p.h"
 
-
 static const char property_service_socket[] = "/dev/socket/" PROP_SERVICE_NAME;
 static int send_prop_msg_no_reply = 0;
+
+typedef struct prop_msg_s {
+        unsigned cmd;
+        char name[PROP_NAME_MAX];
+        char value[PROP_VALUE_MAX];
+} prop_msg_t;
 
 /* Get/Set a property from the Android Init property socket */
 static int send_prop_msg(prop_msg_t *msg,
@@ -115,7 +120,7 @@ static int send_prop_msg(prop_msg_t *msg,
 	return result;
 }
 
-int property_list(void (*propfn)(const char *key, const char *value, void *cookie), void *cookie)
+int my_property_list(void (*propfn)(const char *key, const char *value, void *cookie), void *cookie)
 {
 	int err;
 	prop_msg_t msg;
@@ -157,7 +162,7 @@ static int property_get_socket(const char *key, char *value, const char *default
 	return 0;
 }
 
-int property_get(const char *key, char *value, const char *default_value)
+int my_property_get(const char *key, char *value, const char *default_value)
 {
 	char *ret = NULL;
 
@@ -198,7 +203,7 @@ int property_get(const char *key, char *value, const char *default_value)
 	return 0;
 }
 
-int property_set(const char *key, const char *value)
+int my_property_set(const char *key, const char *value)
 {
 	int err;
 	prop_msg_t msg;

@@ -20,7 +20,6 @@
 #include <stddef.h>
 
 #include <hybris/common/binding.h>
-#include <hardware_legacy/wifi.h>
 
 #define COMPAT_LIBRARY_PATH "libhardware_legacy.so"
 

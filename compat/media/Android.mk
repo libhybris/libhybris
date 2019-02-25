@@ -1,4 +1,11 @@
 LOCAL_PATH:= $(call my-dir)
+
+HYBRIS_MEDIA_32_BIT_ONLY := $(shell cat frameworks/av/media/libmediaplayerservice/Android.mk |grep LOCAL_32_BIT_ONLY |grep -o "true\|false")
+
+ifeq ($(HYBRIS_MEDIA_32_BIT_ONLY),true)
+HYBRIS_MEDIA_MULTILIB := 32
+endif
+
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/../Android.common.mk
 
@@ -38,6 +45,11 @@ ifdef TARGET_2ND_ARCH
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(if $(filter false,$(BOARD_UBUNTU_PREFER_32_BIT)),$(LOCAL_MODULE)$(TARGET_2ND_ARCH_MODULE_SUFFIX),$(LOCAL_MODULE))
 LOCAL_MODULE_STEM_64 := $(if $(filter false,$(BOARD_UBUNTU_PREFER_32_BIT)),$(LOCAL_MODULE),$(LOCAL_MODULE)_64)
+endif
+
+ifeq ($(HYBRIS_MEDIA_32_BIT_ONLY),true)
+LOCAL_32_BIT_ONLY := true
+LOCAL_MULTILIB := 32
 endif
 
 include $(BUILD_EXECUTABLE)
@@ -129,6 +141,11 @@ LOCAL_C_INCLUDES+= \
 	$(TOP)/$(MTK_PATH_SOURCE)/frameworks/av/include
 endif
 
+ifeq ($(HYBRIS_MEDIA_32_BIT_ONLY),true)
+LOCAL_32_BIT_ONLY := true
+LOCAL_MULTILIB := 32
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 # -------------------------------------------------
@@ -168,6 +185,11 @@ ifdef TARGET_2ND_ARCH
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(if $(filter false,$(BOARD_UBUNTU_PREFER_32_BIT)),$(LOCAL_MODULE)$(TARGET_2ND_ARCH_MODULE_SUFFIX),$(LOCAL_MODULE))
 LOCAL_MODULE_STEM_64 := $(if $(filter false,$(BOARD_UBUNTU_PREFER_32_BIT)),$(LOCAL_MODULE),$(LOCAL_MODULE)_64)
+endif
+
+ifeq ($(HYBRIS_MEDIA_32_BIT_ONLY),true)
+LOCAL_32_BIT_ONLY := true
+LOCAL_MULTILIB := 32
 endif
 
 include $(BUILD_EXECUTABLE)

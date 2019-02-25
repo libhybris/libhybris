@@ -28,18 +28,16 @@ class HWComposerNativeWindowBuffer : public BaseNativeWindowBuffer {
 friend class HWComposerNativeWindow;
 
 protected:
-    HWComposerNativeWindowBuffer(alloc_device_t* alloc,
-                            unsigned int width,
-                            unsigned int height,
-                            unsigned int format,
-                            unsigned int usage) ;
+    HWComposerNativeWindowBuffer(unsigned int width,
+                                 unsigned int height,
+                                 unsigned int format,
+                                 unsigned int usage) ;
    virtual ~HWComposerNativeWindowBuffer() ;
 
 protected:
     int busy;
     int fenceFd;
     int status;
-    alloc_device_t* m_alloc;
 };
 
 
@@ -47,8 +45,6 @@ class HWComposerNativeWindow : public BaseNativeWindow {
 public:
     HWComposerNativeWindow(unsigned int width, unsigned int height, unsigned int format);
     ~HWComposerNativeWindow();
-    void setup(gralloc_module_t* gralloc, alloc_device_t* alloc);
-
 
     int getFenceBufferFd(HWComposerNativeWindowBuffer *buffer);
     void setFenceBufferFd(HWComposerNativeWindowBuffer *buffer, int fd);
@@ -82,8 +78,6 @@ private:
     void allocateBuffers();
 
 private:
-    framebuffer_device_t* m_fbDev;
-    alloc_device_t* m_alloc;
     unsigned int m_usage;
     unsigned int m_bufFormat;
     std::vector<HWComposerNativeWindowBuffer*> m_bufList;

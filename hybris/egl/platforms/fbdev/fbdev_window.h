@@ -28,8 +28,7 @@ class FbDevNativeWindowBuffer : public BaseNativeWindowBuffer {
 friend class FbDevNativeWindow;
 
 protected:
-    FbDevNativeWindowBuffer(alloc_device_t* alloc,
-                            unsigned int width,
+    FbDevNativeWindowBuffer(unsigned int width,
                             unsigned int height,
                             unsigned int format,
                             unsigned int usage) ;
@@ -38,14 +37,12 @@ protected:
 protected:
     int busy;
     int status;
-    alloc_device_t* m_alloc;
 };
 
 
 class FbDevNativeWindow : public BaseNativeWindow {
 public:
-    FbDevNativeWindow(alloc_device_t* alloc,
-         framebuffer_device_t* fbDev);
+    FbDevNativeWindow();
     ~FbDevNativeWindow();
 
     // overloads from BaseNativeWindow
@@ -77,8 +74,6 @@ private:
     void reallocateBuffers();
 
 private:
-    framebuffer_device_t* m_fbDev;
-    alloc_device_t* m_alloc;
     unsigned int m_usage;
     unsigned int m_bufFormat;
     unsigned int m_bufferCount;

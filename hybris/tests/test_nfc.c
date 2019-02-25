@@ -17,6 +17,9 @@
 */
 
 #include <android-config.h>
+
+#if HAS_LIBNFC_NXP_HEADERS
+
 #include <assert.h>
 #include <stdio.h>
 #include <pthread.h>
@@ -371,3 +374,15 @@ int main(int argc, char **argv)
 
 	return 0;
 }
+
+#else
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+    printf("test_nfc is not supported in this build\n");
+    return 0;
+}
+
+#endif
+
