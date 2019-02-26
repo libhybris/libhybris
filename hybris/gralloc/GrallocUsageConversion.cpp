@@ -20,7 +20,7 @@
 #include <hardware/gralloc1.h>
 
 #ifndef ANDROID_BUILD
-#include <config.h>
+#include <android-config.h>
 #endif
 
 void android_convertGralloc0To1Usage(int32_t usage, uint64_t* producerUsage,
