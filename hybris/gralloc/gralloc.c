@@ -12,6 +12,7 @@
 #ifdef ANDROID_BUILD
 #include "hybris-gralloc.h"
 #else
+#include <config.h>
 #include <hybris/gralloc/gralloc.h>
 #include <hybris/common/binding.h>
 #endif
@@ -167,7 +168,7 @@ static void gralloc1_init(void)
 
         // currently the only one that affects us/interests us is release imply delete.
         for (i = 0; i < count; i++) {
-#ifdef GRALLOC1_CAPABILITY_RELEASE_IMPLY_DELETE
+#if ANDROID_VERSION_MAJOR >= 8
             if (gralloc1_capabilities[i] == GRALLOC1_CAPABILITY_RELEASE_IMPLY_DELETE) {
                 gralloc1_release_implies_delete = 1;
             }

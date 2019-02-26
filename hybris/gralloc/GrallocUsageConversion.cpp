@@ -19,6 +19,10 @@
 #include <hardware/gralloc.h>
 #include <hardware/gralloc1.h>
 
+#ifndef ANDROID_BUILD
+#include <config.h>
+#endif
+
 void android_convertGralloc0To1Usage(int32_t usage, uint64_t* producerUsage,
                                      uint64_t* consumerUsage) {
     constexpr uint64_t PRODUCER_MASK =
@@ -28,7 +32,7 @@ void android_convertGralloc0To1Usage(int32_t usage, uint64_t* producerUsage,
         /* GRALLOC1_PRODUCER_USAGE_CPU_WRITE_OFTEN | */
         GRALLOC1_PRODUCER_USAGE_GPU_RENDER_TARGET | GRALLOC1_PRODUCER_USAGE_PROTECTED |
         GRALLOC1_PRODUCER_USAGE_CAMERA | GRALLOC1_PRODUCER_USAGE_VIDEO_DECODER
-#ifdef GRALLOC1_PRODUCER_USAGE_SENSOR_DIRECT_DATA
+#if ANDROID_VERSION_MAJOR >= 8
         | GRALLOC1_PRODUCER_USAGE_SENSOR_DIRECT_DATA
 #endif
         ;
@@ -39,8 +43,8 @@ void android_convertGralloc0To1Usage(int32_t usage, uint64_t* producerUsage,
         GRALLOC1_CONSUMER_USAGE_CLIENT_TARGET | GRALLOC1_CONSUMER_USAGE_CURSOR |
         GRALLOC1_CONSUMER_USAGE_VIDEO_ENCODER | GRALLOC1_CONSUMER_USAGE_CAMERA |
         GRALLOC1_CONSUMER_USAGE_RENDERSCRIPT
-#ifdef GRALLOC1_PRODUCER_USAGE_SENSOR_DIRECT_DATA
-        | GRALLOC1_CONSUMER_USAGE_GPU_DATA_BUFFER
+#if ANDROID_VERSION_MAJOR >= 8
+	| GRALLOC1_CONSUMER_USAGE_GPU_DATA_BUFFER
 #endif
         ;
     *producerUsage = static_cast<uint64_t>(usage) & PRODUCER_MASK;
