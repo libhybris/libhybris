@@ -109,6 +109,8 @@ int (*_android_dl_iterate_phdr)(int (*cb)(void* info, size_t size, void* data), 
 void (*_android_get_LD_LIBRARY_PATH)(char* buffer, size_t buffer_size) = NULL;
 void (*_android_update_LD_LIBRARY_PATH)(const char* ld_library_path) = NULL;
 void *(*_android_dlopen_ext)(const char* filename, int flag, const void* extinfo) = NULL;
+void (*_android_set_application_target_sdk_version)(uint32_t target) = NULL;
+uint32_t (*_android_get_application_target_sdk_version)() = NULL;
 void *(*_android_create_namespace)(const char* name,
                                  const char* ld_library_path,
                                  const char* default_library_path,
@@ -2542,6 +2544,20 @@ void* _hybris_hook_android_dlopen_ext(const char* filename, int flag, const void
     return _android_dlopen_ext(filename, flag, extinfo);
 }
 
+void _hybris_hook_android_set_application_target_sdk_version(uint32_t target)
+{
+    TRACE("target %d", target);
+
+    android_set_application_target_sdk_version(target);
+}
+
+uint32_t _hybris_hook_android_get_application_target_sdk_version()
+{
+    TRACE("");
+
+    return _android_get_application_target_sdk_version();
+}
+
 void* _hybris_hook_android_create_namespace(const char* name,
                                                      const char* ld_library_path,
                                                      const char* default_library_path,
@@ -2835,6 +2851,8 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(android_get_LD_LIBRARY_PATH),
     HOOK_INDIRECT(android_update_LD_LIBRARY_PATH),
     HOOK_INDIRECT(android_dlopen_ext),
+    HOOK_INDIRECT(android_set_application_target_sdk_version),
+    HOOK_INDIRECT(android_get_application_target_sdk_version),
     HOOK_INDIRECT(android_create_namespace),
     HOOK_INDIRECT(android_init_anonymous_namespace),
     HOOK_INDIRECT(android_dlwarning),
@@ -3214,6 +3232,8 @@ static void __hybris_linker_init()
     _android_get_LD_LIBRARY_PATH = dlsym(linker_handle, "android_get_LD_LIBRARY_PATH");
     _android_update_LD_LIBRARY_PATH = dlsym(linker_handle, "android_update_LD_LIBRARY_PATH");
     _android_dlopen_ext = dlsym(linker_handle, "android_dlopen_ext");
+    _android_set_application_target_sdk_version = dlsym(linker_handle, "android_set_application_target_sdk_version");
+    _android_get_application_target_sdk_version = dlsym(linker_handle, "android_get_application_target_sdk_version");
     _android_create_namespace = dlsym(linker_handle, "android_create_namespace");
     _android_init_anonymous_namespace = dlsym(linker_handle, "android_init_anonymous_namespace");
     _android_dlwarning = dlsym(linker_handle, "android_dlwarning");
@@ -3225,6 +3245,10 @@ static void __hybris_linker_init()
 #else
     _android_linker_init(sdk_version, __hybris_get_hooked_symbol);
 #endif
+
+    if (_android_set_application_target_sdk_version) {
+        _android_set_application_target_sdk_version(sdk_version);
+    }
 
     linker_initialized = 1;
 }
@@ -3371,6 +3395,28 @@ void* android_dlopen_ext(const char* filename, int flag, const void* extinfo)
     return _android_dlopen_ext(filename, flag, extinfo);
 }
 
+void android_set_application_target_sdk_version(uint32_t target)
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_set_application_target_sdk_version) {
+        return;
+    }
+
+    _android_set_application_target_sdk_version(target);
+}
+
+uint32_t android_get_application_target_sdk_version()
+{
+    ENSURE_LINKER_IS_LOADED();
+
+    if (!_android_get_application_target_sdk_version) {
+        return 0;
+    }
+
+    return _android_get_application_target_sdk_version();
+}
+
 struct android_namespace_t* android_create_namespace(const char* name,
                                                      const char* ld_library_path,
                                                      const char* default_library_path,
@@ -3474,6 +3520,16 @@ void hybris_update_LD_LIBRARY_PATH(const char* ld_library_path)
 void* hybris_dlopen_ext(const char* filename, int flag, const void* extinfo)
 {
     return android_dlopen_ext(filename, flag, extinfo);
+}
+
+void hybris_set_application_target_sdk_version(uint32_t target)
+{
+    android_set_application_target_sdk_version(target);
+}
+
+uint32_t hybris_get_application_target_sdk_version()
+{
+    return android_get_application_target_sdk_version();
 }
 
 void* hybris_create_namespace(const char* name,
