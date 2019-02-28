@@ -198,13 +198,13 @@ int dl_iterate_phdr(int (*cb)(dl_phdr_info* info, size_t size, void* data), void
   return do_dl_iterate_phdr(cb, data);
 }
 
-void android_set_application_target_sdk_version(uint32_t target) {
+extern "C" void android_set_application_target_sdk_version(uint32_t target) {
   // lock to avoid modification in the middle of dlopen.
   ScopedPthreadMutexLocker locker(&g_dl_mutex);
   set_application_target_sdk_version(target);
 }
 
-uint32_t android_get_application_target_sdk_version() {
+extern "C" uint32_t android_get_application_target_sdk_version() {
   return get_application_target_sdk_version();
 }
 
