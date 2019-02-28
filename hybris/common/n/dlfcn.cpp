@@ -142,22 +142,22 @@ int dl_iterate_phdr(int (*cb)(dl_phdr_info* info, size_t size, void* data), void
   return do_dl_iterate_phdr(cb, data);
 }
 
-void android_set_application_target_sdk_version(uint32_t target) {
+extern "C" void android_set_application_target_sdk_version(uint32_t target) {
   // lock to avoid modification in the middle of dlopen.
   ScopedPthreadMutexLocker locker(&g_dl_mutex);
   set_application_target_sdk_version(target);
 }
 
-uint32_t android_get_application_target_sdk_version() {
+extern "C" uint32_t android_get_application_target_sdk_version() {
   return get_application_target_sdk_version();
 }
 
-void android_dlwarning(void* obj, void (*f)(void*, const char*)) {
+extern "C" void android_dlwarning(void* obj, void (*f)(void*, const char*)) {
   ScopedPthreadMutexLocker locker(&g_dl_mutex);
   get_dlwarning(obj, f);
 }
 
-bool android_init_namespaces(const char* public_ns_sonames,
+extern "C" bool android_init_namespaces(const char* public_ns_sonames,
                              const char* anon_ns_library_path) {
   ScopedPthreadMutexLocker locker(&g_dl_mutex);
   bool success = init_namespaces(public_ns_sonames, anon_ns_library_path);
@@ -168,7 +168,7 @@ bool android_init_namespaces(const char* public_ns_sonames,
   return success;
 }
 
-android_namespace_t* android_create_namespace(const char* name,
+extern "C" android_namespace_t* android_create_namespace(const char* name,
                                               const char* ld_library_path,
                                               const char* default_library_path,
                                               uint64_t type,
