@@ -141,10 +141,10 @@ extern "C"
 void __attribute__((noinline)) __attribute__((visibility("default"))) rtld_db_dlactivity();
 
 static pthread_mutex_t g__r_debug_mutex = PTHREAD_MUTEX_INITIALIZER;
-static r_debug _r_debug =
+r_debug _r_debug =
     {1, nullptr, reinterpret_cast<uintptr_t>(&rtld_db_dlactivity), r_debug::RT_CONSISTENT, 0};
 
-static link_map* r_debug_tail = 0;
+static link_map* r_debug_head = 0;
 
 static void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 
@@ -164,23 +164,41 @@ static void insert_soinfo_into_debug_map(soinfo* info) {
   // gdb tends to care more about libc than it does
   // about leaf libraries, and ordering it this way
   // reduces the back-and-forth over the wire.
-  if (r_debug_tail) {
-    r_debug_tail->l_next = map;
-    map->l_prev = r_debug_tail;
-    map->l_next = 0;
+
+  ///// PATCHED: we don't want libhybris modifying glibc's
+  /////          link_map objects, which should not be linked
+  /////          to bionic's stripped link_map objects.
+  /////        ==> make a copy of the whole chain
+  if(r_debug_head == 0 && _r_debug.r_map != 0) {
+    link_map *glibc_link_map = new link_map(*_r_debug.r_map);
+    r_debug_head = glibc_link_map;
+
+    while(glibc_link_map->l_next != 0) {
+      link_map *copy_next_link_map = new link_map(*glibc_link_map->l_next);
+      glibc_link_map->l_next = copy_next_link_map;
+      copy_next_link_map->l_prev = glibc_link_map;
+
+      glibc_link_map = copy_next_link_map;
+    }
+  }
+
+  if (r_debug_head != 0) {
+    r_debug_head->l_prev = map;
+    map->l_next = r_debug_head;
+    map->l_prev = 0;
   } else {
     _r_debug.r_map = map;
     map->l_prev = 0;
     map->l_next = 0;
   }
-  r_debug_tail = map;
+  _r_debug.r_map = r_debug_head = map;
 }
 
 static void remove_soinfo_from_debug_map(soinfo* info) {
   link_map* map = &(info->link_map_head);
 
-  if (r_debug_tail == map) {
-    r_debug_tail = map->l_prev;
+  if (r_debug_head == map) {
+    r_debug_head = map->l_prev;
   }
 
   if (map->l_prev) {
@@ -3175,7 +3193,7 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
   map->l_next = nullptr;
 
   _r_debug.r_map = map;
-  r_debug_tail = map;
+  r_debug_head = map;
 
   init_linker_info_for_gdb(linker_base);
 

@@ -166,7 +166,7 @@ const char *linker_get_error(void)
  */
 extern void __attribute__((noinline)) rtld_db_dlactivity(void);
 
-static struct r_debug _r_debug = {1, NULL, &rtld_db_dlactivity,
+struct r_debug _r_debug = {1, NULL, &rtld_db_dlactivity,
                                   RT_CONSISTENT, 0};
 static struct link_map *r_debug_tail = 0;
 
@@ -188,16 +188,46 @@ static void insert_soinfo_into_debug_map(soinfo * info)
      * about leaf libraries, and ordering it this way
      * reduces the back-and-forth over the wire.
      */
+
+    ///// PATCHED: we don't want libhybris modifying glibc's
+    /////          link_map objects, which should not be linked
+    /////          to bionic's stripped link_map objects.
+    /////        ==> make a copy of the whole chain
+    if(r_debug_tail == 0 && _r_debug.r_map != 0) {
+      struct link_map *glibc_link_map = malloc(sizeof(struct link_map));
+      glibc_link_map->l_addr = _r_debug.r_map->l_addr;
+      glibc_link_map->l_name = _r_debug.r_map->l_name;
+      glibc_link_map->l_ld = _r_debug.r_map->l_ld;
+      glibc_link_map->l_next = _r_debug.r_map->l_next;
+      glibc_link_map->l_prev = _r_debug.r_map->l_prev;
+
+      r_debug_tail = glibc_link_map;
+
+      while(glibc_link_map->l_next != 0) {
+        struct link_map *copy_next_link_map = malloc(sizeof(struct link_map));
+        copy_next_link_map->l_addr = glibc_link_map->l_next->l_addr;
+        copy_next_link_map->l_name = glibc_link_map->l_next->l_name;
+        copy_next_link_map->l_ld = glibc_link_map->l_next->l_ld;
+        copy_next_link_map->l_next = glibc_link_map->l_next->l_next;
+        copy_next_link_map->l_prev = glibc_link_map->l_next->l_prev;
+
+        glibc_link_map->l_next = copy_next_link_map;
+        copy_next_link_map->l_prev = glibc_link_map;
+
+        glibc_link_map = copy_next_link_map;
+      }
+    }
+
     if (r_debug_tail) {
-        r_debug_tail->l_next = map;
-        map->l_prev = r_debug_tail;
-        map->l_next = 0;
+        r_debug_tail->l_prev = map;
+        map->l_next = r_debug_tail;
+        map->l_prev = 0;
     } else {
         _r_debug.r_map = map;
         map->l_prev = 0;
         map->l_next = 0;
     }
-    r_debug_tail = map;
+    _r_debug.r_map = r_debug_tail = map;
 }
 
 static void remove_soinfo_from_debug_map(soinfo * info)
