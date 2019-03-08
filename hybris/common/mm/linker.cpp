@@ -152,7 +152,27 @@ static void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
 #endif
 
+static int _is_android_debug_enabled() 
+{
+  static int _hybris_enable_android_debug = -1; // -1: not initialized
+  
+  if (_hybris_enable_android_debug == -1) {
+    _hybris_enable_android_debug = 0;
+    const char *env = getenv("HYBRIS_ENABLE_LINKER_DEBUG_MAP");
+    if (env != NULL)
+    {
+        if (strcmp(env, "1") == 0) {
+               _hybris_enable_android_debug = 1;
+        }
+    }
+  }
+  
+  return _hybris_enable_android_debug == 1;
+}
+
 static void insert_soinfo_into_debug_map(soinfo* info) {
+  if (!_is_android_debug_enabled()) return;
+    
   // Copy the necessary fields into the debug structure.
   link_map* map = &(info->link_map_head);
   map->l_addr = info->load_bias;
@@ -195,6 +215,8 @@ static void insert_soinfo_into_debug_map(soinfo* info) {
 }
 
 static void remove_soinfo_from_debug_map(soinfo* info) {
+  if (!_is_android_debug_enabled()) return;
+  
   link_map* map = &(info->link_map_head);
 
   if (r_debug_head == map) {

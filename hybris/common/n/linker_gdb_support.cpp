@@ -33,7 +33,27 @@ r_debug _r_debug =
 static pthread_mutex_t g__r_debug_mutex = PTHREAD_MUTEX_INITIALIZER;
 static link_map* r_debug_head = nullptr;
 
+static int _is_android_debug_enabled() 
+{
+  static int _hybris_enable_android_debug = -1; // -1: not initialized
+  
+  if (_hybris_enable_android_debug == -1) {
+    _hybris_enable_android_debug = 0;
+    const char *env = getenv("HYBRIS_ENABLE_LINKER_DEBUG_MAP");
+    if (env != NULL)
+    {
+        if (strcmp(env, "1") == 0) {
+               _hybris_enable_android_debug = 1;
+        }
+    }
+  }
+  
+  return _hybris_enable_android_debug == 1;
+}
+
 void insert_link_map_into_debug_map(link_map* map) {
+  if (!_is_android_debug_enabled()) return;
+        
   // Stick the new library at the end of the list.
   // gdb tends to care more about libc than it does
   // about leaf libraries, and ordering it this way
@@ -69,6 +89,8 @@ void insert_link_map_into_debug_map(link_map* map) {
 }
 
 void remove_link_map_from_debug_map(link_map* map) {
+  if (!_is_android_debug_enabled()) return;
+        
   if (r_debug_head == map) {
     r_debug_head = map->l_next;
   }

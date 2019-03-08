@@ -172,8 +172,28 @@ static struct link_map *r_debug_tail = 0;
 
 static pthread_mutex_t _r_debug_lock = PTHREAD_MUTEX_INITIALIZER;
 
+static int _is_android_debug_enabled() 
+{
+  static int _hybris_enable_android_debug = -1; // -1: not initialized
+  
+  if (_hybris_enable_android_debug == -1) {
+    _hybris_enable_android_debug = 0;
+    const char *env = getenv("HYBRIS_ENABLE_LINKER_DEBUG_MAP");
+    if (env != NULL)
+    {
+        if (strcmp(env, "1") == 0) {
+               _hybris_enable_android_debug = 1;
+        }
+    }
+  }
+  
+  return _hybris_enable_android_debug == 1;
+}
+
 static void insert_soinfo_into_debug_map(soinfo * info)
 {
+    if (!_is_android_debug_enabled()) return;
+
     struct link_map * map;
 
     /* Copy the necessary fields into the debug structure.
@@ -232,6 +252,8 @@ static void insert_soinfo_into_debug_map(soinfo * info)
 
 static void remove_soinfo_from_debug_map(soinfo * info)
 {
+    if (!_is_android_debug_enabled()) return;
+    
     struct link_map * map = &(info->linkmap);
 
     if (r_debug_tail == map)
