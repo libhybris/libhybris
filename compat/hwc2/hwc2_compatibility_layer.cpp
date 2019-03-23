@@ -178,7 +178,8 @@ hwc2_compat_layer_t* hwc2_compat_display_create_layer(hwc2_compat_display_t* dis
     if (!layer)
         return nullptr;
 
-    display->self->createLayer(&layer->self);
+    if (display->self->createLayer(&layer->self) != HWC2::Error::None)
+        return nullptr;
 
     return layer;
 }
@@ -186,9 +187,9 @@ hwc2_compat_layer_t* hwc2_compat_display_create_layer(hwc2_compat_display_t* dis
 void hwc2_compat_display_destroy_layer(hwc2_compat_display_t* display,
                                        hwc2_compat_layer_t* layer)
 {
-    display->self->destroyLayer(layer->self);
+    if (display->self->destroyLayer(layer->self) != HWC2::Error::None)
+        delete layer->self;
 
-    delete layer->self;
     free(layer);
 }
 

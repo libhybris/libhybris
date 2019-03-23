@@ -26,6 +26,9 @@
 #include <ui/Fence.h>
 #include <ui/FloatRect.h>
 #include <ui/GraphicBuffer.h>
+#if ANDROID_VERSION_MAJOR >= 9
+#include <ui/GraphicTypes.h>
+#endif
 #include <ui/Region.h>
 
 #include <android/configuration.h>
@@ -471,10 +474,17 @@ Error Display::getHdrCapabilities(
             &maxLuminance, &maxAverageLuminance, &minLuminance);
     auto error = static_cast<HWC2::Error>(intError);
 
+#if ANDROID_VERSION_MAJOR >= 9
+    std::vector<android::ui::Hdr> types;
+    for (auto type : intTypes) {
+        types.push_back(static_cast<android::ui::Hdr>(type));
+    }
+#else
     std::vector<int32_t> types;
     for (auto type : intTypes) {
         types.push_back(static_cast<int32_t>(type));
     }
+#endif
     numTypes = types.size();
     if (error != Error::None) {
         return error;
