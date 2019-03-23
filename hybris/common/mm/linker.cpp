@@ -148,30 +148,14 @@ static link_map* r_debug_head = 0;
 
 static void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 
+static int _linker_enable_gdb_support = 0;
+
 #ifdef WANT_ARM_TRACING
 void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
 #endif
 
-static int _is_android_debug_enabled() 
-{
-  static int _hybris_enable_android_debug = -1; // -1: not initialized
-  
-  if (_hybris_enable_android_debug == -1) {
-    _hybris_enable_android_debug = 0;
-    const char *env = getenv("HYBRIS_ENABLE_LINKER_DEBUG_MAP");
-    if (env != NULL)
-    {
-        if (strcmp(env, "1") == 0) {
-               _hybris_enable_android_debug = 1;
-        }
-    }
-  }
-  
-  return _hybris_enable_android_debug == 1;
-}
-
 static void insert_soinfo_into_debug_map(soinfo* info) {
-  if (!_is_android_debug_enabled()) return;
+  if (!_linker_enable_gdb_support) return;
     
   // Copy the necessary fields into the debug structure.
   link_map* map = &(info->link_map_head);
@@ -215,7 +199,7 @@ static void insert_soinfo_into_debug_map(soinfo* info) {
 }
 
 static void remove_soinfo_from_debug_map(soinfo* info) {
-  if (!_is_android_debug_enabled()) return;
+  if (!_linker_enable_gdb_support) return;
   
   link_map* map = &(info->link_map_head);
 
@@ -3383,9 +3367,9 @@ static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf) {
 }
 
 #ifdef WANT_ARM_TRACING
-extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), void *(create_wrapper)(const char*, void*, int)) {
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(create_wrapper)(const char*, void*, int)) {
 #else
-extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) {
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) {
 #endif
   // Get a few environment variables.
   const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
@@ -3410,6 +3394,7 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
     set_application_target_sdk_version(sdk_version);
 
   _get_hooked_symbol = get_hooked_symbol;
+  _linker_enable_gdb_support = enable_linker_gdb_support;
 #ifdef WANT_ARM_TRACING
   _create_wrapper = create_wrapper;
 #endif

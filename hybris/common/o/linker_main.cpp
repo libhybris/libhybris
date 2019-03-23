@@ -499,9 +499,9 @@ void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
 
 #ifdef WANT_ARM_TRACING
-extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), void *(create_wrapper)(const char*, void*, int)) {
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(create_wrapper)(const char*, void*, int)) {
 #else
-extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) {
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) {
 #endif
   // Get a few environment variables.
   const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
@@ -526,6 +526,7 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
     set_application_target_sdk_version(sdk_version);
 
   _get_hooked_symbol = get_hooked_symbol;
+  _linker_enable_gdb_support = enable_linker_gdb_support;
 #ifdef WANT_ARM_TRACING
   _create_wrapper = create_wrapper;
 #endif
