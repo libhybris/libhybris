@@ -172,8 +172,12 @@ static struct link_map *r_debug_tail = 0;
 
 static pthread_mutex_t _r_debug_lock = PTHREAD_MUTEX_INITIALIZER;
 
+static int _linker_enable_gdb_support = 0;
+
 static void insert_soinfo_into_debug_map(soinfo * info)
 {
+    if (!_linker_enable_gdb_support) return;
+
     struct link_map * map;
 
     /* Copy the necessary fields into the debug structure.
@@ -232,6 +236,8 @@ static void insert_soinfo_into_debug_map(soinfo * info)
 
 static void remove_soinfo_from_debug_map(soinfo * info)
 {
+    if (!_linker_enable_gdb_support) return;
+    
     struct link_map * map = &(info->linkmap);
 
     if (r_debug_tail == map)
@@ -2375,10 +2381,11 @@ unsigned __linker_init(unsigned **elfdata) {
 }
 
 #ifdef WANT_ARM_TRACING
-void android_linker_init(int sdk_version, void *(get_hooked_symbol)(const char*, const char*), void *(create_wrapper)(const char*, void*, int)) {
+void android_linker_init(int sdk_version, void *(get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(create_wrapper)(const char*, void*, int)) {
 #else
-void android_linker_init(int sdk_version, void *(get_hooked_symbol)(const char*, const char*)) {
+void android_linker_init(int sdk_version, void *(get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) {
 #endif
    (void) sdk_version;
    _get_hooked_symbol = get_hooked_symbol;
+  _linker_enable_gdb_support = enable_linker_gdb_support;
 }

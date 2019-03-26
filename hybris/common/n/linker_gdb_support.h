@@ -28,6 +28,7 @@ void notify_gdb_of_unload(link_map* map);
 void notify_gdb_of_libraries();
 
 extern struct r_debug _r_debug;
+extern int _linker_enable_gdb_support;
 
 __END_DECLS
 
