@@ -45,11 +45,10 @@ r_debug _r_debug =
 static pthread_mutex_t g__r_debug_mutex = PTHREAD_MUTEX_INITIALIZER;
 static link_map* r_debug_head = nullptr;
 
-int _hybris_enable_android_debug = 0;
+int _linker_enable_gdb_support = 0;
 
 void insert_link_map_into_debug_map(link_map* map) {
-  if (!_hybris_enable_android_debug) return;
-        
+  if (!_linker_enable_gdb_support) return;
 
   // Stick the new library at the end of the list.
   // gdb tends to care more about libc than it does
@@ -63,16 +62,16 @@ void insert_link_map_into_debug_map(link_map* map) {
   if(r_debug_head == nullptr && _r_debug.r_map != nullptr) {
     link_map *glibc_link_map = new link_map(*_r_debug.r_map);
     r_debug_head = glibc_link_map;
-      
+
     while(glibc_link_map->l_next != nullptr) {
       link_map *copy_next_link_map = new link_map(*glibc_link_map->l_next);
       glibc_link_map->l_next = copy_next_link_map;
       copy_next_link_map->l_prev = glibc_link_map;
-      
+
       glibc_link_map = copy_next_link_map;
     }
   }
-  
+
   if (r_debug_head != nullptr) {
     r_debug_head->l_prev = map;
     map->l_next = r_debug_head;
@@ -86,8 +85,7 @@ void insert_link_map_into_debug_map(link_map* map) {
 }
 
 void remove_link_map_from_debug_map(link_map* map) {
-  if (!_hybris_enable_android_debug) return;
-        
+  if (!_linker_enable_gdb_support) return;
 
   if (r_debug_head == map) {
     r_debug_head = map->l_next;
