@@ -108,16 +108,20 @@ static const char* const kLdConfigFilePath = "/system/etc/ld.config.txt";
 static const char* const kSystemLibDir     = "/system/lib64";
 static const char* const kVendorLibDir     = "/vendor/lib64";
 static const char* const kOdmLibDir        = "/odm/lib64";
+static const char* const kOdmLibEglDir     = "/odm/lib64/egl";
 static const char* const kAsanSystemLibDir = "/data/asan/system/lib64";
 static const char* const kAsanVendorLibDir = "/data/asan/vendor/lib64";
 static const char* const kAsanOdmLibDir    = "/data/asan/odm/lib64";
+static const char* const kAsanOdmLibEglDir = "/data/asan/odm/lib64/egl";
 #else
 static const char* const kSystemLibDir     = "/system/lib";
 static const char* const kVendorLibDir     = "/vendor/lib";
 static const char* const kOdmLibDir        = "/odm/lib";
+static const char* const kOdmLibEglDir     = "/odm/lib/egl";
 static const char* const kAsanSystemLibDir = "/data/asan/system/lib";
 static const char* const kAsanVendorLibDir = "/data/asan/vendor/lib";
 static const char* const kAsanOdmLibDir    = "/data/asan/odm/lib";
+static const char* const kAsanOdmLibEglDir = "/data/asan/odm/lib/egl";
 #endif
 
 static const char* const kAsanLibDirPrefix = "/data/asan";
@@ -126,6 +130,7 @@ static const char* const kDefaultLdPaths[] = {
   kSystemLibDir,
   kVendorLibDir,
   kOdmLibDir,
+  kOdmLibEglDir,
   nullptr
 };
 
@@ -136,6 +141,8 @@ static const char* const kAsanDefaultLdPaths[] = {
   kVendorLibDir,
   kAsanOdmLibDir,
   kOdmLibDir,
+  kAsanOdmLibEglDir,
+  kOdmLibEglDir,
   nullptr
 };
 
