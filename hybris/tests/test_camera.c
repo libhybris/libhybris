@@ -17,6 +17,11 @@
 
 #include "config.h"
 
+#include <wayland-client.h>
+#include <wayland-server.h>
+#include <wayland-client-protocol.h>
+#include <wayland-egl.h>
+
 #include <hybris/camera/camera_compatibility_layer.h>
 #include <hybris/camera/camera_compatibility_layer_capabilities.h>
 
@@ -286,6 +291,70 @@ static GLuint create_program(const char* pVertexSource, const char* pFragmentSou
 	return program;
 }
 
+struct wl_display *wldisplay = NULL;
+struct wl_compositor *wlcompositor = NULL;
+struct wl_surface *wlsurface;
+struct wl_egl_window *wlegl_window;
+struct wl_region *wlregion;
+struct wl_shell *wlshell;
+struct wl_shell_surface *wlshell_surface;
+
+static void global_registry_handler(void *data, struct wl_registry *registry, uint32_t id, const char *interface, uint32_t version)
+{
+	printf("Got a registry event for %s id %d\n", interface, id);
+	if (strcmp(interface, "wl_compositor") == 0) {
+		wlcompositor = wl_registry_bind(registry,
+						id,
+						&wl_compositor_interface,
+						1);
+	} else if (strcmp(interface, "wl_shell") == 0) {
+		wlshell = wl_registry_bind(registry, id,
+					&wl_shell_interface, 1);
+	}
+}
+
+static void global_registry_remover(void *data, struct wl_registry *registry, uint32_t id)
+{
+	printf("Got a registry losing event for %d\n", id);
+}
+
+static const struct wl_registry_listener registry_listener = {
+	global_registry_handler,
+	global_registry_remover
+};
+
+static void get_server_references(void)
+{
+	wldisplay = wl_display_connect(NULL);
+	if (wldisplay == NULL) {
+		fprintf(stderr, "Can't connect to display\n");
+		exit(1);
+	}
+	printf("connected to display\n");
+
+	struct wl_registry *registry = wl_display_get_registry(wldisplay);
+	wl_registry_add_listener(registry, &registry_listener, NULL);
+
+	wl_display_dispatch(wldisplay);
+	wl_display_roundtrip(wldisplay);
+
+	if (wlcompositor == NULL || wlshell == NULL) {
+		fprintf(stderr, "Can't find compositor or shell\n");
+		exit(1);
+	} else {
+		fprintf(stderr, "Found compositor and shell\n");
+	}
+}
+
+static void create_opaque_region()
+{
+	wlregion = wl_compositor_create_region(wlcompositor);
+	wl_region_add(wlregion, 0, 0,
+		  1024,
+		  1024);
+	wl_surface_set_opaque_region(wlsurface, wlregion);
+}
+
 int main(int argc, char** argv)
 {
 	struct CameraControlListener listener;
@@ -356,6 +425,22 @@ int main(int argc, char** argv)
 	FocusRegion fr = { top: -200, left: -200, bottom: 200, right: 200, weight: 300};
 	android_camera_set_focus_region(cc, &fr);
 
+	/* Wayland Setup */
+	get_server_references();
+
+	wlsurface = wl_compositor_create_surface(wlcompositor);
+	if (wlsurface == NULL) {
+		fprintf(stderr, "Can't create surface\n");
+		exit(1);
+	} else {
+		fprintf(stderr, "Created surface\n");
+	}
+
+	wlshell_surface = wl_shell_get_shell_surface(wlshell, wlsurface);
+	wl_shell_surface_set_toplevel(wlshell_surface);
+
+	create_opaque_region();
+
 	/* EGL Setup */
 	EGLConfig ecfg;
 	EGLBoolean rv;
@@ -372,7 +457,7 @@ int main(int argc, char** argv)
 		EGL_NONE
 	};
 
-	EGLDisplay disp = eglGetDisplay(NULL);
+	EGLDisplay disp = eglGetDisplay((EGLNativeDisplayType)wldisplay);
 	assert(eglGetError() == EGL_SUCCESS);
 	assert(disp != EGL_NO_DISPLAY);
 
@@ -384,8 +469,16 @@ int main(int argc, char** argv)
 	assert(eglGetError() == EGL_SUCCESS);
 	assert(rv == EGL_TRUE);
 
+	wlegl_window = wl_egl_window_create(wlsurface, 1024, 1024);
+	if (wlegl_window == EGL_NO_SURFACE) {
+		fprintf(stderr, "Can't create egl window\n");
+		exit(1);
+	} else {
+		fprintf(stderr, "Created egl window\n");
+	}
+
 	EGLSurface surface = eglCreateWindowSurface((EGLDisplay) disp, ecfg,
-			(EGLNativeWindowType) NULL, NULL);
+			(EGLNativeWindowType) wlegl_window, NULL);
 	assert(eglGetError() == EGL_SUCCESS);
 	assert(surface != EGL_NO_SURFACE);
 
@@ -473,5 +566,9 @@ int main(int argc, char** argv)
 		glDisableVertexAttribArray(gaTexHandle);
 
 		eglSwapBuffers((EGLDisplay) disp, surface);
+
+		wl_display_dispatch(wldisplay);
 	}
+
+	wl_display_disconnect(wldisplay);
 }

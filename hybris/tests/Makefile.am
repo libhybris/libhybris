@@ -140,13 +140,14 @@ test_camera_SOURCES = test_camera.c
 test_camera_CFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS)
-
 test_camera_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/egl/libEGL.la \
 	$(top_builddir)/glesv2/libGLESv2.la \
 	$(top_builddir)/camera/libcamera.la \
-	$(top_builddir)/input/libis.la
+	$(top_builddir)/input/libis.la \
+	$(top_builddir)/egl/platforms/common/libwayland-egl.la \
+	$(WAYLAND_CLIENT_LIBS)
 
 test_media_SOURCES = test_media.c
 test_media_CFLAGS = \
