@@ -177,6 +177,7 @@ int main(int argc, char **argv)
     printf("terminated\n");
     android_dlclose(baz);
 #endif
+    return 0;
 }
 
 // vim:ts=4:sw=4:noexpandtab
