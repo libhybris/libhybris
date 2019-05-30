@@ -74,9 +74,9 @@ private:
     void reallocateBuffers();
 
 private:
-    unsigned int m_usage;
-    unsigned int m_bufFormat;
-    unsigned int m_bufferCount;
+    int m_usage;
+    int m_bufFormat;
+    int m_bufferCount;
     int m_freeBufs;
     bool m_allocateBuffers;
 

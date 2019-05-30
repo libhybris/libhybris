@@ -91,9 +91,6 @@ extern "C" void HWCNativeBufferSetFence(struct ANativeWindowBuffer *buf, int fd)
     static_cast<_BufferFenceAccessor *>(buf)->set(fd);
 }
 
-static pthread_cond_t _cond = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;
-
 
 HWComposerNativeWindowBuffer::HWComposerNativeWindowBuffer(unsigned int width,
                             unsigned int height,

@@ -179,8 +179,6 @@ static const struct wl_callback_listener frame_listener = {
 WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, android_wlegl *wlegl)
     : m_android_wlegl(wlegl)
 {
-    int wayland_ok;
-
     HYBRIS_TRACE_BEGIN("wayland-platform", "create_window", "");
     this->m_window = window;
     this->m_window->nativewindow = (void *) this;
@@ -214,7 +212,6 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
 
 WaylandNativeWindow::~WaylandNativeWindow()
 {
-    std::list<WaylandNativeWindowBuffer *>::iterator it = m_bufList.begin();
     destroyBuffers();
     if (frame_callback)
         wl_callback_destroy(frame_callback);
@@ -400,6 +397,7 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
 
 int WaylandNativeWindow::lockBuffer(BaseNativeWindowBuffer* buffer){
     WaylandNativeWindowBuffer *wnb = (WaylandNativeWindowBuffer*) buffer;
+    (void)wnb;
     HYBRIS_TRACE_BEGIN("wayland-platform", "lockBuffer", "-%p", wnb);
     HYBRIS_TRACE_END("wayland-platform", "lockBuffer", "-%p", wnb);
     return NO_ERROR;
@@ -573,7 +571,6 @@ static int debugenvchecked = 0;
 int WaylandNativeWindow::queueBuffer(BaseNativeWindowBuffer* buffer, int fenceFd)
 {
     WaylandNativeWindowBuffer *wnb = (WaylandNativeWindowBuffer*) buffer;
-    int ret = 0;
 
     HYBRIS_TRACE_BEGIN("wayland-platform", "queueBuffer", "-%p", wnb);
     lock();
@@ -770,19 +767,17 @@ WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
 
 
 int WaylandNativeWindow::setBufferCount(int cnt) {
-    int start = 0;
-
     TRACE("cnt:%d", cnt);
 
-    if (m_bufList.size() == cnt)
+    if ((int)m_bufList.size() == cnt)
         return NO_ERROR;
 
     lock();
 
-    if (m_bufList.size() > cnt) {
+    if ((int)m_bufList.size() > cnt) {
         /* Decreasing buffer count, remove from beginning */
         std::list<WaylandNativeWindowBuffer*>::iterator it = m_bufList.begin();
-        for (int i = 0; i <= m_bufList.size() - cnt; i++ )
+        for (int i = 0; i <= (int)m_bufList.size() - cnt; i++ )
         {
             destroyBuffer(*it);
             ++it;
@@ -791,8 +786,8 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
 
     } else {
         /* Increasing buffer count, start from current size */
-        for (int i = m_bufList.size(); i < cnt; i++)
-            WaylandNativeWindowBuffer *unused = addBuffer();
+        for (int i = (int)m_bufList.size(); i < cnt; i++)
+            (void)addBuffer();
 
     }
 

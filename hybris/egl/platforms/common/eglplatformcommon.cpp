@@ -50,6 +50,7 @@ extern "C" void hybris_dump_buffer_to_file(ANativeWindowBuffer *buf)
 	static int cnt = 0;
 	void *vaddr;
 	int ret = hybris_gralloc_lock(buf->handle, buf->usage, 0, 0, buf->width, buf->height, &vaddr);
+	(void)ret;
 	TRACE("buf:%p gralloc lock returns %i", buf, ret);
 	TRACE("buf:%p lock to vaddr %p", buf, vaddr);
 	char b[1024];
@@ -65,8 +66,8 @@ extern "C" void hybris_dump_buffer_to_file(ANativeWindowBuffer *buf)
 	int fd = ::open(b, O_WRONLY|O_CREAT, S_IRWXU);
 	if(fd < 0)
 		return;
-
-	::write(fd, vaddr, buf->stride * buf->height * bytes_pp);
+	if (::write(fd, vaddr, buf->stride * buf->height * bytes_pp) < 0)
+		TRACE("dump buffer to file failed with error %i", errno);
 	::close(fd);
 	hybris_gralloc_unlock(buf->handle);
 }
@@ -281,11 +282,11 @@ extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProc
 		return (__eglMustCastToProperFunctionPointerType)eglplatformcommon_eglQueryWaylandBufferWL;
 	}
 	else
-    if (strcmp(procname, "eglHybrisAcquireNativeBufferWL") == 0)
-    {
-        return (__eglMustCastToProperFunctionPointerType) eglplatformcommon_eglHybrisAcquireNativeBufferWL;
-    }
-    else
+	if (strcmp(procname, "eglHybrisAcquireNativeBufferWL") == 0)
+	{
+		return (__eglMustCastToProperFunctionPointerType) eglplatformcommon_eglHybrisAcquireNativeBufferWL;
+	}
+	else
 #endif
 	if (strcmp(procname, "eglHybrisCreateNativeBuffer") == 0)
 	{
