@@ -186,7 +186,7 @@ extern "C" EGLBoolean eglplatformcommon_eglHybrisCreateNativeBuffer(EGLint width
 	buffer_handle_t _handle;
 	int _stride;
 
-	hybris_gralloc_allocate(width, height, format, usage, &_handle, (uint32_t*)&_stride);
+	ret = hybris_gralloc_allocate(width, height, format, usage, &_handle, (uint32_t*)&_stride);
 
 	if (ret == 0)
 	{
