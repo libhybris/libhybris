@@ -21,6 +21,7 @@
 
 #include <cstdio>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

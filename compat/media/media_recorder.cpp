@@ -24,16 +24,23 @@
 #include "media_recorder_factory.h"
 
 #include <utils/Log.h>
+#if ANDROID_VERSION_MAJOR >= 7
+#include <camera/android/hardware/ICamera.h>
+#endif
 #include <binder/IServiceManager.h>
 #include <utils/String8.h>
 #include <media/IMediaPlayerService.h>
 #include <media/IMediaRecorder.h>
 #include <media/mediaplayer.h>  // for MEDIA_ERROR_SERVER_DIED
 #include <gui/IGraphicBufferProducer.h>
+namespace a = android;
+namespace ah = android::hardware;
 
-namespace android {
-
-status_t MediaRecorder::setCamera(const sp<ICamera>& camera, const sp<ICameraRecordingProxy>& proxy)
+#if ANDROID_VERSION_MAJOR >= 7
+a::status_t a::MediaRecorder::setCamera(const sp<ah::ICamera>& camera, const sp<ICameraRecordingProxy>& proxy)
+#else
+a::status_t a::MediaRecorder::setCamera(const sp<a::ICamera>& camera, const sp<ICameraRecordingProxy>& proxy)
+#endif
 {
     ALOGV("setCamera(%p,%p)", camera.get(), proxy.get());
     if (mMediaRecorder == NULL) {
@@ -54,7 +61,7 @@ status_t MediaRecorder::setCamera(const sp<ICamera>& camera, const sp<ICameraRec
     return ret;
 }
 
-status_t MediaRecorder::setPreviewSurface(const sp<IGraphicBufferProducer>& surface)
+a::status_t a::MediaRecorder::setPreviewSurface(const sp<IGraphicBufferProducer>& surface)
 {
     ALOGV("setPreviewSurface(%p)", surface.get());
     if (mMediaRecorder == NULL) {
@@ -79,7 +86,7 @@ status_t MediaRecorder::setPreviewSurface(const sp<IGraphicBufferProducer>& surf
     return ret;
 }
 
-status_t MediaRecorder::init()
+a::status_t a::MediaRecorder::init()
 {
     ALOGV("init");
     if (mMediaRecorder == NULL) {
@@ -109,7 +116,7 @@ status_t MediaRecorder::init()
     return ret;
 }
 
-status_t MediaRecorder::setVideoSource(int vs)
+a::status_t a::MediaRecorder::setVideoSource(int vs)
 {
     ALOGV("setVideoSource(%d)", vs);
     if (mMediaRecorder == NULL) {
@@ -144,7 +151,7 @@ status_t MediaRecorder::setVideoSource(int vs)
     return ret;
 }
 
-status_t MediaRecorder::setAudioSource(int as)
+a::status_t a::MediaRecorder::setAudioSource(int as)
 {
     ALOGV("setAudioSource(%d)", as);
     if (mMediaRecorder == NULL) {
@@ -177,7 +184,7 @@ status_t MediaRecorder::setAudioSource(int as)
     return ret;
 }
 
-status_t MediaRecorder::setOutputFormat(int of)
+a::status_t a::MediaRecorder::setOutputFormat(int of)
 {
     ALOGV("setOutputFormat(%d)", of);
     if (mMediaRecorder == NULL) {
@@ -203,7 +210,7 @@ status_t MediaRecorder::setOutputFormat(int of)
     return ret;
 }
 
-status_t MediaRecorder::setVideoEncoder(int ve)
+a::status_t a::MediaRecorder::setVideoEncoder(int ve)
 {
     ALOGV("setVideoEncoder(%d)", ve);
     if (mMediaRecorder == NULL) {
@@ -233,7 +240,7 @@ status_t MediaRecorder::setVideoEncoder(int ve)
     return ret;
 }
 
-status_t MediaRecorder::setAudioEncoder(int ae)
+a::status_t a::MediaRecorder::setAudioEncoder(int ae)
 {
     ALOGV("setAudioEncoder(%d)", ae);
     if (mMediaRecorder == NULL) {
@@ -263,7 +270,7 @@ status_t MediaRecorder::setAudioEncoder(int ae)
     return ret;
 }
 #if ANDROID_VERSION_MAJOR<=5
-status_t MediaRecorder::setOutputFile(const char* path)
+a::status_t a::MediaRecorder::setOutputFile(const char* path)
 {
     ALOGV("setOutputFile(%s)", path);
     if (mMediaRecorder == NULL) {
@@ -290,7 +297,7 @@ status_t MediaRecorder::setOutputFile(const char* path)
 }
 #endif
 
-status_t MediaRecorder::setOutputFile(int fd, int64_t offset, int64_t length)
+a::status_t a::MediaRecorder::setOutputFile(int fd, int64_t offset, int64_t length)
 {
     ALOGV("setOutputFile(%d, %lld, %lld)", fd, offset, length);
     if (mMediaRecorder == NULL) {
@@ -327,7 +334,7 @@ status_t MediaRecorder::setOutputFile(int fd, int64_t offset, int64_t length)
     return ret;
 }
 
-status_t MediaRecorder::setVideoSize(int width, int height)
+a::status_t a::MediaRecorder::setVideoSize(int width, int height)
 {
     ALOGV("setVideoSize(%d, %d)", width, height);
     if (mMediaRecorder == NULL) {
@@ -356,7 +363,7 @@ status_t MediaRecorder::setVideoSize(int width, int height)
 // Query a SurfaceMediaSurface through the Mediaserver, over the
 // binder interface. This is used by the Filter Framework (MediaEncoder)
 // to get an <IGraphicBufferProducer> object to hook up to ANativeWindow.
-sp<IGraphicBufferProducer> MediaRecorder::
+a::sp<a::IGraphicBufferProducer> a::MediaRecorder::
         querySurfaceMediaSourceFromMediaServer()
 {
     Mutex::Autolock _l(mLock);
@@ -368,7 +375,7 @@ sp<IGraphicBufferProducer> MediaRecorder::
     return mSurfaceMediaSource;
 }
 
-status_t MediaRecorder::setVideoFrameRate(int frames_per_second)
+a::status_t a::MediaRecorder::setVideoFrameRate(int frames_per_second)
 {
     ALOGV("setVideoFrameRate(%d)", frames_per_second);
     if (mMediaRecorder == NULL) {
@@ -393,7 +400,7 @@ status_t MediaRecorder::setVideoFrameRate(int frames_per_second)
     return ret;
 }
 
-status_t MediaRecorder::setParameters(const String8& params) {
+a::status_t a::MediaRecorder::setParameters(const String8& params) {
     ALOGV("setParameters(%s)", params.string());
     if (mMediaRecorder == NULL) {
         ALOGE("media recorder is not initialized yet");
@@ -420,7 +427,7 @@ status_t MediaRecorder::setParameters(const String8& params) {
     return ret;
 }
 
-status_t MediaRecorder::prepare()
+a::status_t a::MediaRecorder::prepare()
 {
     ALOGV("prepare");
     if (mMediaRecorder == NULL) {
@@ -459,7 +466,7 @@ status_t MediaRecorder::prepare()
     return ret;
 }
 
-status_t MediaRecorder::getMaxAmplitude(int* max)
+a::status_t a::MediaRecorder::getMaxAmplitude(int* max)
 {
     ALOGV("getMaxAmplitude");
     if (mMediaRecorder == NULL) {
@@ -480,7 +487,7 @@ status_t MediaRecorder::getMaxAmplitude(int* max)
     return ret;
 }
 
-status_t MediaRecorder::start()
+a::status_t a::MediaRecorder::start()
 {
     ALOGV("start");
     if (mMediaRecorder == NULL) {
@@ -502,7 +509,7 @@ status_t MediaRecorder::start()
     return ret;
 }
 
-status_t MediaRecorder::stop()
+a::status_t a::MediaRecorder::stop()
 {
     ALOGV("stop");
     if (mMediaRecorder == NULL) {
@@ -530,7 +537,7 @@ status_t MediaRecorder::stop()
 }
 
 // Reset should be OK in any state
-status_t MediaRecorder::reset()
+a::status_t a::MediaRecorder::reset()
 {
     ALOGV("reset");
     if (mMediaRecorder == NULL) {
@@ -566,7 +573,7 @@ status_t MediaRecorder::reset()
     return ret;
 }
 
-status_t MediaRecorder::close()
+a::status_t a::MediaRecorder::close()
 {
     ALOGV("close");
     if (!(mCurrentState & MEDIA_RECORDER_INITIALIZED)) {
@@ -584,7 +591,7 @@ status_t MediaRecorder::close()
     return ret;
 }
 
-status_t MediaRecorder::doReset()
+a::status_t a::MediaRecorder::doReset()
 {
     ALOGV("doReset");
     status_t ret = mMediaRecorder->reset();
@@ -598,7 +605,7 @@ status_t MediaRecorder::doReset()
     return ret;
 }
 
-void MediaRecorder::doCleanUp()
+void a::MediaRecorder::doCleanUp()
 {
     ALOGV("doCleanUp");
     mIsAudioSourceSet  = false;
@@ -609,7 +616,7 @@ void MediaRecorder::doCleanUp()
 }
 
 // Release should be OK in any state
-status_t MediaRecorder::release()
+a::status_t a::MediaRecorder::release()
 {
     ALOGV("release");
     if (mMediaRecorder != NULL) {
@@ -619,7 +626,7 @@ status_t MediaRecorder::release()
 }
 
 
-MediaRecorder::MediaRecorder()
+a::MediaRecorder::MediaRecorder()
     : mMediaRecorderFactory(NULL),
     mSurfaceMediaSource(NULL)
 {
@@ -650,12 +657,12 @@ MediaRecorder::MediaRecorder()
     doCleanUp();
 }
 
-status_t MediaRecorder::initCheck()
+a::status_t a::MediaRecorder::initCheck()
 {
     return mMediaRecorder != 0 ? NO_ERROR : NO_INIT;
 }
 
-MediaRecorder::~MediaRecorder()
+a::MediaRecorder::~MediaRecorder()
 {
     ALOGV("destructor");
     if (mMediaRecorder != NULL) {
@@ -667,7 +674,7 @@ MediaRecorder::~MediaRecorder()
     }
 }
 
-status_t MediaRecorder::setListener(const sp<MediaRecorderListener>& listener)
+a::status_t a::MediaRecorder::setListener(const sp<MediaRecorderListener>& listener)
 {
     ALOGV("setListener");
     Mutex::Autolock _l(mLock);
@@ -683,7 +690,7 @@ status_t MediaRecorder::setListener(const sp<MediaRecorderListener>& listener)
     return NO_ERROR;
 }
 
-status_t MediaRecorder::setClientName(const String16& clientName)
+a::status_t a::MediaRecorder::setClientName(const String16& clientName)
 {
     ALOGV("setClientName");
     if (mMediaRecorder == NULL) {
@@ -704,7 +711,7 @@ status_t MediaRecorder::setClientName(const String16& clientName)
     return NO_ERROR;
 }
 
-void MediaRecorder::notify(int msg, int ext1, int ext2)
+void a::MediaRecorder::notify(int msg, int ext1, int ext2)
 {
     ALOGV("message received msg=%d, ext1=%d, ext2=%d", msg, ext1, ext2);
 
@@ -721,7 +728,7 @@ void MediaRecorder::notify(int msg, int ext1, int ext2)
     }
 }
 
-void MediaRecorder::readAudio()
+void a::MediaRecorder::readAudio()
 {
     ALOGV("%s", __PRETTY_FUNCTION__);
 
@@ -739,10 +746,8 @@ void MediaRecorder::readAudio()
     }
 }
 
-void MediaRecorder::died()
+void a::MediaRecorder::died()
 {
     ALOGV("died");
     notify(MEDIA_RECORDER_EVENT_ERROR, MEDIA_ERROR_SERVER_DIED, 0);
 }
-
-} // namespace android

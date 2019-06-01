@@ -14,6 +14,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_SHARED_LIBRARIES := \
 	libcameraservice \
+	libcamera_client \
 	libmedialogservice \
 	libcutils \
 	libmedia \
@@ -120,6 +121,7 @@ LOCAL_C_INCLUDES := \
 	frameworks/av/media/libstagefright/include \
 	frameworks/av/include \
 	frameworks/native/include \
+	frameworks/native/include/media/hardware \
 	system/media/audio_utils/include \
 	frameworks/av/services/camera/libcameraservice
 
@@ -162,9 +164,8 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \
 	bionic \
-	bionic/libstdc++/include \
+	external/libcxx/include \
 	external/gtest/include \
-	external/stlport/stlport \
 	external/skia/include/core \
 	frameworks/base/include
 

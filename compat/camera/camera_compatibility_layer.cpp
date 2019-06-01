@@ -50,8 +50,9 @@
 #include <utils/KeyedVector.h>
 #include <utils/Log.h>
 #include <utils/String16.h>
-
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 #include <gui/NativeBufferAlloc.h>
+#endif
 
 #include <cstring>
 
@@ -140,6 +141,12 @@ void CameraControl::postDataTimestamp(
 	(void) data;
 }
 
+void CameraControl::postRecordingFrameHandleTimestamp(nsecs_t /*timestamp*/, native_handle_t* /*handle*/)
+{
+	REPORT_FUNCTION();
+}
+
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 namespace android
 {
 NativeBufferAlloc::NativeBufferAlloc() {
@@ -165,6 +172,7 @@ sp<GraphicBuffer> NativeBufferAlloc::createGraphicBuffer(uint32_t w, uint32_t h,
 	return graphicBuffer;
 }
 }
+#endif
 
 int android_camera_get_number_of_devices()
 {
@@ -220,7 +228,9 @@ CameraControl* android_camera_connect_by_id(int32_t camera_id, struct CameraCont
 
 	android::sp<CameraControl> cc = new CameraControl();
 	cc->listener = listener;
-#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR>=3 || ANDROID_VERSION_MAJOR==5 || ANDROID_VERSION_MAJOR>=6
+#if  ANDROID_VERSION_MAJOR>=7
+	cc->camera = android::Camera::connect(camera_id, android::String16("hybris"), android::Camera::USE_CALLING_UID, android::Camera::USE_CALLING_PID);
+#elif ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR>=3 || ANDROID_VERSION_MAJOR>=5
 	cc->camera = android::Camera::connect(camera_id, android::String16("hybris"), android::Camera::USE_CALLING_UID);
 #else
 	cc->camera = android::Camera::connect(camera_id);
@@ -685,9 +695,11 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 	static const bool allow_synchronous_mode = false;
 	static const bool is_controlled_by_app = true;
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 	android::sp<android::NativeBufferAlloc> native_alloc(
 			new android::NativeBufferAlloc()
 			);
+#endif
 
 #if ANDROID_VERSION_MAJOR>=5
 	android::sp<android::IGraphicBufferProducer> producer;

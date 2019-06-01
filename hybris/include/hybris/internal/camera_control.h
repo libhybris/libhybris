@@ -19,6 +19,9 @@
 
 #include <camera/Camera.h>
 #include <camera/CameraParameters.h>
+#if ANDROID_VERSION_MAJOR>=7
+#include <camera/android/hardware/ICamera.h>
+#endif
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 #include <gui/SurfaceTexture.h>
 #else
@@ -69,6 +72,9 @@ struct CameraControl : public android::CameraListener,
         nsecs_t timestamp,
         int32_t msg_type,
         const android::sp<android::IMemory>& data);
+#if ANDROID_VERSION_MAJOR >= 7
+    void postRecordingFrameHandleTimestamp(nsecs_t timestamp, native_handle_t* handle);
+#endif
 };
 
 

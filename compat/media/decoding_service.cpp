@@ -38,7 +38,9 @@ typedef void* EGLSyncKHR;
 #include <gui/IGraphicBufferProducer.h>
 #include <gui/IGraphicBufferConsumer.h>
 #include <gui/Surface.h>
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 #include <gui/NativeBufferAlloc.h>
+#endif
 
 namespace android {
 
@@ -290,7 +292,9 @@ void DecodingService::createBufferQueue()
     buffer_queue = new BufferQueue(NULL);
     ALOGD("buffer_queue: %p", (void*)buffer_queue.get());
 #endif
-#if ANDROID_VERSION_MAJOR>=5
+#if ANDROID_VERSION_MAJOR>=7
+    producer->setMaxDequeuedBufferCount(5);
+#elif ANDROID_VERSION_MAJOR>=5
     producer->setBufferCount(5);
 #else
     buffer_queue->setBufferCount(5);

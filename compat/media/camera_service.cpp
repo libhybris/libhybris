@@ -23,7 +23,7 @@
 #include "media_recorder_factory.h"
 #include "media_recorder.h"
 
-#include <media/camera_record_service.h>
+//#include <media/camera_record_service.h>
 #include <CameraService.h>
 
 #include <signal.h>
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
     // for creating a new IMediaRecorder (MediaRecorder) instance over Binder
     MediaRecorderFactory::instantiate();
     // Enable audio recording for camera recording
-    CameraRecordService::instantiate();
+    // CameraRecordService::instantiate();
     CameraService::instantiate();
     ProcessState::self()->startThreadPool();
     IPCThreadState::self()->joinThreadPool();
