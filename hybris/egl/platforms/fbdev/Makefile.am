@@ -21,4 +21,4 @@ endif
 eglplatform_fbdev_la_LDFLAGS = \
 	-avoid-version -module -shared -export-dynamic \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
-	$(top_builddir)/hardware/libhardware.la
+	$(top_builddir)/gralloc/libgralloc.la

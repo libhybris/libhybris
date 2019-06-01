@@ -48,15 +48,12 @@ extern "C" {
 #include <wayland-egl.h>
 }
 
+#include <hybris/gralloc/gralloc.h>
 #include "wayland_window.h"
 #include "logging.h"
 #include "wayland-egl-priv.h"
 #include "server_wlegl_buffer.h"
 #include "wayland-android-client-protocol.h"
-
-static gralloc_module_t *gralloc = 0;
-static alloc_device_t *alloc = 0;
-
 
 static const char *  (*_eglQueryString)(EGLDisplay dpy, EGLint name) = NULL;
 static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char *procname) = NULL;
@@ -75,11 +72,8 @@ struct WaylandDisplay {
 
 extern "C" void waylandws_init_module(struct ws_egl_interface *egl_iface)
 {
-	int err;
-	hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const hw_module_t **) &gralloc);
-	err = gralloc_open((const hw_module_t *) gralloc, &alloc);
-	TRACE("++ %lu wayland: got gralloc %p err:%s", pthread_self(), gralloc, strerror(-err));
-	eglplatformcommon_init(egl_iface, gralloc, alloc);
+	hybris_gralloc_initialize(0);
+	eglplatformcommon_init(egl_iface);
 }
 
 static void _init_egl_funcs(EGLDisplay display)
@@ -190,7 +184,7 @@ extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, _
 	}
 	assert(ret >= 0);
 
-	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy, wdpy->wlegl, alloc, gralloc);
+	WaylandNativeWindow *window = new WaylandNativeWindow((struct wl_egl_window *) win, wdpy->wl_dpy, wdpy->wlegl);
 	window->common.incRef(&window->common);
 	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }

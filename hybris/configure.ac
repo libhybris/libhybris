@@ -60,11 +60,11 @@ AC_ARG_ENABLE(trace,
   [trace="no"])
 AM_CONDITIONAL( [WANT_TRACE], [test x"$trace" = x"yes"])
 
-AC_ARG_ENABLE(mm_arm_tracing,
-  [  --enable-mm-arm-tracing            Enable ARM (32-bit only) tracing, useful for understanding what the blob is doing, currently only the mm linker is supported. (default=disabled)],
-  [mm_arm_tracing=$enableval],
-  [mm_arm_tracing="no"])
-AM_CONDITIONAL([WANT_ARM_TRACING], [test x"$mm_arm_tracing" = x"yes"])
+AC_ARG_ENABLE(arm_tracing,
+  [  --enable-arm-tracing            Enable ARM (32-bit only) tracing, useful for understanding what the blob is doing, currently only the mm linker is supported. (default=disabled)],
+  [arm_tracing=$enableval],
+  [arm_tracing="no"])
+AM_CONDITIONAL([WANT_ARM_TRACING], [test x"$arm_tracing" = x"yes"])
 
 AC_ARG_ENABLE(mesa,
   [  --enable-mesa            Enable mesa headers (default=disabled)],
@@ -151,12 +151,20 @@ AC_ARG_WITH(android-headers,
   [  --with-android-headers=DIR     Use android headers available in DIR. See utils/extract-headers.sh ],
   [
     AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test -f $withval/libnfc-nxp/phLibNfc.h])
+    AM_CONDITIONAL([HAS_WIFI_LEGACY_HEADERS], [test -f $withval/hardware_legacy/wifi.h])
+    AM_CONDITIONAL([HAS_HWCOMPOSER2_HEADERS], [test -f $withval/hardware/hwcomposer2.h])
+    AM_CONDITIONAL([HAS_GRALLOC1_HEADER], [test -f $withval/hardware/gralloc1.h])
+    AM_CONDITIONAL([HAS_VIBRATOR_HEADER], [test -f $withval/hardware_legacy/vibrator.h])
     AS_IF([test -f $withval/libnfc-nxp/phLibNfc.h], [ANDROID_HEADERS_CFLAGS="-I$withval -I$withval/libnfc-nxp"],[ANDROID_HEADERS_CFLAGS="-I$withval"])
     AC_SUBST([ANDROID_HEADERS_CFLAGS])
   ],
   [
     PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit)
     AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [false])
+    AM_CONDITIONAL([HAS_WIFI_LEGACY_HEADERS], [false])
+    AM_CONDITIONAL([HAS_HWCOMPOSER2_HEADERS], [false])
+    AM_CONDITIONAL([HAS_GRALLOC1_HEADER], [false])
+    AM_CONDITIONAL([HAS_VIBRATOR_HEADER], [false])
   ]
 )
 CPPFLAGS="$CPPFLAGS $ANDROID_HEADERS_CFLAGS"
@@ -214,6 +222,7 @@ AC_SUBST(ANDROID_VERSION_PATCH, [$android_headers_patch])
 AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch")
 
 # Add automake tests for version/API needs here that you need in code, including test .am's
+AM_CONDITIONAL([HAS_ANDROID_8_0_0], [test $android_headers_major -ge 8 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_7_0_0], [test $android_headers_major -ge 7 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_6_0_0], [test $android_headers_major -ge 6 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_5_0_0], [test $android_headers_major -ge 5 -a $android_headers_minor -ge 0 ])
@@ -246,6 +255,7 @@ AC_CONFIG_FILES([
 	common/stub/Makefile
 	common/mm/Makefile
 	common/n/Makefile
+	common/o/Makefile
 	egl/egl.pc
 	egl/Makefile
 	egl/platforms/Makefile
@@ -262,6 +272,8 @@ AC_CONFIG_FILES([
 	glesv2/Makefile
 	hardware/Makefile
 	hardware/libhardware.pc
+	gralloc/Makefile
+	gralloc/libgralloc.pc
 	libnfc_nxp/Makefile
 	libnfc_nxp/libnfc_nxp.pc
 	libnfc_ndef_nxp/Makefile
@@ -281,6 +293,8 @@ AC_CONFIG_FILES([
 	utils/Makefile
 	sf/Makefile
 	sf/libsf.pc
+	hwc2/Makefile
+	hwc2/libhwc2.pc
 	opencl/Makefile
 	opencl/OpenCL.pc
 	tests/Makefile

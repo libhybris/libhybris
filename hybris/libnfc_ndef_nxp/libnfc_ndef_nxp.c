@@ -17,9 +17,10 @@
  */
 
 /**
- * Bindings generated using:
- * https://github.com/thp/libhybris-nfc-wrapper-generator
+ * Bindings generated using scripts in: utils/generate_nfc
  **/
+
+#if HAS_LIBNFC_NXP_HEADERS
 
 #include <libnfc-nxp/phNfcStatus.h>
 #include <libnfc-nxp/phNfcTypes.h>
@@ -41,3 +42,5 @@ HYBRIS_IMPLEMENT_FUNCTION1(libnfc_ndef_so, uint32_t, phFriNfc_NdefRecord_GetLeng
 HYBRIS_IMPLEMENT_FUNCTION2(libnfc_ndef_so, NFCSTATUS, phFriNfc_NdefRecord_Parse, phFriNfc_NdefRecord_t *, uint8_t *);
 HYBRIS_IMPLEMENT_FUNCTION4(libnfc_ndef_so, NFCSTATUS, phFriNfc_NdefRecord_Generate, phFriNfc_NdefRecord_t *, uint8_t *, uint32_t, uint32_t *);
 /* XXX No prototype for exported symbol: __on_dlclose */
+#endif
+

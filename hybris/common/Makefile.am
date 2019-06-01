@@ -15,14 +15,27 @@ if HAS_ANDROID_7_0_0
 SUBDIRS += n
 endif
 
+if HAS_ANDROID_8_0_0
+SUBDIRS += o
+endif
+
 libhybris_common_la_SOURCES = \
 	hooks.c \
 	hooks_shm.c \
 	strlcpy.c \
 	strlcat.c \
 	logging.c \
-	sysconf.c
+	sysconf.c \
+	legacy_properties/properties.c \
+	legacy_properties/cache.c
 
+if WANT_RUNTIME_PROPERTY_CACHE
+libhybris_common_la_SOURCES += \
+        legacy_properties/runtime_cache.c
+libhybris_common_la_CFLAGS =
+else
+libhybris_common_la_CFLAGS = -DNO_RUNTIME_PROPERTY_CACHE
+endif
 if WANT_ARM_TRACING
 libhybris_common_la_SOURCES += \
 	wrappers.c \
@@ -41,7 +54,7 @@ endif
 
 if WANT_ARM_TRACING
 # thumb mode not supported
-libhybris_common_la_CFLAGS = \
+libhybris_common_la_CFLAGS += \
 	-marm
 libhybris_common_la_CPPFLAGS += \
 	-marm
@@ -71,11 +84,13 @@ endif
 if HAS_ANDROID_7_0_0
 libhybris_common_la_CPPFLAGS += -DWANT_LINKER_N
 endif
+if HAS_ANDROID_8_0_0
+libhybris_common_la_CPPFLAGS += -DWANT_LINKER_O
+endif
 libhybris_common_la_LDFLAGS = \
 	-ldl \
 	-lrt \
 	-pthread \
 	-lc \
 	-lstdc++ \
-	$(top_builddir)/properties/libandroid-properties.la \
 	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"

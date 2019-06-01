@@ -16,6 +16,9 @@
  */
 
 #include <android-config.h>
+
+#if ((ANDROID_VERSION_MAJOR >= 4 && ANDROID_VERSION_MINOR >= 2) || ANDROID_VERSION_MAJOR >= 5)
+
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <assert.h>
@@ -370,5 +373,15 @@ int main(int argc, char **argv)
 	android_dlclose(baz);
 #endif
 }
+
+#else
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+    printf("test_hwcomposer is not supported in this build\n");
+    return 0;
+}
+#endif
 
 // vim:ts=4:sw=4:noexpandtab

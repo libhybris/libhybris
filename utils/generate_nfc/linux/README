@@ -1,0 +1,5 @@
+This is just a dummy include directory, so the file
+
+android_platform_external_libnfc-nxp/Linux_x86/phDal4Nfc_i2c.c
+
+can be properly parsed by cproto.

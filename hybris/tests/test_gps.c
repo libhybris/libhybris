@@ -277,11 +277,19 @@ static void agps_handle_status_callback(AGpsStatus *status)
   {
     case GPS_REQUEST_AGPS_DATA_CONN:
         fprintf(stdout, "*** data_conn_open\n");
-	AGps->data_conn_open(apn);
+#if ANDROID_VERSION_MAJOR == 4 && ANDROID_VERSION_MINOR < 2
+        AGps->data_conn_open(AGPS_TYPE_SUPL, apn, AGPS_APN_BEARER_IPV4);
+#else
+        AGps->data_conn_open(apn);
+#endif
         break;
     case GPS_RELEASE_AGPS_DATA_CONN:
         fprintf(stdout, "*** data_conn_closed\n");
+#if ANDROID_VERSION_MAJOR == 4 && ANDROID_VERSION_MINOR < 2
+        AGps->data_conn_closed(AGPS_TYPE_SUPL);
+#else
         AGps->data_conn_closed();
+#endif
         break;
     case GPS_AGPS_DATA_CONNECTED:
         fprintf(stdout, "*** data_conn_established\n");
@@ -395,7 +403,7 @@ void sigint_handler(int signum)
   fprintf(stdout, "*** cleanup\n");
   if(AGps)
   {
-#if ! defined(HAS_ANDROID_4_2_0) && ! defined(HAS_ANDROID_5_0_0)
+#if ANDROID_VERSION_MAJOR == 4 && ANDROID_VERSION_MINOR < 2
         AGps->data_conn_closed(AGPS_TYPE_SUPL);
 #else
         AGps->data_conn_closed();
@@ -603,7 +611,11 @@ int main(int argc, char *argv[])
   }
 
   if (AGps)
-	AGps->data_conn_closed(AGPS_TYPE_SUPL);
+#if ANDROID_VERSION_MAJOR == 4 && ANDROID_VERSION_MINOR < 2
+        AGps->data_conn_closed(AGPS_TYPE_SUPL);
+#else
+        AGps->data_conn_closed();
+#endif
   fprintf(stdout, "*** stop tracking\n");
   Gps->stop();
   fprintf(stdout, "*** cleaning up\n");

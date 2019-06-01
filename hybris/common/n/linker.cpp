@@ -68,6 +68,10 @@
 #include "linker_non_pie.h"
 #endif
 
+#ifdef WANT_ARM_TRACING
+#include "../wrappers.h"
+#endif
+
 // Stay compatible with newer glibc
 #ifndef R_AARCH64_TLS_TPREL64
 #define R_AARCH64_TLS_TPREL64 R_AARCH64_TLS_TPREL
@@ -347,6 +351,10 @@ uint32_t bitmask[4096];
 #endif
 
 static void* (*_get_hooked_symbol)(const char *sym, const char *requester);
+
+#ifdef WANT_ARM_TRACING
+void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
+#endif
 
 static char __linker_dl_err_buf[768];
 
@@ -2621,7 +2629,19 @@ bool do_dlsym(void* handle, const char* sym_name, const char* sym_ver,
     uint32_t bind = ELF_ST_BIND(sym->st_info);
 
     if ((bind == STB_GLOBAL || bind == STB_WEAK) && sym->st_shndx != 0) {
+#ifdef WANT_ARM_TRACING
+      switch(ELF_ST_TYPE(sym->st_info))
+      {
+        case STT_FUNC:
+        case STT_GNU_IFUNC:
+        case STT_ARM_TFUNC:
+          *symbol = reinterpret_cast<void*>(_create_wrapper((char*)symbol, (void*)found->resolve_symbol_address(sym), WRAPPER_DYNHOOK));
+        default:
+          *symbol = reinterpret_cast<void*>(found->resolve_symbol_address(sym));
+      }
+#else
       *symbol = reinterpret_cast<void*>(found->resolve_symbol_address(sym));
+#endif
       return true;
     }
 
@@ -2914,6 +2934,28 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
           return false;
         }
       }
+#ifdef WANT_ARM_TRACING
+      else
+      {
+        // this will be slower.
+        if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
+          return false;
+        }
+
+        if (!soinfo_do_lookup(this, sym_name, vi, &lsi, global_group, local_group, &s)) {
+          return false;
+        }
+
+        switch(ELF_ST_TYPE(s->st_info))
+        {
+          case STT_FUNC:
+          case STT_GNU_IFUNC:
+          case STT_ARM_TFUNC:
+            sym_addr = (ElfW(Addr))_create_wrapper(sym_name, (void*)sym_addr, WRAPPER_HOOKED);
+            break;
+        }
+      }
+#endif
 
       if (sym_addr == 0 && s == nullptr) {
         // We only allow an undefined symbol if this is a weak reference...
@@ -2987,7 +3029,24 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
           }
         }
 #endif
-        sym_addr = lsi->resolve_symbol_address(s);
+
+#ifdef WANT_ARM_TRACING
+        switch(ELF_ST_TYPE(s->st_info))
+        {
+          case STT_FUNC:
+          case STT_GNU_IFUNC:
+          case STT_ARM_TFUNC:
+            sym_addr = (ElfW(Addr))_create_wrapper(sym_name,
+                    (void*)lsi->resolve_symbol_address(s), WRAPPER_UNHOOKED);
+            break;
+          default:
+            sym_addr = lsi->resolve_symbol_address(s);
+            break;
+        }
+#else
+         sym_addr = lsi->resolve_symbol_address(s);
+#endif
+
 #if !defined(__LP64__)
         if (protect_segments) {
           if (phdr_table_unprotect_segments(phdr, phnum, load_bias) < 0) {
@@ -4624,7 +4683,11 @@ static void __linker_cannot_link(KernelArgumentBlock& args) {
   __libc_fatal("CANNOT LINK EXECUTABLE \"%s\": %s", args.argv[0], linker_get_error_buffer());
 }
 
-extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*)) {
+#ifdef WANT_ARM_TRACING
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(create_wrapper)(const char*, void*, int)) {
+#else
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) {
+#endif
   // Get a few environment variables.
   const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
   if (LD_DEBUG != nullptr) {
@@ -4648,6 +4711,10 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
     set_application_target_sdk_version(sdk_version);
 
   _get_hooked_symbol = get_hooked_symbol;
+  _linker_enable_gdb_support = enable_linker_gdb_support;
+#ifdef WANT_ARM_TRACING
+  _create_wrapper = create_wrapper;
+#endif
 }
 
 #ifdef DISABLED_FOR_HYBRIS_SUPPORT

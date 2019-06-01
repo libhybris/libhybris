@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 #include <string.h>
-#include <hardware/gralloc.h>
 #include <stdio.h>
 #include <assert.h>
 #include "config.h"
@@ -22,15 +21,13 @@
 
 #include "windowbuffer.h"
 
-static struct ws_egl_interface *my_egl_interface;
-static gralloc_module_t *my_gralloc = 0;
-static alloc_device_t *my_alloc = 0;
+#include <hybris/gralloc/gralloc.h>
 
-extern "C" void eglplatformcommon_init(struct ws_egl_interface *egl_iface, gralloc_module_t *gralloc, alloc_device_t *allocdevice)
+static struct ws_egl_interface *my_egl_interface;
+
+extern "C" void eglplatformcommon_init(struct ws_egl_interface *egl_iface)
 {
 	my_egl_interface = egl_iface;
-	my_gralloc = gralloc;
-	my_alloc = allocdevice;
 }
 
 extern "C" void *hybris_android_egl_dlsym(const char *symbol)
@@ -48,27 +45,11 @@ EGLNativeWindowType hybris_egl_get_mapping(EGLSurface surface)
 	return (*my_egl_interface->get_mapping)(surface);
 }
 
-extern "C" int hybris_register_buffer_handle(buffer_handle_t handle)
-{
-	if (!my_gralloc)
-		return -1;
-
-	return my_gralloc->registerBuffer(my_gralloc, handle);
-}
-
-extern "C" int hybris_unregister_buffer_handle(buffer_handle_t handle)
-{
-	if (!my_gralloc)
-		return -1;
-
-	return my_gralloc->unregisterBuffer(my_gralloc, handle);
-}
-
 extern "C" void hybris_dump_buffer_to_file(ANativeWindowBuffer *buf)
 {
 	static int cnt = 0;
 	void *vaddr;
-	int ret = my_gralloc->lock(my_gralloc, buf->handle, buf->usage, 0, 0, buf->width, buf->height, &vaddr);
+	int ret = hybris_gralloc_lock(buf->handle, buf->usage, 0, 0, buf->width, buf->height, &vaddr);
 	TRACE("buf:%p gralloc lock returns %i", buf, ret);
 	TRACE("buf:%p lock to vaddr %p", buf, vaddr);
 	char b[1024];
@@ -87,15 +68,14 @@ extern "C" void hybris_dump_buffer_to_file(ANativeWindowBuffer *buf)
 
 	::write(fd, vaddr, buf->stride * buf->height * bytes_pp);
 	::close(fd);
-	my_gralloc->unlock(my_gralloc, buf->handle);
+	hybris_gralloc_unlock(buf->handle);
 }
 
 #ifdef WANT_WAYLAND
 
 extern "C" EGLBoolean eglplatformcommon_eglBindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
 {
-	assert(my_gralloc != NULL);
-	server_wlegl_create(display, my_gralloc, my_alloc);
+	server_wlegl_create(display);
 	return EGL_TRUE;
 }
 
@@ -183,17 +163,15 @@ extern "C" void eglplatformcommon_eglHybrisSerializeNativeBuffer(EGLClientBuffer
 extern "C" EGLBoolean eglplatformcommon_eglHybrisCreateRemoteBuffer(EGLint width, EGLint height, EGLint usage, EGLint format, EGLint stride,
                                                                     int num_ints, int *ints, int num_fds, int *fds, EGLClientBuffer *buffer)
 {
-	assert(my_gralloc != NULL);
-
 	native_handle_t *native = native_handle_create(num_fds, num_ints);
 	memcpy(&native->data[0], fds, num_fds * sizeof(int));
 	memcpy(&native->data[num_fds], ints, num_ints * sizeof(int));
 
-	int ret = my_gralloc->registerBuffer(my_gralloc, (buffer_handle_t)native);
+	int ret = hybris_gralloc_retain(native);
 
 	if (ret == 0)
 	{
-	        RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, stride, format, usage, (buffer_handle_t)native, my_gralloc, my_alloc);
+		RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, stride, format, usage, (buffer_handle_t)native);
 		buf->common.incRef(&buf->common);
 		*buffer = (EGLClientBuffer) static_cast<ANativeWindowBuffer *>(buf);
 		return EGL_TRUE;
@@ -208,14 +186,11 @@ extern "C" EGLBoolean eglplatformcommon_eglHybrisCreateNativeBuffer(EGLint width
 	buffer_handle_t _handle;
 	int _stride;
 
-	assert(my_gralloc != NULL);
-	assert(my_alloc != NULL);
-
-	ret = my_alloc->alloc(my_alloc, width, height, format, usage, &_handle, &_stride);
+	hybris_gralloc_allocate(width, height, format, usage, &_handle, (uint32_t*)&_stride);
 
 	if (ret == 0)
 	{
-	        RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, _stride, format, usage, _handle, my_gralloc, my_alloc);
+		RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, _stride, format, usage, _handle);
 		buf->common.incRef(&buf->common);
 		buf->setAllocated(true);
 		*buffer = (EGLClientBuffer) static_cast<ANativeWindowBuffer *>(buf);
@@ -231,9 +206,7 @@ extern "C" EGLBoolean eglplatformcommon_eglHybrisLockNativeBuffer(EGLClientBuffe
 	int ret;
 	RemoteWindowBuffer *buf = static_cast<RemoteWindowBuffer *>((ANativeWindowBuffer *) buffer);
 
-	assert(my_gralloc != NULL);
-
-	ret = my_gralloc->lock(my_gralloc, buf->handle, usage, l, t, w, h, vaddr);
+	ret = hybris_gralloc_lock(buf->handle, usage, l, t, w, h, vaddr);
 	if (ret == 0)
 		return EGL_TRUE;
 	else
@@ -245,9 +218,7 @@ extern "C" EGLBoolean eglplatformcommon_eglHybrisUnlockNativeBuffer(EGLClientBuf
 	int ret;
 	RemoteWindowBuffer *buf = static_cast<RemoteWindowBuffer *>((ANativeWindowBuffer *) buffer);
 
-	assert(my_gralloc != NULL);
-
-	ret = my_gralloc->unlock(my_gralloc, buf->handle);
+	ret = hybris_gralloc_unlock(buf->handle);
 	if (ret == 0)
 		return EGL_TRUE;
 	else
