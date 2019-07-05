@@ -181,19 +181,23 @@ static soinfo* somain; // main process, always the one after libdl_info
 #if defined(__LP64__)
 static const char* const kSystemLibDir     = "/system/lib64";
 static const char* const kVendorLibDir     = "/vendor/lib64";
-static const char* const kOdmLibEglDir     = "/odm/lib64/egl";
+static const char* const kVendorLibEglDir  = "/vendor/lib64/egl";
 static const char* const kOdmLibDir        = "/odm/lib64";
+static const char* const kOdmLibEglDir     = "/odm/lib64/egl";
 static const char* const kAsanSystemLibDir = "/data/lib64";
 static const char* const kAsanVendorLibDir = "/data/vendor/lib64";
+static const char* const kAsanVendorLibEglDir = "/data/vendor/lib64/egl";
 static const char* const kAsanOdmLibDir    = "/data/odm/lib64";
 static const char* const kAsanOdmLibEglDir = "/data/odm/lib64/egl";
 #else
 static const char* const kSystemLibDir     = "/system/lib";
 static const char* const kVendorLibDir     = "/vendor/lib";
+static const char* const kVendorLibEglDir  = "/vendor/lib/egl";
 static const char* const kOdmLibDir        = "/odm/lib";
 static const char* const kOdmLibEglDir     = "/odm/lib/egl";
 static const char* const kAsanSystemLibDir = "/data/lib";
 static const char* const kAsanVendorLibDir = "/data/vendor/lib";
+static const char* const kAsanVendorLibEglDir = "/data/vendor/lib/egl";
 static const char* const kAsanOdmLibDir    = "/data/odm/lib";
 static const char* const kAsanOdmLibEglDir = "/data/odm/lib/egl";
 #endif
@@ -202,6 +206,7 @@ static const char* const kDefaultLdPaths[] = {
   kSystemLibDir,
   kVendorLibDir,
   kOdmLibDir,
+  kVendorLibEglDir,
   kOdmLibEglDir,
   nullptr
 };
@@ -213,6 +218,8 @@ static const char* const kAsanDefaultLdPaths[] = {
   kVendorLibDir,
   kAsanOdmLibDir,
   kOdmLibDir,
+  kAsanVendorLibEglDir,
+  kVendorLibEglDir,
   kAsanOdmLibEglDir,
   kOdmLibEglDir,
   nullptr
