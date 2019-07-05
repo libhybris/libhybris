@@ -204,8 +204,10 @@ static const char* const kAsanOdmLibEglDir = "/data/odm/lib/egl";
 
 static const char* const kDefaultLdPaths[] = {
   kSystemLibDir,
-  kVendorLibDir,
   kOdmLibDir,
+  kVendorLibDir,
+
+  // libhybris support:
   kVendorLibEglDir,
   kOdmLibEglDir,
   nullptr
@@ -214,14 +216,16 @@ static const char* const kDefaultLdPaths[] = {
 static const char* const kAsanDefaultLdPaths[] = {
   kAsanSystemLibDir,
   kSystemLibDir,
-  kAsanVendorLibDir,
-  kVendorLibDir,
   kAsanOdmLibDir,
   kOdmLibDir,
-  kAsanVendorLibEglDir,
-  kVendorLibEglDir,
+  kAsanVendorLibDir,
+  kVendorLibDir,
+
+  // libhybris support:
   kAsanOdmLibEglDir,
   kOdmLibEglDir,
+  kAsanVendorLibEglDir,
+  kVendorLibEglDir,
   nullptr
 };
 
