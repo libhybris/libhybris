@@ -26,7 +26,11 @@
 #include <android/frameworks/vr/composer/1.0/IVrComposerClient.h>
 #include <android/hardware/graphics/composer/2.1/IComposer.h>
 #include <utils/StrongPointer.h>
+#if ANDROID_VERSION_MAJOR >= 9
+#include <composer-command-buffer/2.1/ComposerCommandBuffer.h>
+#else
 #include <IComposerCommandBuffer.h>
+#endif
 
 namespace android {
 
