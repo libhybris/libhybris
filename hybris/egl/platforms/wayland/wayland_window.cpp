@@ -132,21 +132,25 @@ static const struct wl_callback_listener sync_listener = {
     WaylandNativeWindow::sync_callback
 };
 
+
+#if WAYLAND_VERSION_MAJOR == 0 || (WAYLAND_VERSION_MAJOR == 1 && WAYLAND_VERSION_MINOR < 6)
 int
-WaylandNativeWindow::wayland_roundtrip(WaylandNativeWindow *display)
+WaylandNativeWindow::wl_display_roundtrip_queue(struct wl_display *display,
+                                                struct wl_event_queue *queue)
 {
     struct wl_callback *callback;
     int done = 0, ret = 0;
-    wl_display_dispatch_queue_pending(display->m_display, display->wl_queue);
+    wl_display_dispatch_queue_pending(display, queue);
 
-    callback = wl_display_sync(display->m_display);
+    callback = wl_display_sync(display);
     wl_callback_add_listener(callback, &sync_listener, &done);
-    wl_proxy_set_queue((struct wl_proxy *) callback, display->wl_queue);
+    wl_proxy_set_queue((struct wl_proxy *) callback, queue);
     while (ret >= 0 && !done)
-        ret = wl_display_dispatch_queue(display->m_display, display->wl_queue);
+        ret = wl_display_dispatch_queue(display, queue);
 
     return ret;
 }
+#endif
 
 static void check_fatal_error(struct wl_display *display)
 {
@@ -752,7 +756,7 @@ WaylandNativeWindowBuffer *WaylandNativeWindow::addBuffer() {
 
 #ifndef HYBRIS_NO_SERVER_SIDE_BUFFERS
     wnb = new ServerWaylandBuffer(m_width, m_height, m_format, m_usage, m_android_wlegl, wl_queue);
-    wayland_roundtrip(this);
+    wl_display_roundtrip_queue(m_display, wl_queue);
 #else
     wnb = new ClientWaylandBuffer(m_width, m_height, m_format, m_usage);
 #endif
