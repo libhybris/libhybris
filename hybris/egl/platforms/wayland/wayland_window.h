@@ -161,7 +161,7 @@ public:
     static void registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
                        const char *interface, uint32_t version);
     static void resize_callback(struct wl_egl_window *egl_window, void *);
-    static void free_callback(struct wl_egl_window *egl_window, void *);
+    static void destroy_window_callback(void *data);
     struct wl_event_queue *wl_queue;
 
 protected:

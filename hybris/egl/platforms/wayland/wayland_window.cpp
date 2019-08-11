@@ -97,12 +97,12 @@ void WaylandNativeWindow::resize(unsigned int width, unsigned int height)
 void WaylandNativeWindow::resize_callback(struct wl_egl_window *egl_window, void *)
 {
     TRACE("%dx%d",egl_window->width,egl_window->height);
-    ((WaylandNativeWindow *) egl_window->nativewindow)->resize(egl_window->width, egl_window->height);
+    ((WaylandNativeWindow *) egl_window->driver_private)->resize(egl_window->width, egl_window->height);
 }
 
-void WaylandNativeWindow::free_callback(struct wl_egl_window *egl_window, void *)
+void WaylandNativeWindow::destroy_window_callback(void *data)
 {
-    WaylandNativeWindow *native = (WaylandNativeWindow*)egl_window->nativewindow;
+    WaylandNativeWindow *native = (WaylandNativeWindow*)data;
 
     native->lock();
     native->m_window = 0;
@@ -181,14 +181,14 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window, struct wl
 {
     HYBRIS_TRACE_BEGIN("wayland-platform", "create_window", "");
     this->m_window = window;
-    this->m_window->nativewindow = (void *) this;
+    this->m_window->driver_private = (void *) this;
     this->m_display = display;
     this->m_width = window->width;
     this->m_height = window->height;
     this->m_defaultWidth = window->width;
     this->m_defaultHeight = window->height;
     this->m_window->resize_callback = resize_callback;
-    this->m_window->free_callback = free_callback;
+    this->m_window->destroy_window_callback = destroy_window_callback;
     this->frame_callback = NULL;
     this->wl_queue = wl_display_create_queue(display);
     this->m_format = 1;
@@ -217,9 +217,9 @@ WaylandNativeWindow::~WaylandNativeWindow()
         wl_callback_destroy(frame_callback);
     wl_event_queue_destroy(wl_queue);
     if (m_window) {
-	    m_window->nativewindow = NULL;
+	    m_window->driver_private = NULL;
 	    m_window->resize_callback = NULL;
-	    m_window->free_callback = NULL;
+	    m_window->destroy_window_callback = NULL;
     }
 }
 

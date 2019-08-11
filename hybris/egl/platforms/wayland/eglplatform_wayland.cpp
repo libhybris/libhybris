@@ -207,7 +207,7 @@ extern "C" int waylandws_post(EGLNativeWindowType win, void *buffer)
 {
 	struct wl_egl_window *eglwin = (struct wl_egl_window *) win;
 
-	return ((WaylandNativeWindow *) eglwin->nativewindow)->postBuffer((ANativeWindowBuffer *) buffer);
+	return ((WaylandNativeWindow *) eglwin->driver_private)->postBuffer((ANativeWindowBuffer *) buffer);
 }
 
 /**
