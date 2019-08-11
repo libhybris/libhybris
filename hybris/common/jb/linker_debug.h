@@ -67,11 +67,12 @@ extern int format_log(int, const char *, const char *, ...);
 extern int format_fd(int, const char *, ...);
 #define _PRINTVF(v,f,x...)                                        \
     do {                                                          \
-        if (debug_verbosity > (v))                                \
+        if (debug_verbosity > (v)) {                              \
             if (debug_stdout)                                     \
                 format_fd(1, x);                                  \
             else                                                  \
                 format_log(5-(v),"linker",x);                     \
+        }                                                         \
     } while (0)
 #else /* !LINKER_DEBUG */
 #define _PRINTVF(v,f,x...)   do {} while(0)
