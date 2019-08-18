@@ -1593,7 +1593,6 @@ static int _hybris_hook_fsetpos(FILE *fp, const bionic_fpos_t *pos)
     fpos_t my_fpos;
     my_fpos.__pos = *pos;
     memset(&my_fpos.__state, 0, sizeof(mbstate_t));
-    mbsinit(&my_fpos.__state);
 
     return fsetpos(_get_actual_fp(fp), &my_fpos);
 }
