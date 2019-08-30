@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <dlfcn.h>
 extern "C" {
 #include <eglplatformcommon.h>
 };
@@ -60,6 +61,13 @@ static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char
 static EGLSyncKHR (*_eglCreateSyncKHR)(EGLDisplay dpy, EGLenum type, const EGLint *attrib_list) = NULL;
 static EGLBoolean (*_eglDestroySyncKHR)(EGLDisplay dpy, EGLSyncKHR sync) = NULL;
 static EGLint (*_eglClientWaitSyncKHR)(EGLDisplay dpy, EGLSyncKHR sync, EGLint flags, EGLTimeKHR timeout) = NULL;
+
+/* The following function is implemented in libhybris's libEGL.so.
+ * However, eglplatform_wayland.so is not linking to libEGL directly,
+ * causing undefined symbol errors during loading, if libEGL was not
+ * already loaded by some other dependencies. Therefore, we should try
+ * to load libEGL at runtime here and resolve this function dynamically */
+typedef struct _EGLDisplay *(*PFNHYBRISEGLDISPLAYGETMAPPINGPROC)(EGLDisplay dpy);
 
 struct WaylandDisplay {
 	_EGLDisplay base;
@@ -202,6 +210,36 @@ extern "C" int waylandws_post(EGLNativeWindowType win, void *buffer)
 	return ((WaylandNativeWindow *) eglwin->nativewindow)->postBuffer((ANativeWindowBuffer *) buffer);
 }
 
+/**
+ * Loads libhybris's libEGL at runtime to call hybris_egl_display_get_mapping()
+ */
+static struct _EGLDisplay *_hybris_egl_display_get_mapping(EGLDisplay dpy)
+{
+	static void *libEGL_handle = NULL;
+	static PFNHYBRISEGLDISPLAYGETMAPPINGPROC hybris_egl_display_get_mapping_fn = NULL;
+
+	if (!libEGL_handle) {
+		dlerror();  // cleanup error buffer
+		libEGL_handle = dlopen("libEGL.so.1", RTLD_NOW | RTLD_GLOBAL);
+		if (!libEGL_handle) {
+			HYBRIS_ERROR("ERROR: Failed to dlopen libEGL! %s", dlerror());
+			abort();
+		}
+	}
+
+	if (!hybris_egl_display_get_mapping_fn) {
+		dlerror();  // cleanup error buffer
+		hybris_egl_display_get_mapping_fn = (PFNHYBRISEGLDISPLAYGETMAPPINGPROC)dlsym(
+			libEGL_handle, "hybris_egl_display_get_mapping");
+		if (!hybris_egl_display_get_mapping_fn) {
+			HYBRIS_ERROR("ERROR: Cannot resolve 'hybris_egl_display_get_mapping' in libEGL! %s", dlerror());
+			abort();
+		}
+	}
+	
+	return hybris_egl_display_get_mapping_fn(dpy);
+}
+
 extern "C" wl_buffer *waylandws_createWlBuffer(EGLDisplay dpy, EGLImageKHR image)
 {
 	egl_image *img = reinterpret_cast<egl_image *>(image);
@@ -211,7 +249,7 @@ extern "C" wl_buffer *waylandws_createWlBuffer(EGLDisplay dpy, EGLImageKHR image
 	    return NULL;
 	}
 	if (img->target == EGL_WAYLAND_BUFFER_WL) {
-		WaylandDisplay *wdpy = (WaylandDisplay *)hybris_egl_display_get_mapping(dpy);
+		WaylandDisplay *wdpy = (WaylandDisplay *)_hybris_egl_display_get_mapping(dpy);
 		server_wlegl_buffer *buf = server_wlegl_buffer_from((wl_resource *)img->egl_buffer);
 		WaylandNativeWindowBuffer wnb(buf->buf);
 		// The buffer will be managed by the app, so pass NULL as the queue so that
