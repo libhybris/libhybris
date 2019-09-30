@@ -9,6 +9,10 @@ endif
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/../Android.common.mk
 
+ifeq ($(CAMERA_SERVICE_WANT_UBUNTU_HEADERS),1)
+    LOCAL_CPPFLAGS += -DWANT_UBUNTU_CAMERA_HEADERS
+endif
+
 LOCAL_SRC_FILES := \
 	camera_service.cpp
 

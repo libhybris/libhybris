@@ -325,10 +325,13 @@ void android_camera_enumerate_supported_flash_modes(CameraControl* control, flas
 	assert(control);
 
 	android::Mutex::Autolock al(control->guard);
-	android::String8 raw_modes;
-	raw_modes = android::String8(
+	const char* raw_modes_cstr =
 			control->camera_parameters.get(
-				android::CameraParameters::KEY_SUPPORTED_FLASH_MODES));
+				android::CameraParameters::KEY_SUPPORTED_FLASH_MODES);
+	if (!raw_modes_cstr)
+		return;
+
+	android::String8 raw_modes = android::String8(raw_modes_cstr);
 
 	const char delimiter[2] = ",";
 	char *token;
