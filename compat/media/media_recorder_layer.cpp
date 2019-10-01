@@ -26,6 +26,9 @@
 
 #include <hybris/internal/camera_control.h>
 #include <hybris/media/media_recorder_layer.h>
+#if ANDROID_MAJOR_VERSION >= 7
+#include "camera/android/hardware/ICamera.h"
+#endif
 
 #include <utils/KeyedVector.h>
 #include <utils/Log.h>
@@ -230,7 +233,6 @@ int android_recorder_setCamera(MediaRecorderWrapper *mr, CameraControl* control)
     }
 
     mr->init();
-
     return mr->setCamera(control->camera->remote(), control->camera->getRecordingProxy());
 }
 

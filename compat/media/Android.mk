@@ -9,11 +9,16 @@ endif
 include $(CLEAR_VARS)
 include $(LOCAL_PATH)/../Android.common.mk
 
+ifeq ($(CAMERA_SERVICE_WANT_UBUNTU_HEADERS),1)
+    LOCAL_CPPFLAGS += -DWANT_UBUNTU_CAMERA_HEADERS
+endif
+
 LOCAL_SRC_FILES := \
 	camera_service.cpp
 
 LOCAL_SHARED_LIBRARIES := \
 	libcameraservice \
+	libcamera_client \
 	libmedialogservice \
 	libcutils \
 	libmedia \
@@ -120,6 +125,7 @@ LOCAL_C_INCLUDES := \
 	frameworks/av/media/libstagefright/include \
 	frameworks/av/include \
 	frameworks/native/include \
+	frameworks/native/include/media/hardware \
 	system/media/audio_utils/include \
 	frameworks/av/services/camera/libcameraservice
 
@@ -162,9 +168,8 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \
 	bionic \
-	bionic/libstdc++/include \
+	external/libcxx/include \
 	external/gtest/include \
-	external/stlport/stlport \
 	external/skia/include/core \
 	frameworks/base/include
 

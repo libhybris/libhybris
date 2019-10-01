@@ -44,10 +44,13 @@
 
 #include <utils/Log.h>
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 #include <gui/NativeBufferAlloc.h>
+#endif
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__)
 
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 namespace android
 {
 NativeBufferAlloc::NativeBufferAlloc() {
@@ -73,6 +76,8 @@ sp<GraphicBuffer> NativeBufferAlloc::createGraphicBuffer(uint32_t w, uint32_t h,
 	return graphicBuffer;
 }
 }
+#endif
+
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 struct FrameAvailableListener : public android::SurfaceTexture::FrameAvailableListener
 #else
@@ -254,8 +259,10 @@ struct MediaPlayerWrapper : public android::MediaPlayer
 
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 			surfaceTexture->getBufferQueue()->setBufferCount(5);
-#else
+#elif ANDROID_VERSION_MAJOR<7
 			bq->setBufferCount(5);
+#else
+			bq->setMaxDequeuedBufferCount(5);
 #endif
 			texture = surfaceTexture;
 			texture->setFrameAvailableListener(frame_listener);
@@ -488,15 +495,16 @@ int android_media_set_preview_texture(MediaPlayerWrapper *mp, int texture_id)
 		return BAD_VALUE;
 	}
 
-	android::sp<android::NativeBufferAlloc> native_alloc(
-			new android::NativeBufferAlloc()
-			);
-
 #if ANDROID_VERSION_MAJOR>=5
 	android::sp<IGraphicBufferProducer> producer;
 	android::sp<IGraphicBufferConsumer> consumer;
 	BufferQueue::createBufferQueue(&producer, &consumer);
 #else
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
+    android::sp<android::NativeBufferAlloc> native_alloc(
+            new android::NativeBufferAlloc()
+            );
+#endif
 	android::sp<android::BufferQueue> buffer_queue(
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 			new android::BufferQueue(false, NULL, native_alloc)

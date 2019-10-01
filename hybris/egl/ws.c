@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
+#include <sys/auxv.h>
 
 static struct ws_module *ws = NULL;
 
@@ -40,7 +41,14 @@ static void _init_ws()
 		if (egl_platform == NULL)
 			egl_platform = DEFAULT_EGL_PLATFORM;
 
-		snprintf(ws_name, 2048, PKGLIBDIR "eglplatform_%s.so", egl_platform);
+		const char *eglplatform_dir = PKGLIBDIR;
+		const char *user_eglplatform_dir = getauxval(AT_SECURE)
+		                                   ? NULL
+		                                   : getenv("HYBRIS_EGLPLATFORM_DIR");
+		if (user_eglplatform_dir)
+			eglplatform_dir = user_eglplatform_dir;
+
+		snprintf(ws_name, 2048, "%s/eglplatform_%s.so", eglplatform_dir, egl_platform);
 
 		void *wsmod = (void *) dlopen(ws_name, RTLD_LAZY);
 		if (wsmod==NULL)

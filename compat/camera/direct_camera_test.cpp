@@ -675,6 +675,7 @@ int main(int argc, char** argv)
 
 	while (1) {
 		usleep(50);
+		preview_texture_needs_update_cb(0);
 	}
 
 	stop_video_recording(recorder);

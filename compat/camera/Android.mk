@@ -52,9 +52,8 @@ endif
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \
 	bionic \
-	bionic/libstdc++/include \
+	external/libcxx/include \
 	external/gtest/include \
-	external/stlport/stlport \
 	external/skia/include/core \
 
 LOCAL_SHARED_LIBRARIES := \
