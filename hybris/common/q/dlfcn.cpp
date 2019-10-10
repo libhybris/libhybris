@@ -95,16 +95,29 @@ _Unwind_Ptr __loader_dl_unwind_find_exidx(_Unwind_Ptr pc, int* pcount) __LINKER_
 
 static pthread_mutex_t g_dl_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
+static __thread char *dl_err_str;
+char __thread dlerror_buffer[__BIONIC_DLERROR_BUFFER_SIZE];
+
 static char* __bionic_set_dlerror(char* new_value) {
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   char* old_value = __get_thread()->current_dlerror;
   __get_thread()->current_dlerror = new_value;
 
   if (new_value != nullptr) LD_LOG(kLogErrors, "dlerror set to \"%s\"", new_value);
   return old_value;
+#else
+  char *old_value = dl_err_str;
+  dl_err_str = new_value;
+  return old_value;
+#endif
 }
 
 static void __bionic_format_dlerror(const char* msg, const char* detail) {
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   char* buffer = __get_thread()->dlerror_buffer;
+#else
+  char* buffer = dlerror_buffer;
+#endif
   strlcpy(buffer, msg, __BIONIC_DLERROR_BUFFER_SIZE);
   if (detail != nullptr) {
     strlcat(buffer, ": ", __BIONIC_DLERROR_BUFFER_SIZE);
@@ -314,10 +327,10 @@ static soinfo* __libdl_info = nullptr;
 
 // This is used by the dynamic linker. Every process gets these symbols for free.
 soinfo* get_libdl_info(const char* linker_path, const soinfo& linker_si) {
-  CHECK((linker_si.flags_ & FLAG_GNU_HASH) != 0);
+  //CHECK((linker_si.flags_ & FLAG_GNU_HASH) != 0);
 
   if (__libdl_info == nullptr) {
-    __libdl_info = new (__libdl_info_buf) soinfo(&g_default_namespace, linker_path, nullptr, 0, 0);
+    __libdl_info = new (__libdl_info_buf) soinfo(g_default_namespace, linker_path, nullptr, 0, 0);
     __libdl_info->flags_ |= (FLAG_LINKED | FLAG_GNU_HASH);
     __libdl_info->strtab_ = linker_si.strtab_;
     __libdl_info->symtab_ = linker_si.symtab_;

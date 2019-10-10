@@ -28,6 +28,8 @@
 #ifndef _LINK_H_
 #define _LINK_H_
 
+#include <android/versioning.h> // for __INTRODUCED_IN
+
 #include <stdint.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>

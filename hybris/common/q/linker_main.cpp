@@ -148,7 +148,7 @@ static void parse_path(const char* path, const char* delimiters,
 static void parse_LD_LIBRARY_PATH(const char* path) {
   std::vector<std::string> ld_libary_paths;
   parse_path(path, ":", &ld_libary_paths);
-  g_default_namespace.set_ld_library_paths(std::move(ld_libary_paths));
+  g_default_namespace->set_ld_library_paths(std::move(ld_libary_paths));
 }
 
 static void parse_LD_PRELOAD(const char* path) {
@@ -171,7 +171,7 @@ static void add_vdso() {
     return;
   }
 
-  soinfo* si = soinfo_alloc(&g_default_namespace, "[vdso]", nullptr, 0, 0);
+  soinfo* si = soinfo_alloc(g_default_namespace, "[vdso]", nullptr, 0, 0);
 
   si->phdr = reinterpret_cast<ElfW(Phdr)*>(reinterpret_cast<char*>(ehdr_vdso) + ehdr_vdso->e_phoff);
   si->phnum = ehdr_vdso->e_phnum;
@@ -373,7 +373,7 @@ static ElfW(Addr) linker_main(KernelArgumentBlock& args, const char* exe_to_load
   INFO("[ Linking executable \"%s\" ]", exe_path.c_str());
 
   // Initialize the main exe's soinfo.
-  soinfo* si = soinfo_alloc(&g_default_namespace,
+  soinfo* si = soinfo_alloc(g_default_namespace,
                             exe_path.c_str(), &exe_info.file_stat,
                             0, RTLD_GLOBAL);
   somain = si;
@@ -429,7 +429,7 @@ static ElfW(Addr) linker_main(KernelArgumentBlock& args, const char* exe_to_load
   si->set_dt_flags_1(si->get_dt_flags_1() | DF_1_GLOBAL);
   // ... and add it to all other linked namespaces
   for (auto linked_ns : namespaces) {
-    if (linked_ns != &g_default_namespace) {
+    if (linked_ns != g_default_namespace) {
       linked_ns->add_soinfo(somain);
       somain->add_secondary_namespace(linked_ns);
     }
@@ -454,7 +454,7 @@ static ElfW(Addr) linker_main(KernelArgumentBlock& args, const char* exe_to_load
   size_t needed_libraries_count = needed_library_name_list.size();
 
   if (needed_libraries_count > 0 &&
-      !find_libraries(&g_default_namespace,
+      !find_libraries(g_default_namespace,
                       si,
                       needed_library_names,
                       needed_libraries_count,
@@ -718,7 +718,7 @@ __linker_init_post_relocation(KernelArgumentBlock& args, soinfo& tmp_linker_so) 
   // get correct libdl_info we need to call constructors
   // before get_libdl_info().
   sonext = solist = solinker = get_libdl_info(kLinkerPath, tmp_linker_so);
-  g_default_namespace.add_soinfo(solinker);
+  g_default_namespace->add_soinfo(solinker);
   init_link_map_head(*solinker, kLinkerPath);
 
   ElfW(Addr) start_address = linker_main(args, exe_to_load);
@@ -762,6 +762,20 @@ static void generate_tmpsoinfo(soinfo& tmp_linker_so) {
   //tmp_linker_so.call_constructors();
 }
 
+static const char* get_executable_path() {
+  static std::string executable_path;
+  if (executable_path.empty()) {
+    char path[PATH_MAX];
+    ssize_t path_len = readlink("/proc/self/exe", path, sizeof(path));
+    if (path_len == -1 || path_len >= static_cast<ssize_t>(sizeof(path))) {
+      async_safe_fatal("readlink('/proc/self/exe') failed: %s", strerror(errno));
+    }
+    executable_path = std::string(path, path_len);
+  }
+
+  return executable_path.c_str();
+}
+
 void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
 #ifdef WANT_ARM_TRACING
@@ -794,7 +808,7 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
     set_application_target_sdk_version(sdk_version);
 
   _get_hooked_symbol = get_hooked_symbol;
-  //_linker_enable_gdb_support = enable_linker_gdb_support;
+  _linker_enable_gdb_support = enable_linker_gdb_support;
 
   soinfo tmp_linker_so(nullptr, nullptr, nullptr, 0, 0);
   generate_tmpsoinfo(tmp_linker_so);
@@ -806,6 +820,6 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
 
   DEBUG("sdk_version %d\n", sdk_version);
 
-  //init_default_namespaces(get_executable_path());
+  init_default_namespaces(get_executable_path());
   DEBUG("init_default_namespaces %d\n", sdk_version);
 }
