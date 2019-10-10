@@ -180,6 +180,11 @@ if [ $MAJOR -ge 6 ]; then
 	    system/media/audio/include/system/audio.h
 fi
 
+if [ $MAJOR -ge 10 ]; then
+	extract_headers_to system \
+	    system/media/audio/include/system
+fi
+
 extract_headers_to cutils \
     system/core/include/cutils
 
@@ -193,8 +198,24 @@ if [ $MAJOR -ge 4 ]; then
         system/core/include/system
 fi
 
+if [ $MAJOR -ge 10 ]; then
+    extract_headers_to vndk \
+        frameworks/native/libs/nativewindow/include/vndk/window.h
+    extract_headers_to system \
+        frameworks/native/libs/nativewindow/include/system/window.h
+    extract_headers_to nativebase \
+        frameworks/native/libs/nativebase/include/nativebase/nativebase.h
+fi
+
 extract_headers_to android \
     system/core/include/android
+
+if [ $MAJOR -ge 10 ]; then
+    extract_headers_to android \
+        frameworks/native/libs/nativewindow/include/android
+    extract_headers_to android \
+        frameworks/native/libs/arect/include/android
+fi
 
 if [ $MAJOR -eq 4 -a $MINOR -ge 1 ]; then
     extract_headers_to linux \
@@ -210,6 +231,11 @@ elif [ $MAJOR -ge 5 ]; then
 
     extract_headers_to sync \
         system/core/libsync/include/sync
+fi
+
+if [ $MAJOR -ge 10 ]; then
+     extract_headers_to ndk \
+        system/core/libsync/include/ndk/sync.h
 fi
 
 if [ $MAJOR -eq 2 -a $MINOR -ge 3 -o $MAJOR -ge 3 ]; then

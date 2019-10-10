@@ -36,17 +36,18 @@
 
 #include <async_safe/log.h>
 
+#include <hybris_compat.h>
+
 #define DL_ERR(fmt, x...) \
     do { \
-      async_safe_format_buffer(linker_get_error_buffer(), linker_get_error_buffer_size(), fmt, ##x); \
+      fprintf(stderr, fmt, ##x); \
+      fprintf(stderr, "\n"); \
     } while (false)
 
 #define DL_WARN(fmt, x...) \
     do { \
-      async_safe_format_log(ANDROID_LOG_WARN, "linker", fmt, ##x); \
-      async_safe_format_fd(2, "WARNING: linker: "); \
-      async_safe_format_fd(2, fmt, ##x); \
-      async_safe_format_fd(2, "\n"); \
+      fprintf(stderr, "WARNING: linker " fmt, ##x); \
+      fprintf(stderr, "\n"); \
     } while (false)
 
 void DL_WARN_documented_change(int api_level, const char* doc_link, const char* fmt, ...);
@@ -75,6 +76,7 @@ extern std::unordered_map<uintptr_t, soinfo*> g_soinfo_handles_map;
 // Error buffer "variable"
 char* linker_get_error_buffer();
 size_t linker_get_error_buffer_size();
+extern void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 
 class DlErrorRestorer {
  public:

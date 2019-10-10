@@ -57,18 +57,19 @@
 
 #include <async_safe/log.h>
 #include <async_safe/CHECK.h>
+#include <sys/cdefs-android.h>
 
 __LIBC_HIDDEN__ extern int g_ld_debug_verbosity;
 
 #if LINKER_DEBUG_TO_LOG
 #define _PRINTVF(v, x...) \
     do { \
-      if (g_ld_debug_verbosity > (v)) async_safe_format_log(5-(v), "linker", x); \
+      if (g_ld_debug_verbosity > (v)) {fprintf(stderr, x); fprintf(stderr, "\n");}  \
     } while (0)
 #else /* !LINKER_DEBUG_TO_LOG */
 #define _PRINTVF(v, x...) \
     do { \
-      if (g_ld_debug_verbosity > (v)) { async_safe_format_fd(1, x); write(1, "\n", 1); } \
+      if (g_ld_debug_verbosity > (v)) { fprintf(stderr, x); fprintf(stderr, "\n"); } \
     } while (0)
 #endif /* !LINKER_DEBUG_TO_LOG */
 

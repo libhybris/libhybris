@@ -31,11 +31,14 @@
 #include <stdlib.h>
 #include <sys/cdefs.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 #include <atomic>
 
 #include <async_safe/log.h>
-
+#include <sys/syscall.h>
+#define gettid() syscall(SYS_gettid)
+#if DISABLED_FOR_HYBRIS_SUPPORT
 static BionicAllocator g_bionic_allocator;
 static std::atomic<pid_t> fallback_tid(0);
 
@@ -60,6 +63,8 @@ static BionicAllocator& get_fallback_allocator() {
   static BionicAllocator fallback_allocator;
   return fallback_allocator;
 }
+
+#define __predict_false(exp) __builtin_expect((exp) != 0, 0) 
 
 static BionicAllocator& get_allocator() {
   if (__predict_false(fallback_tid) && __predict_false(gettid() == fallback_tid)) {
@@ -92,3 +97,4 @@ void* reallocarray(void* p, size_t item_count, size_t item_size) {
 void free(void* ptr) {
   get_allocator().free(ptr);
 }
+#endif

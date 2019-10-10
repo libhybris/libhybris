@@ -43,11 +43,28 @@ r_debug _r_debug =
 static pthread_mutex_t g__r_debug_mutex = PTHREAD_MUTEX_INITIALIZER;
 static link_map* r_debug_tail = nullptr;
 
+int _linker_enable_gdb_support = 0;
+
 void insert_link_map_into_debug_map(link_map* map) {
   // Stick the new library at the end of the list.
   // gdb tends to care more about libc than it does
   // about leaf libraries, and ordering it this way
   // reduces the back-and-forth over the wire.
+  
+  if (!_linker_enable_gdb_support) return;
+  
+  if(r_debug_tail == nullptr && _r_debug.r_map != nullptr) {
+    link_map *glibc_link_map = new link_map(*_r_debug.r_map);
+    r_debug_tail = glibc_link_map;
+
+    while(glibc_link_map->l_prev != nullptr) {
+      link_map *copy_next_link_map = new link_map(*glibc_link_map->l_prev);
+      glibc_link_map->l_prev = copy_next_link_map;
+      copy_next_link_map->l_next = glibc_link_map;
+      glibc_link_map = copy_next_link_map;
+    }
+  }
+  
   if (r_debug_tail != nullptr) {
     r_debug_tail->l_next = map;
     map->l_prev = r_debug_tail;
@@ -57,10 +74,12 @@ void insert_link_map_into_debug_map(link_map* map) {
     map->l_prev = nullptr;
     map->l_next = nullptr;
   }
-  r_debug_tail = map;
+  _r_debug.r_map = r_debug_tail = map;
 }
 
 void remove_link_map_from_debug_map(link_map* map) {
+  if (!_linker_enable_gdb_support) return;
+  
   if (r_debug_tail == map) {
     r_debug_tail = map->l_prev;
   }

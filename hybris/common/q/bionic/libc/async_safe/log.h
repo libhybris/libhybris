@@ -1,6 +1,6 @@
 #ifndef thatasyncsafeheaderthingy_replacement__
 #define thatasyncsafeheaderthingy_replacement__
-
+#include <stdio.h>
 enum {
   ANDROID_LOG_UNKNOWN = 0,
   ANDROID_LOG_DEFAULT,    /* only for SetMinPriority() */
@@ -17,7 +17,7 @@ enum {
 
 #define async_safe_fatal(...) { fprintf(stderr, __VA_ARGS__); abort(); }
 
-#define async_safe_format_fd(...) dprintf(__VA_ARGS)
+#define async_safe_format_fd(fd, ...) dprintf(fd, __VA_ARGS__)
 
 // Don't really care about verbose/debug logs for now
 #define async_safe_format_log_va_list(loglevel, category, format, ...) { if (loglevel > ANDROID_LOG_DEFAULT) { vfprintf(stdout, format, __VA_ARGS__); /*vfprintf(stderr, "%s", "\n");*/} }

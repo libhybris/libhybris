@@ -44,7 +44,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include <android-base/properties.h>
+#include "hybris_compat.h"
+
+//#include <android-base/properties.h>
 #include <android-base/scopeguard.h>
 
 #include <async_safe/log.h>
@@ -70,9 +72,19 @@
 
 #include "private/bionic_globals.h"
 #include "android-base/macros.h"
-#include "android-base/strings.h"
-#include "android-base/stringprintf.h"
-#include "ziparchive/zip_archive.h"
+//#include "android-base/strings.h"
+//#include "android-base/stringprintf.h"
+//#include "ziparchive/zip_archive.h"
+
+
+#define TMPFS_MAGIC 0x01021994
+
+#define DF_1_PIE        0x08000000
+
+
+// Override macros to use C++ style casts.
+#undef ELF_ST_TYPE
+#define ELF_ST_TYPE(x) (static_cast<uint32_t>(x) & 0xf)
 
 static std::unordered_map<void*, size_t> g_dso_handle_counters;
 
@@ -394,7 +406,7 @@ static void parse_LD_LIBRARY_PATH(const char* path) {
 
 static bool realpath_fd(int fd, std::string* realpath) {
   std::vector<char> buf(PATH_MAX), proc_self_fd(PATH_MAX);
-  async_safe_format_buffer(&proc_self_fd[0], proc_self_fd.size(), "/proc/self/fd/%d", fd);
+  snprintf(&proc_self_fd[0], proc_self_fd.size(), "/proc/self/fd/%d", fd);
   if (readlink(&proc_self_fd[0], &buf[0], buf.size()) == -1) {
     if (!is_first_stage_init()) {
       PRINT("readlink(\"%s\") failed: %s [fd=%d]", &proc_self_fd[0], strerror(errno), fd);
@@ -956,15 +968,15 @@ soinfo* find_containing_library(const void* p) {
 class ZipArchiveCache {
  public:
   ZipArchiveCache() {}
-  ~ZipArchiveCache();
+  ~ZipArchiveCache() {};
 
-  bool get_or_open(const char* zip_path, ZipArchiveHandle* handle);
+  //bool get_or_open(const char* zip_path, ZipArchiveHandle* handle);
  private:
   DISALLOW_COPY_AND_ASSIGN(ZipArchiveCache);
 
-  std::unordered_map<std::string, ZipArchiveHandle> cache_;
+ // std::unordered_map<std::string, ZipArchiveHandle> cache_;
 };
-
+/*
 bool ZipArchiveCache::get_or_open(const char* zip_path, ZipArchiveHandle* handle) {
   std::string key(zip_path);
 
@@ -1065,9 +1077,9 @@ static int open_library_in_zipfile(ZipArchiveCache* zip_archive_cache,
 
   return fd;
 }
-
+*/
 static bool format_path(char* buf, size_t buf_size, const char* path, const char* name) {
-  int n = async_safe_format_buffer(buf, buf_size, "%s/%s", path, name);
+  int n = snprintf(buf, buf_size, "%s/%s", path, name);
   if (n < 0 || n >= static_cast<int>(buf_size)) {
     PRINT("Warning: ignoring very long library path: %s/%s", path, name);
     return false;
@@ -1080,10 +1092,11 @@ static int open_library_at_path(ZipArchiveCache* zip_archive_cache,
                                 const char* path, off64_t* file_offset,
                                 std::string* realpath) {
   int fd = -1;
+  /*
   if (strstr(path, kZipFileSeparator) != nullptr) {
     fd = open_library_in_zipfile(zip_archive_cache, path, file_offset, realpath);
   }
-
+*/
   if (fd == -1) {
     fd = TEMP_FAILURE_RETRY(open(path, O_RDONLY | O_CLOEXEC));
     if (fd != -1) {
@@ -1130,9 +1143,9 @@ static int open_library(android_namespace_t* ns,
   if (strchr(name, '/') != nullptr) {
     int fd = -1;
 
-    if (strstr(name, kZipFileSeparator) != nullptr) {
+    /*if (strstr(name, kZipFileSeparator) != nullptr) {
       fd = open_library_in_zipfile(zip_archive_cache, name, file_offset, realpath);
-    }
+    }*/
 
     if (fd == -1) {
       fd = TEMP_FAILURE_RETRY(open(name, O_RDONLY | O_CLOEXEC));
@@ -1152,8 +1165,10 @@ static int open_library(android_namespace_t* ns,
   }
 
   // Otherwise we try LD_LIBRARY_PATH first, and fall back to the default library path
+  TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),ns->get_ld_library_paths());
   int fd = open_library_on_paths(zip_archive_cache, name, file_offset, ns->get_ld_library_paths(), realpath);
   if (fd == -1 && needed_by != nullptr) {
+    TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),needed_by->get_dt_runpath());
     fd = open_library_on_paths(zip_archive_cache, name, file_offset, needed_by->get_dt_runpath(), realpath);
     // Check if the library is accessible
     if (fd != -1 && !ns->is_accessible(*realpath)) {
@@ -1163,6 +1178,7 @@ static int open_library(android_namespace_t* ns,
   }
 
   if (fd == -1) {
+    TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),ns->get_default_library_paths());
     fd = open_library_on_paths(zip_archive_cache, name, file_offset, ns->get_default_library_paths(), realpath);
   }
 
@@ -1351,9 +1367,9 @@ static bool load_library(android_namespace_t* ns,
               name, realpath.c_str(),
               needed_or_dlopened_by,
               ns->get_name(),
-              android::base::Join(ns->get_ld_library_paths(), ':').c_str(),
-              android::base::Join(ns->get_default_library_paths(), ':').c_str(),
-              android::base::Join(ns->get_permitted_paths(), ':').c_str());
+              join(ns->get_ld_library_paths(), ':').c_str(),
+              join(ns->get_default_library_paths(), ':').c_str(),
+              join(ns->get_permitted_paths(), ':').c_str());
       }
       return false;
     }
@@ -1622,10 +1638,12 @@ static void shuffle(std::vector<LoadTask*>* v) {
   }
   for (size_t i = 0, size = v->size(); i < size; ++i) {
     size_t n = size - i;
-    size_t r = arc4random_uniform(n);
+    //size_t r = arc4random_uniform(n);
+    size_t r = rand() % n;
     std::swap((*v)[n-1], (*v)[r]);
   }
 }
+
 
 // add_as_children - add first-level loaded libraries (i.e. library_names[], but
 // not their transitive dependencies) as children of the start_with library.
@@ -2155,7 +2173,7 @@ static std::string android_dlextinfo_to_string(const android_dlextinfo* info) {
     return "(null)";
   }
 
-  return android::base::StringPrintf("[flags=0x%" PRIx64 ","
+  return stringPrintf("[flags=0x%" PRIx64 ","
                                      " reserved_addr=%p,"
                                      " reserved_size=0x%zx,"
                                      " relro_fd=%d,"
@@ -2568,7 +2586,7 @@ bool link_namespaces(android_namespace_t* namespace_from,
     return false;
   }
 
-  auto sonames = android::base::Split(shared_lib_sonames, ":");
+  auto sonames = split(shared_lib_sonames, ":");
   std::unordered_set<std::string> sonames_set(sonames.begin(), sonames.end());
 
   ProtectedDataGuard guard;
@@ -2862,7 +2880,7 @@ static bool is_tls_reloc(ElfW(Word) type) {
 template<typename ElfRelIteratorT>
 bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& rel_iterator,
                       const soinfo_list_t& global_group, const soinfo_list_t& local_group) {
-  const size_t tls_tp_base = __libc_shared_globals()->static_tls_layout.offset_thread_pointer();
+  const size_t tls_tp_base = 0/*__libc_shared_globals()->static_tls_layout.offset_thread_pointer()*/;
   std::vector<std::pair<TlsDescriptor*, size_t>> deferred_tlsdesc_relocs;
 
   for (size_t idx = 0; rel_iterator.has_next(); ++idx) {
@@ -2910,6 +2928,10 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       sym_name = get_string(symtab_[sym].st_name);
       const version_info* vi = nullptr;
 
+      sym_addr = reinterpret_cast<ElfW(Addr)>(_get_hooked_symbol(sym_name, get_realpath()));
+
+      if(!sym_addr) {
+
       if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
         return false;
       }
@@ -2917,8 +2939,9 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       if (!soinfo_do_lookup(this, sym_name, vi, &lsi, global_group, local_group, &s)) {
         return false;
       }
+      }
 
-      if (s == nullptr) {
+      if (sym_addr == 0 && s == nullptr) {
         // We only allow an undefined symbol if this is a weak reference...
         s = &symtab_[sym];
         if (ELF_ST_BIND(s->st_info) != STB_WEAK) {
@@ -2978,7 +3001,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
             DL_ERR("unknown weak reloc type %d @ %p (%zu)", type, rel, idx);
             return false;
         }
-      } else { // We got a definition.
+      } else if (sym_addr == 0) { // We got a definition.
 #if !defined(__LP64__)
         // When relocating dso with text_relocation .text segment is
         // not executable. We need to restore elf flags before resolving
@@ -3399,7 +3422,7 @@ bool soinfo::prelink_image() {
                                   &ARM_exidx, &ARM_exidx_count);
 #endif
 
-  TlsSegment tls_segment;
+  /*TlsSegment tls_segment;
   if (__bionic_get_tls_segment(phdr, phnum, load_bias, &tls_segment)) {
     if (!__bionic_check_tls_alignment(&tls_segment.alignment)) {
       if (!relocating_linker) {
@@ -3410,7 +3433,7 @@ bool soinfo::prelink_image() {
     }
     tls_ = std::make_unique<soinfo_tls>();
     tls_->segment = tls_segment;
-  }
+  }*/
 
   // Extract useful information from dynamic section.
   // Note that: "Except for the DT_NULL element at the end of the array,
@@ -3434,16 +3457,22 @@ bool soinfo::prelink_image() {
         break;
 
       case DT_GNU_HASH:
-        gnu_nbucket_ = reinterpret_cast<uint32_t*>(load_bias + d->d_un.d_ptr)[0];
+        ElfW(Addr) base;
+        if(d->d_un.d_ptr > load_bias)
+          base = d->d_un.d_ptr;
+        else
+          base = load_bias + d->d_un.d_ptr;
+        
+        gnu_nbucket_ = reinterpret_cast<uint32_t*>(base)[0];
         // skip symndx
-        gnu_maskwords_ = reinterpret_cast<uint32_t*>(load_bias + d->d_un.d_ptr)[2];
-        gnu_shift2_ = reinterpret_cast<uint32_t*>(load_bias + d->d_un.d_ptr)[3];
+        gnu_maskwords_ = reinterpret_cast<uint32_t*>(base)[2];
+        gnu_shift2_ = reinterpret_cast<uint32_t*>(base)[3];
 
-        gnu_bloom_filter_ = reinterpret_cast<ElfW(Addr)*>(load_bias + d->d_un.d_ptr + 16);
+        gnu_bloom_filter_ = reinterpret_cast<ElfW(Addr)*>(base + 16);
         gnu_bucket_ = reinterpret_cast<uint32_t*>(gnu_bloom_filter_ + gnu_maskwords_);
         // amend chain for symndx = header[1]
         gnu_chain_ = gnu_bucket_ + gnu_nbucket_ -
-            reinterpret_cast<uint32_t*>(load_bias + d->d_un.d_ptr)[1];
+            reinterpret_cast<uint32_t*>(base)[1];
 
         if (!powerof2(gnu_maskwords_)) {
           DL_ERR("invalid maskwords for gnu_hash = 0x%x, in \"%s\" expecting power to two",
@@ -3818,8 +3847,8 @@ bool soinfo::prelink_image() {
 
   // Sanity checks.
   if (relocating_linker && needed_count != 0) {
-    DL_ERR("linker cannot have DT_NEEDED dependencies on other libraries");
-    return false;
+    DL_WARN("linker cannot have DT_NEEDED dependencies on other libraries");
+    //return false;
   }
   if (nbucket_ == 0 && gnu_nbucket_ == 0) {
     DL_ERR("empty/missing DT_HASH/DT_GNU_HASH in \"%s\" "
@@ -4061,7 +4090,7 @@ static std::vector<android_namespace_t*> init_default_namespace_no_config(bool i
 
 // return /apex/<name>/etc/ld.config.txt from /apex/<name>/bin/<exec>
 static std::string get_ld_config_file_apex_path(const char* executable_path) {
-  std::vector<std::string> paths = android::base::Split(executable_path, "/");
+  std::vector<std::string> paths = split(executable_path, "/");
   if (paths.size() == 5 && paths[1] == "apex" && paths[3] == "bin") {
     return std::string("/apex/") + paths[2] + "/etc/ld.config.txt";
   }
@@ -4069,9 +4098,9 @@ static std::string get_ld_config_file_apex_path(const char* executable_path) {
 }
 
 static std::string get_ld_config_file_vndk_path() {
-  if (android::base::GetBoolProperty("ro.vndk.lite", false)) {
+  /*if (android::base::GetBoolProperty("ro.vndk.lite", false)) {
     return kLdConfigVndkLiteFilePath;
-  }
+  }*/
 
   std::string ld_config_file_vndk = kLdConfigFilePath;
   size_t insert_pos = ld_config_file_vndk.find_last_of('.');

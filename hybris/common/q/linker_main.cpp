@@ -26,10 +26,14 @@
  * SUCH DAMAGE.
  */
 
+#include "hybris_compat.h"
+
 #include "linker_main.h"
 
 #include <link.h>
 #include <sys/auxv.h>
+#include <sys/cdefs-android.h>
+#include <stdarg.h>
 
 #include "linker_debug.h"
 #include "linker_cfi.h"
@@ -44,8 +48,11 @@
 #include "private/KernelArgumentBlock.h"
 
 #include "android-base/unique_fd.h"
-#include "android-base/strings.h"
-#include "android-base/stringprintf.h"
+//#include "android-base/strings.h"
+//#include "android-base/stringprintf.h"
+
+#include "linker_utils.h"
+
 #ifdef __ANDROID__
 #include "debuggerd/handler.h"
 #endif
@@ -56,7 +63,15 @@
 
 #include <vector>
 
-__LIBC_HIDDEN__ extern "C" void _start();
+extern void __libc_init_globals(KernelArgumentBlock&);
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
+extern void __libc_init_AT_SECURE(KernelArgumentBlock&);
+#endif
+
+
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
+extern "C" void _start();
+#endif
 
 static ElfW(Addr) get_elf_exec_load_bias(const ElfW(Ehdr)* elf);
 
@@ -140,7 +155,7 @@ static void parse_LD_PRELOAD(const char* path) {
   g_ld_preload_names.clear();
   if (path != nullptr) {
     // We have historically supported ':' as well as ' ' in LD_PRELOAD.
-    g_ld_preload_names = android::base::Split(path, " :");
+    g_ld_preload_names = split(path, " :");
     g_ld_preload_names.erase(std::remove_if(g_ld_preload_names.begin(), g_ld_preload_names.end(),
                                             [](const std::string& s) { return s.empty(); }),
                              g_ld_preload_names.end());
@@ -241,7 +256,7 @@ static void __linker_error(const char* fmt, ...) {
   va_list ap;
 
   va_start(ap, fmt);
-  async_safe_format_fd_va_list(STDERR_FILENO, fmt, ap);
+  vfprintf(stderr, fmt, ap);
   va_end(ap);
 
   va_start(ap, fmt);
@@ -300,6 +315,7 @@ static ElfW(Addr) linker_main(KernelArgumentBlock& args, const char* exe_to_load
   gettimeofday(&t0, 0);
 #endif
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   // Sanitize the environment.
   __libc_init_AT_SECURE(args.envp);
 
@@ -315,6 +331,7 @@ static ElfW(Addr) linker_main(KernelArgumentBlock& args, const char* exe_to_load
     .post_dump = &notify_gdb_of_libraries,
   };
   debuggerd_init(&callbacks);
+#endif
 #endif
 
   g_linker_logger.ResetState();
@@ -458,7 +475,10 @@ static ElfW(Addr) linker_main(KernelArgumentBlock& args, const char* exe_to_load
   }
 
   linker_finalize_static_tls();
+
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   __libc_init_main_thread_final();
+#endif
 
   if (!get_cfi_shadow()->InitialLinkDone(solist)) __linker_cannot_link(g_argv[0]);
 
@@ -556,6 +576,14 @@ static void get_elf_base_from_phdr(const ElfW(Phdr)* phdr_table, size_t phdr_cou
   async_safe_fatal("Could not find a PHDR: broken executable?");
 }
 
+#if defined(__i386__)
+__LIBC_HIDDEN__ void* __libc_sysinfo;
+#endif
+
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
+__LIBC_HIDDEN__ __attribute__((__naked__)) void __libc_int0x80() {
+ __asm__ volatile("int $0x80; ret");
+}
 // Detect an attempt to run the linker on itself. e.g.:
 //   /system/bin/linker64 /system/bin/linker64
 // Use priority-1 to run this constructor before other constructors.
@@ -573,10 +601,11 @@ __attribute__((constructor(1))) static void detect_self_exec() {
 #endif
   __linker_error("error: linker cannot load itself\n");
 }
+#endif
 
 static ElfW(Addr) __attribute__((noinline))
 __linker_init_post_relocation(KernelArgumentBlock& args, soinfo& linker_so);
-
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
 /*
  * This is the entry point for the linker, called from begin.S. This
  * method is responsible for fixing the linker's own relocations, and
@@ -630,7 +659,9 @@ extern "C" ElfW(Addr) __linker_init(void* raw_args) {
 
   return __linker_init_post_relocation(args, tmp_linker_so);
 }
+#endif
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
 /*
  * This code is called after the linker has linked itself and fixed its own
  * GOT. It is safe to make references to externs and other non-local data at
@@ -647,7 +678,7 @@ __linker_init_post_relocation(KernelArgumentBlock& args, soinfo& tmp_linker_so) 
   if (!tmp_linker_so.protect_relro()) __linker_cannot_link(args.argv[0]);
 
   // Initialize the linker's static libc's globals
-  __libc_init_globals();
+  __libc_init_globals(args);
 
   // Initialize the linker's own global variables
   tmp_linker_so.call_constructors();
@@ -695,4 +726,102 @@ __linker_init_post_relocation(KernelArgumentBlock& args, soinfo& tmp_linker_so) 
 
   // Return the address that the calling assembly stub should jump to.
   return start_address;
+}
+#endif
+
+
+static void generate_tmpsoinfo(soinfo& tmp_linker_so) {
+  Dl_info dlinfo;
+  int ret = dladdr((void *)generate_tmpsoinfo, &dlinfo);
+  if(!ret) {
+    PRINT("can't get self info:ret\n", ret);
+    exit(-1);
+  }
+  ElfW(Addr) linker_addr = (ElfW(Addr))dlinfo.dli_fbase;
+  DEBUG("get self base adder=%p\n", linker_addr);
+
+  ElfW(Ehdr)* elf_hdr = reinterpret_cast<ElfW(Ehdr)*>(linker_addr);
+  ElfW(Phdr)* phdr = reinterpret_cast<ElfW(Phdr)*>(linker_addr + elf_hdr->e_phoff);
+
+  tmp_linker_so.base = linker_addr;
+  tmp_linker_so.size = phdr_table_get_load_size(phdr, elf_hdr->e_phnum);
+  tmp_linker_so.load_bias = get_elf_exec_load_bias(elf_hdr);
+  tmp_linker_so.dynamic = nullptr;
+  tmp_linker_so.phdr = phdr;
+  tmp_linker_so.phnum = elf_hdr->e_phnum;
+  tmp_linker_so.set_linker_flag();
+
+  DEBUG("tmp_linker_so's load_bias=%p \n", tmp_linker_so.load_bias);
+
+  // Prelink the linker so we can access linker globals.
+  if (!tmp_linker_so.prelink_image()) {
+    PRINT("can't prelink self:ret\n");
+  };
+
+  //tmp_linker_so.call_constructors();
+}
+
+bionic_tls* __allocate_temp_bionic_tls() {
+  size_t allocation_size = __BIONIC_ALIGN(sizeof(bionic_tls), PAGE_SIZE);
+  void* allocation = mmap(nullptr, allocation_size,
+                          PROT_READ | PROT_WRITE,
+                          MAP_PRIVATE | MAP_ANONYMOUS,
+                          -1, 0);
+  if (allocation == MAP_FAILED) {
+    // Avoid strerror because it might need bionic_tls.
+    PRINT("failed to allocate bionic_tls: error %d", errno);
+ }
+  return static_cast<bionic_tls*>(allocation);
+}
+
+void* (*_get_hooked_symbol)(const char *sym, const char *requester);
+void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
+#ifdef WANT_ARM_TRACING
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(create_wrapper)(const char*, void*, int)) {
+#else
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) {
+#endif
+  // Get a few environment variables.
+  const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
+  if (LD_DEBUG != nullptr) {
+    g_ld_debug_verbosity = atoi(LD_DEBUG);
+  }
+
+  const char* ldpath_env = nullptr;
+  const char* ldpreload_env = nullptr;
+  if (!getauxval(AT_SECURE)) {
+    ldpath_env = getenv("HYBRIS_LD_LIBRARY_PATH");
+    ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
+  }
+
+  if (DEFAULT_HYBRIS_LD_LIBRARY_PATH)
+    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
+  else
+    parse_LD_LIBRARY_PATH(ldpath_env);
+  parse_LD_PRELOAD(ldpreload_env);
+
+  DEBUG("sdk_version %d\n", sdk_version);
+
+  if (sdk_version > 0)
+    set_application_target_sdk_version(sdk_version);
+
+  _get_hooked_symbol = get_hooked_symbol;
+ //_linker_enable_gdb_support = enable_linker_gdb_support;
+
+  soinfo tmp_linker_so(nullptr, nullptr, nullptr, 0, 0);
+  generate_tmpsoinfo(tmp_linker_so);
+
+  sonext = solist = get_libdl_info(kLinkerPath, tmp_linker_so);
+
+  init_link_map_head(tmp_linker_so, kLinkerPath);
+  insert_link_map_into_debug_map(&tmp_linker_so.link_map_head);
+
+  DEBUG("sdk_version %d\n", sdk_version);
+
+  //init_default_namespaces(get_executable_path());
+  DEBUG("init_default_namespaces %d\n", sdk_version);
+
+
+  __get_tls()[9] =  __get_thread()->bionic_tls = __allocate_temp_bionic_tls();
+  DEBUG("bionic_tls = %p\n", __get_thread()->bionic_tls);
 }

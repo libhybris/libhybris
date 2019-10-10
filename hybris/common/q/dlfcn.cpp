@@ -300,8 +300,13 @@ void __loader_remove_thread_local_dtor(void* dso_handle) {
   decrement_dso_handle_reference_counter(dso_handle);
 }
 
+__LIBC_HIDDEN__ libc_shared_globals* __libc_shared_globals() {
+  static libc_shared_globals globals;
+  return &globals;
+}
+
 libc_shared_globals* __loader_shared_globals() {
-  return __libc_shared_globals();
+   return __libc_shared_globals();
 }
 
 static uint8_t __libdl_info_buf[sizeof(soinfo)] __attribute__((aligned(8)));
@@ -339,4 +344,104 @@ soinfo* get_libdl_info(const char* linker_path, const soinfo& linker_si) {
   }
 
   return __libdl_info;
+}
+
+// hybris compat
+extern "C" {
+void* android_dlopen(const char* filename, int flag) {
+  const void* caller_addr = __builtin_return_address(0);
+  return __loader_dlopen(filename, flag, caller_addr);
+}
+
+char* android_dlerror() {
+  return __loader_dlerror();
+}
+
+void* android_dlsym(void* handle, const char* symbol) {
+  const void* caller_addr = __builtin_return_address(0);
+  return __loader_dlsym(handle, symbol, caller_addr);
+}
+
+void* android_dlvsym(void* handle, const char* symbol, const char* version) {
+  const void* caller_addr = __builtin_return_address(0);
+  return __loader_dlvsym(handle, symbol, version, caller_addr);
+}
+
+int android_dladdr(const void* addr, Dl_info* info) {
+  return __loader_dladdr(addr, info);
+}
+
+int android_dlclose(void* handle) {
+  return __loader_dlclose(handle);
+}
+
+#if defined(__arm__)
+_Unwind_Ptr android_dl_unwind_find_exidx(_Unwind_Ptr pc, int* pcount) {
+  return __loader_dl_unwind_find_exidx(pc, pcount);
+}
+#endif
+
+int android_dl_iterate_phdr(int (*cb)(struct dl_phdr_info* info, size_t size, void* data), void* data) {
+  return __loader_dl_iterate_phdr(cb, data);
+}
+
+void android_get_LD_LIBRARY_PATH(char* buffer, size_t buffer_size) {
+  __loader_android_get_LD_LIBRARY_PATH(buffer, buffer_size);
+}
+
+void android_update_LD_LIBRARY_PATH(const char* ld_library_path) {
+  __loader_android_update_LD_LIBRARY_PATH(ld_library_path);
+}
+
+void* android_dlopen_ext(const char* filename, int flag, const android_dlextinfo* extinfo) {
+  const void* caller_addr = __builtin_return_address(0);
+  return __loader_android_dlopen_ext(filename, flag, extinfo, caller_addr);
+}
+
+void android_set_application_target_sdk_version(uint32_t target) {
+  __loader_android_set_application_target_sdk_version(target);
+}
+
+int android_get_application_target_sdk_version() {
+  return __loader_android_get_application_target_sdk_version();
+}
+
+bool android_init_anonymous_namespace(const char* shared_libs_sonames,
+                                      const char* library_search_path) {
+  return __loader_android_init_anonymous_namespace(shared_libs_sonames, library_search_path);
+}
+
+struct android_namespace_t* android_create_namespace(const char* name,
+                                                     const char* ld_library_path,
+                                                     const char* default_library_path,
+                                                     uint64_t type,
+                                                     const char* permitted_when_isolated_path,
+                                                     struct android_namespace_t* parent) {
+  const void* caller_addr = __builtin_return_address(0);
+  return __loader_android_create_namespace(name,
+                                           ld_library_path,
+                                           default_library_path,
+                                           type,
+                                           permitted_when_isolated_path,
+                                           parent,
+                                           caller_addr);
+}
+
+libc_shared_globals* android_shared_globals() {
+  return __loader_shared_globals();
+}
+
+bool android_link_namespaces(struct android_namespace_t* namespace_from,
+                             struct android_namespace_t* namespace_to,
+                             const char* shared_libs_sonames) {
+  return __loader_android_link_namespaces(namespace_from, namespace_to, shared_libs_sonames);
+}
+
+void android_dlwarning(void* obj, void (*f)(void*, const char*)) {
+  __loader_android_dlwarning(obj, f);
+}
+
+struct android_namespace_t* android_get_exported_namespace(const char* name) {
+  return __loader_android_get_exported_namespace(name);
+}
 }

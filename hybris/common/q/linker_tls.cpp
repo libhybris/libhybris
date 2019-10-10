@@ -29,7 +29,7 @@
 #include "linker_tls.h"
 
 #include <vector>
-
+#include <android/versioning.h>
 #include "async_safe/CHECK.h"
 #include "private/ScopedRWLock.h"
 #include "private/ScopedSignalBlocker.h"
@@ -39,6 +39,9 @@
 #include "private/linker_native_bridge.h"
 #include "linker_main.h"
 #include "linker_soinfo.h"
+#include <stdint.h>
+
+__LIBC_HIDDEN__ _Atomic(size_t) __libc_tls_generation_copy = {SIZE_MAX};
 
 static bool g_static_tls_finished;
 static std::vector<TlsModule> g_tls_modules;
@@ -101,18 +104,17 @@ const TlsModule& get_tls_module(size_t module_id) {
   return g_tls_modules[module_idx];
 }
 
-__BIONIC_WEAK_FOR_NATIVE_BRIDGE
 extern "C" void __linker_reserve_bionic_tls_in_static_tls() {
-  __libc_shared_globals()->static_tls_layout.reserve_bionic_tls();
+ // __libc_shared_globals()->static_tls_layout.reserve_bionic_tls();
 }
 
 void linker_setup_exe_static_tls(const char* progname) {
   soinfo* somain = solist_get_somain();
   StaticTlsLayout& layout = __libc_shared_globals()->static_tls_layout;
   if (somain->get_tls() == nullptr) {
-    layout.reserve_exe_segment_and_tcb(nullptr, progname);
+   // layout.reserve_exe_segment_and_tcb(nullptr, progname);
   } else {
-    register_tls_module(somain, layout.reserve_exe_segment_and_tcb(&somain->get_tls()->segment, progname));
+  //  register_tls_module(somain, layout.reserve_exe_segment_and_tcb(&somain->get_tls()->segment, progname));
   }
 
   // The pthread key data is located at the very front of bionic_tls. As a
@@ -127,7 +129,7 @@ void linker_setup_exe_static_tls(const char* progname) {
 
 void linker_finalize_static_tls() {
   g_static_tls_finished = true;
-  __libc_shared_globals()->static_tls_layout.finish_layout();
+  //__libc_shared_globals()->static_tls_layout.finish_layout();
 }
 
 void register_soinfo_tls(soinfo* si) {
@@ -138,7 +140,7 @@ void register_soinfo_tls(soinfo* si) {
   size_t static_offset = SIZE_MAX;
   if (!g_static_tls_finished) {
     StaticTlsLayout& layout = __libc_shared_globals()->static_tls_layout;
-    static_offset = layout.reserve_solib_segment(si_tls->segment);
+   // static_offset = layout.reserve_solib_segment(si_tls->segment);
   }
   register_tls_module(si, static_offset);
 }

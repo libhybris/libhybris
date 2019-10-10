@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <sys/cdefs.h>
 #include <sys/types.h>  /* for off64_t */
+#include <android/versioning.h>
 
 /**
  * @addtogroup libdl Dynamic Linker

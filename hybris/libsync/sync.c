@@ -23,6 +23,20 @@
 
 #include <android-version.h>
 
+#if (ANDROID_VERSION_MAJOR >= 10)
+#include <linux/sync_file.h>
+struct sync_file_info* sync_file_info(int32_t fd);
+static inline struct sync_fence_info* sync_get_fence_info(const struct sync_file_info* info) {
+// This header should compile in C, but some C++ projects enable
+// warnings-as-error for C-style casts.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+    return (struct sync_fence_info *)(uintptr_t)(info->sync_fence_info);
+#pragma GCC diagnostic pop
+}
+void sync_file_info_free(struct sync_file_info* info);
+#endif
+
 #if (ANDROID_VERSION_MAJOR <= 7)
 #include <linux/sync.h>
 #include <linux/sw_sync.h>
@@ -98,6 +112,26 @@ struct sw_sync_create_fence_data {
 
 
 #endif //(ANDROID_VERSION_MAJOR >= 8)
+
+#if (ANDROID_VERSION_MAJOR >= 10)
+struct sync_fence_info_data {
+   uint32_t len;
+   char name[32];
+   int32_t status;
+   uint8_t pt_info[0];
+};
+struct sync_pt_info {
+   uint32_t len;
+   char obj_name[32];
+   char driver_name[32];
+   int32_t status;
+   uint64_t timestamp_ns;
+   uint8_t driver_data[0];
+};
+struct sync_fence_info_data* sync_fence_info(int fd);
+struct sync_pt_info* sync_pt_info(struct sync_fence_info_data* info, struct sync_pt_info* itr);
+void sync_fence_info_free(struct sync_fence_info_data* info);
+#endif
 
 extern size_t strlcpy(char *dst, const char *src, size_t siz);
 

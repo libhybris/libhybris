@@ -122,7 +122,9 @@ bool (*_android_init_anonymous_namespace)(const char* shared_libs_sonames,
                                       const char* library_search_path) = NULL;
 void (*_android_dlwarning)(void* obj, void (*f)(void*, const char*)) = NULL;
 void *(*_android_get_exported_namespace)(const char* name) = NULL;
-
+#if WANT_LINKER_Q
+void * (*_android_shared_globals)() = NULL;
+#endif
 /* TODO:
 *  - Check if the int arguments at attr_set/get match the ones at Android
 *  - Check how to deal with memory leaks (specially with static initializers)
@@ -1922,7 +1924,7 @@ static int _hybris_hook_scandirat(int fd, const char *dir,
         *namelist = result;
     }
 
-    return res;
+    return nItems;
 }
 
 static int _hybris_hook_scandir(const char *dir,
@@ -2570,7 +2572,14 @@ void* _hybris_hook_android_create_namespace(const char* name,
 
     return _android_create_namespace(name, ld_library_path, default_library_path, type, permitted_when_isolated_path, parent);
 }
+#if WANT_LINKER_Q
+void* _hybris_hook___loader_shared_globals()
+{
+    TRACE("");
 
+    return _android_shared_globals();
+}
+#endif
 bool _hybris_hook_android_init_anonymous_namespace(const char* shared_libs_sonames,
                                       const char* library_search_path)
 {
@@ -2858,10 +2867,14 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(android_init_anonymous_namespace),
     HOOK_INDIRECT(android_dlwarning),
     HOOK_INDIRECT(android_get_exported_namespace),
+#if WANT_LINKER_Q
+    HOOK_INDIRECT(__loader_shared_globals),
+#endif
     /* dirent.h */
     HOOK_DIRECT_NO_DEBUG(opendir),
     HOOK_DIRECT_NO_DEBUG(fdopendir),
     HOOK_DIRECT_NO_DEBUG(closedir),
+    HOOK_DIRECT_NO_DEBUG(__fsetlocking),
     HOOK_INDIRECT(readdir),
     HOOK_INDIRECT(readdir_r),
     HOOK_DIRECT_NO_DEBUG(rewinddir),
@@ -3022,8 +3035,12 @@ void hybris_set_hook_callback(hybris_hook_cb callback)
 #define LINKER_NAME_MM "mm"
 #define LINKER_NAME_N "n"
 #define LINKER_NAME_O "o"
+#define LINKER_NAME_Q "q"
 
-#if defined(WANT_LINKER_O)
+#if defined(WANT_LINKER_Q)
+#define LINKER_VERSION_DEFAULT 29
+#define LINKER_NAME_DEFAULT LINKER_NAME_Q
+#elif defined(WANT_LINKER_O)
 #define LINKER_VERSION_DEFAULT 27
 #define LINKER_NAME_DEFAULT LINKER_NAME_O
 #elif defined(WANT_LINKER_N)
@@ -3121,7 +3138,7 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
     key.name = sym;
     sdk_version = get_android_sdk_version();
 
-#if defined(WANT_LINKER_MM) || defined(WANT_LINKER_N) || defined(WANT_LINKER_O)
+#if defined(WANT_LINKER_MM) || defined(WANT_LINKER_N) || defined(WANT_LINKER_O) || defined(WANT_LINKER_Q)
     if (sdk_version > 21)
         found = bsearch(&key, hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
 #endif
@@ -3198,6 +3215,10 @@ static void __hybris_linker_init()
     /* See https://source.android.com/source/build-numbers.html for
      * an overview over available SDK version numbers and which
      * Android version they relate to. */
+#if defined(WANT_LINKER_Q)
+    if (sdk_version <= 29)
+        name = LINKER_NAME_Q;
+#endif
 #if defined(WANT_LINKER_O)
     if (sdk_version <= 27)
         name = LINKER_NAME_O;
@@ -3251,7 +3272,9 @@ static void __hybris_linker_init()
     _android_init_anonymous_namespace = dlsym(linker_handle, "android_init_anonymous_namespace");
     _android_dlwarning = dlsym(linker_handle, "android_dlwarning");
     _android_get_exported_namespace = dlsym(linker_handle, "android_get_exported_namespace");
-
+#if WANT_LINKER_Q
+    _android_shared_globals = dlsym(linker_handle, "android_shared_globals");
+#endif
     /* Now its time to setup the linker itself */
 #ifdef WANT_ARM_TRACING
     _android_linker_init(sdk_version, __hybris_get_hooked_symbol, enable_linker_gdb_support, create_wrapper);

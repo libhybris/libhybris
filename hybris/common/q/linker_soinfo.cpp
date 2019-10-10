@@ -34,12 +34,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <android/api-level.h>
+
 #include <async_safe/log.h>
 
 #include "linker_debug.h"
 #include "linker_globals.h"
 #include "linker_logger.h"
 #include "linker_utils.h"
+
+#include "hybris_compat.h"
+
+#define ELF_ST_TYPE(x) ((x) & 0xf)
 
 // TODO(dimitry): These functions are currently located in linker.cpp - find a better place for it
 bool find_verdef_version_index(const soinfo* si, const version_info* vi, ElfW(Versym)* versym);
@@ -85,11 +91,11 @@ void soinfo::set_dt_runpath(const char* path) {
   // FIXME: add $PLATFORM.
   std::vector<std::pair<std::string, std::string>> params = {
     {"ORIGIN", origin},
-#if defined(LIB_PATH)
+/*#if defined(LIB_PATH)
     {"LIB", LIB_PATH},
 #else
 #error "LIB_PATH not defined"
-#endif
+#endif*/
   };
   for (auto&& s : runpaths) {
     format_string(&s, params);
@@ -396,8 +402,25 @@ void soinfo::call_pre_init_constructors() {
   call_array("DT_PREINIT_ARRAY", preinit_array_, preinit_array_count_, false, get_realpath());
 }
 
+// Defined somewhere else in this linker.
+extern "C" void* android_dlsym(void* handle, const char* symbol);
+
+void (*bionic___system_properties_init)(void) = NULL;
+
 void soinfo::call_constructors() {
   if (constructors_called) {
+    return;
+  }
+
+  if (soname_ != nullptr && strcmp(soname_, "libc.so") == 0) {
+     DEBUG("HYBRIS: =============> Skipping libc.so (but initializing properties)\n");
+    bionic___system_properties_init = (void(*)())android_dlsym(this, "__system_properties_init");
+    if (!bionic___system_properties_init) {
+        fprintf(stderr, "Could not initialize android system properties!\n");
+        abort();
+    }
+    bionic___system_properties_init();
+    constructors_called = true;
     return;
   }
 
@@ -436,7 +459,7 @@ void soinfo::call_constructors() {
 }
 
 void soinfo::call_destructors() {
-  if (!constructors_called) {
+  if (!constructors_called  || (soname_ != nullptr && (strcmp(soname_, "libc.so") == 0))) {
     return;
   }
 
@@ -764,7 +787,8 @@ void soinfo::generate_handle() {
   // with special values which are RTLD_DEFAULT and RTLD_NEXT.
   do {
     if (!is_first_stage_init()) {
-      arc4random_buf(&handle_, sizeof(handle_));
+      handle_ = rand();
+      //arc4random_buf(&handle_, sizeof(handle_));
     } else {
       // arc4random* is not available in init because /dev/urandom hasn't yet been
       // created. So, when running with init, use the monotonically increasing

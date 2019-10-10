@@ -15,7 +15,7 @@
  */
 
 #pragma once
-
+#include <sys/cdefs-android.h>
 #include "bionic_macros.h"
 
 // Tracing class for bionic. To begin a trace at a specified point:
@@ -24,14 +24,14 @@
 
 class __LIBC_HIDDEN__ ScopedTrace {
  public:
-  explicit ScopedTrace(const char* message);
-  ~ScopedTrace();
+  explicit ScopedTrace(const char* message) {};
+  ~ScopedTrace(){};
 
-  void End();
+  void End(){};
  private:
   bool called_end_;
   BIONIC_DISALLOW_COPY_AND_ASSIGN(ScopedTrace);
 };
 
-void bionic_trace_begin(const char* message);
-void bionic_trace_end();
+static inline void bionic_trace_begin(const char* message){};
+static inline void bionic_trace_end(){};

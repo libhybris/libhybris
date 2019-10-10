@@ -32,7 +32,7 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdint.h>
-#include <sys/cdefs.h>
+#include <sys/cdefs-android.h>
 
 __LIBC_HIDDEN__ extern _Atomic(size_t) __libc_tls_generation_copy;
 
@@ -119,7 +119,7 @@ struct TlsModules {
 
   // A pointer to the TLS generation counter in libc.so. The counter is
   // incremented each time an solib is loaded or unloaded.
-  _Atomic(size_t) generation = kTlsGenerationFirst;
+  _Atomic(size_t) generation = {kTlsGenerationFirst};
   _Atomic(size_t) *generation_libc_so = nullptr;
 
   // Access to the TlsModule[] table requires taking this lock.

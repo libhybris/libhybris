@@ -32,14 +32,22 @@
 
 #include <sys/cdefs.h>
 
+#define XSTR(x) STR(x)
+#define STR(x) #x
+#pragma message "__cplusplus=" XSTR(__cplusplus)
+#pragma message "_USING_LIBCXX=" XSTR(_USING_LIBCXX)
+
 #if defined(__cplusplus) && __cplusplus >= 201103L && defined(_USING_LIBCXX)
-# if __has_feature(cxx_atomic)
-#  define _STDATOMIC_HAVE_ATOMIC
+# ifdef __clang__
+# 	if __has_feature(cxx_atomic)
+#  		define _STDATOMIC_HAVE_ATOMIC
+# 	endif
+# else
+# 	define _STDATOMIC_HAVE_ATOMIC
 # endif
 #endif
-
+#define _STDATOMIC_HAVE_ATOMIC
 #ifdef _STDATOMIC_HAVE_ATOMIC
-
 /* We have a usable C++ <atomic>; use it instead.  */
 
 #include <atomic>
@@ -142,9 +150,23 @@ using std::atomic_uintmax_t;
 // Include uchar.h only when available.  Bionic's stdatomic.h is also used for
 // the host (via a copy in prebuilts/clang) and uchar.h is not available in the
 // glibc used for the host.
-#if defined(__BIONIC__)
+#if __STDC_VERSION__ >= 201112L
 # include <uchar.h>  /* For char16_t and char32_t.              */
 #endif
+
+#ifdef __clang__
+# if __has_extension(c_atomic) || __has_extension(cxx_atomic)
+#  define       __CLANG_ATOMICS
+# else
+#  error "stdatomic.h does not support your compiler"
+# endif
+# if __has_builtin(__sync_swap)
+#  define __HAS_BUILTIN_SYNC_SWAP
+# endif
+#else
+# define __GNUC_ATOMICS
+#endif
+
 
 /*
  * 7.17.1 Atomic lock-free macros.
@@ -184,10 +206,13 @@ using std::atomic_uintmax_t;
 /*
  * 7.17.2 Initialization.
  */
-
+#if defined(__CLANG_ATOMICS)
 #define	ATOMIC_VAR_INIT(value)		(value)
 #define	atomic_init(obj, value)		__c11_atomic_init(obj, value)
-
+#else
+#define	ATOMIC_VAR_INIT(value)		{ .__val = (value) }
+#define	atomic_init(obj, value)		((void)((obj)->__val = (value)))
+#endif
 /*
  * Clang and recent GCC both provide predefined macros for the memory
  * orderings.  If we are using a compiler that doesn't define them, use the
@@ -236,22 +261,55 @@ typedef enum {
  */
 
 static __inline void atomic_thread_fence(memory_order __order __attribute__((unused))) {
+#ifdef __CLANG_ATOMICS
 	__c11_atomic_thread_fence(__order);
+#elif defined(__GNUC_ATOMICS)
+	__atomic_thread_fence(__order);
+#else
+	__sync_synchronize();
+#endif
 }
 
 static __inline void atomic_signal_fence(memory_order __order __attribute__((unused))) {
+#ifdef __CLANG_ATOMICS
 	__c11_atomic_signal_fence(__order);
+#elif defined(__GNUC_ATOMICS)
+	__atomic_signal_fence(__order);
+#else
+	__asm volatile ("" ::: "memory");
+#endif
 }
 
 /*
  * 7.17.5 Lock-free property.
  */
 
-#define	atomic_is_lock_free(obj) __c11_atomic_is_lock_free(sizeof(*(obj)))
+#if defined(_KERNEL)
+/* Atomics in kernelspace are always lock-free. */
+#define	atomic_is_lock_free(obj) \
+	((void)(obj), (_Bool)1)
+#elif defined(__CLANG_ATOMICS)
+#define	atomic_is_lock_free(obj) \
+	__c11_atomic_is_lock_free(sizeof(*(obj)))
+#elif defined(__GNUC_ATOMICS)
+#define	atomic_is_lock_free(obj) \
+	__atomic_is_lock_free(sizeof((obj)->__val), &(obj)->__val)
+#else
+#define	atomic_is_lock_free(obj) \
+	((void)(obj), sizeof((obj)->__val) <= sizeof(void *))
+#endif
 
 /*
  * 7.17.6 Atomic integer types.
  */
+
+#ifndef __CLANG_ATOMICS
+/*
+ * No native support for _Atomic(). Place object in structure to prevent
+ * most forms of direct non-atomic access.
+ */
+#define _Atomic(T)              struct { T volatile __val; }
+#endif
 
 typedef _Atomic(bool)			atomic_bool;
 typedef _Atomic(char)			atomic_char;
@@ -265,7 +323,7 @@ typedef _Atomic(long)			atomic_long;
 typedef _Atomic(unsigned long)		atomic_ulong;
 typedef _Atomic(long long)		atomic_llong;
 typedef _Atomic(unsigned long long)	atomic_ullong;
-#if defined(__BIONIC__) || (defined(__cplusplus) && __cplusplus >= 201103L)
+#if __STDC_VERSION__ >= 201112L  || (defined(__cplusplus) && __cplusplus >= 201103L)
   typedef _Atomic(char16_t)		atomic_char16_t;
   typedef _Atomic(char32_t)		atomic_char32_t;
 #endif
@@ -300,7 +358,7 @@ typedef _Atomic(uintmax_t)		atomic_uintmax_t;
 /*
  * Compiler-specific operations.
  */
-
+#if defined(__CLANG_ATOMICS)
 #define	atomic_compare_exchange_strong_explicit(object, expected,	\
     desired, success, failure)						\
 	__c11_atomic_compare_exchange_strong(object, expected, desired,	\
@@ -325,11 +383,85 @@ typedef _Atomic(uintmax_t)		atomic_uintmax_t;
 	__c11_atomic_load(object, order)
 #define	atomic_store_explicit(object, desired, order)			\
 	__c11_atomic_store(object, desired, order)
-
+#elif defined(__GNUC_ATOMICS)
+#define	atomic_compare_exchange_strong_explicit(object, expected,	\
+    desired, success, failure)						\
+	__atomic_compare_exchange_n(&(object)->__val, expected,		\
+	    desired, 0, success, failure)
+#define	atomic_compare_exchange_weak_explicit(object, expected,		\
+    desired, success, failure)						\
+	__atomic_compare_exchange_n(&(object)->__val, expected,		\
+	    desired, 1, success, failure)
+#define	atomic_exchange_explicit(object, desired, order)		\
+	__atomic_exchange_n(&(object)->__val, desired, order)
+#define	atomic_fetch_add_explicit(object, operand, order)		\
+	__atomic_fetch_add(&(object)->__val, operand, order)
+#define	atomic_fetch_and_explicit(object, operand, order)		\
+	__atomic_fetch_and(&(object)->__val, operand, order)
+#define	atomic_fetch_or_explicit(object, operand, order)		\
+	__atomic_fetch_or(&(object)->__val, operand, order)
+#define	atomic_fetch_sub_explicit(object, operand, order)		\
+	__atomic_fetch_sub(&(object)->__val, operand, order)
+#define	atomic_fetch_xor_explicit(object, operand, order)		\
+	__atomic_fetch_xor(&(object)->__val, operand, order)
+#define	atomic_load_explicit(object, order)				\
+	__atomic_load_n(&(object)->__val, order)
+#define	atomic_store_explicit(object, desired, order)			\
+	__atomic_store_n(&(object)->__val, desired, order)
+#else
+#define	__atomic_apply_stride(object, operand) \
+	(((__typeof__((object)->__val))0) + (operand))
+#define	atomic_compare_exchange_strong_explicit(object, expected,	\
+    desired, success, failure)	__extension__ ({			\
+	__typeof__(expected) __ep = (expected);				\
+	__typeof__(*__ep) __e = *__ep;					\
+	(void)(success); (void)(failure);				\
+	(bool)((*__ep = __sync_val_compare_and_swap(&(object)->__val,	\
+	    __e, desired)) == __e);					\
+})
+#define	atomic_compare_exchange_weak_explicit(object, expected,		\
+    desired, success, failure)						\
+	atomic_compare_exchange_strong_explicit(object, expected,	\
+		desired, success, failure)
+#ifdef __HAS_BUILTIN_SYNC_SWAP
+/* Clang provides a full-barrier atomic exchange - use it if available. */
+#define	atomic_exchange_explicit(object, desired, order)		\
+	((void)(order), __sync_swap(&(object)->__val, desired))
+#else
+/*
+ * __sync_lock_test_and_set() is only an acquire barrier in theory (although in
+ * practice it is usually a full barrier) so we need an explicit barrier before
+ * it.
+ */
+#define	atomic_exchange_explicit(object, desired, order)		\
+__extension__ ({							\
+	__typeof__(object) __o = (object);				\
+	__typeof__(desired) __d = (desired);				\
+	(void)(order);							\
+	__sync_synchronize();						\
+	__sync_lock_test_and_set(&(__o)->__val, __d);			\
+})
+#endif
+#define	atomic_fetch_add_explicit(object, operand, order)		\
+	((void)(order), __sync_fetch_and_add(&(object)->__val,		\
+	    __atomic_apply_stride(object, operand)))
+#define	atomic_fetch_and_explicit(object, operand, order)		\
+	((void)(order), __sync_fetch_and_and(&(object)->__val, operand))
+#define	atomic_fetch_or_explicit(object, operand, order)		\
+	((void)(order), __sync_fetch_and_or(&(object)->__val, operand))
+#define	atomic_fetch_sub_explicit(object, operand, order)		\
+	((void)(order), __sync_fetch_and_sub(&(object)->__val,		\
+	    __atomic_apply_stride(object, operand)))
+#define	atomic_fetch_xor_explicit(object, operand, order)		\
+	((void)(order), __sync_fetch_and_xor(&(object)->__val, operand))
+#define	atomic_load_explicit(object, order)				\
+	((void)(order), __sync_fetch_and_add(&(object)->__val, 0))
+#define	atomic_store_explicit(object, desired, order)			\
+	((void)atomic_exchange_explicit(object, desired, order))
+#endif
 /*
  * Convenience functions.
  */
-
 #define	atomic_compare_exchange_strong(object, expected, desired)	\
 	atomic_compare_exchange_strong_explicit(object, expected,	\
 	    desired, memory_order_seq_cst, memory_order_seq_cst)
@@ -352,7 +484,6 @@ typedef _Atomic(uintmax_t)		atomic_uintmax_t;
 	atomic_load_explicit(object, memory_order_seq_cst)
 #define	atomic_store(object, desired)					\
 	atomic_store_explicit(object, desired, memory_order_seq_cst)
-
 /*
  * 7.17.8 Atomic flag type and operations.
  *

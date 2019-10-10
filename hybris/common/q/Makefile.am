@@ -48,6 +48,7 @@ q_la_CPPFLAGS = \
 	-I$(bionic_libc)/ \
 	-I$(bionic_libc)/include \
 	-DDEFAULT_HYBRIS_LD_LIBRARY_PATH="\"@DEFAULT_HYBRIS_LD_LIBRARY_PATH@\"" \
+	-D_USING_LIBCXX \
 	$(ARCH_FLAGS) \
 	$(ANDROID_HEADERS_CFLAGS)
 q_la_LDFLAGS = \

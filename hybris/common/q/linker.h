@@ -31,6 +31,11 @@
 #include <dlfcn.h>
 #include <android/dlext.h>
 #include <elf.h>
+
+typedef Elf32_Word Elf32_Relr;
+typedef Elf64_Xword Elf64_Relr;
+
+
 #include <inttypes.h>
 #include <link.h>
 #include <sys/stat.h>
@@ -44,6 +49,7 @@
 
 #include <string>
 #include <vector>
+
 
 #if defined(__LP64__)
 #define ELFW(what) ELF64_ ## what

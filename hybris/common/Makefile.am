@@ -4,7 +4,9 @@ lib_LTLIBRARIES = \
 SUBDIRS =
 
 if !WANT_ARCH_ARM64
+if !WANT_ARCH_X86_64
 SUBDIRS += jb
+endif
 endif
 
 if HAS_ANDROID_6_0_0
@@ -17,6 +19,10 @@ endif
 
 if HAS_ANDROID_8_0_0
 SUBDIRS += o
+endif
+
+if HAS_ANDROID_10_0_0
+SUBDIRS += q
 endif
 
 libhybris_common_la_SOURCES = \
@@ -86,6 +92,9 @@ libhybris_common_la_CPPFLAGS += -DWANT_LINKER_N
 endif
 if HAS_ANDROID_8_0_0
 libhybris_common_la_CPPFLAGS += -DWANT_LINKER_O
+endif
+if HAS_ANDROID_10_0_0
+libhybris_common_la_CPPFLAGS += -DWANT_LINKER_Q
 endif
 libhybris_common_la_LDFLAGS = \
 	-ldl \

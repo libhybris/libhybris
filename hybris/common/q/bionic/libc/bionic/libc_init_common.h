@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2008 The Android Open Source Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,42 +28,32 @@
 
 #pragma once
 
-#include <stdlib.h>
-#include <limits.h>
+#include <sys/cdefs-android.h>
 
-#include "private/bionic_systrace.h"
+typedef struct {
+  void (**preinit_array)(void);
+  void (**init_array)(void);
+  void (**fini_array)(void);
+} structors_array_t;
 
-#include <android-base/macros.h>
-#define __printflike(x, y) __attribute__((__format__(printf, x, y)))
-#define LD_LOG(type, x...)                                       \
-  do {                                                           \
-    if (g_linker_logger.IsEnabled(type)) {g_linker_logger.Log(x); g_linker_logger.Log("\n");}\
-  } while (0)
+__BEGIN_DECLS
 
-constexpr const uint32_t kLogErrors = 1 << 0;
-constexpr const uint32_t kLogDlopen = 1 << 1;
-constexpr const uint32_t kLogDlsym  = 1 << 2;
+extern int main(int argc, char** argv, char** env);
 
-class LinkerLogger {
- public:
-  LinkerLogger() : flags_(0) { }
+void __libc_init(void* raw_args,
+                            void (*onexit)(void),
+                            int (*slingshot)(int, char**, char**),
+                            structors_array_t const* const structors);
+__LIBC_HIDDEN__ void __libc_fini(void* finit_array);
 
-  void ResetState();
-  void Log(const char* format, ...) __printflike(2, 3);
+__END_DECLS
 
-  uint32_t IsEnabled(uint32_t type) {
-    return flags_ & type;
-  }
+#if defined(__cplusplus)
 
- private:
-  uint32_t flags_;
+__LIBC_HIDDEN__ void __libc_init_globals();
 
-  DISALLOW_COPY_AND_ASSIGN(LinkerLogger);
-};
+__LIBC_HIDDEN__ void __libc_init_common();
 
-extern LinkerLogger g_linker_logger;
-extern char** g_argv;
+__LIBC_HIDDEN__ void __libc_init_AT_SECURE(char** envp);
 
-// If the system property debug.ld.greylist_disabled is true, we'll not use the greylist
-// regardless of API level.
-extern bool g_greylist_disabled;
+#endif
