@@ -37,6 +37,8 @@
 #include <sys/types.h>
 #include <cstdint>
 
+#include "private/bionic_prctl.h"
+
 // Update shadow without making it writable by preparing the data on the side and mremap-ing it in
 // place.
 class ShadowWrite {

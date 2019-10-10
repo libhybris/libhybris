@@ -35,9 +35,10 @@
 
 #include <android-base/macros.h>
 
+#define __printflike(x, y) __attribute__((__format__(printf, x, y)))
 #define LD_LOG(type, x...)                                       \
   do {                                                           \
-    if (g_linker_logger.IsEnabled(type)) g_linker_logger.Log(x); \
+    if (g_linker_logger.IsEnabled(type)) { g_linker_logger.Log(x); g_linker_logger.Log("\n"); } \
   } while (0)
 
 constexpr const uint32_t kLogErrors = 1 << 0;

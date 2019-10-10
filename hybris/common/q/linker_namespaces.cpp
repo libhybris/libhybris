@@ -32,6 +32,7 @@
 #include "linker_utils.h"
 
 #include <dlfcn.h>
+#include <algorithm>
 
 bool android_namespace_t::is_accessible(const std::string& file) {
   if (!is_isolated_) {

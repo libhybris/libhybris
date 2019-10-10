@@ -32,10 +32,10 @@
 #include "linker_debug.h"
 #include "linker_utils.h"
 
-#include <android-base/file.h>
+//#include <android-base/file.h>
 #include <android-base/properties.h>
 #include <android-base/scopeguard.h>
-#include <android-base/strings.h>
+//#include <android-base/strings.h>
 
 #include <async_safe/log.h>
 
@@ -74,7 +74,7 @@ class ConfigParser {
     std::string line;
     while(NextLine(&line)) {
       size_t found = line.find('#');
-      line = android::base::Trim(line.substr(0, found));
+      line = trim(line.substr(0, found));
 
       if (line.empty()) {
         continue;
@@ -88,14 +88,14 @@ class ConfigParser {
       size_t found_assign = line.find('=');
       size_t found_append = line.find("+=");
       if (found_assign != std::string::npos && found_append == std::string::npos) {
-        *name = android::base::Trim(line.substr(0, found_assign));
-        *value = android::base::Trim(line.substr(found_assign + 1));
+        *name = trim(line.substr(0, found_assign));
+        *value = trim(line.substr(found_assign + 1));
         return kPropertyAssign;
       }
 
       if (found_append != std::string::npos) {
-        *name = android::base::Trim(line.substr(0, found_append));
-        *value = android::base::Trim(line.substr(found_append + 2));
+        *name = trim(line.substr(0, found_append));
+        *value = trim(line.substr(found_append + 2));
         return kPropertyAppend;
       }
 
@@ -174,7 +174,7 @@ static std::string create_error_msg(const char* file,
                                     size_t lineno,
                                     const std::string& msg) {
   char buf[1024];
-  async_safe_format_buffer(buf, sizeof(buf), "%s:%zu: error: %s", file, lineno, msg.c_str());
+  snprintf(buf, sizeof(buf), "%s:%zu: error: %s", file, lineno, msg.c_str());
 
   return std::string(buf);
 }
@@ -184,7 +184,7 @@ static bool parse_config_file(const char* ld_config_file_path,
                               std::unordered_map<std::string, PropertyValue>* properties,
                               std::string* error_msg) {
   std::string content;
-  if (!android::base::ReadFileToString(ld_config_file_path, &content)) {
+  if (!readFileToString(ld_config_file_path, &content)) {
     if (errno != ENOENT) {
       *error_msg = std::string("error reading file \"") +
                    ld_config_file_path + "\": " + strerror(errno);
@@ -215,7 +215,7 @@ static bool parse_config_file(const char* ld_config_file_path,
     }
 
     if (result == ConfigParser::kPropertyAssign) {
-      if (!android::base::StartsWith(name, "dir.")) {
+      if (!startsWith(name, "dir.")) {
         DL_WARN("%s:%zd: warning: unexpected property name \"%s\", "
                 "expected format dir.<section_name> (ignoring this line)",
                 ld_config_file_path,
@@ -320,12 +320,12 @@ static bool parse_config_file(const char* ld_config_file_path,
                 name.c_str());
         (*properties)[name] = PropertyValue(std::move(value), cp.lineno());
       } else {
-        if (android::base::EndsWith(name, ".links") ||
-            android::base::EndsWith(name, ".namespaces")) {
+        if (endsWith(name, ".links") ||
+            endsWith(name, ".namespaces")) {
           value = "," + value;
           (*properties)[name].append_value(std::move(value));
-        } else if (android::base::EndsWith(name, ".paths") ||
-                   android::base::EndsWith(name, ".shared_libs")) {
+        } else if (endsWith(name, ".paths") ||
+                   endsWith(name, ".shared_libs")) {
           value = ":" + value;
           (*properties)[name].append_value(std::move(value));
         } else {
@@ -371,10 +371,10 @@ class Properties {
       return std::vector<std::string>();
     }
 
-    std::vector<std::string> strings = android::base::Split(it->second.value(), ",");
+    std::vector<std::string> strings = split(it->second.value(), ",");
 
     for (size_t i = 0; i < strings.size(); ++i) {
-      strings[i] = android::base::Trim(strings[i]);
+      strings[i] = trim(strings[i]);
     }
 
     return strings;
@@ -404,7 +404,7 @@ class Properties {
     params.push_back({ "LIB", kLibParamValue });
     if (target_sdk_version_ != 0) {
       char buf[16];
-      async_safe_format_buffer(buf, sizeof(buf), "%d", target_sdk_version_);
+      snprintf(buf, sizeof(buf), "%d", target_sdk_version_);
       params.push_back({ "SDK_VER", buf });
     }
 
@@ -477,14 +477,14 @@ bool Config::read_binary_config(const char* ld_config_file_path,
   if (versioning_enabled) {
     std::string version_file = dirname(binary_realpath) + "/.version";
     std::string content;
-    if (!android::base::ReadFileToString(version_file, &content)) {
+    if (!readFileToString(version_file, &content)) {
       if (errno != ENOENT) {
         *error_msg = std::string("error reading version file \"") +
                      version_file + "\": " + strerror(errno);
         return false;
       }
     } else {
-      content = android::base::Trim(content);
+      content = trim(content);
       errno = 0;
       char* end = nullptr;
       const char* content_str = content.c_str();
@@ -555,7 +555,7 @@ bool Config::read_binary_config(const char* ld_config_file_path,
     std::string whitelisted =
         properties.get_string(property_name_prefix + ".whitelisted", &lineno);
     if (!whitelisted.empty()) {
-      ns_config->set_whitelisted_libs(android::base::Split(whitelisted, ":"));
+      ns_config->set_whitelisted_libs(split(whitelisted, ":"));
     }
 
     // these are affected by is_asan flag
@@ -583,11 +583,11 @@ bool Config::read_binary_config(const char* ld_config_file_path,
 }
 
 std::string Config::get_vndk_version_string(const char delimiter) {
-  std::string version = android::base::GetProperty("ro.vndk.version", "");
+  /*std::string version = android::base::GetProperty("ro.vndk.version", "");
   if (version != "" && version != "current") {
     //add the delimiter char in front of the string and return it.
     return version.insert(0, 1, delimiter);
-  }
+  }*/
   return "";
 }
 

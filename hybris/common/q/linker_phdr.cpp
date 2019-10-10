@@ -26,12 +26,14 @@
  * SUCH DAMAGE.
  */
 
+#include "hybris_compat.h"
+
 #include "linker_phdr.h"
 
 #include <errno.h>
 #include <string.h>
 #include <sys/mman.h>
-#include <sys/prctl.h>
+//#include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -42,7 +44,10 @@
 #include "linker_debug.h"
 #include "linker_utils.h"
 
+#include <android/api-level.h>
+
 #include "private/CFIShadow.h" // For kLibraryAlignment
+#include "private/bionic_prctl.h"
 
 static int GetTargetElfMachine() {
 #if defined(__arm__)
@@ -547,7 +552,7 @@ static void* ReserveAligned(size_t size, size_t align) {
 
   // arc4random* is not available in first stage init because /dev/urandom hasn't yet been
   // created. Don't randomize then.
-  size_t n = is_first_stage_init() ? 0 : arc4random_uniform((last - first) / PAGE_SIZE + 1);
+  size_t n = is_first_stage_init() ? 0 : rand() % ((last - first) / PAGE_SIZE + 1);
   uint8_t* start = first + n * PAGE_SIZE;
   munmap(mmap_ptr, start - mmap_ptr);
   munmap(start + size, mmap_ptr + mmap_size - (start + size));

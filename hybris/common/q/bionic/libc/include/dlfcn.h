@@ -31,7 +31,19 @@
 
 #include <stdint.h>
 #include <sys/cdefs.h>
+#include <android/versioning.h>
 __BEGIN_DECLS
+
+#if defined(__cplusplus)
+#define __BIONIC_CAST(_k,_t,_v) (_k<_t>(_v))
+#else
+#define __BIONIC_CAST(_k,_t,_v) ((_t) (_v))
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnullability-completeness"
+#endif
 
 typedef struct {
   /* Pathname of shared object that contains address. */
@@ -72,6 +84,10 @@ int dladdr(const void* __addr, Dl_info* __info);
 #else
 #define RTLD_DEFAULT  __BIONIC_CAST(reinterpret_cast, void*, 0xffffffff)
 #define RTLD_NEXT     __BIONIC_CAST(reinterpret_cast, void*, 0xfffffffe)
+#endif
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
 #endif
 
 __END_DECLS

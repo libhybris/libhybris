@@ -33,6 +33,10 @@
 #include <sys/prctl.h>
 #include <unistd.h>
 
+#include "private/bionic_prctl.h"
+
+#include "hybris_compat.h"
+
 static constexpr size_t kAllocateSize = PAGE_SIZE * 100;
 static_assert(kAllocateSize % PAGE_SIZE == 0, "Invalid kAllocateSize.");
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2008 The Android Open Source Project
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,36 +26,34 @@
  * SUCH DAMAGE.
  */
 
-#include "linker_dlwarning.h"
+#pragma once
 
-#include <strings.h>
+#include <sys/cdefs-android.h>
 
-#include <string>
+typedef struct {
+  void (**preinit_array)(void);
+  void (**init_array)(void);
+  void (**fini_array)(void);
+} structors_array_t;
 
-#include "hybris_compat.h"
+__BEGIN_DECLS
 
-static std::string current_msg;
+extern int main(int argc, char** argv, char** env);
 
-void add_dlwarning(const char* sopath, const char* message, const char* value) {
-  if (!current_msg.empty()) {
-    current_msg += '\n';
-  }
+void __libc_init(void* raw_args,
+                            void (*onexit)(void),
+                            int (*slingshot)(int, char**, char**),
+                            structors_array_t const* const structors);
+__LIBC_HIDDEN__ void __libc_fini(void* finit_array);
 
-  current_msg = current_msg + basename(sopath) + ": " + message;
+__END_DECLS
 
-  if (value != nullptr) {
-    current_msg = current_msg + " \"" + value + "\"";
-  }
-}
+#if defined(__cplusplus)
 
-// Resets the current one (like dlerror but instead of
-// being thread-local it is process-local).
-void get_dlwarning(void* obj, void (*f)(void*, const char*)) {
-  if (current_msg.empty()) {
-    f(obj, nullptr);
-  } else {
-    std::string msg = current_msg;
-    current_msg.clear();
-    f(obj, msg.c_str());
-  }
-}
+__LIBC_HIDDEN__ void __libc_init_globals();
+
+__LIBC_HIDDEN__ void __libc_init_common();
+
+__LIBC_HIDDEN__ void __libc_init_AT_SECURE(char** envp);
+
+#endif

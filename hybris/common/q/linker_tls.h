@@ -60,6 +60,6 @@ struct TlsDynamicResolverArg {
   TlsIndex index;
 };
 
-__LIBC_HIDDEN__ extern "C" size_t tlsdesc_resolver_static(size_t);
-__LIBC_HIDDEN__ extern "C" size_t tlsdesc_resolver_dynamic(size_t);
-__LIBC_HIDDEN__ extern "C" size_t tlsdesc_resolver_unresolved_weak(size_t);
+extern "C" size_t tlsdesc_resolver_static(size_t);
+extern "C" size_t tlsdesc_resolver_dynamic(size_t);
+extern "C" size_t tlsdesc_resolver_unresolved_weak(size_t);

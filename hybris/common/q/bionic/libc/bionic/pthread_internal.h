@@ -93,7 +93,7 @@ class pthread_internal_t {
 
   _Atomic(ThreadJoinState) join_state;
 
-  __pthread_cleanup_t* cleanup_stack;
+  //__pthread_cleanup_t* cleanup_stack;
 
   void* (*start_routine)(void*);
   void* start_routine_arg;
@@ -139,7 +139,7 @@ class pthread_internal_t {
 #define __BIONIC_DLERROR_BUFFER_SIZE 512
   char dlerror_buffer[__BIONIC_DLERROR_BUFFER_SIZE];
 
-  bionic_tls* bionic_tls;
+  struct bionic_tls* bionic_tls;
 
   int errno_value;
 };
@@ -169,20 +169,20 @@ __LIBC_HIDDEN__ pid_t __pthread_internal_gettid(pthread_t pthread_id, const char
 __LIBC_HIDDEN__ void __pthread_internal_remove(pthread_internal_t* thread);
 __LIBC_HIDDEN__ void __pthread_internal_remove_and_free(pthread_internal_t* thread);
 
-static inline __always_inline bionic_tcb* __get_bionic_tcb() {
+static inline bionic_tcb* __get_bionic_tcb() {
   return reinterpret_cast<bionic_tcb*>(&__get_tls()[MIN_TLS_SLOT]);
 }
 
 // Make __get_thread() inlined for performance reason. See http://b/19825434.
-static inline __always_inline pthread_internal_t* __get_thread() {
+static inline  pthread_internal_t* __get_thread() {
   return static_cast<pthread_internal_t*>(__get_tls()[TLS_SLOT_THREAD_ID]);
 }
 
-static inline __always_inline bionic_tls& __get_bionic_tls() {
+static inline  bionic_tls& __get_bionic_tls() {
   return *static_cast<bionic_tls*>(__get_tls()[TLS_SLOT_BIONIC_TLS]);
 }
 
-static inline __always_inline TlsDtv* __get_tcb_dtv(bionic_tcb* tcb) {
+static inline  TlsDtv* __get_tcb_dtv(bionic_tcb* tcb) {
   uintptr_t dtv_slot = reinterpret_cast<uintptr_t>(tcb->tls_slot(TLS_SLOT_DTV));
   return reinterpret_cast<TlsDtv*>(dtv_slot - offsetof(TlsDtv, generation));
 }

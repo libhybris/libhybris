@@ -52,13 +52,13 @@ class Lock {
 
   bool trylock() {
     LockState old_state = Unlocked;
-    return __predict_true(atomic_compare_exchange_strong_explicit(&state, &old_state,
+    return (atomic_compare_exchange_strong_explicit(&state, &old_state,
                         LockedWithoutWaiter, memory_order_acquire, memory_order_relaxed));
   }
 
   void lock() {
     LockState old_state = Unlocked;
-    if (__predict_true(atomic_compare_exchange_strong_explicit(&state, &old_state,
+    if ((atomic_compare_exchange_strong_explicit(&state, &old_state,
                          LockedWithoutWaiter, memory_order_acquire, memory_order_relaxed))) {
       return;
     }

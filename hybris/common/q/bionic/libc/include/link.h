@@ -36,6 +36,9 @@
 
 __BEGIN_DECLS
 
+typedef Elf32_Word Elf32_Relr;
+typedef Elf64_Xword Elf64_Relr;
+
 #if defined(__LP64__)
 #define ElfW(type) Elf64_ ## type
 #else

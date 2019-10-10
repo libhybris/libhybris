@@ -33,7 +33,8 @@
  * @brief Functions and constants for dealing with multiple API levels.
  */
 
-#include <sys/cdefs.h>
+#include <sys/cdefs-android.h>
+#include <android/versioning.h>
 
 __BEGIN_DECLS
 

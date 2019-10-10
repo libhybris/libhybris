@@ -35,6 +35,7 @@
 #include <sys/prctl.h>
 #include <stddef.h>
 #include <unistd.h>
+#include <stdint.h>
 
 const uint32_t kSmallObjectMaxSizeLog2 = 10;
 const uint32_t kSmallObjectMinSizeLog2 = 4;

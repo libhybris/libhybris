@@ -31,6 +31,10 @@
 #include <string>
 #include <vector>
 
+std::string trim(const std::string& s);
+std::vector<std::string> split(const std::string &text, const std::string &sep);
+std::string join(const std::vector<std::string>& things, char separator);
+
 extern const char* const kZipFileSeparator;
 
 void format_string(std::string* str, const std::vector<std::pair<std::string, std::string>>& params);
@@ -56,3 +60,10 @@ off64_t page_start(off64_t offset);
 size_t page_offset(off64_t offset);
 bool safe_add(off64_t* out, off64_t a, size_t b);
 bool is_first_stage_init();
+
+void stringAppendV(std::string* dst, const char* format, va_list ap);
+void stringAppendF(std::string* dst, const char* format, ...);
+std::string stringPrintf(const char* fmt, ...);
+bool startsWith(const std::string& s, const char* prefix);
+bool endsWith(const std::string& s, const char* suffix);
+bool readFileToString(const std::string& path, std::string* content, bool follow_symlinks = false);
