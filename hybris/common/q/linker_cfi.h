@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "hybris_compat.h"
+
 #include "linker.h"
 #include "linker_debug.h"
 

@@ -55,7 +55,7 @@ int get_application_target_sdk_version();
 soinfo::soinfo(android_namespace_t* ns, const char* realpath,
                const struct stat* file_stat, off64_t file_offset,
                int rtld_flags) {
-  memset(this, 0, sizeof(*this));
+//  memset(this, 0, sizeof(*this));
 
   if (realpath != nullptr) {
     realpath_ = realpath;
@@ -649,7 +649,7 @@ android_namespace_t* soinfo::get_primary_namespace() {
     return primary_namespace_;
   }
 
-  return &g_default_namespace;
+  return g_default_namespace;
 }
 
 void soinfo::add_secondary_namespace(android_namespace_t* secondary_ns) {

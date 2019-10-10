@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "../../../hybris_compat.h"
+
 #include <errno.h>
 #include <string.h>
 #include <sys/cdefs.h>

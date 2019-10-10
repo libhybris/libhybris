@@ -88,13 +88,14 @@
 
 static std::unordered_map<void*, size_t> g_dso_handle_counters;
 
-static android_namespace_t* g_anonymous_namespace = &g_default_namespace;
 static std::unordered_map<std::string, android_namespace_t*> g_exported_namespaces;
 
 static LinkerTypeAllocator<soinfo> g_soinfo_allocator;
 static LinkerTypeAllocator<LinkedListEntry<soinfo>> g_soinfo_links_allocator;
 
 static LinkerTypeAllocator<android_namespace_t> g_namespace_allocator;
+android_namespace_t *g_default_namespace = new (g_namespace_allocator.alloc()) android_namespace_t();
+static android_namespace_t* g_anonymous_namespace = g_default_namespace;
 static LinkerTypeAllocator<LinkedListEntry<android_namespace_t>> g_namespace_list_allocator;
 
 static const char* const kLdConfigArchFilePath = "/system/etc/ld.config." ABI_STRING ".txt";
@@ -149,7 +150,7 @@ CFIShadowWriter* get_cfi_shadow() {
 }
 
 static bool is_system_library(const std::string& realpath) {
-  for (const auto& dir : g_default_namespace.get_default_library_paths()) {
+  for (const auto& dir : g_default_namespace->get_default_library_paths()) {
     if (file_is_in_dir(realpath, dir)) {
       return true;
     }
@@ -401,7 +402,7 @@ static void parse_path(const char* path, const char* delimiters,
 static void parse_LD_LIBRARY_PATH(const char* path) {
   std::vector<std::string> ld_libary_paths;
   parse_path(path, ":", &ld_libary_paths);
-  g_default_namespace.set_ld_library_paths(std::move(ld_libary_paths));
+  g_default_namespace->set_ld_library_paths(std::move(ld_libary_paths));
 }
 
 static bool realpath_fd(int fd, std::string* realpath) {
@@ -867,7 +868,7 @@ static const ElfW(Sym)* dlsym_handle_lookup(soinfo* si,
   // libraries and they are loaded in breath-first (correct) order we can just execute
   // dlsym(RTLD_DEFAULT, ...); instead of doing two stage lookup.
   if (si == solist_get_somain()) {
-    return dlsym_linear_lookup(&g_default_namespace, name, vi, found, nullptr, RTLD_DEFAULT);
+    return dlsym_linear_lookup(g_default_namespace, name, vi, found, nullptr, RTLD_DEFAULT);
   }
 
   SymbolName symbol_name(name);
@@ -1165,10 +1166,10 @@ static int open_library(android_namespace_t* ns,
   }
 
   // Otherwise we try LD_LIBRARY_PATH first, and fall back to the default library path
-  TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),ns->get_ld_library_paths());
+//  TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),ns->get_ld_library_paths());
   int fd = open_library_on_paths(zip_archive_cache, name, file_offset, ns->get_ld_library_paths(), realpath);
   if (fd == -1 && needed_by != nullptr) {
-    TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),needed_by->get_dt_runpath());
+//    TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),needed_by->get_dt_runpath());
     fd = open_library_on_paths(zip_archive_cache, name, file_offset, needed_by->get_dt_runpath(), realpath);
     // Check if the library is accessible
     if (fd != -1 && !ns->is_accessible(*realpath)) {
@@ -1178,7 +1179,7 @@ static int open_library(android_namespace_t* ns,
   }
 
   if (fd == -1) {
-    TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),ns->get_default_library_paths());
+    //TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),ns->get_default_library_paths());
     fd = open_library_on_paths(zip_archive_cache, name, file_offset, ns->get_default_library_paths(), realpath);
   }
 
@@ -1585,8 +1586,8 @@ static bool find_library_internal(android_namespace_t* ns,
     // from the default namespace.
     LD_LOG(kLogDlopen,
            "find_library_internal(ns=%s, task=%s): Greylisted library - trying namespace %s",
-           ns->get_name(), task->get_name(), g_default_namespace.get_name());
-    ns = &g_default_namespace;
+           ns->get_name(), task->get_name(), g_default_namespace->get_name());
+    ns = g_default_namespace;
     if (load_library(ns, task, zip_archive_cache, load_tasks, rtld_flags,
                      search_linked_namespaces)) {
       return true;
@@ -2145,7 +2146,7 @@ void do_android_get_LD_LIBRARY_PATH(char* buffer, size_t buffer_size) {
   // See b/17302493 for further details.
   // Once the above bug is fixed, this code can be modified to use
   // snprintf again.
-  const auto& default_ld_paths = g_default_namespace.get_default_library_paths();
+  const auto& default_ld_paths = g_default_namespace->get_default_library_paths();
 
   size_t required_size = 0;
   for (const auto& path : default_ld_paths) {
@@ -2482,13 +2483,13 @@ bool init_anonymous_namespace(const char* shared_lib_sonames, const char* librar
                        library_search_path,
                        ANDROID_NAMESPACE_TYPE_ISOLATED,
                        nullptr,
-                       &g_default_namespace);
+                       g_default_namespace);
 
   if (anon_ns == nullptr) {
     return false;
   }
 
-  if (!link_namespaces(anon_ns, &g_default_namespace, shared_lib_sonames)) {
+  if (!link_namespaces(anon_ns, g_default_namespace, shared_lib_sonames)) {
     return false;
   }
 
@@ -2572,7 +2573,7 @@ bool link_namespaces(android_namespace_t* namespace_from,
                      android_namespace_t* namespace_to,
                      const char* shared_lib_sonames) {
   if (namespace_to == nullptr) {
-    namespace_to = &g_default_namespace;
+    namespace_to = g_default_namespace;
   }
 
   if (namespace_from == nullptr) {
@@ -3441,6 +3442,7 @@ bool soinfo::prelink_image() {
   //
   // source: http://www.sco.com/developers/gabi/1998-04-29/ch5.dynamic.html
   uint32_t needed_count = 0;
+  ElfW(Addr) base;
   for (ElfW(Dyn)* d = dynamic; d->d_tag != DT_NULL; ++d) {
     DEBUG("d = %p, d[0](tag) = %p d[1](val) = %p",
           d, reinterpret_cast<void*>(d->d_tag), reinterpret_cast<void*>(d->d_un.d_val));
@@ -3450,14 +3452,18 @@ bool soinfo::prelink_image() {
         break;
 
       case DT_HASH:
-        nbucket_ = reinterpret_cast<uint32_t*>(load_bias + d->d_un.d_ptr)[0];
-        nchain_ = reinterpret_cast<uint32_t*>(load_bias + d->d_un.d_ptr)[1];
-        bucket_ = reinterpret_cast<uint32_t*>(load_bias + d->d_un.d_ptr + 8);
-        chain_ = reinterpret_cast<uint32_t*>(load_bias + d->d_un.d_ptr + 8 + nbucket_ * 4);
+        if(d->d_un.d_ptr > load_bias)
+          base = d->d_un.d_ptr;
+        else
+          base = load_bias + d->d_un.d_ptr;
+
+        nbucket_ = reinterpret_cast<uint32_t*>(base)[0];
+        nchain_ = reinterpret_cast<uint32_t*>(base)[1];
+        bucket_ = reinterpret_cast<uint32_t*>(base + 8);
+        chain_ = reinterpret_cast<uint32_t*>(base+ 8 + nbucket_ * 4);
         break;
 
       case DT_GNU_HASH:
-        ElfW(Addr) base;
         if(d->d_un.d_ptr > load_bias)
           base = d->d_un.d_ptr;
         else
@@ -4068,7 +4074,7 @@ bool soinfo::protect_relro() {
 }
 
 static std::vector<android_namespace_t*> init_default_namespace_no_config(bool is_asan) {
-  g_default_namespace.set_isolated(false);
+  g_default_namespace->set_isolated(false);
   auto default_ld_paths = is_asan ? kAsanDefaultLdPaths : kDefaultLdPaths;
 
   char real_path[PATH_MAX];
@@ -4081,10 +4087,10 @@ static std::vector<android_namespace_t*> init_default_namespace_no_config(bool i
     }
   }
 
-  g_default_namespace.set_default_library_paths(std::move(ld_default_paths));
+  g_default_namespace->set_default_library_paths(std::move(ld_default_paths));
 
   std::vector<android_namespace_t*> namespaces;
-  namespaces.push_back(&g_default_namespace);
+  namespaces.push_back(g_default_namespace);
   return namespaces;
 }
 
@@ -4144,8 +4150,9 @@ static std::string get_ld_config_file_path(const char* executable_path) {
 }
 
 std::vector<android_namespace_t*> init_default_namespaces(const char* executable_path) {
-  g_default_namespace.set_name("(default)");
+  g_default_namespace->set_name("(default)");
 
+#if DISABLED_FOR_HYBRIS_SUPPORT
   soinfo* somain = solist_get_somain();
 
   const char *interp = phdr_table_get_interpreter_name(somain->phdr, somain->phnum,
@@ -4155,6 +4162,7 @@ std::vector<android_namespace_t*> init_default_namespaces(const char* executable
   g_is_asan = bname != nullptr &&
               (strcmp(bname, "linker_asan") == 0 ||
                strcmp(bname, "linker_asan64") == 0);
+#endif
 
   const Config* config = nullptr;
 
@@ -4187,13 +4195,13 @@ std::vector<android_namespace_t*> init_default_namespaces(const char* executable
   // 1. Initialize default namespace
   const NamespaceConfig* default_ns_config = config->default_namespace_config();
 
-  g_default_namespace.set_isolated(default_ns_config->isolated());
-  g_default_namespace.set_default_library_paths(default_ns_config->search_paths());
-  g_default_namespace.set_permitted_paths(default_ns_config->permitted_paths());
+  g_default_namespace->set_isolated(default_ns_config->isolated());
+  g_default_namespace->set_default_library_paths(default_ns_config->search_paths());
+  g_default_namespace->set_permitted_paths(default_ns_config->permitted_paths());
 
-  namespaces[default_ns_config->name()] = &g_default_namespace;
+  namespaces[default_ns_config->name()] = g_default_namespace;
   if (default_ns_config->visible()) {
-    g_exported_namespaces[default_ns_config->name()] = &g_default_namespace;
+    g_exported_namespaces[default_ns_config->name()] = g_default_namespace;
   }
 
   // 2. Initialize other namespaces

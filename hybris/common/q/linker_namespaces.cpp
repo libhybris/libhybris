@@ -123,7 +123,7 @@ soinfo_list_t android_namespace_t::get_global_group() {
 // of RTLD_GLOBAL libraries (which includes the global group from
 // the default namespace).
 soinfo_list_t android_namespace_t::get_shared_group() {
-  if (this == &g_default_namespace) {
+  if (this == g_default_namespace) {
     return get_global_group();
   }
 

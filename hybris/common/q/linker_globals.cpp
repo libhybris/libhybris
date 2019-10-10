@@ -37,8 +37,6 @@ int g_argc = 0;
 char** g_argv = nullptr;
 char** g_envp = nullptr;
 
-android_namespace_t g_default_namespace;
-
 std::unordered_map<uintptr_t, soinfo*> g_soinfo_handles_map;
 
 static char __linker_dl_err_buf[768];

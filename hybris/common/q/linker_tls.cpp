@@ -58,6 +58,7 @@ static size_t get_unused_module_index() {
   return g_tls_modules.size() - 1;
 }
 
+#if 0
 static void register_tls_module(soinfo* si, size_t static_offset) {
   TlsModules& libc_modules = __libc_shared_globals()->tls_modules;
 
@@ -84,7 +85,9 @@ static void register_tls_module(soinfo* si, size_t static_offset) {
     .soinfo_ptr = si,
   };
 }
+#endif
 
+#if 0
 static void unregister_tls_module(soinfo* si) {
   ScopedSignalBlocker ssb;
   ScopedWriteLock locker(&__libc_shared_globals()->tls_modules.rwlock);
@@ -96,6 +99,7 @@ static void unregister_tls_module(soinfo* si) {
   mod = {};
   si_tls->module_id = kTlsUninitializedModuleId;
 }
+#endif
 
 // The reference is valid until a TLS module is registered or unregistered.
 const TlsModule& get_tls_module(size_t module_id) {
@@ -142,7 +146,7 @@ void register_soinfo_tls(soinfo* si) {
     StaticTlsLayout& layout = __libc_shared_globals()->static_tls_layout;
    // static_offset = layout.reserve_solib_segment(si_tls->segment);
   }
-  register_tls_module(si, static_offset);
+  // register_tls_module(si, static_offset);
 }
 
 void unregister_soinfo_tls(soinfo* si) {
@@ -150,5 +154,5 @@ void unregister_soinfo_tls(soinfo* si) {
   if (si_tls == nullptr || si_tls->module_id == kTlsUninitializedModuleId) {
     return;
   }
-  return unregister_tls_module(si);
+  // return unregister_tls_module(si);
 }

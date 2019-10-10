@@ -69,7 +69,7 @@ extern char** g_envp;
 struct soinfo;
 struct android_namespace_t;
 
-extern android_namespace_t g_default_namespace;
+extern android_namespace_t *g_default_namespace;
 
 extern std::unordered_map<uintptr_t, soinfo*> g_soinfo_handles_map;
 
