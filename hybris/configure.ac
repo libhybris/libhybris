@@ -35,8 +35,7 @@ AC_SUBST([LT_AGE])
 
 AC_CHECK_LIB(dl, dlopen, dummy=yes, AC_MSG_ERROR(dynamic linking loader is required))
 AC_CHECK_LIB(rt, clock_gettime, dummy=yes, AC_MSG_ERROR(librt is required))
-
-CXXFLAGS="$CXXFLAGS -std=c++14"
+AX_CHECK_COMPILE_FLAG([-std=c++14], [CXXFLAGS="$CXXFLAGS -std=c++14"])
 
 AC_ARG_ENABLE(debug,
   [  --enable-debug            Enable debug build (default=disabled)],
