@@ -2468,6 +2468,66 @@ static wint_t _hybris_hook_getwc(FILE *stream)
     return getwc(_get_actual_fp(stream));
 }
 
+static size_t _hybris_hook___fbufsize(FILE *stream)
+{
+    TRACE_HOOK("__fbufsize");
+    return __fbufsize(_get_actual_fp(stream));
+}
+
+static size_t _hybris_hook___fpending(FILE *stream)
+{
+    TRACE_HOOK("__fpending");
+    return __fpending(_get_actual_fp(stream));
+}
+
+static int _hybris_hook___flbf(FILE *stream)
+{
+    TRACE_HOOK("__flbf");
+    return __flbf(_get_actual_fp(stream));
+}
+
+static int _hybris_hook___freadable(FILE *stream)
+{
+    TRACE_HOOK("__freadable");
+    return __freadable(_get_actual_fp(stream));
+}
+
+static int _hybris_hook___fwritable(FILE *stream)
+{
+    TRACE_HOOK("__fwritable");
+    return __fwritable(_get_actual_fp(stream));
+}
+
+static int _hybris_hook___freading(FILE *stream)
+{
+    TRACE_HOOK("__freading");
+    return __freading(_get_actual_fp(stream));
+}
+
+static int _hybris_hook___fwriting(FILE *stream)
+{
+    TRACE_HOOK("__fwriting");
+    return __fwriting(_get_actual_fp(stream));
+}
+
+static int _hybris_hook___fsetlocking(FILE *stream, int type)
+{
+    TRACE_HOOK("__fsetlocking");
+    return __fsetlocking(_get_actual_fp(stream), type);
+}
+
+static void _hybris_hook__flushlbf(void)
+{
+    TRACE_HOOK("_flushlbf");
+    _flushlbf();
+}
+
+static void _hybris_hook___fpurge(FILE *stream)
+{
+    TRACE_HOOK("__fpurge");
+    __fpurge(_get_actual_fp(stream));
+}
+
 static void *_hybris_hook_dlopen(const char *filename, int flag)
 {
     TRACE("filename %s flag %i", filename, flag);
@@ -2902,6 +2962,17 @@ static struct _hook hooks_common[] = {
     HOOK_DIRECT_NO_DEBUG(__cxa_finalize),
     /* sys/prctl.h */
     HOOK_INDIRECT(prctl),
+    /* stdio_ext.h */
+    HOOK_INDIRECT(__fbufsize),
+    HOOK_INDIRECT(__fpending),
+    HOOK_INDIRECT(__flbf),
+    HOOK_INDIRECT(__freadable),
+    HOOK_INDIRECT(__fwritable),
+    HOOK_INDIRECT(__freading),
+    HOOK_INDIRECT(__fwriting),
+    HOOK_INDIRECT(__fsetlocking),
+    HOOK_INDIRECT(_flushlbf),
+    HOOK_INDIRECT(__fpurge),
 };
 
 static struct _hook hooks_mm[] = {
