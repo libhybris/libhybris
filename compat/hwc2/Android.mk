@@ -12,10 +12,10 @@ LOCAL_SRC_FILES := HWC2.cpp ComposerHal.cpp hwc2_compatibility_layer.cpp
 
 LOCAL_C_INCLUDES := ../hybris/include
 
-ifeq ($(strip $(ANDROID_VERSION_MAJOR)),9)
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 9 && echo true),true)
 LOCAL_C_INCLUDES += \
     hardware/interfaces/graphics/composer/2.1/utils/command-buffer/include
-LOCAL_HEADER_LIBRARIES : \
+LOCAL_HEADER_LIBRARIES := \
     android.hardware.graphics.composer@2.1-command-buffer
 else
 LOCAL_STATIC_LIBRARIES := \
