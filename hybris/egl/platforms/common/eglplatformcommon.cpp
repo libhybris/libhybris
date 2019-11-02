@@ -335,8 +335,8 @@ extern "C" const char *eglplatformcommon_eglQueryString(EGLDisplay dpy, EGLint n
 	if (name == EGL_EXTENSIONS)
 	{
 		const char *ret = (*real_eglQueryString)(dpy, name);
-		static char eglextensionsbuf[1024];
-		snprintf(eglextensionsbuf, 1022, "%sEGL_HYBRIS_native_buffer2 EGL_HYBRIS_WL_acquire_native_buffer %s", ret ? ret : "",
+		static char eglextensionsbuf[2048];
+		snprintf(eglextensionsbuf, 2046, "%sEGL_HYBRIS_native_buffer2 EGL_HYBRIS_WL_acquire_native_buffer %s", ret ? ret : "",
 #ifdef WANT_WAYLAND
 			"EGL_WL_bind_wayland_display "
 #else

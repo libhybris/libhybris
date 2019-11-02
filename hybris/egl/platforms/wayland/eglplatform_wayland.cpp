@@ -285,8 +285,8 @@ extern "C" const char *waylandws_eglQueryString(EGLDisplay dpy, EGLint name, con
 	const char *ret = eglplatformcommon_eglQueryString(dpy, name, real_eglQueryString);
 	if (ret && name == EGL_EXTENSIONS)
 	{
-		static char eglextensionsbuf[1024];
-		snprintf(eglextensionsbuf, 1022, "%s %s", ret,
+		static char eglextensionsbuf[2048];
+		snprintf(eglextensionsbuf, 2046, "%s %s", ret,
 			"EGL_EXT_swap_buffers_with_damage EGL_WL_create_wayland_buffer_from_image"
 		);
 		ret = eglextensionsbuf;
