@@ -110,22 +110,34 @@ static const char* const kVendorLibDir     = "/vendor/lib64";
 static const char* const kVendorLibEglDir  = "/vendor/lib64/egl";
 static const char* const kOdmLibDir        = "/odm/lib64";
 static const char* const kOdmLibEglDir     = "/odm/lib64/egl";
+#ifdef HAS_ANDROID_9_0_0
+static const char* const kSystemLibVndk28Dir = "/system/lib64/vndk-28";
+#endif
 static const char* const kAsanSystemLibDir = "/data/asan/system/lib64";
 static const char* const kAsanVendorLibDir = "/data/asan/vendor/lib64";
 static const char* const kAsanVendorLibEglDir = "/data/asan/vendor/lib64/egl";
 static const char* const kAsanOdmLibDir    = "/data/asan/odm/lib64";
 static const char* const kAsanOdmLibEglDir = "/data/asan/odm/lib64/egl";
+#ifdef HAS_ANDROID_9_0_0
+static const char* const kAsanSystemLibVndk28Dir = "/data/asan/system/lib64/vndk-28";
+#endif
 #else
 static const char* const kSystemLibDir     = "/system/lib";
 static const char* const kVendorLibDir     = "/vendor/lib";
 static const char* const kVendorLibEglDir  = "/vendor/lib/egl";
 static const char* const kOdmLibDir        = "/odm/lib";
 static const char* const kOdmLibEglDir     = "/odm/lib/egl";
+#ifdef HAS_ANDROID_9_0_0
+static const char* const kSystemLibVndk28Dir = "/system/lib/vndk-28";
+#endif
 static const char* const kAsanSystemLibDir = "/data/asan/system/lib";
 static const char* const kAsanVendorLibDir = "/data/asan/vendor/lib";
 static const char* const kAsanVendorLibEglDir = "/data/asan/vendor/lib/egl";
 static const char* const kAsanOdmLibDir    = "/data/asan/odm/lib";
 static const char* const kAsanOdmLibEglDir = "/data/asan/odm/lib/egl";
+#ifdef HAS_ANDROID_9_0_0
+static const char* const kAsanSystemLibVndk28Dir = "/data/asan/system/lib/vndk-28";
+#endif
 #endif
 
 static const char* const kAsanLibDirPrefix = "/data/asan";
@@ -135,8 +147,13 @@ static const char* const kDefaultLdPaths[] = {
   kOdmLibDir,
   kVendorLibDir,
 
+  // libhybris support:
   kOdmLibEglDir,
   kVendorLibEglDir,
+
+#ifdef HAS_ANDROID_9_0_0
+  kSystemLibVndk28Dir,
+#endif
   nullptr
 };
 
@@ -153,6 +170,11 @@ static const char* const kAsanDefaultLdPaths[] = {
   kOdmLibEglDir,
   kAsanVendorLibEglDir,
   kVendorLibEglDir,
+
+#ifdef HAS_ANDROID_9_0_0
+  kAsanSystemLibVndk28Dir,
+  kSystemLibVndk28Dir,
+#endif
   nullptr
 };
 
