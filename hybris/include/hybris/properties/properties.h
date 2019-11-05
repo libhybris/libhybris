@@ -25,8 +25,6 @@
 #include <unistd.h>
 #include <stdint.h>
 
-#include <android-config.h>
-
 /* Based on Android */
 #define PROP_SERVICE_NAME "property_service"
 
