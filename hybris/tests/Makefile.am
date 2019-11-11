@@ -30,7 +30,7 @@ test_dlopen_LDADD = \
 	$(top_builddir)/hardware/libhardware.la
 
 test_audio_SOURCES = test_audio.c
-test_audio_CFLAGS = \
+test_audio_CFLAGS = -std=c99\
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/include/android
 test_audio_LDADD = \
