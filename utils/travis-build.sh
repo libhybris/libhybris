@@ -20,8 +20,7 @@ run_second_stage() {
 	  pkg-config \
 	  libgles2-mesa-dev \
 	  libwayland-dev \
-	  libtool \
-	  autoconf-archive
+	  libtool
 
 	cd /libhybris/hybris
 
