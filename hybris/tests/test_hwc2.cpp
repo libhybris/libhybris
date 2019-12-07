@@ -26,12 +26,9 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <cutils/log.h>
-#include <sync/sync.h>
 
-#include <hwcomposer_window.h>
-
-#include <hybris/hwc2/hwc2_compatibility_layer.h>
 #include "logging.h"
+#include "test_common.h"
 
 const char vertex_src [] =
 "                                        \
@@ -60,17 +57,6 @@ const char fragment_src [] =
    }                                                   \
 ";
 
-GLuint load_shader(const char *shader_source, GLenum type)
-{
-    GLuint  shader = glCreateShader(type);
-
-    glShaderSource(shader, 1, &shader_source, NULL);
-    glCompileShader(shader);
-
-    return shader;
-}
-
-
 GLfloat norm_x    =  0.0;
 GLfloat norm_y    =  0.0;
 GLfloat offset_x  =  0.0;
@@ -88,130 +74,6 @@ const float vertexArray[] = {
     0.0, -1.0,  0.0,
     1.,  0.0,  0.0,
     0.0,  1.,  0.0
-};
-
-hwc2_compat_device_t* hwcDevice;
-
-class HWComposer : public HWComposerNativeWindow
-{
-    private:
-        hwc2_compat_layer_t *layer;
-        hwc2_compat_display_t *hwcDisplay;
-        int lastPresentFence = -1;
-    protected:
-        void present(HWComposerNativeWindowBuffer *buffer);
-
-    public:
-
-        HWComposer(unsigned int width, unsigned int height, unsigned int format,
-                hwc2_compat_display_t *display, hwc2_compat_layer_t *layer);
-        void set();
-};
-
-HWComposer::HWComposer(unsigned int width, unsigned int height,
-                    unsigned int format, hwc2_compat_display_t* display,
-                    hwc2_compat_layer_t *layer) :
-                    HWComposerNativeWindow(width, height, format)
-{
-    this->layer = layer;
-    this->hwcDisplay = display;
-}
-
-void HWComposer::present(HWComposerNativeWindowBuffer *buffer)
-{
-    uint32_t numTypes = 0;
-    uint32_t numRequests = 0;
-    hwc2_display_t displayId = 0;
-
-    hwc2_error_t error = hwc2_compat_display_validate(hwcDisplay, &numTypes,
-                                                      &numRequests);
-
-    if (error != HWC2_ERROR_NONE && error != HWC2_ERROR_HAS_CHANGES) {
-        HYBRIS_ERROR("prepare: validate failed for display %lu: %s (%d)", displayId,
-              to_string(static_cast<HWC2::Error>(error)).c_str(), error);
-        return;
-    }
-
-    if (numTypes || numRequests) {
-        HYBRIS_ERROR("prepare: validate required changes for display %lu: %s (%d)",
-              displayId, to_string(static_cast<HWC2::Error>(error)).c_str(),
-              error);
-        return;
-    }
-
-    error = hwc2_compat_display_accept_changes(hwcDisplay);
-    if (error != HWC2_ERROR_NONE) {
-        HYBRIS_ERROR("prepare: acceptChanges failed: %s",
-              to_string(static_cast<HWC2::Error>(error)).c_str());
-        return;
-    }
-
-    hwc2_compat_display_set_client_target(hwcDisplay, /* slot */0, buffer,
-                                          getFenceBufferFd(buffer),
-                                          HAL_DATASPACE_UNKNOWN);
-
-    int presentFence;
-    hwc2_compat_display_present(hwcDisplay, &presentFence);
-
-    if (error != HWC2_ERROR_NONE) {
-        HYBRIS_ERROR("presentAndGetReleaseFences: failed for display %lu: %s (%d)",
-              displayId,
-              to_string(static_cast<HWC2::Error>(error)).c_str(), error);
-        return;
-    }
-
-    hwc2_compat_out_fences_t* fences;
-    error = hwc2_compat_display_get_release_fences(
-        hwcDisplay, &fences);
-
-    if (error != HWC2_ERROR_NONE) {
-        HYBRIS_ERROR("presentAndGetReleaseFences: Failed to get release fences "
-              "for display %lu: %s (%d)",
-              displayId, to_string(static_cast<HWC2::Error>(error)).c_str(),
-              error);
-        return;
-    }
-
-    int fenceFd = hwc2_compat_out_fences_get_fence(fences, layer);
-    if (fenceFd != -1)
-        setFenceBufferFd(buffer, fenceFd);
-
-    hwc2_compat_out_fences_destroy(fences);
-
-    if (lastPresentFence != -1) {
-        sync_wait(lastPresentFence, -1);
-        close(lastPresentFence);
-    }
-    lastPresentFence = presentFence;
-}
-
-void onVsyncReceived(HWC2EventListener* listener, int32_t sequenceId,
-                     hwc2_display_t display, int64_t timestamp)
-{
-}
-
-void onHotplugReceived(HWC2EventListener* listener, int32_t sequenceId,
-                       hwc2_display_t display, bool connected,
-                       bool primaryDisplay)
-{
-    HYBRIS_INFO("onHotplugReceived(%d, %" PRIu64 ", %s, %s)",
-        sequenceId, display,
-        connected ?
-                "connected" : "disconnected",
-        primaryDisplay ? "primary" : "external");
-
-    hwc2_compat_device_on_hotplug(hwcDevice, display, connected);
-}
-
-void onRefreshReceived(HWC2EventListener* listener,
-                       int32_t sequenceId, hwc2_display_t display)
-{
-}
-
-HWC2EventListener eventListener = {
-    &onVsyncReceived,
-    &onHotplugReceived,
-    &onRefreshReceived
 };
 
 int main()
@@ -234,44 +96,12 @@ int main()
 
     EGLBoolean rv;
 
-    int err;
-    int composerSequenceId = 0;
+    HWComposer *win = create_hwcomposer_window();
 
-    hwcDevice = hwc2_compat_device_new(false);
-    assert(hwcDevice);
-
-    hwc2_compat_device_register_callback(hwcDevice, &eventListener,
-                                         composerSequenceId);
-
-    hwc2_compat_display_t* hwcDisplay;
-    for (int i = 0; i < 5 * 1000; ++i) {
-        /* Wait at most 5s for hotplug events */
-        if ((hwcDisplay = hwc2_compat_device_get_display_by_id(hwcDevice, 0)))
-            break;
-        usleep(1000);
+    if (!win) {
+        printf("Failed to create native window\n");
+        return 1;
     }
-    assert(hwcDisplay);
-
-    hwc2_compat_display_set_power_mode(hwcDisplay, HWC2_POWER_MODE_ON);
-
-    HWC2DisplayConfig* config = hwc2_compat_display_get_active_config(hwcDisplay);
-
-    printf("width: %i height: %i\n", config->width, config->height);
-
-    hwc2_compat_layer_t* layer = hwc2_compat_display_create_layer(hwcDisplay);
-
-    hwc2_compat_layer_set_composition_type(layer, HWC2_COMPOSITION_CLIENT);
-    hwc2_compat_layer_set_blend_mode(layer, HWC2_BLEND_MODE_NONE);
-    hwc2_compat_layer_set_source_crop(layer, 0.0f, 0.0f, config->width,
-                                      config->height);
-    hwc2_compat_layer_set_display_frame(layer, 0, 0, config->width,
-                                        config->height);
-    hwc2_compat_layer_set_visible_region(layer, 0, 0, config->width,
-                                         config->height);
-
-    HWComposer *win = new HWComposer(config->width, config->height,
-                                     HAL_PIXEL_FORMAT_RGBA_8888, hwcDisplay,
-                                     layer);
     printf("created native window\n");
     /* Not needed with hybris window platform
      * hybris_gralloc_initialize(0); */
@@ -305,14 +135,7 @@ int main()
     assert(version);
     printf("%s\n",version);
 
-    GLuint vertexShader = load_shader (vertex_src, GL_VERTEX_SHADER);
-    GLuint fragmentShader = load_shader(fragment_src, GL_FRAGMENT_SHADER);
-
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-
-    glLinkProgram(shaderProgram);
+    GLuint shaderProgram = create_program(vertex_src, fragment_src);
     glUseProgram(shaderProgram);
 
     position_loc = glGetAttribLocation(shaderProgram, "position");
