@@ -18,7 +18,7 @@
  */
 
 #define GL_GLEXT_PROTOTYPES
-#include <GLES3/gl3.h>
+#include <GLES3/gl32.h>
 #include <GLES3/gl3ext.h>
 
 #include <GLES2/gl2ext.h>
@@ -289,3 +289,121 @@ void glEGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
        struct egl_image *img = image;
        (*_glEGLImageTargetTexture2DOES)(target, img ? img->egl_image : NULL);
 }
+
+/* GLES 3.1 */
+
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glDispatchCompute, GLuint, GLuint, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv2, glDispatchComputeIndirect, GLintptr);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glDrawArraysIndirect, GLenum, const void *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glDrawElementsIndirect, GLenum, GLenum, const void *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glFramebufferParameteri, GLenum, GLenum, GLint );
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetFramebufferParameteriv, GLenum, GLenum, GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetProgramInterfaceiv, GLuint, GLenum, GLenum, GLint *);
+HYBRIS_IMPLEMENT_FUNCTION3(glesv2, GLuint, glGetProgramResourceIndex, GLuint, GLenum, const GLchar *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION6(glesv2, glGetProgramResourceName, GLuint, GLenum, GLuint, GLsizei, GLsizei *, GLchar *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION8(glesv2, glGetProgramResourceiv, GLuint, GLenum, GLuint, GLsizei, const GLenum *, GLsizei, GLsizei *, GLint *);
+HYBRIS_IMPLEMENT_FUNCTION3(glesv2, GLint, glGetProgramResourceLocation, GLuint, GLenum, const GLchar *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glUseProgramStages, GLuint, GLbitfield, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glActiveShaderProgram, GLuint, GLuint);
+HYBRIS_IMPLEMENT_FUNCTION3(glesv2, GLuint, glCreateShaderProgramv, GLenum, GLsizei, const GLchar *const*);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv2, glBindProgramPipeline, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glDeleteProgramPipelines, GLsizei, const GLuint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glGenProgramPipelines, GLsizei, GLuint *);
+HYBRIS_IMPLEMENT_FUNCTION1(glesv2, GLboolean, glIsProgramPipeline, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetProgramPipelineiv, GLuint, GLenum, GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glProgramUniform1i, GLuint, GLint, GLint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform2i, GLuint, GLint, GLint, GLint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniform3i, GLuint, GLint, GLint, GLint, GLint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION6(glesv2, glProgramUniform4i, GLuint, GLint, GLint, GLint, GLint, GLint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glProgramUniform1ui, GLuint, GLint, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform2ui, GLuint, GLint, GLuint, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniform3ui, GLuint, GLint, GLuint, GLuint, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION6(glesv2, glProgramUniform4ui, GLuint, GLint, GLuint, GLuint, GLuint, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glProgramUniform1f, GLuint, GLint, GLfloat);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform2f, GLuint, GLint, GLfloat, GLfloat);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniform3f, GLuint, GLint, GLfloat, GLfloat, GLfloat);
+HYBRIS_IMPLEMENT_VOID_FUNCTION6(glesv2, glProgramUniform4f, GLuint, GLint, GLfloat, GLfloat, GLfloat, GLfloat);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform1iv, GLuint, GLint, GLsizei, const GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform2iv, GLuint, GLint, GLsizei, const GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform3iv, GLuint, GLint, GLsizei, const GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform4iv, GLuint, GLint, GLsizei, const GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform1uiv, GLuint, GLint, GLsizei, const GLuint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform2uiv, GLuint, GLint, GLsizei, const GLuint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform3uiv, GLuint, GLint, GLsizei, const GLuint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform4uiv, GLuint, GLint, GLsizei, const GLuint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform1fv, GLuint, GLint, GLsizei, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform2fv, GLuint, GLint, GLsizei, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform3fv, GLuint, GLint, GLsizei, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glProgramUniform4fv, GLuint, GLint, GLsizei, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniformMatrix2fv, GLuint, GLint, GLsizei, GLboolean, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniformMatrix3fv, GLuint, GLint, GLsizei, GLboolean, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniformMatrix4fv, GLuint, GLint, GLsizei, GLboolean, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniformMatrix2x3fv, GLuint, GLint, GLsizei, GLboolean, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniformMatrix3x2fv, GLuint, GLint, GLsizei, GLboolean, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniformMatrix2x4fv, GLuint, GLint, GLsizei, GLboolean, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniformMatrix4x2fv, GLuint, GLint, GLsizei, GLboolean, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniformMatrix3x4fv, GLuint, GLint, GLsizei, GLboolean, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glProgramUniformMatrix4x3fv, GLuint, GLint, GLsizei, GLboolean, const GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv2, glValidateProgramPipeline, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetProgramPipelineInfoLog, GLuint, GLsizei, GLsizei *, GLchar *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION7(glesv2, glBindImageTexture, GLuint, GLuint, GLint, GLboolean, GLint, GLenum, GLenum);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetBooleani_v, GLenum, GLuint, GLboolean *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv2, glMemoryBarrier, GLbitfield);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv2, glMemoryBarrierByRegion, GLbitfield);
+HYBRIS_IMPLEMENT_VOID_FUNCTION6(glesv2, glTexStorage2DMultisample, GLenum, GLsizei, GLenum, GLsizei, GLsizei, GLboolean);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetMultisamplefv, GLenum, GLuint, GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glSampleMaski, GLuint, GLbitfield);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetTexLevelParameteriv, GLenum, GLint, GLenum, GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetTexLevelParameterfv, GLenum, GLint, GLenum, GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glBindVertexBuffer, GLuint, GLuint, GLintptr, GLsizei);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glVertexAttribFormat, GLuint, GLint, GLenum, GLboolean, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glVertexAttribIFormat, GLuint, GLint, GLenum, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glVertexAttribBinding, GLuint, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glVertexBindingDivisor, GLuint, GLuint);
+
+/* GLES 3.2 */
+
+HYBRIS_IMPLEMENT_VOID_FUNCTION0(glesv2, glBlendBarrier);
+HYBRIS_IMPLEMENT_VOID_FUNCTION15(glesv2, glCopyImageSubData, GLuint, GLenum, GLint, GLint, GLint, GLint, GLuint, GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei);
+HYBRIS_IMPLEMENT_VOID_FUNCTION6(glesv2, glDebugMessageControl, GLenum, GLenum, GLenum, GLsizei, const GLuint *, GLboolean);
+HYBRIS_IMPLEMENT_VOID_FUNCTION6(glesv2, glDebugMessageInsert, GLenum, GLenum, GLuint, GLenum, GLsizei, const GLchar *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glDebugMessageCallback, GLDEBUGPROC, const void *);
+HYBRIS_IMPLEMENT_FUNCTION8(glesv2, GLuint, glGetDebugMessageLog, GLuint, GLsizei, GLenum *, GLenum *, GLuint *, GLenum *, GLsizei *, GLchar *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glPushDebugGroup, GLenum, GLuint, GLsizei, const GLchar *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION0(glesv2, glPopDebugGroup);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glObjectLabel, GLenum, GLuint, GLsizei, const GLchar *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glGetObjectLabel, GLenum, GLuint, GLsizei, GLsizei *, GLchar *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glObjectPtrLabel, const void *, GLsizei, const GLchar *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetObjectPtrLabel, const void *, GLsizei, GLsizei *, GLchar *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glGetPointerv, GLenum, void **);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glEnablei, GLenum, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glDisablei, GLenum, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glBlendEquationi, GLuint, GLenum);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glBlendEquationSeparatei, GLuint, GLenum, GLenum);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glBlendFunci, GLuint, GLenum, GLenum);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glBlendFuncSeparatei, GLuint, GLenum, GLenum, GLenum, GLenum);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glColorMaski, GLuint, GLboolean, GLboolean, GLboolean, GLboolean);
+HYBRIS_IMPLEMENT_FUNCTION2(glesv2, GLboolean, glIsEnabledi, GLenum, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glDrawElementsBaseVertex, GLenum, GLsizei, GLenum, const void *, GLint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION7(glesv2, glDrawRangeElementsBaseVertex, GLenum, GLuint, GLuint, GLsizei, GLenum, const void *, GLint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION6(glesv2, glDrawElementsInstancedBaseVertex, GLenum, GLsizei, GLenum, const void *, GLsizei, GLint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glFramebufferTexture, GLenum, GLenum, GLuint, GLint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION8(glesv2, glPrimitiveBoundingBox, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat, GLfloat);
+HYBRIS_IMPLEMENT_FUNCTION0(glesv2, GLenum, glGetGraphicsResetStatus);
+HYBRIS_IMPLEMENT_VOID_FUNCTION8(glesv2, glReadnPixels, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLsizei, void *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetnUniformfv, GLuint, GLint, GLsizei, GLfloat *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetnUniformiv, GLuint, GLint, GLsizei, GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetnUniformuiv, GLuint, GLint, GLsizei, GLuint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv2, glMinSampleShading, GLfloat);
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glPatchParameteri, GLenum, GLint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glTexParameterIiv, GLenum, GLenum, const GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glTexParameterIuiv, GLenum, GLenum, const GLuint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetTexParameterIiv, GLenum, GLenum, GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetTexParameterIuiv, GLenum, GLenum, GLuint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glSamplerParameterIiv, GLuint, GLenum, const GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glSamplerParameterIuiv, GLuint, GLenum, const GLuint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetSamplerParameterIiv, GLuint, GLenum, GLint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetSamplerParameterIuiv, GLuint, GLenum, GLuint *);
+HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glTexBuffer, GLenum, GLenum, GLuint);
+HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glTexBufferRange, GLenum, GLenum, GLuint, GLintptr, GLsizeiptr);
+HYBRIS_IMPLEMENT_VOID_FUNCTION7(glesv2, glTexStorage3DMultisample, GLenum, GLsizei, GLenum, GLsizei, GLsizei, GLsizei, GLboolean);
