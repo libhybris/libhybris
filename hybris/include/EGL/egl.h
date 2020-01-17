@@ -41,6 +41,8 @@ extern "C" {
 
 /* EGL Types */
 /* EGLint is defined in eglplatform.h */
+typedef intptr_t EGLAttrib;
+typedef khronos_utime_nanoseconds_t EGLTime;
 typedef unsigned int EGLBoolean;
 typedef unsigned int EGLenum;
 typedef void *EGLConfig;
@@ -48,6 +50,8 @@ typedef void *EGLContext;
 typedef void *EGLDisplay;
 typedef void *EGLSurface;
 typedef void *EGLClientBuffer;
+typedef void *EGLSync;
+typedef void *EGLImage;
 
 /* EGL Versioning */
 #define EGL_VERSION_1_0			1
@@ -55,6 +59,7 @@ typedef void *EGLClientBuffer;
 #define EGL_VERSION_1_2			1
 #define EGL_VERSION_1_3			1
 #define EGL_VERSION_1_4			1
+#define EGL_VERSION_1_5			1
 
 /* EGL Enumerants. Bitmasks and other exceptional cases aside, most
  * enums are assigned unique values starting at 0x3000.
@@ -242,6 +247,50 @@ typedef void *EGLClientBuffer;
  * a bug in Khronos Bugzilla against task "Registry".
  */
 
+/* EGL 1.5 tokens */
+#define EGL_CONTEXT_MAJOR_VERSION         0x3098
+#define EGL_CONTEXT_MINOR_VERSION         0x30FB
+#define EGL_CONTEXT_OPENGL_PROFILE_MASK   0x30FD
+#define EGL_CONTEXT_OPENGL_RESET_NOTIFICATION_STRATEGY 0x31BD
+#define EGL_NO_RESET_NOTIFICATION         0x31BE
+#define EGL_LOSE_CONTEXT_ON_RESET         0x31BF
+#define EGL_CONTEXT_OPENGL_CORE_PROFILE_BIT 0x00000001
+#define EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT 0x00000002
+#define EGL_CONTEXT_OPENGL_DEBUG          0x31B0
+#define EGL_CONTEXT_OPENGL_FORWARD_COMPATIBLE 0x31B1
+#define EGL_CONTEXT_OPENGL_ROBUST_ACCESS  0x31B2
+#define EGL_OPENGL_ES3_BIT                0x00000040
+#define EGL_CL_EVENT_HANDLE               0x309C
+#define EGL_SYNC_CL_EVENT                 0x30FE
+#define EGL_SYNC_CL_EVENT_COMPLETE        0x30FF
+#define EGL_SYNC_PRIOR_COMMANDS_COMPLETE  0x30F0
+#define EGL_SYNC_TYPE                     0x30F7
+#define EGL_SYNC_STATUS                   0x30F1
+#define EGL_SYNC_CONDITION                0x30F8
+#define EGL_SIGNALED                      0x30F2
+#define EGL_UNSIGNALED                    0x30F3
+#define EGL_SYNC_FLUSH_COMMANDS_BIT       0x0001
+#define EGL_FOREVER                       0xFFFFFFFFFFFFFFFFull
+#define EGL_TIMEOUT_EXPIRED               0x30F5
+#define EGL_CONDITION_SATISFIED           0x30F6
+#define EGL_NO_SYNC                       EGL_CAST(EGLSync,0)
+#define EGL_SYNC_FENCE                    0x30F9
+#define EGL_GL_COLORSPACE                 0x309D
+#define EGL_GL_COLORSPACE_SRGB            0x3089
+#define EGL_GL_COLORSPACE_LINEAR          0x308A
+#define EGL_GL_RENDERBUFFER               0x30B9
+#define EGL_GL_TEXTURE_2D                 0x30B1
+#define EGL_GL_TEXTURE_LEVEL              0x30BC
+#define EGL_GL_TEXTURE_3D                 0x30B2
+#define EGL_GL_TEXTURE_ZOFFSET            0x30BD
+#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_X 0x30B3
+#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_X 0x30B4
+#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Y 0x30B5
+#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Y 0x30B6
+#define EGL_GL_TEXTURE_CUBE_MAP_POSITIVE_Z 0x30B7
+#define EGL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 0x30B8
+#define EGL_IMAGE_PRESERVED               0x30D2
+#define EGL_NO_IMAGE                      EGL_CAST(EGLImage,0)
 
 
 /* EGL Functions */
@@ -312,6 +361,18 @@ EGLAPI EGLBoolean EGLAPIENTRY eglWaitNative(EGLint engine);
 EGLAPI EGLBoolean EGLAPIENTRY eglSwapBuffers(EGLDisplay dpy, EGLSurface surface);
 EGLAPI EGLBoolean EGLAPIENTRY eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
 			  EGLNativePixmapType target);
+
+/* EGL 1.5 */
+EGLAPI EGLSync EGLAPIENTRY eglCreateSync(EGLDisplay dpy, EGLenum type, const EGLAttrib *attrib_list);
+EGLAPI EGLBoolean EGLAPIENTRY eglDestroySync(EGLDisplay dpy, EGLSync sync);
+EGLAPI EGLint EGLAPIENTRY eglClientWaitSync(EGLDisplay dpy, EGLSync sync, EGLint flags, EGLTime timeout);
+EGLAPI EGLBoolean EGLAPIENTRY eglGetSyncAttrib(EGLDisplay dpy, EGLSync sync, EGLint attribute, EGLAttrib *value);
+EGLAPI EGLImage EGLAPIENTRY eglCreateImage(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLAttrib *attrib_list);
+EGLAPI EGLBoolean EGLAPIENTRY eglDestroyImage(EGLDisplay dpy, EGLImage image);
+EGLAPI EGLDisplay EGLAPIENTRY eglGetPlatformDisplay(EGLenum platform, void *native_display, const EGLAttrib *attrib_list);
+EGLAPI EGLSurface EGLAPIENTRY eglCreatePlatformWindowSurface(EGLDisplay dpy, EGLConfig config, void *native_window, const EGLAttrib *attrib_list);
+EGLAPI EGLSurface EGLAPIENTRY eglCreatePlatformPixmapSurface(EGLDisplay dpy, EGLConfig config, void *native_pixmap, const EGLAttrib *attrib_list);
+EGLAPI EGLBoolean EGLAPIENTRY eglWaitSync(EGLDisplay dpy, EGLSync sync, EGLint flags);
 
 /* This is a generic function pointer type, whose name indicates it must
  * be cast to the proper type *and calling convention* before use.
