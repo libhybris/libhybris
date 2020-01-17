@@ -1,61 +1,89 @@
-#!/bin/sh
+#! /bin/sh
 
-ANDROID_ROOT=$1
-HEADERPATH=$2
-MAJOR=$3
-MINOR=$4
-
-PATCH=$5
-PATCH2=$6
-PATCH3=$7
-
+error() {
+    echo "Error: $1" >&2
+}
 usage() {
-    echo "Usage: extract-headers.sh <ANDROID_ROOT> <HEADER_PATH> [Android Platform Version]"
+    echo "Usage: extract-headers.sh [Options] <ANDROID_ROOT> <HEADER_PATH>"
     echo
     echo "  ANDROID_ROOT: Directory containing the Android source tree."
     echo "  HEADER_PATH:  Where the headers will be extracted to."
     echo
-    echo "Android Platform Version:"
-    echo "  This field is optional. If not specified, automatic extraction is attempted."
-    echo
-    echo "Ex:"
-    echo "    ./extract-headers.sh  android-aosp/  /tmp/android-headers/  4 2 2"
-
+    echo "Options:"
+    echo "  -v|--version MAJOR.MINOR.PATCH.[PATCH2].[PATCH3]]"
+    echo "               Override the Android version detected by this script"
+    echo "  -p|--pkgconfigpath <path>"
+    echo "               pkgconfig path for the headers installed location"
+    exit 1
 }
 
-if [ x$ANDROID_ROOT = x -o "x$HEADERPATH" = x ]; then
-    usage
+##############
+while [ $# -gt 0 ]; do
+    case $1 in
+    *-version|-v)
+        if [ x$2 = x ]; then error "--version needs an argument"; usage; fi
+        IFS="." read MAJOR MINOR PATCH PATCH2 PATCH3 <<EOF
+$2
+EOF
+        echo "Using version ${MAJOR}.${MINOR}.${PATCH}.${PATCH2}.${PATCH3}"
+        shift 2
+    ;;
+    *-pkgconfigpath|-p)
+	if [ "$2" = "" ]; then error "--pkgconfigpath needs an argument"; usage; fi
+	PKGCONFIGPATH=$2
+	shift 2
+    ;;
+    *)
+        break
+    ;;
+    esac
+done
+
+##############
+ANDROID_ROOT=$1
+HEADER_PATH=$2
+
+# Required arguments
+[ x$ANDROID_ROOT = x ] && error "missing argument ANDROID_ROOT" && usage
+[ x$HEADER_PATH = x ] && error "missing argument HEADER_PATH" && usage
+
+shift 2
+
+# check if android source exists
+if [ ! -e "$ANDROID_ROOT" ]; then
+    error "Cannot extract headers: '$ANDROID_ROOT' does not exist."
     exit 1
 fi
 
-
+# In case one of the version number is missing,
+# try to extract if from the version_defaults.mk
 if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
     VERSION_DEFAULTS=$ANDROID_ROOT/build/core/version_defaults.mk
 
-    parse_defaults_failed() {
-        echo "Error: Cannot read PLATFORM_VERSION from ${VERSION_DEFAULTS}."
-        echo "Please specify MAJOR, MINOR and PATCH manually to continue."
-        exit 1
-    }
-
+    echo "not all version fields supplied:  trying to extract from $VERSION_DEFAULTS"
     if [ ! -f $VERSION_DEFAULTS ]; then
-        parse_defaults_failed
+        error "$VERSION_DEFAULTS not found"
     fi
 
     IFS="." read MAJOR MINOR PATCH PATCH2 PATCH3 <<EOF
-$(IFS="." awk '/PLATFORM_VERSION := ([0-9.]+)/ { print $3; }' < $VERSION_DEFAULTS)
+$(IFS="." awk '/PLATFORM_VERSION[A-Z0-9.]* := ([0-9.]+)/ { print $3; }' < $VERSION_DEFAULTS)
 EOF
-
-    if [ x$MAJOR = x -o x$MINOR = x ]; then
-        parse_defaults_failed
+    if [ x$MINOR = x ]; then
+         MINOR=0
     fi
     if [ x$PATCH = x ]; then
-        PATCH=0
+         PATCH=0
+    fi
+    if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
+        error "Cannot read PLATFORM_VERSION from ${VERSION_DEFAULTS}."
+        error "Please specify MAJOR, MINOR and PATCH manually to continue."
+        exit 1
     fi
 
     echo -n "Auto-detected version: ${MAJOR}.${MINOR}.${PATCH}";echo "${PATCH2:+.${PATCH2}}${PATCH3:+.${PATCH3}}"
 fi
 
+##############
 require_sources() {
     # require_sources [FILE|DIR] ...
     # Check if the given paths exist in the Android source
@@ -64,7 +92,7 @@ require_sources() {
         shift
 
         if [ ! -e "$SOURCE_PATH" ]; then
-            echo "Cannot extract headers: '$SOURCE_PATH' does not exist."
+            error "Cannot extract headers: '$SOURCE_PATH' does not exist."
             exit 1
         fi
     done
@@ -74,41 +102,51 @@ extract_headers_to() {
     # extract_headers_to <TARGET> [FILE|DIR] ...
     # For each FILE argument, copy it to TARGET
     # For each DIR argument, copy all its contents to TARGET
-    TARGET_DIRECTORY=$HEADERPATH/$1
+    TARGET_DIRECTORY=$HEADER_PATH/$1
+    if [ ! -d "$TARGET_DIRECTORY" ]; then
+        mkdir -p "$TARGET_DIRECTORY"
+    fi
     echo "  $1"
     shift
 
     while [ $# -gt 0 ]; do
         SOURCE_PATH=$ANDROID_ROOT/$1
         if [ -d $SOURCE_PATH ]; then
-            for file in $SOURCE_PATH/*.h; do
+            for file in $SOURCE_PATH/*; do
                 echo "    $1/$(basename $file)"
-                mkdir -p $TARGET_DIRECTORY
-                cp $file $TARGET_DIRECTORY/
+                cp -L $file $TARGET_DIRECTORY/
             done
-        elif [ -f $SOURCE_PATH ]; then
-            echo "    $1"
-            mkdir -p $TARGET_DIRECTORY
-            cp $SOURCE_PATH $TARGET_DIRECTORY/
         else
-            echo "Missing file: $1"
+            echo "    $1"
+            cp -L $SOURCE_PATH $TARGET_DIRECTORY/
         fi
         shift
     done
 }
 
+check_header_exists() {
+    # check_header_exists <FILENAME>
+    HEADER_FILE=$ANDROID_ROOT/$1
+    if [ ! -e "$HEADER_FILE" ]; then
+        return 1
+    fi
+
+    return 0
+}
+
+##############
 
 # Make sure that the dir given contains at least some of the assumed structures.
 require_sources \
     hardware/libhardware/include/hardware
 
-mkdir -p $HEADERPATH
+mkdir -p $HEADER_PATH
 
 # Default PATCH2,3 to 0
 PATCH2=${PATCH2:-0}
 PATCH3=${PATCH3:-0}
 
-cat > $HEADERPATH/android-version.h << EOF
+cat > $HEADER_PATH/android-version.h << EOF
 #ifndef ANDROID_VERSION_H_
 #define ANDROID_VERSION_H_
 
@@ -121,14 +159,14 @@ cat > $HEADERPATH/android-version.h << EOF
 #endif
 EOF
 
-cat > $HEADERPATH/android-config.h << EOF
+cat > $HEADER_PATH/android-config.h << EOF
 #ifndef HYBRIS_CONFIG_H_
 #define HYBRIS_CONFIG_H_
 
 /* When android is built for a specific device the build is
    modified by BoardConfig.mk and possibly other mechanisms.
    eg
-   device/samsung/i9305/BoardConfig.mk: 
+   device/samsung/i9305/BoardConfig.mk:
        COMMON_GLOBAL_CFLAGS += -DCAMERA_WITH_CITYID_PARAM
    device/samsung/smdk4412-common/BoardCommonConfig.mk:
        COMMON_GLOBAL_CFLAGS += -DEXYNOS4_ENHANCEMENTS
@@ -139,7 +177,7 @@ cat > $HEADERPATH/android-config.h << EOF
 
    Typically it is generated at hardware adaptation time.
 
-   The CONFIG GOES HERE line can be used by automation to modify
+   The CONFIG GOES... line below can be used by automation to modify
    this file.
 */
 
@@ -150,90 +188,104 @@ cat > $HEADERPATH/android-config.h << EOF
 #endif
 EOF
 
-cat > $HEADERPATH/android-headers.pc <<'EOF'
-Name: Android header files
-Description: Header files needed to write applications for the Android platform
-Version: androidversion
-
-prefix=/usr
-exec_prefix=${prefix}
-includedir=${prefix}/include
-
-Cflags: -I${includedir}/android
-EOF
-
-sed -i -e s:androidversion:$MAJOR.$MINOR.$PATCH:g $HEADERPATH/android-headers.pc
-
 extract_headers_to hardware \
     hardware/libhardware/include/hardware
 
-extract_headers_to hardware_legacy \
-    hardware/libhardware_legacy/include/hardware_legacy/vibrator.h
-if [ $MAJOR -ge 4 -a $MINOR -ge 1 -o $MAJOR -ge 5 ]; then
+check_header_exists hardware/libhardware_legacy/include/hardware_legacy/vibrator.h && \
     extract_headers_to hardware_legacy \
-        hardware/libhardware_legacy/include/hardware_legacy/audio_policy_conf.h \
-        hardware/libhardware_legacy/include/hardware_legacy/wifi.h
-fi
+        hardware/libhardware_legacy/include/hardware_legacy/vibrator.h
 
-if [ $MAJOR -ge 6 ]; then
-	extract_headers_to system \
-	    system/media/audio/include/system/audio.h
-fi
+check_header_exists hardware/libhardware_legacy/include/hardware_legacy/wifi.h && \
+    extract_headers_to hardware_legacy \
+        hardware/libhardware_legacy/include/hardware_legacy/wifi.h
+
+check_header_exists frameworks/opt/net/wifi/libwifi_hal/include/hardware_legacy/wifi.h && \
+    extract_headers_to hardware_legacy \
+        frameworks/opt/net/wifi/libwifi_hal/include/hardware_legacy/wifi.h
+
+extract_headers_to hardware_legacy \
+    hardware/libhardware_legacy/include/hardware_legacy/audio_policy_conf.h
 
 extract_headers_to cutils \
     system/core/include/cutils
 
-if [ $MAJOR -eq 4 -a $MINOR -ge 4 -o $MAJOR -ge 5 ]; then
-    extract_headers_to log \
-        system/core/include/log
-fi
+extract_headers_to log \
+    system/core/include/log
 
-if [ $MAJOR -ge 4 ]; then
+extract_headers_to system \
+    system/core/include/system
+
+check_header_exists system/media/audio/include/system/audio.h && \
     extract_headers_to system \
-        system/core/include/system
-fi
+        system/media/audio/include/system
 
 extract_headers_to android \
     system/core/include/android
 
-if [ $MAJOR -eq 4 -a $MINOR -ge 1 ]; then
+check_header_exists bionic/libc/kernel/common/linux/sync.h && \
     extract_headers_to linux \
         bionic/libc/kernel/common/linux/sync.h \
         bionic/libc/kernel/common/linux/sw_sync.h
 
+check_header_exists system/core/include/sync/sync.h && \
     extract_headers_to sync \
         system/core/include/sync
-elif [ $MAJOR -ge 5 ]; then
+
+check_header_exists bionic/libc/kernel/uapi/linux/sync.h && \
     extract_headers_to linux \
         bionic/libc/kernel/uapi/linux/sync.h \
         bionic/libc/kernel/uapi/linux/sw_sync.h
 
+check_header_exists bionic/libc/kernel/uapi/linux/sync_file.h && \
+    extract_headers_to linux \
+        bionic/libc/kernel/uapi/linux/sync_file.h
+
+check_header_exists bionic/libc/include/android/dlext.h && \
+    extract_headers_to android \
+        bionic/libc/include/android/dlext.h \
+        bionic/libc/include/android/api-level.h \
+        bionic/libc/include/android/set_abort_message.h
+
+check_header_exists system/core/libsync/include/sync/sync.h && \
     extract_headers_to sync \
         system/core/libsync/include/sync
-fi
 
-if [ $MAJOR -eq 2 -a $MINOR -ge 3 -o $MAJOR -ge 3 ]; then
+check_header_exists system/core/libsync/include/ndk/sync.h && \
+    extract_headers_to ndk \
+        system/core/libsync/include/ndk
+
+check_header_exists external/libnfc-nxp/inc/phNfcConfig.h && \
     extract_headers_to libnfc-nxp \
         external/libnfc-nxp/inc \
         external/libnfc-nxp/src
-fi
+
+check_header_exists system/media/radio/include/system/radio_metadata.h && \
+    extract_headers_to system \
+        system/media/radio/include/system/radio_metadata.h
 
 extract_headers_to private \
-    system/core/include/private/android_filesystem_config.h
+    system/core/include/private/android_filesystem_config.h \
+    bionic/libc/private
 
-if [ $MAJOR -ge 5 ]; then
-    extract_headers_to linux \
-        bionic/libc/kernel/uapi/linux/android_alarm.h \
-        bionic/libc/kernel/uapi/linux/binder.h
-elif [ $MAJOR -eq 2 -a $MINOR -ge 2 -o $MAJOR -ge 3 ]; then
-    extract_headers_to linux \
-        external/kernel-headers/original/linux/android_alarm.h \
-        external/kernel-headers/original/linux/binder.h
-else
-    extract_headers_to linux \
-        bionic/libc/kernel/common/linux/android_alarm.h \
-        bionic/libc/kernel/common/linux/binder.h
-fi
+check_header_exists frameworks/native/libs/nativewindow/include/android/native_window.h && \
+    extract_headers_to android \
+        frameworks/native/libs/nativewindow/include/android
+
+check_header_exists frameworks/native/libs/arect/include/android/rect.h && \
+    extract_headers_to android \
+        frameworks/native/libs/arect/include/android/rect.h
+
+check_header_exists frameworks/native/libs/nativebase/include/nativebase/nativebase.h && \
+    extract_headers_to nativebase \
+        frameworks/native/libs/nativebase/include/nativebase/nativebase.h
+
+check_header_exists frameworks/native/libs/nativewindow/include/system/window.h && \
+    extract_headers_to system \
+        frameworks/native/libs/nativewindow/include/system/window.h
+
+check_header_exists frameworks/native/libs/nativewindow/include/vndk/window.h && \
+    extract_headers_to vndk \
+        frameworks/native/libs/nativewindow/include/vndk
 
 # In order to make it easier to trace back the origins of headers, fetch
 # some repository information from the Git source tree (if available).
@@ -242,68 +294,91 @@ NOW=$(LC_ALL=C date)
 
 # Add here all sub-projects of AOSP/CM from which headers are extracted
 GIT_PROJECTS="
+    bionic
     hardware/libhardware
     hardware/libhardware_legacy
     system/core
+    system/media
+    external/kernel-headers
     external/libnfc-nxp
-    external/linux-headers
 "
 
 echo "Extracting Git revision information"
-rm -f $HEADERPATH/SOURCE_GIT_REVISION_INFO
-(for GIT_PROJECT in $GIT_PROJECTS; do
-    TARGET_DIR=$ANDROID_ROOT/$GIT_PROJECT
-    echo "================================================"
-    echo "$GIT_PROJECT @ $NOW"
-    echo "================================================"
-    if [ -e $TARGET_DIR/.git ]; then
-        (
-        set -x
-        cd $ANDROID_ROOT
-        repo status $GIT_PROJECT
-        cd $TARGET_DIR
-        git show-ref --head
-        git remote -v
-        )
-        echo ""
-        echo ""
-    else
-        echo "WARNING: $GIT_PROJECT does not contain a Git repository"
-    fi
-done) > $HEADERPATH/git-revisions.txt 2>&1
-
-# Repo manifest that can be used to fetch the sources for re-extracting headers
-if [ -e $ANDROID_ROOT/.repo/manifest.xml ]; then
-    cp $ANDROID_ROOT/.repo/manifest.xml $HEADERPATH/
+if ! which repo >/dev/null 2>&1; then
+    echo "Can't extract Git info: missing 'repo'"
+    SKIPGIT=1
+fi
+if ! which git >/dev/null 2>&1; then
+    echo "Can't extract Git info: missing 'git'"
+    SKIPGIT=1
 fi
 
-# Add a makefile to make packaging easier
-cat > ${HEADERPATH}/Makefile << EOF
+
+rm -f $HEADER_PATH/SOURCE_GIT_REVISION_INFO
+if [ x$SKIPGIT != x1 ]; then
+    (for GIT_PROJECT in $GIT_PROJECTS; do
+	TARGET_DIR=$ANDROID_ROOT/$GIT_PROJECT
+	echo "================================================"
+	echo "$GIT_PROJECT @ $NOW"
+	echo "================================================"
+	if [ -e $TARGET_DIR/.git ]; then
+            (
+		set -x
+		cd $ANDROID_ROOT
+		repo status $GIT_PROJECT
+		cd $TARGET_DIR
+		git show-ref --head
+		git remote -v
+            )
+            echo ""
+            echo ""
+	else
+            echo "WARNING: $GIT_PROJECT does not contain a Git repository"
+	fi
+	done) > $HEADER_PATH/git-revisions.txt 2>&1
+
+    # Repo manifest that can be used to fetch the sources for re-extracting headers
+    if [ -e $ANDROID_ROOT/.repo/manifest.xml ]; then
+	cp $ANDROID_ROOT/.repo/manifest.xml $HEADER_PATH/
+    fi
+fi
+
+find "$HEADER_PATH" -type f -exec chmod 0644 {} \;
+
+
+# Create a pkconfig if we know the final installation path otherwise
+# make a Makefile and a pc.in file for it to handle
+if [ x$PKGCONFIGPATH = x ]; then
+    # Add a makefile to make packaging easier
+    cat > ${HEADER_PATH}/Makefile << EOF
 PREFIX?=/usr/local
 INCLUDEDIR?=\$(PREFIX)/include/android
-PKGCONFIGDIR?=\$(PREFIX)/lib/pkgconfig
 all:
 	@echo "Use '\$(MAKE) install' to install"
 
 install:
 	mkdir -p \$(DESTDIR)/\$(INCLUDEDIR)
-	mkdir -p \$(DESTDIR)/\$(PKGCONFIGDIR)
-	cp android-config.h android-version.h \$(DESTDIR)/\$(INCLUDEDIR)
-	cp android-headers.pc \$(DESTDIR)/\$(PKGCONFIGDIR)
-	sed -i -e s:prefix=/usr:prefix=\$(PREFIX):g \$(DESTDIR)/\$(PKGCONFIGDIR)/android-headers.pc
-	cp -r hardware \$(DESTDIR)/\$(INCLUDEDIR)
-	cp -r hardware_legacy \$(DESTDIR)/\$(INCLUDEDIR)
-	cp -r cutils \$(DESTDIR)/\$(INCLUDEDIR)
-	cp -r system \$(DESTDIR)/\$(INCLUDEDIR)
-	cp -r android \$(DESTDIR)/\$(INCLUDEDIR)
-	cp -r linux \$(DESTDIR)/\$(INCLUDEDIR)
-	cp -r sync \$(DESTDIR)/\$(INCLUDEDIR)
-	cp -r libnfc-nxp \$(DESTDIR)/\$(INCLUDEDIR)
-	cp -r private \$(DESTDIR)/\$(INCLUDEDIR)
-	cp -r log \$(DESTDIR)/\$(INCLUDEDIR)
+	cp -r * \$(DESTDIR)/\$(INCLUDEDIR)
+	rm -f \$(DESTDIR)/\$(INCLUDEDIR)/Makefile
+	rm -f \$(DESTDIR)/\$(INCLUDEDIR)/android-headers.pc.in
+	mkdir -p \$(DESTDIR)/\$(PREFIX)/lib/pkgconfig
+	sed -e 's;@prefix@;\$(PREFIX)/;g; s;@includedir@;\$(INCLUDEDIR);g' android-headers.pc.in > \$(DESTDIR)/\$(PREFIX)/lib/pkgconfig/android-headers.pc
 EOF
 
-find "$HEADERPATH" -type f -exec chmod 0644 {} \;
-
-exit 0
+    echo "Creating ${HEADER_PATH}/android-headers.pc.in"
+    cat > ${HEADER_PATH}/android-headers.pc.in << EOF
+Name: android-headers
+Description: Provides the headers for the droid system
+Version: ${MAJOR}.${MINOR}.${PATCH}
+Cflags: -I@includedir@
+EOF
+else
+    echo "Creating ${HEADER_PATH}/android-headers.pc"
+    cat > ${HEADER_PATH}/android-headers.pc << EOF
+Name: android-headers
+Description: Provides the headers for the droid system
+Version: ${MAJOR}.${MINOR}.${PATCH}
+Cflags: -I$PKGCONFIGPATH
+EOF
+fi
 # vim: noai:ts=4:sw=4:ss=4:expandtab
