@@ -4561,10 +4561,10 @@ static ElfW(Addr) __linker_init_post_relocation(KernelArgumentBlock& args, ElfW(
 #endif
 
   // Use LD_LIBRARY_PATH and LD_PRELOAD (but only if we aren't setuid/setgid).
-  if (DEFAULT_HYBRIS_LD_LIBRARY_PATH)
-    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
-  else
+  if (ldpath_env)
     parse_LD_LIBRARY_PATH(ldpath_env);
+  else
+    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
   parse_LD_PRELOAD(ldpreload_env);
   parse_LD_SHIM_LIBS(ldshim_libs_env);
 
@@ -4719,10 +4719,10 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
     ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
   }
 
-  if (DEFAULT_HYBRIS_LD_LIBRARY_PATH)
-    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
-  else
+  if (ldpath_env)
     parse_LD_LIBRARY_PATH(ldpath_env);
+  else
+    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
   parse_LD_PRELOAD(ldpreload_env);
 
   if (sdk_version > 0)
