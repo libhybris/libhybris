@@ -66,7 +66,13 @@ struct graphic_buffer* graphic_buffer_new_existing(uint32_t w, uint32_t h,
     if (!buffer)
         return NULL;
 
-    buffer->self = new android::GraphicBuffer(w, h, format, usage, stride, (native_handle_t*) handle, keepOwnership);
+#if ANDROID_VERSION_MAJOR>=8
+    buffer->self = new android::GraphicBuffer(w, h, format, 1/* layerCount */, usage, stride,
+                                              (native_handle_t*) handle, keepOwnership);
+#else
+    buffer->self = new android::GraphicBuffer(w, h, format, usage, stride,
+                                              (native_handle_t*) handle, keepOwnership);
+#endif
 
     return buffer;
 
@@ -108,7 +114,11 @@ int32_t graphic_buffer_get_pixel_format(struct graphic_buffer *buffer)
 uint32_t graphic_buffer_reallocate(struct graphic_buffer *buffer, uint32_t w,
                                    uint32_t h, int32_t f, uint32_t usage)
 {
+#if ANDROID_VERSION_MAJOR>=8
+    return buffer->self->reallocate(w, h, f, 1/* layerCount */, usage);
+#else
     return buffer->self->reallocate(w, h, f, usage);
+#endif
 }
 
 uint32_t graphic_buffer_lock(struct graphic_buffer *buffer, uint32_t usage, void **vaddr)
