@@ -76,13 +76,24 @@ include $(LOCAL_PATH)/../Android.common.mk
 
 HYBRIS_PATH := $(LOCAL_PATH)/../../hybris
 
-LOCAL_CFLAGS += -std=gnu++0x
+IS_ANDROID_8 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 8 && echo true)
+ifneq ($(IS_ANDROID_8),true)
+    LOCAL_CFLAGS += -std=gnu++0x
+endif
 
 ifeq ($(BOARD_HAS_MEDIA_RECORDER_PAUSE),true)
 LOCAL_CFLAGS += -DBOARD_HAS_MEDIA_RECORDER_PAUSE
 endif
 ifeq ($(BOARD_HAS_MEDIA_RECORDER_RESUME),true)
 LOCAL_CFLAGS += -DBOARD_HAS_MEDIA_RECORDER_RESUME
+endif
+
+ifeq ($(IS_ANDROID_8),true)
+LOCAL_CFLAGS += \
+    -Wno-unused-parameter \
+    -Wno-multichar \
+    -Wno-unused-variable \
+    -Wno-unused-private-field
 endif
 
 LOCAL_SRC_FILES:= \
