@@ -23,6 +23,7 @@
 
 #include <binder/IInterface.h>
 #include <binder/Parcel.h>
+#include <utils/KeyedVector.h>
 
 namespace android {
 
