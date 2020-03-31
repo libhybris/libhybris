@@ -299,9 +299,17 @@ a::status_t a::MediaRecorder::setOutputFile(const char* path)
 }
 #endif
 
+#if ANDROID_VERSION_MAJOR>=8
+a::status_t a::MediaRecorder::setOutputFile(int fd)
+#else
 a::status_t a::MediaRecorder::setOutputFile(int fd, int64_t offset, int64_t length)
+#endif
 {
+#if ANDROID_VERSION_MAJOR>=8
+    ALOGV("setOutputFile(%d)", fd);
+#else
     ALOGV("setOutputFile(%d, %lld, %lld)", fd, offset, length);
+#endif
     if (mMediaRecorder == NULL) {
         ALOGE("media recorder is not initialized yet");
         return INVALID_OPERATION;
@@ -326,7 +334,11 @@ a::status_t a::MediaRecorder::setOutputFile(int fd, int64_t offset, int64_t leng
         return BAD_VALUE;
     }
 
+#if ANDROID_VERSION_MAJOR>=8
+    status_t ret = mMediaRecorder->setOutputFile(fd);
+#else
     status_t ret = mMediaRecorder->setOutputFile(fd, offset, length);
+#endif
     if (OK != ret) {
         ALOGV("setOutputFile failed: %d", ret);
         mCurrentState = MEDIA_RECORDER_ERROR;

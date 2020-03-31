@@ -21,6 +21,9 @@
 
 #include <hybris/media/media_buffer_layer.h>
 
+#if ANDROID_VERSION_MAJOR>=8
+#include <media/MediaCodecBuffer.h>
+#endif
 #include <media/stagefright/foundation/ABuffer.h>
 
 #include <media/stagefright/MediaBuffer.h>
@@ -30,13 +33,23 @@ struct MediaBufferPrivate : public android::MediaBufferObserver
 public:
     static MediaBufferPrivate* toPrivate(MediaBufferWrapper *source);
 
+#if ANDROID_VERSION_MAJOR>=8
+    MediaBufferPrivate(android::MediaBufferBase *data);
+#else
     MediaBufferPrivate(android::MediaBuffer *data);
+#endif
     MediaBufferPrivate();
     ~MediaBufferPrivate();
 
+#if ANDROID_VERSION_MAJOR>=8
+    void signalBufferReturned(android::MediaBufferBase *buffer);
+    
+    android::MediaBufferBase *buffer;
+#else
     void signalBufferReturned(android::MediaBuffer *buffer);
 
     android::MediaBuffer *buffer;
+#endif
     MediaBufferReturnCallback return_callback;
     void *return_callback_data;
 };
@@ -47,10 +60,18 @@ public:
     static MediaABufferPrivate* toPrivate(MediaABufferWrapper *source);
 
     MediaABufferPrivate();
+#if ANDROID_VERSION_MAJOR>=8
+    MediaABufferPrivate(android::sp<android::MediaCodecBuffer> buffer);
+#else
     MediaABufferPrivate(android::sp<android::ABuffer> buffer);
+#endif
 
 public:
+#if ANDROID_VERSION_MAJOR>=8
+    android::sp<android::MediaCodecBuffer> buffer;
+#else
     android::sp<android::ABuffer> buffer;
+#endif
 };
 
 #endif

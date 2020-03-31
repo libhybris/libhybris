@@ -37,6 +37,9 @@
 #include <media/stagefright/foundation/AHandler.h>
 #include <media/stagefright/foundation/AString.h>
 #include <media/ICrypto.h>
+#if ANDROID_VERSION_MAJOR>=8
+#include <media/MediaCodecBuffer.h>
+#endif
 #include <media/stagefright/foundation/ABuffer.h>
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/foundation/AMessage.h>
@@ -79,8 +82,13 @@ public:
     sp<MediaCodec> media_codec;
     sp<ALooper> looper;
 
+#if ANDROID_VERSION_MAJOR>=8
+    Vector<sp<MediaCodecBuffer> > input_buffers;
+    Vector<sp<MediaCodecBuffer> > output_buffers;
+#else
     Vector<sp<ABuffer> > input_buffers;
     Vector<sp<ABuffer> > output_buffers;
+#endif
     List<MediaCodecBufferInfo> available_output_buffer_infos;
     Mutex mtx_output_buffer_infos;
     List<size_t> available_input_buffer_indices;
@@ -429,7 +437,11 @@ int media_codec_queue_csd(MediaCodecDelegate delegate, MediaFormat format)
 
     status_t err = OK;
 
+#if ANDROID_VERSION_MAJOR>=8
+    Vector<sp<MediaCodecBuffer> > input_bufs[1];
+#else
     Vector<sp<ABuffer> > input_bufs[1];
+#endif
     err = d->media_codec->getInputBuffers(&input_bufs[0]);
     CHECK_EQ(err, static_cast<status_t>(OK));
 
@@ -441,7 +453,11 @@ int media_codec_queue_csd(MediaCodecDelegate delegate, MediaFormat format)
         err = d->media_codec->dequeueInputBuffer(&index, -1ll);
         CHECK_EQ(err, static_cast<status_t>(OK));
 
+#if ANDROID_VERSION_MAJOR>=8
+        const sp<MediaCodecBuffer> &dstBuffer = input_bufs[0].itemAt(index);
+#else
         const sp<ABuffer> &dstBuffer = input_bufs[0].itemAt(index);
+#endif
 
         CHECK_LE(srcBuffer->size(), dstBuffer->capacity());
         dstBuffer->setRange(0, srcBuffer->size());
@@ -594,7 +610,11 @@ size_t media_codec_get_nth_input_buffer_capacity(MediaCodecDelegate delegate, si
     if (d == NULL)
         return BAD_VALUE;
 
+#if ANDROID_VERSION_MAJOR>=8
+    Vector<sp<MediaCodecBuffer> > input_buffers;
+#else
     Vector<sp<ABuffer> > input_buffers;
+#endif
     status_t ret = d->media_codec->getInputBuffers(&input_buffers);
     if (ret != OK)
     {

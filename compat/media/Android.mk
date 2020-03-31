@@ -137,6 +137,13 @@ LOCAL_SHARED_LIBRARIES := \
 	libaudioutils \
 	libmediaplayerservice
 
+ifeq ($(IS_ANDROID_8),true)
+LOCAL_SHARED_LIBRARIES += \
+    liblog \
+    libmedia_omx \
+    libmediaextractor
+endif
+
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \
 	frameworks/base/media/libstagefright/include \

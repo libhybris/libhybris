@@ -234,7 +234,11 @@ public:
 #if ANDROID_VERSION_MAJOR<=5
     status_t    setOutputFile(const char* path);
 #endif
+#if ANDROID_VERSION_MAJOR>=8
+    status_t    setOutputFile(int fd);
+#else
     status_t    setOutputFile(int fd, int64_t offset, int64_t length);
+#endif
     status_t    setVideoSize(int width, int height);
     status_t    setVideoFrameRate(int frames_per_second);
     status_t    setParameters(const String8& params);
