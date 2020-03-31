@@ -342,7 +342,11 @@ int android_recorder_setOutputFile(MediaRecorderWrapper *mr, int fd)
         return android::BAD_VALUE;
     }
 
+#if ANDROID_VERSION_MAJOR>=8
+    return mr->setOutputFile(fd);
+#else
     return mr->setOutputFile(fd, 0, 0);
+#endif
 }
 
 /*!

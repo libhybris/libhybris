@@ -28,7 +28,11 @@
 
 namespace android {
 
+#if ANDROID_VERSION_MAJOR>=8
+struct MediaRecorderBase;
+#else
 class MediaRecorderBase;
+#endif
 class Mutex;
 class BpMediaRecorderObserver;
 
@@ -64,9 +68,17 @@ public:
 #if ANDROID_VERSION_MAJOR<=5
     virtual status_t setOutputFile(const char* path);
 #else
+#if ANDROID_VERSION_MAJOR>=8
+    virtual status_t setInputSurface(const sp<PersistentSurface>& surface);
+#else
     virtual status_t setInputSurface(const sp<IGraphicBufferConsumer>& surface);
 #endif
+#endif
+#if ANDROID_VERSION_MAJOR>=8
+    virtual status_t setOutputFile(int fd);
+#else
     virtual status_t setOutputFile(int fd, int64_t offset, int64_t length);
+#endif
     virtual status_t setVideoSize(int width, int height);
     virtual status_t setVideoFrameRate(int frames_per_second);
     virtual status_t setParameters(const String8& params);
@@ -86,8 +98,21 @@ public:
     virtual status_t init();
     virtual status_t close();
     virtual status_t release();
+#if ANDROID_VERSION_MAJOR>=8
+    virtual status_t dump(int fd, const Vector<String16>& args);
+#else
     virtual status_t dump(int fd, const Vector<String16>& args) const;
+#endif
     virtual sp<IGraphicBufferProducer> querySurfaceMediaSource();
+#if ANDROID_VERSION_MAJOR>=8
+    virtual status_t setNextOutputFile(int fd);
+    virtual status_t getMetrics(Parcel* reply);
+    virtual status_t setInputDevice(audio_port_handle_t deviceId);
+    virtual status_t getRoutedDeviceId(audio_port_handle_t* deviceId);
+    virtual status_t enableAudioDeviceCallback(bool enabled);
+    virtual status_t getActiveMicrophones(
+                        std::vector<media::MicrophoneInfo>* activeMicrophones);
+#endif
 
 private:
     sp<BpMediaRecorderObserver> media_recorder_observer;

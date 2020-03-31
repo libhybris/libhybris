@@ -20,6 +20,9 @@
 #define MEDIA_META_DATA_PRIV_H_
 
 #include <media/stagefright/MetaData.h>
+#if ANDROID_VERSION_MAJOR>=8
+#include <media/MediaBufferHolder.h>
+#endif
 
 struct MediaMetaDataPrivate
 {

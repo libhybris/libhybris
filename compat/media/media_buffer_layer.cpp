@@ -34,7 +34,11 @@ MediaBufferPrivate* MediaBufferPrivate::toPrivate(MediaBufferWrapper *buffer)
     return static_cast<MediaBufferPrivate*>(buffer);
 }
 
+#if ANDROID_VERSION_MAJOR>=8
+MediaBufferPrivate::MediaBufferPrivate(android::MediaBufferBase *buffer) :
+#else
 MediaBufferPrivate::MediaBufferPrivate(android::MediaBuffer *buffer) :
+#endif
     buffer(buffer),
     return_callback(NULL),
     return_callback_data(NULL)
@@ -52,7 +56,11 @@ MediaBufferPrivate::~MediaBufferPrivate()
         buffer->release();
 }
 
+#if ANDROID_VERSION_MAJOR>=8
+void MediaBufferPrivate::signalBufferReturned(android::MediaBufferBase *buffer)
+#else
 void MediaBufferPrivate::signalBufferReturned(android::MediaBuffer *buffer)
+#endif
 {
     if (buffer != this->buffer) {
         ALOGE("Got called for unknown buffer %p", buffer);
@@ -67,7 +75,11 @@ void MediaBufferPrivate::signalBufferReturned(android::MediaBuffer *buffer)
 
 MediaBufferWrapper* media_buffer_create(size_t size)
 {
+#if ANDROID_VERSION_MAJOR>=8
+    android::MediaBufferBase *mbuf = android::MediaBufferBase::Create(size);
+#else
     android::MediaBuffer *mbuf = new android::MediaBuffer(size);
+#endif
     if (!mbuf)
         return NULL;
 
@@ -159,7 +171,12 @@ MediaMetaDataWrapper* media_buffer_get_meta_data(MediaBufferWrapper *buffer)
     if (!d || !d->buffer)
         return NULL;
 
+#if ANDROID_VERSION_MAJOR>=8
+    android::MetaData *md = new android::MetaData(d->buffer->meta_data());
+    return new MediaMetaDataPrivate(md);
+#else
     return new MediaMetaDataPrivate(d->buffer->meta_data());
+#endif
 }
 
 void media_buffer_set_return_callback(MediaBufferWrapper *buffer,
@@ -190,8 +207,13 @@ MediaABufferPrivate::MediaABufferPrivate()
 {
 }
 
+#if ANDROID_VERSION_MAJOR>=8
+MediaABufferPrivate::MediaABufferPrivate(android::sp<android::MediaCodecBuffer> buffer) :
+    buffer(buffer)
+#else
 MediaABufferPrivate::MediaABufferPrivate(android::sp<android::ABuffer> buffer) :
     buffer(buffer)
+#endif
 {
 }
 
@@ -201,7 +223,11 @@ MediaABufferWrapper* media_abuffer_create(size_t capacity)
     if (!d)
         return NULL;
 
+#if ANDROID_VERSION_MAJOR>=8
+    d->buffer = new android::MediaCodecBuffer(new android::AMessage, new android::ABuffer(capacity));
+#else
     d->buffer = new android::ABuffer(capacity);
+#endif
     if (!d->buffer.get()) {
         delete d;
         return NULL;
@@ -216,7 +242,11 @@ MediaABufferWrapper* media_abuffer_create_with_data(uint8_t *data, size_t size)
     if (!d)
         return NULL;
 
+#if ANDROID_VERSION_MAJOR>=8
+    d->buffer = new android::MediaCodecBuffer(new android::AMessage, new android::ABuffer(data, size));
+#else
     d->buffer = new android::ABuffer(data, size);
+#endif
     if (!d->buffer.get()) {
         delete d;
         return NULL;
@@ -241,12 +271,20 @@ void media_abuffer_set_media_buffer_base(MediaABufferWrapper *buffer, MediaBuffe
         return;
 
 #if ANDROID_VERSION_MAJOR>=5
+#if ANDROID_VERSION_MAJOR>=8
+    android::MediaBufferBase *media_buffer = NULL;
+#else
     android::MediaBuffer *media_buffer = NULL;
+#endif
 
     if (mbuf != NULL)
         media_buffer = MediaBufferPrivate::toPrivate(mbuf)->buffer;
 
+#if ANDROID_VERSION_MAJOR>=8
+    d->buffer->meta()->setObject("mediaBufferHolder", new android::MediaBufferHolder(media_buffer));
+#else
     d->buffer->setMediaBufferBase(media_buffer);
+#endif
 #else
     return;
 #endif
@@ -260,12 +298,26 @@ MediaBufferWrapper* media_abuffer_get_media_buffer_base(MediaABufferWrapper *buf
 
 #if ANDROID_VERSION_MAJOR>= 5
 
+#if ANDROID_VERSION_MAJOR>=8
+    android::MediaBufferBase *mbufb = NULL;
+    
+    android::sp<android::RefBase> holder;
+    if (d->buffer->meta()->findObject("mediaBufferHolder", &holder)) {
+        mbufb = (holder != nullptr) ?
+        static_cast<android::MediaBufferHolder*>(holder.get())->mediaBuffer() : nullptr;
+    }
+#else
     android::MediaBufferBase *mbufb = d->buffer->getMediaBufferBase();
+#endif
     if (mbufb == NULL)
         return NULL;
 
     MediaBufferPrivate *mbuf = new MediaBufferPrivate;
+#if ANDROID_VERSION_MAJOR>=8
+    mbuf->buffer = mbufb;
+#else
     mbuf->buffer = (android::MediaBuffer*) mbufb;
+#endif
 
     return mbuf;
 #else

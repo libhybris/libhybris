@@ -51,7 +51,11 @@ public:
     android::status_t start(android::MetaData *params = NULL);
     android::status_t stop();
     android::sp<android::MetaData> getFormat();
+#if ANDROID_VERSION_MAJOR>=8
+    android::status_t read(android::MediaBufferBase **buffer, const android::MediaSource::ReadOptions *options = NULL);
+#else
     android::status_t read(android::MediaBuffer **buffer, const android::MediaSource::ReadOptions *options = NULL);
+#endif
     android::status_t pause();
 
     android::sp<android::MetaData> format;
@@ -95,7 +99,11 @@ android::sp<android::MetaData> MediaSourcePrivate::getFormat()
     return format;
 }
 
+#if ANDROID_VERSION_MAJOR>=8
+android::status_t MediaSourcePrivate::read(android::MediaBufferBase **buffer, const android::MediaSource::ReadOptions *options)
+#else
 android::status_t MediaSourcePrivate::read(android::MediaBuffer **buffer, const android::MediaSource::ReadOptions *options)
+#endif
 {
     (void) options;
 
@@ -339,7 +347,11 @@ bool media_codec_source_read(MediaCodecSourceWrapper *source, MediaBufferWrapper
     if (!d)
         return false;
 
+#if ANDROID_VERSION_MAJOR>=8
+    android::MediaBufferBase *buff = NULL;
+#else
     android::MediaBuffer *buff = NULL;
+#endif
     android::status_t err = d->codec->read(&buff);
     if (err != android::OK)
         return false;

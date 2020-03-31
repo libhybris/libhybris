@@ -36,6 +36,9 @@
 #else
 #include <gui/GLConsumer.h>
 #endif
+#if ANDROID_VERSION_MAJOR>=8
+#include <gui/BufferQueue.h>
+#endif
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>

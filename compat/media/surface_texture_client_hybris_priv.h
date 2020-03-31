@@ -27,6 +27,9 @@
 #else
 #include <gui/GLConsumer.h>
 #endif
+#if ANDROID_VERSION_MAJOR>=8
+#include <gui/BufferQueue.h>
+#endif
 
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
 struct _SurfaceTextureClientHybris : public android::SurfaceTextureClient
