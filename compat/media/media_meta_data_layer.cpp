@@ -70,8 +70,6 @@ uint32_t media_meta_data_get_key_id(int key)
         return android::kKeySliceHeight;
     case MEDIA_META_DATA_KEY_FRAMERATE:
         return android::kKeyFrameRate;
-    case MEDIA_META_DATA_KEY_MEDIA_BUFFER:
-        return 'mediaBuffer';
     default:
         break;
     }
