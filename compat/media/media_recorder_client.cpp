@@ -21,7 +21,7 @@
 #include <libmediaplayerservice/StagefrightRecorder.h>
 #include <binder/IServiceManager.h>
 
-#define LOG_NDEBUG 0
+// #define LOG_NDEBUG 0
 #define LOG_TAG "MediaRecorderClient"
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__)
