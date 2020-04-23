@@ -14,7 +14,6 @@ bin_PROGRAMS = \
 	test_gps \
 	test_opencl \
 	test_wifi \
-	test_hwc2 \
 	test_hwcomposer \
 	test_nfc
 
@@ -314,45 +313,3 @@ test_opencl_CFLAGS = \
 test_opencl_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/opencl/libOpenCL.la
-
-test_hwc2_SOURCES = test_hwc2.cpp test_common.cpp
-test_hwc2_CXXFLAGS = \
-	-I$(top_srcdir)/include \
-	$(ANDROID_HEADERS_CFLAGS) \
-	-I$(top_srcdir)/common \
-	-I$(top_srcdir)/egl/platforms/common \
-	-I$(top_srcdir)/egl/platforms/hwcomposer \
-	-I$(top_srcdir)/libsync \
-	-std=gnu++11\
-	-DUSE_HWCOMPOSER=1
-
-
-if HAS_ANDROID_7_0_0
-test_hwc2_LDADD = \
-        -lm \
-        $(top_builddir)/common/libhybris-common.la \
-	$(top_builddir)/egl/platforms/hwcomposer/libhybris-hwcomposerwindow.la \
-	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
-	$(top_builddir)/egl/libEGL.la \
-	$(top_builddir)/glesv2/libGLESv2.la \
-	$(top_builddir)/libsync/libsync.la
-else
-test_hwc2_LDADD = \
-        -lm \
-        $(top_builddir)/common/libhybris-common.la \
-	$(top_builddir)/egl/platforms/hwcomposer/libhybris-hwcomposerwindow.la \
-	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
-	$(top_builddir)/egl/libEGL.la \
-	$(top_builddir)/glesv2/libGLESv2.la \
-	$(top_builddir)/libsync/libsync.la
-endif
-
-if HAS_HWCOMPOSER2_HEADERS
-test_hwc2_CXXFLAGS += \
-        -DHAS_HWCOMPOSER2_HEADERS=1
-test_hwc2_LDADD += \
-	$(top_builddir)/hwc2/libhwc2.la
-else
-test_hwc2_CXXFLAGS += \
-        -DHAS_HWCOMPOSER2_HEADERS=0
-endif
