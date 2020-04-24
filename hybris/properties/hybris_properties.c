@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2018 Jolla Ltd. <franz.haider@jolla.com>
+ * Copyright (c) 2020 UBports foundation <marius@ubports.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +23,17 @@
 #include <hybris/common/binding.h>
 
 static void *libcutils = NULL;
+static int own_impl = 0;
 
 // These may point to the libhybris implementation or to the bionic implementation, depending on the linker being used.
 static int (*bionic_property_list)(void (*propfn)(const char *key, const char *value, void *cookie), void *cookie) = NULL;
 static int (*bionic_property_get)(const char *key, char *value, const char *default_value) = NULL;
 static int (*bionic_property_set)(const char *key, const char *value) = NULL;
+
+// Private implementations as fallback
+extern int my_property_list(void (*propfn)(const char *key, const char *value, void *cookie), void *cookie);
+extern int my_property_get(const char *key, char *value, const char *default_value);
+extern int my_property_set(const char *key, const char *value);
 
 static void unload_libcutils(void)
 {
@@ -43,7 +50,7 @@ static void unload_libcutils(void)
 
 static void ensure_bionic_properties_initialized(void)
 {
-    if (!libcutils) {
+    if (!libcutils && !own_impl) {
         libcutils = android_dlopen("libcutils.so", RTLD_LAZY);
         if (libcutils) {
             PROPERTY_DLSYM(property_get);
@@ -51,8 +58,8 @@ static void ensure_bionic_properties_initialized(void)
             PROPERTY_DLSYM(property_list);
             atexit(unload_libcutils);
         } else {
-            fprintf(stderr, "failed to load bionic libc.so\n");
-            abort();
+            own_impl = 1;
+            fprintf(stderr, "failed to load bionic libc.so, falling back own property implementation\n");
         }
     }
 }
@@ -61,20 +68,28 @@ int property_list(void (*propfn)(const char *key, const char *value, void *cooki
 {
     ensure_bionic_properties_initialized();
 
-    return bionic_property_list(propfn, cookie);
+    if (!own_impl)
+        return bionic_property_list(propfn, cookie);
+    else
+        return my_property_list(propfn, cookie);
 }
 
 int property_get(const char *key, char *value, const char *default_value)
 {
     ensure_bionic_properties_initialized();
 
-    return bionic_property_get(key, value, default_value);
+    if (!own_impl)
+        return bionic_property_get(key, value, default_value);
+    else
+        return my_property_get(key, value, default_value);
 }
 
 int property_set(const char *key, const char *value)
 {
     ensure_bionic_properties_initialized();
 
-    return bionic_property_set(key, value);
+    if (!own_impl)
+        return bionic_property_set(key, value);
+    else
+        return my_property_set(key, value);
 }
-
