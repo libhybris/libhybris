@@ -214,7 +214,11 @@ hwc2_error_t hwc2_compat_display_present(hwc2_compat_display_t* display,
     android::sp<android::Fence> presentFence;
     HWC2::Error error = display->self->present(&presentFence);
 
-    *outPresentFence = presentFence->dup();
+    if (presentFence != NULL) {
+        *outPresentFence = presentFence->dup();
+    } else {
+        *outPresentFence = -1;
+    }
 
     return static_cast<hwc2_error_t>(error);
 }
