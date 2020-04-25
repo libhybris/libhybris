@@ -74,9 +74,9 @@ AM_CONDITIONAL( [WANT_MESA], [test x"$mesa" = x"yes"])
 
 AC_ARG_ENABLE(ubuntu-camera-headers,
   [  --enable-ubuntu-camera-headers            Enable Ubuntu camera headers (default=disabled)],
-  [ubuntu-camera-headers=$enableval],
-  [ubuntu-camera-headers="no"])
-AM_CONDITIONAL( [WANT_UBUNTU_CAMERA_HEADERS], [test x"$ubuntu-camera-headers" = x"yes"])
+  [ubuntu_camera_headers=$enableval],
+  [ubuntu_camera_headers="no"])
+AM_CONDITIONAL( [WANT_UBUNTU_CAMERA_HEADERS], [test x"$ubuntu_camera_headers" = x"yes"])
 
 AC_ARG_ENABLE(wayland,
   [  --enable-wayland            Enable wayland support (default=disabled)],
