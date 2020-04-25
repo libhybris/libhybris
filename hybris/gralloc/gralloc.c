@@ -84,7 +84,8 @@ void hybris_gralloc_initialize(int framebuffer)
     if (version == -1) {
         if (hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const struct hw_module_t **)&gralloc_hardware_module) == 0) {
 #if HAS_GRALLOC1_HEADER
-            if ((gralloc1_open(gralloc_hardware_module, &gralloc1_device) == 0) && (gralloc1_device != NULL)) {
+            uint8_t majorVersion = (gralloc_hardware_module->module_api_version >> 8) & 0xFF;
+            if ((majorVersion == 1) && (gralloc1_open(gralloc_hardware_module, &gralloc1_device) == 0) && (gralloc1_device != NULL)) {
                 // success
                 gralloc1_init();
                 version = 1;
