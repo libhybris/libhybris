@@ -21,6 +21,9 @@
 #include <assert.h>
 #include <stdio.h>
 #include <sys/auxv.h>
+#include <pthread.h>
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static struct ws_module *ws = NULL;
 
@@ -28,6 +31,10 @@ static void _init_ws()
 {
 	if (ws == NULL)
 	{
+		pthread_mutex_lock(&mutex);
+		if (ws != NULL)
+			return;
+
 		char ws_name[2048];
 		char *egl_platform;
 
@@ -59,6 +66,8 @@ static void _init_ws()
 		ws = dlsym(wsmod, "ws_module_info");
 		assert(ws != NULL);
 		ws->init_module(&hybris_egl_interface);
+
+		pthread_mutex_unlock(&mutex);
 	}
 }
 
