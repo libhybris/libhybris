@@ -33,8 +33,10 @@ static void _init_ws()
 	if (ws == NULL)
 	{
 		pthread_mutex_lock(&mutex);
-		if (ws != NULL)
+		if (ws != NULL) {
+			pthread_mutex_unlock(&mutex);
 			return;
+		}
 
 		char ws_name[2048];
 		char *egl_platform;
