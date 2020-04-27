@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <sys/auxv.h>
 #include <pthread.h>
+#include <string.h>
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -46,6 +47,10 @@ static void _init_ws()
 			egl_platform=getenv("EGL_PLATFORM");
 
 		if (egl_platform == NULL)
+			egl_platform = DEFAULT_EGL_PLATFORM;
+
+		// The env variables may be defined yet empty
+		if (!strcmp(egl_platform, ""))
 			egl_platform = DEFAULT_EGL_PLATFORM;
 
 		const char *eglplatform_dir = PKGLIBDIR;
