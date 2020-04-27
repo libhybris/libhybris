@@ -947,8 +947,10 @@ MediaFormat media_codec_get_output_format(MediaCodecDelegate delegate)
     CHECK(msg_format->findString("mime", &f->mime));
     CHECK(msg_format->findInt32("width", &f->width));
     CHECK(msg_format->findInt32("height", &f->height));
-    CHECK(msg_format->findInt32("stride", &f->stride));
-    CHECK(msg_format->findInt32("slice-height", &f->slice_height));
+    if (!msg_format->findInt32("stride", &f->stride))
+        f->stride = f->width;
+    if (!msg_format->findInt32("slice-height", &f->slice_height))
+        f->slice_height = f->height;
     CHECK(msg_format->findInt32("color-format", &f->color_format));
     Rect crop;
     CHECK(msg_format->findRect("crop", &crop.left, &crop.top, &crop.right, &crop.bottom));
