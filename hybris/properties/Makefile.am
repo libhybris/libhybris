@@ -12,7 +12,7 @@ endif
 libandroid_properties_la_CFLAGS += -I$(top_srcdir)/include
 
 libandroid_properties_la_LDFLAGS = \
-	$(top_srcdir)/common/libhybris-common.la \
+	$(top_builddir)/common/libhybris-common.la \
 	-version-info "1":"0":"0"
 
 pkgconfigdir = $(libdir)/pkgconfig
