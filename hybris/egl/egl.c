@@ -425,13 +425,11 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 			ret = _hybris_libgles1 ? dlsym(_hybris_libgles1, procname) : NULL;
 			break;
 		case 2:  // OpenGL ES 2.0 API
+		case 3:  // OpenGL ES 3.x API, backwards compatible with OpenGL ES 2.0 so we implement in same library
 			if (_hybris_libgles2 == NULL) {
 				_hybris_libgles2 = (void *) dlopen(getenv("HYBRIS_LIBGLESV2") ?: "libGLESv2.so.2", RTLD_LAZY);
 			}
 			ret = _hybris_libgles2 ? dlsym(_hybris_libgles2, procname) : NULL;
-			break;
-		case 3:  // OpenGL ES 3.x API
-			// TODO: Load from libGLESv3.so once we have OpenGL ES 3.0/3.1 support
 			break;
 		default:
 			HYBRIS_WARN("Unknown EGL context client version: %d", _egl_context_client_version);

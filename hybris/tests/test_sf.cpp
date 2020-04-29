@@ -27,6 +27,7 @@
 #include <GLES2/gl2ext.h>
 
 #include <hybris/surface_flinger/surface_flinger_compatibility_layer.h>
+#include "test_common.h"
 
 struct SfSurface* sf_surface_create(struct SfClient* client, SfSurfaceCreationParameters* params);
 EGLSurface sf_surface_get_egl_surface(struct SfSurface*);
@@ -75,84 +76,12 @@ static const char gFragmentShader[] = "precision mediump float;\n"
 	"}\n";
 
 /* util functions */
-GLuint loadShader(GLenum shaderType, const char* pSource)
-{
-	GLuint shader = glCreateShader(shaderType);
-	if (shader) {
-		glShaderSource(shader, 1, &pSource, NULL);
-		glCompileShader(shader);
-		GLint compiled = 0;
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-
-		if (!compiled) {
-			GLint infoLen = 0;
-			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
-			if (infoLen) {
-				char* buf = (char*) malloc(infoLen);
-				if (buf) {
-					glGetShaderInfoLog(shader, infoLen, NULL, buf);
-					fprintf(stderr, "Could not compile shader %d:\n%s\n",
-							shaderType, buf);
-					free(buf);
-				}
-				glDeleteShader(shader);
-				shader = 0;
-			}
-		}
-	} else {
-		printf("Error, during shader creation: %i\n", glGetError());
-	}
-
-	return shader;
-}
-
-GLuint createProgram(const char* pVertexSource, const char* pFragmentSource)
-{
-	GLuint vertexShader = loadShader(GL_VERTEX_SHADER, pVertexSource);
-	if (!vertexShader) {
-		printf("vertex shader not compiled\n");
-		return 0;
-	}
-
-	GLuint pixelShader = loadShader(GL_FRAGMENT_SHADER, pFragmentSource);
-	if (!pixelShader) {
-		printf("frag shader not compiled\n");
-		return 0;
-	}
-
-	GLuint program = glCreateProgram();
-	if (program) {
-		glAttachShader(program, vertexShader);
-		glAttachShader(program, pixelShader);
-		glLinkProgram(program);
-		GLint linkStatus = GL_FALSE;
-		glGetProgramiv(program, GL_LINK_STATUS, &linkStatus);
-
-		if (linkStatus != GL_TRUE) {
-			GLint bufLength = 0;
-			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &bufLength);
-			if (bufLength) {
-				char* buf = (char*) malloc(bufLength);
-				if (buf) {
-					glGetProgramInfoLog(program, bufLength, NULL, buf);
-					fprintf(stderr, "Could not link program:\n%s\n", buf);
-					free(buf);
-				}
-			}
-			glDeleteProgram(program);
-			program = 0;
-		}
-	}
-
-	return program;
-}
-
 int setupGraphics()
 {
 	vertex_data = triangle;
 	color_data = color_triangle;
 
-	gProgram = createProgram(gVertexShader, gFragmentShader);
+	gProgram = create_program(gVertexShader, gFragmentShader);
 	if (!gProgram) {
 		printf("error making program\n");
 		return 0;
