@@ -480,7 +480,7 @@ int android_media_set_data_source(MediaPlayerWrapper *mp, const char* url)
 		struct stat st;
 		stat(url, &st);
 
-		ALOGD("source file length: %lld\n", st.st_size);
+		ALOGD("source file length: %lld\n", (long long)st.st_size);
 
 		mp->setDataSource(fd, 0, st.st_size);
 	}
