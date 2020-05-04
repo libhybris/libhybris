@@ -21,6 +21,10 @@
 #include <assert.h>
 #include <stdio.h>
 #include <sys/auxv.h>
+#include <pthread.h>
+#include <string.h>
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static struct ws_module *ws = NULL;
 
@@ -28,6 +32,12 @@ static void _init_ws()
 {
 	if (ws == NULL)
 	{
+		pthread_mutex_lock(&mutex);
+		if (ws != NULL) {
+			pthread_mutex_unlock(&mutex);
+			return;
+		}
+
 		char ws_name[2048];
 		char *egl_platform;
 
@@ -39,6 +49,10 @@ static void _init_ws()
 			egl_platform=getenv("EGL_PLATFORM");
 
 		if (egl_platform == NULL)
+			egl_platform = DEFAULT_EGL_PLATFORM;
+
+		// The env variables may be defined yet empty
+		if (!strcmp(egl_platform, ""))
 			egl_platform = DEFAULT_EGL_PLATFORM;
 
 		const char *eglplatform_dir = PKGLIBDIR;
@@ -59,6 +73,8 @@ static void _init_ws()
 		ws = dlsym(wsmod, "ws_module_info");
 		assert(ws != NULL);
 		ws->init_module(&hybris_egl_interface);
+
+		pthread_mutex_unlock(&mutex);
 	}
 }
 
