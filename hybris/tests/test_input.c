@@ -79,4 +79,5 @@ int main(int argc, char** argv)
 
 	android_input_stack_stop();
 	android_input_stack_shutdown();
+	return 0;
 }

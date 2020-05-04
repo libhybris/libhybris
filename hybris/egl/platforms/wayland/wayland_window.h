@@ -161,7 +161,7 @@ public:
     static void registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
                        const char *interface, uint32_t version);
     static void resize_callback(struct wl_egl_window *egl_window, void *);
-    static void free_callback(struct wl_egl_window *egl_window, void *);
+    static void destroy_window_callback(void *data);
     struct wl_event_queue *wl_queue;
 
 protected:
@@ -199,9 +199,9 @@ private:
     struct wl_egl_window *m_window;
     struct wl_display *m_display;
     WaylandNativeWindowBuffer *m_lastBuffer;
-    unsigned int m_width;
-    unsigned int m_height;
-    unsigned int m_format;
+    int m_width;
+    int m_height;
+    int m_format;
     unsigned int m_defaultWidth;
     unsigned int m_defaultHeight;
     unsigned int m_usage;
@@ -213,7 +213,10 @@ private:
     EGLint *m_damage_rects, m_damage_n_rects;
     struct wl_callback *frame_callback;
     int m_swap_interval;
-    static int wayland_roundtrip(WaylandNativeWindow *display);
+#if WAYLAND_VERSION_MAJOR == 0 || (WAYLAND_VERSION_MAJOR == 1 && WAYLAND_VERSION_MINOR < 6)
+    static int wl_roundtrip_queue(struct wl_display *display,
+                                  struct wl_event_queue *queue);
+#endif
 };
 
 #endif

@@ -1373,14 +1373,14 @@ static int reloc_library(soinfo *si, Elf_Rel *rel, unsigned count)
         if(sym != 0) {
             sym_name = (char *)(strtab + symtab[sym].st_name);
             INFO("HYBRIS: '%s' checking hooks for sym '%s'\n", si->name, sym_name);
-            sym_addr = _get_hooked_symbol(sym_name, si->name);
-            if (sym_addr != NULL) {
+            sym_addr = (unsigned)_get_hooked_symbol(sym_name, si->name);
+            if (sym_addr != 0) {
                 INFO("HYBRIS: '%s' hooked symbol %s to %x\n", si->name,
                                                   sym_name, sym_addr);
             } else {
                s = _do_lookup(si, sym_name, &base);
             }
-            if(sym_addr == NULL)
+            if(sym_addr == 0) {
             if(s == NULL) {
                 /* We only allow an undefined symbol if this is a weak
                    reference..   */
@@ -1448,7 +1448,8 @@ static int reloc_library(soinfo *si, Elf_Rel *rel, unsigned count)
             }
 #endif
                 sym_addr = (unsigned)(s->st_value + base);
-	    }
+            }
+            }
             COUNT_RELOC(RELOC_SYMBOL);
         } else {
             s = NULL;

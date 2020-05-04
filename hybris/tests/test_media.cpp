@@ -107,8 +107,8 @@ struct ClientWithSurface client_with_surface(bool setup_surface_with_egl)
 	SfSurfaceCreationParameters params = {
 		0,
 		0,
-		DestWidth,
-		DestHeight,
+		(int)DestWidth,
+		(int)DestHeight,
 		-1, //PIXEL_FORMAT_RGBA_8888,
 		15000,
 		0.5f,

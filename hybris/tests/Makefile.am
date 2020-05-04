@@ -230,6 +230,7 @@ else
 test_camera_CXXFLAGS += \
 	-DHAS_HWCOMPOSER2_HEADERS=0
 endif
+if WANT_WAYLAND_EGL
 test_camera_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/egl/libEGL.la \
@@ -238,6 +239,16 @@ test_camera_LDADD = \
 	$(top_builddir)/input/libis.la \
 	$(top_builddir)/egl/platforms/common/libwayland-egl.la \
 	$(WAYLAND_CLIENT_LIBS)
+else
+test_camera_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/egl/libEGL.la \
+	$(top_builddir)/glesv2/libGLESv2.la \
+	$(top_builddir)/camera/libcamera.la \
+	$(top_builddir)/input/libis.la \
+	$(WAYLAND_EGL_LIBS)
+	$(WAYLAND_CLIENT_LIBS)
+endif
 
 test_media_SOURCES = test_media.cpp test_common.cpp
 test_media_CFLAGS = \

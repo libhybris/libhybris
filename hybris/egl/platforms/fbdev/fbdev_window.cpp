@@ -510,7 +510,7 @@ void FbDevNativeWindow::reallocateBuffers()
 {
     destroyBuffers();
 
-    for(unsigned int i = 0; i < m_bufferCount; i++)
+    for(int i = 0; i < m_bufferCount; i++)
     {
         FbDevNativeWindowBuffer *fbnb = new FbDevNativeWindowBuffer(hybris_gralloc_fbdev_width(),
                             hybris_gralloc_fbdev_height(), hybris_gralloc_fbdev_format(), m_usage|GRALLOC_USAGE_HW_FB);

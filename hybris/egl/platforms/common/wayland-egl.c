@@ -29,13 +29,15 @@ wl_egl_window_create(struct wl_surface *surface,
 	if (!egl_window)
 		return NULL;
 
+	intptr_t *version = (intptr_t *)&egl_window->version;
+	*version = WL_EGL_WINDOW_VERSION;
 	egl_window->surface = surface;
 	egl_window->resize_callback = NULL;
-	egl_window->free_callback = NULL;
+	egl_window->destroy_window_callback = NULL;
 	wl_egl_window_resize(egl_window, width, height, 0, 0);
 	egl_window->attached_width  = 0;
 	egl_window->attached_height = 0;
-	egl_window->nativewindow = 0;
+	egl_window->driver_private = 0;
 
 	return egl_window;
 
@@ -44,8 +46,8 @@ wl_egl_window_create(struct wl_surface *surface,
 WL_EGL_EXPORT void
 wl_egl_window_destroy(struct wl_egl_window *egl_window)
 {
-	if (egl_window->free_callback)
-		egl_window->free_callback(egl_window, NULL);
+	if (egl_window->destroy_window_callback)
+		egl_window->destroy_window_callback(egl_window->driver_private);
 	free(egl_window);
 }
 

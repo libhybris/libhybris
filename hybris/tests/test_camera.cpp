@@ -502,4 +502,5 @@ int main(int argc, char** argv)
 	}
 
 	wl_display_disconnect(wldisplay);
+	return 0;
 }

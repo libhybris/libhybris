@@ -20,6 +20,7 @@
 
 #include <android-config.h>
 
+int is_wifi_driver_loaded();
 int wifi_load_driver();
 int wifi_unload_driver();
 

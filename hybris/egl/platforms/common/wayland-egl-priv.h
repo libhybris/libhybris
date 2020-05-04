@@ -14,8 +14,10 @@ extern "C" {
 
 #include <wayland-client.h>
 
+#define WL_EGL_WINDOW_VERSION 3
+
 struct wl_egl_window {
-	struct wl_surface *surface;
+	const intptr_t version;
 
 	int width;
 	int height;
@@ -25,9 +27,11 @@ struct wl_egl_window {
 	int attached_width;
 	int attached_height;
 
-	void *nativewindow;
+	void *driver_private;
 	void (*resize_callback)(struct wl_egl_window *, void *);
-	void (*free_callback)(struct wl_egl_window *, void *);
+	void (*destroy_window_callback)(void *);
+
+	struct wl_surface *surface;
 };
 
 #ifdef  __cplusplus

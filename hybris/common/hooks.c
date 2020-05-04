@@ -257,6 +257,7 @@ static int __android_pthread_cond_pulse(android_cond_t *cond, int counter)
     fret = syscall(SYS_futex , &cond->value,
                    pshared ? FUTEX_WAKE : FUTEX_WAKE_PRIVATE, counter,
                    NULL, NULL, NULL);
+    (void)fret;
     LOGD("futex based pthread_cond_*, value %d, counter %d, ret %d",
                                             cond->value, counter, fret);
     return 0;
@@ -1573,14 +1574,14 @@ FP_ATTRIB static int _hybris_hook_fscanf(FILE *fp, const char *fmt, ...)
 
 static int _hybris_hook_fseek(FILE *fp, long offset, int whence)
 {
-    TRACE_HOOK("fp %p offset %jd whence %d", fp, offset, whence);
+    TRACE_HOOK("fp %p offset %ld whence %d", fp, offset, whence);
 
     return fseek(_get_actual_fp(fp), offset, whence);
 }
 
 static int _hybris_hook_fseeko(FILE *fp, off_t offset, int whence)
 {
-    TRACE_HOOK("fp %p offset %jd whence %d", fp, offset, whence);
+    TRACE_HOOK("fp %p offset %ld whence %d", fp, offset, whence);
 
     return fseeko(_get_actual_fp(fp), offset, whence);
 }
@@ -1592,7 +1593,6 @@ static int _hybris_hook_fsetpos(FILE *fp, const bionic_fpos_t *pos)
     fpos_t my_fpos;
     my_fpos.__pos = *pos;
     memset(&my_fpos.__state, 0, sizeof(mbstate_t));
-    mbsinit(&my_fpos.__state);
 
     return fsetpos(_get_actual_fp(fp), &my_fpos);
 }
@@ -2363,7 +2363,7 @@ static char* _hybris_hook_setlocale(int category, const char *locale)
 static void* _hybris_hook_mmap(void *addr, size_t len, int prot,
                   int flags, int fd, off_t offset)
 {
-    TRACE_HOOK("addr %p len %zu prot %i flags %i fd %i offset %jd",
+    TRACE_HOOK("addr %p len %zu prot %i flags %i fd %i offset %ld",
                addr, len, prot, flags, fd, offset);
 
     return mmap(addr, len, prot, flags, fd, offset);
@@ -2553,7 +2553,7 @@ static void* _hybris_hook_dladdr(void *addr, Dl_info *info)
 {
     TRACE("addr %p info %p", addr, info);
 
-    return _android_dladdr(addr, info);
+    return (void *)_android_dladdr(addr, info);
 }
 
 static int _hybris_hook_dlclose(void *handle)
@@ -2586,7 +2586,7 @@ int _hybris_hook_dl_iterate_phdr(int (*cb)(void* info, size_t size, void* data),
 
 void _hybris_hook_android_get_LD_LIBRARY_PATH(char* buffer, size_t buffer_size)
 {
-    TRACE("buffer %p, buffer_size %zu\n", buffer_size);
+    TRACE("buffer %p, buffer_size %zu\n", buffer, buffer_size);
 
     _android_get_LD_LIBRARY_PATH(buffer, buffer_size);
 }
@@ -2600,7 +2600,7 @@ void _hybris_hook_android_update_LD_LIBRARY_PATH(const char* ld_library_path)
 
 void* _hybris_hook_android_dlopen_ext(const char* filename, int flag, const void* extinfo)
 {
-    TRACE("filename %s, flag %d, extinfo %s", filename, flag, extinfo);
+    TRACE("filename %s, flag %d, extinfo %p", filename, flag, extinfo);
 
     return _android_dlopen_ext(filename, flag, extinfo);
 }
@@ -2609,7 +2609,7 @@ void _hybris_hook_android_set_application_target_sdk_version(uint32_t target)
 {
     TRACE("target %d", target);
 
-    android_set_application_target_sdk_version(target);
+    _android_set_application_target_sdk_version(target);
 }
 
 uint32_t _hybris_hook_android_get_application_target_sdk_version()

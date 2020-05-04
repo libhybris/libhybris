@@ -53,7 +53,6 @@ server_wlegl_create_handle(struct wl_client *client,
 			   int32_t num_fds,
 			   struct wl_array *ints)
 {
-	server_wlegl *wlegl = server_wlegl_from(resource);
 	server_wlegl_handle *handle;
 
 	if (num_fds < 0) {

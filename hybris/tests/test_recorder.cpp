@@ -228,8 +228,8 @@ struct ClientWithSurface client_with_surface(bool setup_surface_with_egl)
 	SfSurfaceCreationParameters params = {
 		0,
 		0,
-		sf_get_display_width(primary_display),
-		sf_get_display_height(primary_display),
+		(int)sf_get_display_width(primary_display),
+		(int)sf_get_display_height(primary_display),
 		-1, //PIXEL_FORMAT_RGBA_8888,
 		15000,
 		0.5f,

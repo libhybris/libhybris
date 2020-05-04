@@ -240,7 +240,6 @@ int main()
 
     EGLBoolean rv;
 
-    int err;
     int composerSequenceId = 0;
 
     hwcDevice = hwc2_compat_device_new(false);
@@ -290,7 +289,7 @@ int main()
     assert(eglGetError() == EGL_SUCCESS);
     assert(rv == EGL_TRUE);
 
-    eglChooseConfig((EGLDisplay) display, attr, &ecfg, 1, &num_config);
+    rv = eglChooseConfig((EGLDisplay) display, attr, &ecfg, 1, &num_config);
     assert(eglGetError() == EGL_SUCCESS);
     assert(rv == EGL_TRUE);
 
