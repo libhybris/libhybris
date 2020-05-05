@@ -85,6 +85,7 @@ test_glesv2_LDADD = \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/egl/libEGL.la \
 	$(top_builddir)/glesv2/libGLESv2.la \
+	$(top_builddir)/hardware/libhardware.la \
 	$(top_builddir)/libsync/libsync.la
 if HAS_HWCOMPOSER2_HEADERS
 test_glesv2_CXXFLAGS += \
@@ -116,6 +117,7 @@ test_glesv3_LDADD = \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/egl/libEGL.la \
 	$(top_builddir)/glesv2/libGLESv2.la \
+	$(top_builddir)/hardware/libhardware.la \
 	$(top_builddir)/libsync/libsync.la
 if HAS_HWCOMPOSER2_HEADERS
 test_glesv3_CXXFLAGS += \
