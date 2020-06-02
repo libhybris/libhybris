@@ -325,9 +325,19 @@ static void *_hybris_hook_malloc(size_t size)
 {
     TRACE_HOOK("size %zu", size);
 
+    void *res = malloc(size);
+
+    TRACE_HOOK("res %p", res);
+
+    return res;
+}
+
 #ifdef WANT_ADRENO_QUIRKS
-    if(size == 4) size = 5;
-#endif
+static void *_hybris_hook_malloc45(size_t size)
+{
+    TRACE_HOOK("size %zu", size);
+
+    if (size == 4) size = 5;
 
     void *res = malloc(size);
 
@@ -335,6 +345,7 @@ static void *_hybris_hook_malloc(size_t size)
 
     return res;
 }
+#endif
 
 static size_t _hybris_hook_malloc_usable_size (void *ptr)
 {
@@ -346,6 +357,10 @@ static size_t _hybris_hook_malloc_usable_size (void *ptr)
 static void *_hybris_hook_memcpy(void *dst, const void *src, size_t len)
 {
     TRACE_HOOK("dst %p src %p len %zu", dst, src, len);
+
+    if (src == dst) {
+        return dst;
+    }
 
     if (src == NULL || dst == NULL)
         return dst;
@@ -2653,12 +2668,9 @@ void* _hybris_hook_android_get_exported_namespace(const char* name)
     return _android_get_exported_namespace(name);
 }
 
-/* this was added while debugging in the hopes to get a backtrace from a double
- * free crash. Unfortunately it fixes the problem so we cannot get a proper
- * backtrace to fix the underlying problem. */
 void _hybris_hook_free(void *ptr)
 {
-    if (ptr) ((char*)ptr)[0] = 0;
+    TRACE_HOOK("ptr %p", ptr);
     free(ptr);
 }
 
@@ -3179,6 +3191,12 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
         if (found)
             return (void*) found;
     }
+
+#ifdef WANT_ADRENO_QUIRKS
+    if (strstr(requester, "libllvm-glnext.so") != NULL && strcmp(sym, "malloc") == 0) {
+        return _hybris_hook_malloc45;
+    }
+#endif
 
     if (!sorted)
     {
