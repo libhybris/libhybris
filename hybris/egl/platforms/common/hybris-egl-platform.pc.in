@@ -6,7 +6,7 @@ includedir=@includedir@
 Name: hybris-egl-platform
 Description: libhybris EGL platform library
 Version: @VERSION@
-Requires: android-headers
+Requires: @ANDROID_HEADERS_PKGCONFIG@
 Libs: -L${libdir} -lhybris-common -lhybris-eglplatformcommon
-Cflags: -I${includedir} -I${includedir}/hybris/eglplatformcommon
+Cflags: -I${includedir} -I${includedir}/hybris/eglplatformcommon @ANDROID_HEADERS_CFLAGS@
 
