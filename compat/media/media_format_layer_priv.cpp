@@ -46,5 +46,3 @@ struct _MediaFormat : public RefBase
 #ifdef __cplusplus
 }
 #endif
-
-#endif
