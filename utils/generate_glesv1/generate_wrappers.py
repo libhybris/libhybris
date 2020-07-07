@@ -31,7 +31,6 @@
 #
 
 import re
-import os
 import sys
 
 funcs = []
@@ -45,7 +44,6 @@ FIXED_MAPPINGS = {
         'GLfixed eqn[4]': 'GLfixed[4]',
         'GLfixed mantissa[16]': 'GLfixed[16]',
         'GLint exponent[16]': 'GLint[16]',
-        'GLfloat eqn[4]': 'GLfloat[4]',
         'GLvoid **': 'GLvoid **',
         'GLfloat *': 'GLfloat *',
         'GLfixed *': 'GLfixed *',
