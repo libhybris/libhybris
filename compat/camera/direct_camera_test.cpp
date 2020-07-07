@@ -121,12 +121,12 @@ void autofocus_msg_cb(void* context)
 
 void raw_data_cb(void* data, uint32_t data_size, void* context)
 {
-	printf("%s: %d \n", __PRETTY_FUNCTION__, data_size);
+	printf("%s: %u \n", __PRETTY_FUNCTION__, data_size);
 }
 
 void jpeg_data_cb(void* data, uint32_t data_size, void* context)
 {
-	printf("%s: %d \n", __PRETTY_FUNCTION__, data_size);
+	printf("%s: %u \n", __PRETTY_FUNCTION__, data_size);
 
 	char fn[256];
 	sprintf(fn, "/cache/shot_%d.jpeg", shot_counter);

@@ -118,12 +118,12 @@ void autofocus_msg_cb(void* context)
 
 void raw_data_cb(void* data, uint32_t data_size, void* context)
 {
-	printf("%s: %d \n", __PRETTY_FUNCTION__, data_size);
+	printf("%s: %u \n", __PRETTY_FUNCTION__, data_size);
 }
 
 void jpeg_data_cb(void* data, uint32_t data_size, void* context)
 {
-	printf("%s: %d \n", __PRETTY_FUNCTION__, data_size);
+	printf("%s: %u \n", __PRETTY_FUNCTION__, data_size);
 
 	char fn[256];
 	sprintf(fn, "/tmp/shot_%d.jpeg", shot_counter);
@@ -232,7 +232,7 @@ struct wl_shell_surface *wlshell_surface;
 
 static void global_registry_handler(void *data, struct wl_registry *registry, uint32_t id, const char *interface, uint32_t version)
 {
-	printf("Got a registry event for %s id %d\n", interface, id);
+	printf("Got a registry event for %s id %u\n", interface, id);
 	if (strcmp(interface, "wl_compositor") == 0) {
 		wlcompositor = (wl_compositor *)wl_registry_bind(registry,
 						id,
@@ -246,7 +246,7 @@ static void global_registry_handler(void *data, struct wl_registry *registry, ui
 
 static void global_registry_remover(void *data, struct wl_registry *registry, uint32_t id)
 {
-	printf("Got a registry losing event for %d\n", id);
+	printf("Got a registry losing event for %u\n", id);
 }
 
 static const struct wl_registry_listener registry_listener = {

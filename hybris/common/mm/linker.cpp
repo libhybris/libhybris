@@ -468,7 +468,7 @@ static bool for_each_verdef(const soinfo* si, F functor) {
     offset += verdef->vd_next;
 
     if (verdef->vd_version != 1) {
-      DL_ERR("unsupported verdef[%zd] vd_version: %d (expected 1) library: %s",
+      DL_ERR("unsupported verdef[%zu] vd_version: %d (expected 1) library: %s",
           i, verdef->vd_version, si->get_realpath());
       return false;
     }
@@ -482,7 +482,7 @@ static bool for_each_verdef(const soinfo* si, F functor) {
     }
 
     if (verdef->vd_cnt == 0) {
-      DL_ERR("invalid verdef[%zd] vd_cnt == 0 (version without a name)", i);
+      DL_ERR("invalid verdef[%zu] vd_cnt == 0 (version without a name)", i);
       return false;
     }
 
@@ -614,7 +614,7 @@ bool soinfo::gnu_lookup(SymbolName& symbol_name,
         check_symbol_version(verneed, verdef) &&
         strcmp(get_string(s->st_name), symbol_name.get_name()) == 0 &&
         is_symbol_global_and_defined(this, s)) {
-      TRACE_TYPE(LOOKUP, "FOUND %s in %s (%p) %zd",
+      TRACE_TYPE(LOOKUP, "FOUND %s in %s (%p) %zu",
           symbol_name.get_name(), get_realpath(), reinterpret_cast<void*>(s->st_value),
           static_cast<size_t>(s->st_size));
       *symbol_index = n;
@@ -633,7 +633,7 @@ bool soinfo::elf_lookup(SymbolName& symbol_name,
                         uint32_t* symbol_index) const {
   uint32_t hash = symbol_name.elf_hash();
 
-  TRACE_TYPE(LOOKUP, "SEARCH %s in %s@%p h=%x(elf) %zd",
+  TRACE_TYPE(LOOKUP, "SEARCH %s in %s@%p h=%x(elf) %zu",
              symbol_name.get_name(), get_realpath(),
              reinterpret_cast<void*>(base), hash, hash % nbucket_);
 
@@ -654,7 +654,7 @@ bool soinfo::elf_lookup(SymbolName& symbol_name,
     if (check_symbol_version(verneed, verdef) &&
         strcmp(get_string(s->st_name), symbol_name.get_name()) == 0 &&
         is_symbol_global_and_defined(this, s)) {
-      TRACE_TYPE(LOOKUP, "FOUND %s in %s (%p) %zd",
+      TRACE_TYPE(LOOKUP, "FOUND %s in %s (%p) %zu",
                  symbol_name.get_name(), get_realpath(),
                  reinterpret_cast<void*>(s->st_value),
                  static_cast<size_t>(s->st_size));
@@ -663,7 +663,7 @@ bool soinfo::elf_lookup(SymbolName& symbol_name,
     }
   }
 
-  TRACE_TYPE(LOOKUP, "NOT FOUND %s in %s@%p %x %zd",
+  TRACE_TYPE(LOOKUP, "NOT FOUND %s in %s@%p %x %zu",
              symbol_name.get_name(), get_realpath(),
              reinterpret_cast<void*>(base), hash, hash % nbucket_);
 
@@ -1609,7 +1609,7 @@ static void soinfo_unload(soinfo* root) {
       soinfo_unload(si);
     }
   } else {
-    TRACE("not unloading '%s' group, decrementing ref_count to %zd",
+    TRACE("not unloading '%s' group, decrementing ref_count to %zu",
         root->get_realpath(), ref_count);
   }
 }
@@ -1715,7 +1715,7 @@ bool VersionTracker::init_verneed(const soinfo* si_from) {
     offset += verneed->vn_next;
 
     if (verneed->vn_version != 1) {
-      DL_ERR("unsupported verneed[%zd] vn_version: %d (expected 1)", i, verneed->vn_version);
+      DL_ERR("unsupported verneed[%zu] vn_version: %d (expected 1)", i, verneed->vn_version);
       return false;
     }
 
@@ -1726,7 +1726,7 @@ bool VersionTracker::init_verneed(const soinfo* si_from) {
     });
 
     if (target_si == nullptr) {
-      DL_ERR("cannot find \"%s\" from verneed[%zd] in DT_NEEDED list for \"%s\"",
+      DL_ERR("cannot find \"%s\" from verneed[%zu] in DT_NEEDED list for \"%s\"",
           target_soname, i, si_from->get_realpath());
       return false;
     }
@@ -1817,7 +1817,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
     const char* sym_name = nullptr;
     ElfW(Addr) addend = get_addend(rel, reloc);
 
-    DEBUG("Processing '%s' relocation at index %zd", get_realpath(), idx);
+    DEBUG("Processing '%s' relocation at index %zu", get_realpath(), idx);
     if (type == R_GENERIC_NONE) {
       continue;
     }
@@ -2216,7 +2216,7 @@ void soinfo::call_array(const char* array_name , linker_function_t* functions,
     return;
   }
 
-  TRACE("[ Calling %s (size %zd) @ %p for '%s' ]", array_name, count, functions, get_realpath());
+  TRACE("[ Calling %s (size %zu) @ %p for '%s' ]", array_name, count, functions, get_realpath());
 
   int begin = reverse ? (count - 1) : 0;
   int end = reverse ? -1 : count;
@@ -2270,7 +2270,7 @@ void soinfo::call_constructors() {
 
   if (!is_main_executable() && preinit_array_ != nullptr) {
     // The GNU dynamic linker silently ignores these, but we warn the developer.
-    PRINT("\"%s\": ignoring %zd-entry DT_PREINIT_ARRAY in shared library!",
+    PRINT("\"%s\": ignoring %zu-entry DT_PREINIT_ARRAY in shared library!",
           get_realpath(), preinit_array_count_);
   }
 
@@ -2591,7 +2591,7 @@ bool soinfo::prelink_image() {
 
       case DT_SYMENT:
         if (d->d_un.d_val != sizeof(ElfW(Sym))) {
-          DL_ERR("invalid DT_SYMENT: %zd in \"%s\"",
+          DL_ERR("invalid DT_SYMENT: %zu in \"%s\"",
               static_cast<size_t>(d->d_un.d_val), get_realpath());
           return false;
         }
@@ -2675,7 +2675,7 @@ bool soinfo::prelink_image() {
 
       case DT_RELAENT:
         if (d->d_un.d_val != sizeof(ElfW(Rela))) {
-          DL_ERR("invalid DT_RELAENT: %zd", static_cast<size_t>(d->d_un.d_val));
+          DL_ERR("invalid DT_RELAENT: %zu", static_cast<size_t>(d->d_un.d_val));
           return false;
         }
         break;
@@ -2703,7 +2703,7 @@ bool soinfo::prelink_image() {
 
       case DT_RELENT:
         if (d->d_un.d_val != sizeof(ElfW(Rel))) {
-          DL_ERR("invalid DT_RELENT: %zd", static_cast<size_t>(d->d_un.d_val));
+          DL_ERR("invalid DT_RELENT: %zu", static_cast<size_t>(d->d_un.d_val));
           return false;
         }
         break;

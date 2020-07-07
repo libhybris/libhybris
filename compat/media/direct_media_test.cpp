@@ -289,7 +289,7 @@ static int setup_video_texture(ClientWithSurface *cs, GLuint *preview_texture_id
 static void print_gl_error(unsigned int line)
 {
 	GLint error = glGetError();
-	printf("GL error: %#04x (line: %d)\n", error, line);
+	printf("GL error: %#04x (line: %u)\n", error, line);
 }
 
 static int update_gl_buffer(RenderData *render_data, EGLDisplay *disp, EGLSurface *surface)

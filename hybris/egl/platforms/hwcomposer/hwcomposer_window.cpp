@@ -493,7 +493,7 @@ void HWComposerNativeWindow::allocateBuffers()
 
         if (b->status) {
             b->common.decRef(&b->common);
-            fprintf(stderr,"WARNING: %s: allocated only %d buffers out of %d\n", __PRETTY_FUNCTION__, m_bufList.size(), m_bufferCount);
+            fprintf(stderr,"WARNING: %s: allocated only %zu buffers out of %u\n", __PRETTY_FUNCTION__, m_bufList.size(), m_bufferCount);
             break;
         }
 
