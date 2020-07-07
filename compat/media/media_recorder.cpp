@@ -34,7 +34,9 @@
 #include <media/mediaplayer.h>  // for MEDIA_ERROR_SERVER_DIED
 #include <gui/IGraphicBufferProducer.h>
 namespace a = android;
+#if ANDROID_VERSION_MAJOR >= 7
 namespace ah = android::hardware;
+#endif
 
 #if ANDROID_VERSION_MAJOR >= 7
 a::status_t a::MediaRecorder::setCamera(const sp<ah::ICamera>& camera, const sp<ICameraRecordingProxy>& proxy)

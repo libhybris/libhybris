@@ -141,10 +141,12 @@ void CameraControl::postDataTimestamp(
 	(void) data;
 }
 
+#if ANDROID_VERSION_MAJOR >= 7
 void CameraControl::postRecordingFrameHandleTimestamp(nsecs_t /*timestamp*/, native_handle_t* /*handle*/)
 {
 	REPORT_FUNCTION();
 }
+#endif
 
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 namespace android
