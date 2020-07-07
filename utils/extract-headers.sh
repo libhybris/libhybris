@@ -21,7 +21,7 @@ usage() {
 while [ $# -gt 0 ]; do
     case $1 in
     *-version|-v)
-        if [ x$2 = x ]; then error "--version needs an argument"; usage; fi
+        if [ x"$2" = x ]; then error "--version needs an argument"; usage; fi
         IFS="." read MAJOR MINOR PATCH PATCH2 PATCH3 <<EOF
 $2
 EOF
@@ -44,8 +44,8 @@ ANDROID_ROOT=$1
 HEADER_PATH=$2
 
 # Required arguments
-[ x$ANDROID_ROOT = x ] && error "missing argument ANDROID_ROOT" && usage
-[ x$HEADER_PATH = x ] && error "missing argument HEADER_PATH" && usage
+[ x"$ANDROID_ROOT" = x ] && error "missing argument ANDROID_ROOT" && usage
+[ x"$HEADER_PATH" = x ] && error "missing argument HEADER_PATH" && usage
 
 shift 2
 
@@ -57,24 +57,24 @@ fi
 
 # In case one of the version number is missing,
 # try to extract if from the version_defaults.mk
-if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
+if [ x"$MAJOR" = x -o x"$MINOR" = x -o x"$PATCH" = x ]; then
     VERSION_DEFAULTS=$ANDROID_ROOT/build/core/version_defaults.mk
 
     echo "not all version fields supplied:  trying to extract from $VERSION_DEFAULTS"
-    if [ ! -f $VERSION_DEFAULTS ]; then
+    if [ ! -f "$VERSION_DEFAULTS" ]; then
         error "$VERSION_DEFAULTS not found"
     fi
 
     IFS="." read MAJOR MINOR PATCH PATCH2 PATCH3 <<EOF
-$(IFS="." awk '/PLATFORM_VERSION[A-Z0-9.]* := ([0-9.]+)/ { print $3; }' < $VERSION_DEFAULTS)
+$(IFS="." awk '/PLATFORM_VERSION[A-Z0-9.]* := ([0-9.]+)/ { print $3; }' < "$VERSION_DEFAULTS")
 EOF
-    if [ x$MINOR = x ]; then
+    if [ x"$MINOR" = x ]; then
          MINOR=0
     fi
-    if [ x$PATCH = x ]; then
+    if [ x"$PATCH" = x ]; then
          PATCH=0
     fi
-    if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
+    if [ x"$MAJOR" = x -o x"$MINOR" = x -o x"$PATCH" = x ]; then
         error "Cannot read PLATFORM_VERSION from ${VERSION_DEFAULTS}."
         error "Please specify MAJOR, MINOR and PATCH manually to continue."
         exit 1
@@ -111,14 +111,14 @@ extract_headers_to() {
 
     while [ $# -gt 0 ]; do
         SOURCE_PATH=$ANDROID_ROOT/$1
-        if [ -d $SOURCE_PATH ]; then
+        if [ -d "$SOURCE_PATH" ]; then
             for file in $SOURCE_PATH/*; do
-                echo "    $1/$(basename $file)"
-                cp -L $file $TARGET_DIRECTORY/
+                echo "$1"/"$(basename "$file")"
+                cp -L "$file" "$TARGET_DIRECTORY"/
             done
         else
             echo "    $1"
-            cp -L $SOURCE_PATH $TARGET_DIRECTORY/
+            cp -L "$SOURCE_PATH" "$TARGET_DIRECTORY"/
         fi
         shift
     done
@@ -140,13 +140,13 @@ check_header_exists() {
 require_sources \
     hardware/libhardware/include/hardware
 
-mkdir -p $HEADER_PATH
+mkdir -p "$HEADER_PATH"
 
 # Default PATCH2,3 to 0
 PATCH2=${PATCH2:-0}
 PATCH3=${PATCH3:-0}
 
-cat > $HEADER_PATH/android-version.h << EOF
+cat > "$HEADER_PATH"/android-version.h << EOF
 #ifndef ANDROID_VERSION_H_
 #define ANDROID_VERSION_H_
 
@@ -159,7 +159,7 @@ cat > $HEADER_PATH/android-version.h << EOF
 #endif
 EOF
 
-cat > $HEADER_PATH/android-config.h << EOF
+cat > "$HEADER_PATH"/android-config.h << EOF
 #ifndef HYBRIS_CONFIG_H_
 #define HYBRIS_CONFIG_H_
 
@@ -314,19 +314,19 @@ if ! which git >/dev/null 2>&1; then
 fi
 
 
-rm -f $HEADER_PATH/SOURCE_GIT_REVISION_INFO
+rm -f "$HEADER_PATH"/SOURCE_GIT_REVISION_INFO
 if [ x$SKIPGIT != x1 ]; then
     (for GIT_PROJECT in $GIT_PROJECTS; do
 	TARGET_DIR=$ANDROID_ROOT/$GIT_PROJECT
 	echo "================================================"
 	echo "$GIT_PROJECT @ $NOW"
 	echo "================================================"
-	if [ -e $TARGET_DIR/.git ]; then
+	if [ -e "$TARGET_DIR"/.git ]; then
             (
 		set -x
-		cd $ANDROID_ROOT
-		repo status $GIT_PROJECT
-		cd $TARGET_DIR
+		cd "$ANDROID_ROOT"
+		repo status "$GIT_PROJECT" 
+		cd "$TARGET_DIR" 
 		git show-ref --head
 		git remote -v
             )
@@ -335,11 +335,11 @@ if [ x$SKIPGIT != x1 ]; then
 	else
             echo "WARNING: $GIT_PROJECT does not contain a Git repository"
 	fi
-	done) > $HEADER_PATH/git-revisions.txt 2>&1
+	done) > "$HEADER_PATH"/git-revisions.txt 2>&1
 
     # Repo manifest that can be used to fetch the sources for re-extracting headers
-    if [ -e $ANDROID_ROOT/.repo/manifest.xml ]; then
-	cp $ANDROID_ROOT/.repo/manifest.xml $HEADER_PATH/
+    if [ -e "$ANDROID_ROOT"/.repo/manifest.xml ]; then
+	cp "$ANDROID_ROOT"/.repo/manifest.xml "$HEADER_PATH"/
     fi
 fi
 
@@ -348,9 +348,9 @@ find "$HEADER_PATH" -type f -exec chmod 0644 {} \;
 
 # Create a pkconfig if we know the final installation path otherwise
 # make a Makefile and a pc.in file for it to handle
-if [ x$PKGCONFIGPATH = x ]; then
+if [ x"$PKGCONFIGPATH" = x ]; then
     # Add a makefile to make packaging easier
-    cat > ${HEADER_PATH}/Makefile << EOF
+    cat > "${HEADER_PATH}"/Makefile << EOF
 PREFIX?=/usr/local
 INCLUDEDIR?=\$(PREFIX)/include/android
 all:
@@ -366,7 +366,7 @@ install:
 EOF
 
     echo "Creating ${HEADER_PATH}/android-headers.pc.in"
-    cat > ${HEADER_PATH}/android-headers.pc.in << EOF
+    cat > "${HEADER_PATH}"/android-headers.pc.in << EOF
 Name: android-headers
 Description: Provides the headers for the droid system
 Version: ${MAJOR}.${MINOR}.${PATCH}
@@ -374,7 +374,7 @@ Cflags: -I@includedir@
 EOF
 else
     echo "Creating ${HEADER_PATH}/android-headers.pc"
-    cat > ${HEADER_PATH}/android-headers.pc << EOF
+    cat > "${HEADER_PATH}"/android-headers.pc << EOF
 Name: android-headers
 Description: Provides the headers for the droid system
 Version: ${MAJOR}.${MINOR}.${PATCH}
