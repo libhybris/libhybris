@@ -148,6 +148,12 @@ void CameraControl::postRecordingFrameHandleTimestamp(nsecs_t /*timestamp*/, nat
 }
 #endif
 
+void CameraControl::postRecordingFrameHandleTimestampBatch(const std::vector<nsecs_t>& /*timestamps*/,
+                                                const std::vector<native_handle_t*>& /*handles*/)
+{
+	REPORT_FUNCTION();
+}
+
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 namespace android
 {

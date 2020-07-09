@@ -31,6 +31,10 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#if ANDROID_VERSION_MAJOR >= 9
+#include <vector>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -74,6 +78,10 @@ struct CameraControl : public android::CameraListener,
         const android::sp<android::IMemory>& data);
 #if ANDROID_VERSION_MAJOR >= 7
     void postRecordingFrameHandleTimestamp(nsecs_t timestamp, native_handle_t* handle);
+#endif
+#if ANDROID_VERSION_MAJOR >= 9
+    void postRecordingFrameHandleTimestampBatch(const std::vector<nsecs_t>& timestamps,
+                                                const std::vector<native_handle_t*>& handles);
 #endif
 };
 
