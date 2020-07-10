@@ -2148,6 +2148,8 @@ int _hybris_hook_clearenv(void)
 
 extern int __cxa_atexit(void (*)(void*), void*, void*);
 extern void __cxa_finalize(void * d);
+extern int __cxa_thread_atexit(void (*dtor)(void *), void *obj,
+                               void *dso_symbol);
 
 struct open_redirect {
     const char *from;
@@ -2222,6 +2224,35 @@ static void *_hybris_hook___get_tls_hooks()
 {
     TRACE_HOOK("");
     return tls_hooks;
+}
+
+static int _hybris_hook___cxa_thread_atexit(void (*dtor)(void *), void *obj,
+                                     void *dso_symbol)
+{
+    /* Register the callback with glibc. Glibc will be unable to find the
+     * DSO, but we'll do it later. */
+    int ret;
+    if ((ret = __cxa_thread_atexit(dtor, obj, dso_symbol)) != 0)
+        return ret;
+
+    /*
+     * Use android_dladdr() to find the library then use android_dlopen()
+     * to increase refcount. We don't wrap the dtor, thus we can't call
+     * android_dlclose() later to decrease refcount.
+     *
+     * We can't set the NODELETE flag on the handle directly; doing so requires
+     * accessing linker's internal which changes between linker versions.
+     */
+    static __thread void *dso_symbol_cache;
+    if (dso_symbol_cache != dso_symbol) {
+        dso_symbol_cache = dso_symbol;
+
+        Dl_info dso_symbol_info;
+        
+        if (_android_dladdr(dso_symbol, &dso_symbol_info)) {
+            _android_dlopen(dso_symbol_info.dli_fname, RTLD_NODELETE);
+        }
+    }
 }
 
 int _hybris_hook_prctl(int option, unsigned long arg2, unsigned long arg3,
@@ -2958,8 +2989,10 @@ static struct _hook hooks_common[] = {
     HOOK_DIRECT_NO_DEBUG(access),
     /* grp.h */
     HOOK_DIRECT_NO_DEBUG(getgrgid),
+    /* C++ ABI */
     HOOK_DIRECT_NO_DEBUG(__cxa_atexit),
     HOOK_DIRECT_NO_DEBUG(__cxa_finalize),
+    HOOK_INDIRECT(__cxa_thread_atexit),
     /* sys/prctl.h */
     HOOK_INDIRECT(prctl),
     /* stdio_ext.h */
