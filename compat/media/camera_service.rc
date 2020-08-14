@@ -1,0 +1,8 @@
+on boot
+    exec - root -- /system/bin/micshm.sh
+
+service camera_service /system/bin/camera_service
+    class main
+    user media
+    group audio camera graphics media
+    ioprio rt 4

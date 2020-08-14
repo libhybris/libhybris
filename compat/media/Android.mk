@@ -27,16 +27,24 @@ LOCAL_SRC_FILES := \
 	camera_service.cpp
 
 LOCAL_SHARED_LIBRARIES := \
-	libcameraservice \
-	libcamera_client \
-	libmedialogservice \
 	libcutils \
-	libmedia \
 	libmedia_compat_layer \
-	libmediaplayerservice \
+	libaudioclient \
 	libutils \
 	liblog \
 	libbinder
+
+ifeq ($(IS_ANDROID_8),true)
+LOCAL_SHARED_LIBRARIES += \
+	libaudioclient
+else
+LOCAL_SHARED_LIBRARIES += \
+	libcameraservice \
+	libcamera_client \
+	libmedialogservice \
+	libmedia \
+	libmediaplayerservice
+endif
 
 LOCAL_C_INCLUDES := \
     frameworks/av/media/libmediaplayerservice \
@@ -56,6 +64,10 @@ endif
 
 LOCAL_MODULE := camera_service
 
+ifeq ($(IS_ANDROID_8),true)
+LOCAL_INIT_RC := camera_service.rc
+endif
+
 ifdef TARGET_2ND_ARCH
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(if $(filter false,$(BOARD_UBUNTU_PREFER_32_BIT)),$(LOCAL_MODULE)$(TARGET_2ND_ARCH_MODULE_SUFFIX),$(LOCAL_MODULE))
@@ -68,6 +80,17 @@ LOCAL_MULTILIB := 32
 endif
 
 include $(BUILD_EXECUTABLE)
+
+# -------------------------------------------------
+
+ifeq ($(IS_ANDROID_8),true)
+include $(CLEAR_VARS)
+LOCAL_MODULE       := micshm.sh
+LOCAL_MODULE_TAGS  := optional
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_SRC_FILES    := micshm.sh
+include $(BUILD_PREBUILT)
+endif
 
 # -------------------------------------------------
 
