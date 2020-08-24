@@ -1853,7 +1853,7 @@ static void soinfo_unload(soinfo* soinfos[], size_t count) {
       if (ref_count == 0) {
         unload_list.push_back(si);
       } else {
-        TRACE("not unloading '%s' group, decrementing ref_count to %zd",
+        TRACE("not unloading '%s' group, decrementing ref_count to %zu",
             si->get_realpath(), ref_count);
       }
     } else {
@@ -2424,7 +2424,7 @@ bool VersionTracker::init_verneed(const soinfo* si_from) {
     offset += verneed->vn_next;
 
     if (verneed->vn_version != 1) {
-      DL_ERR("unsupported verneed[%zd] vn_version: %d (expected 1)", i, verneed->vn_version);
+      DL_ERR("unsupported verneed[%zu] vn_version: %d (expected 1)", i, verneed->vn_version);
       return false;
     }
 
@@ -2435,7 +2435,7 @@ bool VersionTracker::init_verneed(const soinfo* si_from) {
     });
 
     if (target_si == nullptr) {
-      DL_ERR("cannot find \"%s\" from verneed[%zd] in DT_NEEDED list for \"%s\"",
+      DL_ERR("cannot find \"%s\" from verneed[%zu] in DT_NEEDED list for \"%s\"",
           target_soname, i, si_from->get_realpath());
       return false;
     }
@@ -2475,7 +2475,7 @@ static bool for_each_verdef(const soinfo* si, F functor) {
     offset += verdef->vd_next;
 
     if (verdef->vd_version != 1) {
-      DL_ERR("unsupported verdef[%zd] vd_version: %d (expected 1) library: %s",
+      DL_ERR("unsupported verdef[%zu] vd_version: %d (expected 1) library: %s",
           i, verdef->vd_version, si->get_realpath());
       return false;
     }
@@ -2489,7 +2489,7 @@ static bool for_each_verdef(const soinfo* si, F functor) {
     }
 
     if (verdef->vd_cnt == 0) {
-      DL_ERR("invalid verdef[%zd] vd_cnt == 0 (version without a name)", i);
+      DL_ERR("invalid verdef[%zu] vd_cnt == 0 (version without a name)", i);
       return false;
     }
 
@@ -2599,7 +2599,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
     const char* sym_name = nullptr;
     ElfW(Addr) addend = get_addend(rel, reloc);
 
-    DEBUG("Processing \"%s\" relocation at index %zd", get_realpath(), idx);
+    DEBUG("Processing \"%s\" relocation at index %zu", get_realpath(), idx);
     if (type == R_GENERIC_NONE) {
       continue;
     }
@@ -3076,7 +3076,7 @@ bool soinfo::prelink_image() {
 
       case DT_SYMENT:
         if (d->d_un.d_val != sizeof(ElfW(Sym))) {
-          DL_ERR("invalid DT_SYMENT: %zd in \"%s\"",
+          DL_ERR("invalid DT_SYMENT: %zu in \"%s\"",
               static_cast<size_t>(d->d_un.d_val), get_realpath());
           return false;
         }
@@ -3160,7 +3160,7 @@ bool soinfo::prelink_image() {
 
       case DT_RELAENT:
         if (d->d_un.d_val != sizeof(ElfW(Rela))) {
-          DL_ERR("invalid DT_RELAENT: %zd", static_cast<size_t>(d->d_un.d_val));
+          DL_ERR("invalid DT_RELAENT: %zu", static_cast<size_t>(d->d_un.d_val));
           return false;
         }
         break;
@@ -3188,7 +3188,7 @@ bool soinfo::prelink_image() {
 
       case DT_RELENT:
         if (d->d_un.d_val != sizeof(ElfW(Rel))) {
-          DL_ERR("invalid DT_RELENT: %zd", static_cast<size_t>(d->d_un.d_val));
+          DL_ERR("invalid DT_RELENT: %zu", static_cast<size_t>(d->d_un.d_val));
           return false;
         }
         break;

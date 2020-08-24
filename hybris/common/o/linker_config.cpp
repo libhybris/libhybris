@@ -182,7 +182,7 @@ static bool parse_config_file(const char* ld_config_file_path,
 
     int result = cp.next_token(&name, &value, &error);
     if (result == ConfigParser::kError) {
-      DL_WARN("error parsing %s:%zd: %s (ignoring this line)",
+      DL_WARN("error parsing %s:%zu: %s (ignoring this line)",
               ld_config_file_path,
               cp.lineno(),
               error.c_str());
@@ -195,7 +195,7 @@ static bool parse_config_file(const char* ld_config_file_path,
 
     if (result == ConfigParser::kProperty) {
       if (!startsWith(name, "dir.")) {
-        DL_WARN("error parsing %s:%zd: unexpected property name \"%s\", "
+        DL_WARN("error parsing %s:%zu: unexpected property name \"%s\", "
                 "expected format dir.<section_name> (ignoring this line)",
                 ld_config_file_path,
                 cp.lineno(),
@@ -209,7 +209,7 @@ static bool parse_config_file(const char* ld_config_file_path,
       }
 
       if (value.empty()) {
-        DL_WARN("error parsing %s:%zd: property value is empty (ignoring this line)",
+        DL_WARN("error parsing %s:%zu: property value is empty (ignoring this line)",
                 ld_config_file_path,
                 cp.lineno());
         continue;
@@ -256,7 +256,7 @@ static bool parse_config_file(const char* ld_config_file_path,
 
     if (result == ConfigParser::kProperty) {
       if (properties->find(name) != properties->end()) {
-        DL_WARN("%s:%zd: warning: property \"%s\" redefinition",
+        DL_WARN("%s:%zu: warning: property \"%s\" redefinition",
                 ld_config_file_path,
                 cp.lineno(),
                 name.c_str());
@@ -266,7 +266,7 @@ static bool parse_config_file(const char* ld_config_file_path,
     }
 
     if (result == ConfigParser::kError) {
-      DL_WARN("error parsing %s:%zd: %s (ignoring this line)",
+      DL_WARN("error parsing %s:%zu: %s (ignoring this line)",
               ld_config_file_path,
               cp.lineno(),
               error.c_str());

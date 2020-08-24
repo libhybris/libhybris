@@ -232,7 +232,7 @@ bool soinfo::gnu_lookup(SymbolName& symbol_name,
         check_symbol_version(verneed, verdef) &&
         strcmp(get_string(s->st_name), symbol_name.get_name()) == 0 &&
         is_symbol_global_and_defined(this, s)) {
-      TRACE_TYPE(LOOKUP, "FOUND %s in %s (%p) %zd",
+      TRACE_TYPE(LOOKUP, "FOUND %s in %s (%p) %zu",
           symbol_name.get_name(), get_realpath(), reinterpret_cast<void*>(s->st_value),
           static_cast<size_t>(s->st_size));
       *symbol_index = n;
@@ -251,7 +251,7 @@ bool soinfo::elf_lookup(SymbolName& symbol_name,
                         uint32_t* symbol_index) const {
   uint32_t hash = symbol_name.elf_hash();
 
-  TRACE_TYPE(LOOKUP, "SEARCH %s in %s@%p h=%x(elf) %zd",
+  TRACE_TYPE(LOOKUP, "SEARCH %s in %s@%p h=%x(elf) %zu",
              symbol_name.get_name(), get_realpath(),
              reinterpret_cast<void*>(base), hash, hash % nbucket_);
 
@@ -272,7 +272,7 @@ bool soinfo::elf_lookup(SymbolName& symbol_name,
     if (check_symbol_version(verneed, verdef) &&
         strcmp(get_string(s->st_name), symbol_name.get_name()) == 0 &&
         is_symbol_global_and_defined(this, s)) {
-      TRACE_TYPE(LOOKUP, "FOUND %s in %s (%p) %zd",
+      TRACE_TYPE(LOOKUP, "FOUND %s in %s (%p) %zu",
                  symbol_name.get_name(), get_realpath(),
                  reinterpret_cast<void*>(s->st_value),
                  static_cast<size_t>(s->st_size));
@@ -281,7 +281,7 @@ bool soinfo::elf_lookup(SymbolName& symbol_name,
     }
   }
 
-  TRACE_TYPE(LOOKUP, "NOT FOUND %s in %s@%p %x %zd",
+  TRACE_TYPE(LOOKUP, "NOT FOUND %s in %s@%p %x %zu",
              symbol_name.get_name(), get_realpath(),
              reinterpret_cast<void*>(base), hash, hash % nbucket_);
 
@@ -372,7 +372,7 @@ static void call_array(const char* array_name,
     return;
   }
 
-  TRACE("[ Calling %s (size %zd) @ %p for '%s' ]", array_name, count, functions, realpath);
+  TRACE("[ Calling %s (size %zu) @ %p for '%s' ]", array_name, count, functions, realpath);
 
   int begin = reverse ? (count - 1) : 0;
   int end = reverse ? -1 : count;

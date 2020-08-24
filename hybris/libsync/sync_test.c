@@ -60,7 +60,7 @@ void *sync_thread(void *data)
                        pt_info->driver_name, pt_info->status,
                        ts_sec, ts_usec);
                 if (!strcmp(pt_info->driver_name, "sw_sync"))
-                    printf(" val=%d\n", *(uint32_t *)pt_info->driver_data);
+                    printf(" val=%u\n", *(uint32_t *)pt_info->driver_data);
                 else
                     printf("\n");
             }
@@ -94,7 +94,7 @@ int main(int argc __attribute__((unused)), char *argv[] __attribute__((unused)))
             sprintf(str, "test_fence%d-%d", i, j);
             int fd = sw_sync_fence_create(sync_timeline_fd, str, val);
             if (fd < 0) {
-                printf("can't create sync pt %d: %s", val, strerror(errno));
+                printf("can't create sync pt %u: %s", val, strerror(errno));
                 return 1;
             }
             sync_data[i].fd[j] = fd;

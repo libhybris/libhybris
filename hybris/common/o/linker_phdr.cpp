@@ -198,7 +198,7 @@ bool ElfReader::ReadElfHeader() {
   }
 
   if (rc != sizeof(header_)) {
-    DL_ERR("\"%s\" is too small to be an ELF executable: only found %zd bytes", name_.c_str(),
+    DL_ERR("\"%s\" is too small to be an ELF executable: only found %zu bytes", name_.c_str(),
            static_cast<size_t>(rc));
     return false;
   }
@@ -314,7 +314,7 @@ bool ElfReader::ReadProgramHeaders() {
   // Like the kernel, we only accept program header tables that
   // are smaller than 64KiB.
   if (phdr_num_ < 1 || phdr_num_ > 65536/sizeof(ElfW(Phdr))) {
-    DL_ERR("\"%s\" has invalid e_phnum: %zd", name_.c_str(), phdr_num_);
+    DL_ERR("\"%s\" has invalid e_phnum: %zu", name_.c_str(), phdr_num_);
     return false;
   }
 
@@ -586,18 +586,18 @@ bool ElfReader::ReserveAddressSpace(const android_dlextinfo* extinfo) {
 
   if (load_size_ > reserved_size) {
     if (!reserved_hint) {
-      DL_ERR("reserved address space %zd smaller than %zd bytes needed for \"%s\"",
+      DL_ERR("reserved address space %zu smaller than %zu bytes needed for \"%s\"",
              reserved_size - load_size_, load_size_, name_.c_str());
       return false;
     }
     start = ReserveAligned(mmap_hint, load_size_, kLibraryAlignment);
     if (start == nullptr) {
-      DL_ERR("couldn't reserve %zd bytes of address space for \"%s\"", load_size_, name_.c_str());
+      DL_ERR("couldn't reserve %zu bytes of address space for \"%s\"", load_size_, name_.c_str());
       return false;
     }
     if (strict_hint && (start != mmap_hint)) {
       munmap(start, load_size_);
-      DL_ERR("couldn't reserve %zd bytes of address space at %p for \"%s\"",
+      DL_ERR("couldn't reserve %zu bytes of address space at %p for \"%s\"",
              load_size_, mmap_hint, name_.c_str());
       return false;
     }
@@ -668,7 +668,7 @@ bool ElfReader::LoadSegments() {
                             fd_,
                             file_offset_ + file_page_start);
       if (seg_addr == MAP_FAILED) {
-        DL_ERR("couldn't map \"%s\" segment %zd: %s", name_.c_str(), i, strerror(errno));
+        DL_ERR("couldn't map \"%s\" segment %zu: %s", name_.c_str(), i, strerror(errno));
         return false;
       }
     }
