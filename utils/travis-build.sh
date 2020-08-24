@@ -2,7 +2,7 @@
 
 run_first_stage() {
 	docker pull ubuntu:16.04
-	docker run -i -t -v $PWD:/libhybris ubuntu:16.04 /libhybris/utils/travis-build.sh --second-stage
+	docker run -i -t -v "$PWD":/libhybris ubuntu:16.04 /libhybris/utils/travis-build.sh --second-stage
 }
 
 run_second_stage() {
