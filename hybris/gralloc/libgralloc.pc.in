@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: hybris-gralloc
 Description: libhybris gralloc library
 Version: @VERSION@
-Requires: android-headers
+Requires: @ANDROID_HEADERS_PKGCONFIG@
 Libs: -L${libdir} -lgralloc
-Cflags: -I${includedir}
+Cflags: -I${includedir} @ANDROID_HEADERS_CFLAGS@
