@@ -1402,7 +1402,7 @@ struct bionic_sbuf {
 typedef off_t bionic_fpos_t;
 
 /* "struct __sFILE" from bionic/libc/include/stdio.h */
-struct __attribute__((packed)) bionic_file {
+struct bionic_file {
     unsigned char *_p;      /* current position in (some) buffer */
     int _r;                 /* read space left for getc() */
     int _w;                 /* write space left for putc() */
