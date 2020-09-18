@@ -85,6 +85,8 @@ extern int my_property_list(void (*propfn)(const char *key, const char *value, v
 // this is also used in bionic:
 #define bool int
 
+#include "dso_handle_counters.h"
+
 #ifdef WANT_ARM_TRACING
 #include "wrappers.h"
 #endif
@@ -2244,16 +2246,15 @@ static void *_hybris_hook___get_tls_hooks()
 struct __wrapped_atexit {
     void (*dtor)(void *);
     void *obj;
-    void *dlopen_handle;
+    void *dso_handle;
 };
 
 static void __dtor_wrapper(void *obj) {
     struct __wrapped_atexit *wrapped = obj;
     /* Call the wrapped dtor. */
     wrapped->dtor(wrapped->obj);
-    /* Call dlclose, effectively decrease refcount. */
-    if (wrapped->dlopen_handle)
-        _android_dlclose(wrapped->dlopen_handle);
+    /* Reduce dso_handle's ref count. */
+    __hybris_remove_thread_local_dtor(wrapped->dso_handle);
     /* Free the wrapper. */
     free(wrapped);
 }
@@ -2263,35 +2264,21 @@ extern const void * const __dso_handle;
 static int _hybris_hook___cxa_thread_atexit(void (*dtor)(void *), void *obj,
                                             void *dso_symbol)
 {
-    /*
-     * Use android_dladdr() to find the library then use android_dlopen()
-     * to increase refcount. We then wrap the dtor with our own function
-     * which will call the dtor then call android_dlclose().
-     */
-    static __thread void *dso_symbol_cache;
-    static __thread Dl_info dso_symbol_info;
-    if (dso_symbol_cache != dso_symbol) {
-        dso_symbol_cache = dso_symbol;
-
-        if (!_android_dladdr(dso_symbol, &dso_symbol_info)) {
-            dso_symbol_info.dli_fname = NULL;
-        }
-    }
-
     struct __wrapped_atexit *wrapped = malloc(sizeof(struct __wrapped_atexit));
     wrapped->dtor = dtor;
     wrapped->obj = obj;
-    if (dso_symbol_info.dli_fname)
-        wrapped->dlopen_handle = _android_dlopen(dso_symbol_info.dli_fname,
-                                                 /* flags */ 0);
-    else
-        wrapped->dlopen_handle = NULL;
+    wrapped->dso_handle = dso_symbol;
 
     /* Call Glibc's implementation. Pass our symbol to prevent ourself from
      * being unloaded. */
     int ret;
-    if ((ret = __cxa_thread_atexit(__dtor_wrapper, wrapped, &__dso_handle)) != 0)
+    if ((ret = __cxa_thread_atexit(__dtor_wrapper, wrapped, &__dso_handle)) != 0) {
         free(wrapped);
+        return ret;
+    }
+
+    /* Increase refcount of this dso_symbol. */
+    __hybris_add_thread_local_dtor(dso_symbol);
 
     return ret;
 }

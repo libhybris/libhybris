@@ -26,6 +26,7 @@ libhybris_common_la_SOURCES = \
 	strlcat.c \
 	logging.c \
 	sysconf.c \
+	dso_handle_counters.cpp \
 	legacy_properties/properties.c \
 	legacy_properties/cache.c
 
@@ -87,10 +88,15 @@ endif
 if HAS_ANDROID_8_0_0
 libhybris_common_la_CPPFLAGS += -DWANT_LINKER_O
 endif
+
+libhybris_common_la_CXXFLAGS = \
+	-std=gnu++11
+
 libhybris_common_la_LDFLAGS = \
 	-ldl \
 	-lrt \
 	-pthread \
 	-lc \
 	-lstdc++ \
+	-lpthread \
 	-version-info "$(LT_CURRENT)":"$(LT_REVISION)":"$(LT_AGE)"

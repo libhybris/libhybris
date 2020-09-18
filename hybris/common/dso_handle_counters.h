@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Intel Corporation
+ * Copyright (C) 2020 UBports Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,18 @@
  *
  */
 
-#ifndef _HYBRIS_DLFCN_H_
-#define _HYBRIS_DLFCN_H_
+#ifndef _HYBRIS_DSO_HANDLE_COUNTERS_H_
+#define _HYBRIS_DSO_HANDLE_COUNTERS_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void *hybris_dlopen(const char *filename, int flag);
-void *hybris_dlsym(void *handle, const char *symbol);
-int   hybris_dlclose(void *handle);
-char *hybris_dlerror(void);
-int   hybris_dladdr(const void *addr, void *info);
+void __hybris_add_thread_local_dtor(void* dso_handle);
+void __hybris_remove_thread_local_dtor(void* dso_handle);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // _HYBRIS_DLFCN_H_
-
-// vim: noai:ts=4:sw=4:ss=4:expandtab
+#endif // _HYBRIS_DSO_HANDLE_COUNTERS_H_
