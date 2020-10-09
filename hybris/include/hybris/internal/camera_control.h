@@ -57,6 +57,11 @@ struct CameraControl : public android::CameraListener,
 #else
     android::sp<android::GLConsumer> preview_texture;
 #endif
+#if ANDROID_VERSION_MAJOR >= 5
+    android::sp<android::IGraphicBufferProducer> preview_bq;
+#else
+    android::sp<android::BufferQueue> preview_bq;
+#endif
     // From android::SurfaceTexture/GLConsumer::FrameAvailableListener
 #if ANDROID_VERSION_MAJOR==5 && ANDROID_VERSION_MINOR>=1 || ANDROID_VERSION_MAJOR>=6
     void onFrameAvailable(const android::BufferItem& item);
