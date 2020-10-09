@@ -703,10 +703,19 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 	REPORT_FUNCTION();
 	assert(control);
 
+	if (texture_id == 0) {
+#if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
+		control->camera->setPreviewTexture(NULL);
+#else
+		control->camera->setPreviewTarget(NULL);
+#endif
+		return;
+	}
+
 	static const bool allow_synchronous_mode = false;
 	static const bool is_controlled_by_app = true;
 
-	if (control->preview_texture == NULL) {
+	if (control->preview_texture == NULL || control->preview_texture_id != texture_id) {
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=3
 		android::sp<android::NativeBufferAlloc> native_alloc(
 			new android::NativeBufferAlloc()
@@ -755,6 +764,8 @@ void android_camera_set_preview_texture(CameraControl* control, int texture_id)
 					true,
 					is_controlled_by_app));
 #endif
+
+		control->preview_texture_id = texture_id;
 	}
 
 	control->preview_texture->setFrameAvailableListener(

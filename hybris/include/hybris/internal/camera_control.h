@@ -52,6 +52,7 @@ struct CameraControl : public android::CameraListener,
     CameraControlListener* listener;
     android::sp<android::Camera> camera;
     android::CameraParameters camera_parameters;
+    int preview_texture_id = 0;
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     android::sp<android::SurfaceTexture> preview_texture;
 #else
