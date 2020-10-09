@@ -2412,6 +2412,8 @@ bool do_dlsym(void* handle,
 
     if ((bind == STB_GLOBAL || bind == STB_WEAK) && sym->st_shndx != 0) {
       if (type == STT_TLS) {
+        fprintf(stderr, "TLS relocations not yet implemented in libhybris");
+        abort();
         // For a TLS symbol, dlsym returns the address of the current thread's
         // copy of the symbol. This function may allocate a DTV and/or storage
         // for the source TLS module. (Allocating a DTV isn't necessary if the
@@ -3018,6 +3020,8 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
         }
 #endif
         if (is_tls_reloc(type)) {
+          fprintf(stderr, "TLS relocations not yet implemented in libhybris");
+          abort();
           if (ELF_ST_TYPE(s->st_info) != STT_TLS) {
             DL_ERR("reference to non-TLS symbol \"%s\" from TLS relocation in \"%s\"",
                    sym_name, get_realpath());
@@ -3110,6 +3114,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
         }
         break;
       case R_GENERIC_TLS_TPREL:
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
         {
@@ -3134,12 +3139,17 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
                      reinterpret_cast<void*>(tpoff), sym_name);
           *reinterpret_cast<ElfW(Addr)*>(reloc) = tpoff;
         }
+#else
+        fprintf(stderr, "TLS relocations not yet implemented in libhybris");
+        abort();
+#endif
         break;
 
 #if !defined(__aarch64__)
       // Omit support for DTPMOD/DTPREL on arm64, at least until
       // http://b/123385182 is fixed. arm64 uses TLSDESC instead.
       case R_GENERIC_TLS_DTPMOD:
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
         {
@@ -3162,6 +3172,10 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
                    reinterpret_cast<void*>(reloc),
                    reinterpret_cast<void*>(sym_addr + addend), sym_name);
         *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend;
+#else
+        fprintf(stderr, "TLS relocations not yet implemented in libhybris");
+        abort();
+#endif
         break;
 #endif  // !defined(__aarch64__)
 
@@ -3169,6 +3183,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       // Bionic currently only implements TLSDESC for arm64. This implementation should work with
       // other architectures, as long as the resolver functions are implemented.
       case R_GENERIC_TLSDESC:
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
         {
@@ -3205,6 +3220,10 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
             }
           }
         }
+#else
+        fprintf(stderr, "TLS relocations not yet implemented in libhybris");
+        abort();
+#endif
         break;
 #endif  // defined(__aarch64__)
 
