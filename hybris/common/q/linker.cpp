@@ -1942,7 +1942,7 @@ static soinfo* find_library(android_namespace_t* ns,
   soinfo* si = nullptr;
 
   if (name == nullptr) {
-    si = solist_get_somain();
+    si = nullptr;//solist_get_somain();
   } else if (!find_libraries(ns,
                              needed_by,
                              &name,
@@ -4249,12 +4249,14 @@ std::vector<android_namespace_t*> init_default_namespaces(const char* executable
   }
   // we can no longer rely on the fact that libdl.so is part of default namespace
   // this is why we want to add ld-android.so to all namespaces from ld.config.txt
-  soinfo* ld_android_so = solist_get_head();
+//hybris we have no libdl soinfo
+//  soinfo* ld_android_so = solist_get_head();
 
   // we also need vdso to be available for all namespaces (if present)
   soinfo* vdso = solist_get_vdso();
   for (auto it : namespaces) {
-    it.second->add_soinfo(ld_android_so);
+// hybris we have no libdl soinfo
+  //  it.second->add_soinfo(ld_android_so);
     if (vdso != nullptr) {
       it.second->add_soinfo(vdso);
     }

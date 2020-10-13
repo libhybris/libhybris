@@ -121,11 +121,12 @@ bool solist_remove_soinfo(soinfo* si) {
 }
 
 soinfo* solist_get_head() {
-  return solist;
+// hybris skip the dummy libdl so info
+  return solist->next;
 }
 
 soinfo* solist_get_somain() {
-  return somain;
+  return (soinfo*)0xDEADBEEF;
 }
 
 soinfo* solist_get_vdso() {
@@ -732,32 +733,20 @@ __linker_init_post_relocation(KernelArgumentBlock& args, soinfo& tmp_linker_so) 
 
 
 static void generate_tmpsoinfo(soinfo& tmp_linker_so) {
-  Dl_info dlinfo;
-  int ret = dladdr((void *)generate_tmpsoinfo, &dlinfo);
-  if (!ret) {
-    PRINT("can't get self info:ret\n", ret);
-    exit(-1);
-  }
-  ElfW(Addr) linker_addr = (ElfW(Addr))dlinfo.dli_fbase;
-  DEBUG("get self base adder=%p\n", linker_addr);
-
-  ElfW(Ehdr)* elf_hdr = reinterpret_cast<ElfW(Ehdr)*>(linker_addr);
-  ElfW(Phdr)* phdr = reinterpret_cast<ElfW(Phdr)*>(linker_addr + elf_hdr->e_phoff);
-
-  tmp_linker_so.base = linker_addr;
-  tmp_linker_so.size = phdr_table_get_load_size(phdr, elf_hdr->e_phnum);
-  tmp_linker_so.load_bias = get_elf_exec_load_bias(elf_hdr);
+  tmp_linker_so.base = (ElfW(Addr))nullptr;
+  tmp_linker_so.size = 0;
+  tmp_linker_so.load_bias = 0;
   tmp_linker_so.dynamic = nullptr;
-  tmp_linker_so.phdr = phdr;
-  tmp_linker_so.phnum = elf_hdr->e_phnum;
+  tmp_linker_so.phdr = nullptr;
+  tmp_linker_so.phnum = 0;
   tmp_linker_so.set_linker_flag();
 
   DEBUG("tmp_linker_so's load_bias=%p \n", tmp_linker_so.load_bias);
 
   // Prelink the linker so we can access linker globals.
-  if (!tmp_linker_so.prelink_image()) {
-    PRINT("can't prelink self:ret\n");
-  };
+//  if (!tmp_linker_so.prelink_image()) {
+//    PRINT("can't prelink self:ret\n");
+//  };
 
   //tmp_linker_so.call_constructors();
 }
@@ -815,8 +804,9 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
 
   sonext = solist = get_libdl_info(kLinkerPath, tmp_linker_so);
 
-  init_link_map_head(tmp_linker_so, kLinkerPath);
-  insert_link_map_into_debug_map(&tmp_linker_so.link_map_head);
+  add_vdso();
+  //init_link_map_head(tmp_linker_so, kLinkerPath);
+  //insert_link_map_into_debug_map(&tmp_linker_so.link_map_head);
 
   DEBUG("sdk_version %d\n", sdk_version);
 
