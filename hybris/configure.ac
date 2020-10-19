@@ -171,11 +171,6 @@ AC_ARG_WITH(android-headers,
   ],
   [
     PKG_CHECK_MODULES(ANDROID_HEADERS, android-headers,, exit)
-    AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [false])
-    AM_CONDITIONAL([HAS_WIFI_LEGACY_HEADERS], [false])
-    AM_CONDITIONAL([HAS_HWCOMPOSER2_HEADERS], [false])
-    AM_CONDITIONAL([HAS_GRALLOC1_HEADER], [false])
-    AM_CONDITIONAL([HAS_VIBRATOR_HEADER], [false])
     AC_SUBST([ANDROID_HEADERS_PKGCONFIG], [android-headers])
   ]
 )
@@ -183,6 +178,19 @@ CPPFLAGS="$CPPFLAGS $ANDROID_HEADERS_CFLAGS"
 
 AC_CHECK_HEADERS(android-config.h,,AC_MSG_ERROR(required header file is missing))
 AC_CHECK_HEADERS(android-version.h,,AC_MSG_ERROR(required header file is missing))
+
+if test x$ac_with_android_headers == x""; then
+    AC_CHECK_HEADERS(libnfc-nxp/phLibNfc.h, HAS_LIBNFC_NXP_HEADERS=yes)
+    AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test x"$HAS_LIBNFC_NXP_HEADERS" = x"yes"])
+    AC_CHECK_HEADERS(hardware_legacy/wifi.h, HAS_WIFI_LEGACY_HEADERS=yes)
+    AM_CONDITIONAL([HAS_WIFI_LEGACY_HEADERS], [test x"$HAS_WIFI_LEGACY_HEADERS" = x"yes"])
+    AC_CHECK_HEADERS(hardware/hwcomposer2.h, HAS_HWCOMPOSER2_HEADERS=yes)
+    AM_CONDITIONAL([HAS_HWCOMPOSER2_HEADERS], [test x"$HAS_HWCOMPOSER2_HEADERS" = x"yes"])
+    AC_CHECK_HEADERS(hardware/gralloc1.h, HAS_GRALLOC1_HEADER=yes)
+    AM_CONDITIONAL([HAS_GRALLOC1_HEADER], [test x"$HAS_GRALLOC1_HEADER" = x"yes"])
+    AC_CHECK_HEADERS(hardware_legacy/vibrator.h, HAS_VIBRATOR_HEADER=yes)
+    AM_CONDITIONAL([HAS_VIBRATOR_HEADER], [test x"$HAS_VIBRATOR_HEADER" = x"yes"])
+fi
 
 # AC_AWK_CPP
 AC_DEFUN([AC_AWK_CPP],
