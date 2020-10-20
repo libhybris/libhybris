@@ -85,6 +85,8 @@ extern int my_property_list(void (*propfn)(const char *key, const char *value, v
 // this is also used in bionic:
 #define bool int
 
+#include "dso_handle_counters.h"
+
 #ifdef WANT_ARM_TRACING
 #include "wrappers.h"
 #endif
@@ -2163,6 +2165,8 @@ int _hybris_hook_clearenv(void)
 
 extern int __cxa_atexit(void (*)(void*), void*, void*);
 extern void __cxa_finalize(void * d);
+extern int __cxa_thread_atexit(void (*dtor)(void *), void *obj,
+                               void *dso_symbol);
 
 struct open_redirect {
     const char *from;
@@ -2237,6 +2241,46 @@ static void *_hybris_hook___get_tls_hooks()
 {
     TRACE_HOOK("");
     return tls_hooks;
+}
+
+struct __wrapped_atexit {
+    void (*dtor)(void *);
+    void *obj;
+    void *dso_handle;
+};
+
+static void __dtor_wrapper(void *obj) {
+    struct __wrapped_atexit *wrapped = obj;
+    /* Call the wrapped dtor. */
+    wrapped->dtor(wrapped->obj);
+    /* Reduce dso_handle's ref count. */
+    __hybris_remove_thread_local_dtor(wrapped->dso_handle);
+    /* Free the wrapper. */
+    free(wrapped);
+}
+
+extern const void * const __dso_handle;
+
+static int _hybris_hook___cxa_thread_atexit(void (*dtor)(void *), void *obj,
+                                            void *dso_symbol)
+{
+    struct __wrapped_atexit *wrapped = malloc(sizeof(struct __wrapped_atexit));
+    wrapped->dtor = dtor;
+    wrapped->obj = obj;
+    wrapped->dso_handle = dso_symbol;
+
+    /* Call Glibc's implementation. Pass our symbol to prevent ourself from
+     * being unloaded. */
+    int ret;
+    if ((ret = __cxa_thread_atexit(__dtor_wrapper, wrapped, &__dso_handle)) != 0) {
+        free(wrapped);
+        return ret;
+    }
+
+    /* Increase refcount of this dso_symbol. */
+    __hybris_add_thread_local_dtor(dso_symbol);
+
+    return ret;
 }
 
 int _hybris_hook_prctl(int option, unsigned long arg2, unsigned long arg3,
@@ -2970,8 +3014,10 @@ static struct _hook hooks_common[] = {
     HOOK_DIRECT_NO_DEBUG(access),
     /* grp.h */
     HOOK_DIRECT_NO_DEBUG(getgrgid),
+    /* C++ ABI */
     HOOK_DIRECT_NO_DEBUG(__cxa_atexit),
     HOOK_DIRECT_NO_DEBUG(__cxa_finalize),
+    HOOK_INDIRECT(__cxa_thread_atexit),
     /* sys/prctl.h */
     HOOK_INDIRECT(prctl),
     /* stdio_ext.h */
