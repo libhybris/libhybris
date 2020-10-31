@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<registry>
+    <comment>
+        This file contains any EGL extension functions that are missing from
+        the normal egl.xml list.
+    </comment>
+    <commands namespace="EGL">
+        <!-- EGL_WL_bind_wayland_display -->
+        <command>
+            <proto>struct wl_buffer * <name>eglCreateWaylandBufferFromImageWL</name></proto>
+            <param><ptype>EGLDisplay</ptype> <name>dpy</name></param>
+            <param><ptype>EGLImage</ptype> <name>image</name></param>
+        </command>
+
+        <command>
+            <proto>EGLBoolean <name>eglUnbindWaylandDisplayWL</name></proto>
+            <param><ptype>EGLDisplay</ptype> <name>dpy</name></param>
+            <param><ptype>struct wl_display *</ptype> <name>display</name></param>
+        </command>
+
+        <command>
+            <proto>EGLBoolean <name>eglQueryWaylandBufferWL</name></proto>
+            <param><ptype>EGLDisplay</ptype> <name>dpy</name></param>
+            <param><ptype>struct wl_resource *</ptype> <name>buffer</name></param>
+            <param><ptype>EGLint</ptype> <name>attribute</name></param>
+            <param><ptype>EGLint *</ptype> <name>value</name></param>
+        </command>
+
+        <command>
+            <proto>EGLBoolean <name>eglBindWaylandDisplayWL</name></proto>
+            <param><ptype>EGLDisplay</ptype> <name>dpy</name></param>
+            <param><ptype>struct wl_display *</ptype> <name>display</name></param>
+        </command>
+
+        <!-- EGL_CHROMIUM_get_sync_values -->
+        <command>
+            <proto>EGLBoolean <name>eglGetSyncValuesCHROMIUM</name></proto>
+            <param><ptype>EGLDisplay</ptype> <name>display</name></param>
+            <param><ptype>EGLSurface</ptype> <name>surface</name></param>
+            <param><ptype>EGLuint64KHR *</ptype> <name>ust</name></param>
+            <param><ptype>EGLuint64KHR *</ptype> <name>msc</name></param>
+            <param><ptype>EGLuint64KHR *</ptype> <name>sbc</name></param>
+        </command>
+    </commands>
+</registry>
+
+
