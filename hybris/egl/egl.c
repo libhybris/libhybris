@@ -188,7 +188,10 @@ static const char * _defaultEglPlatform()
 	return egl_platform;
 }
 
-static EGLDisplay __eglHybrisGetPlatformDisplayCommon(EGLenum platform,
+#ifndef WANT_GLVND
+static
+#endif
+EGLDisplay __eglHybrisGetPlatformDisplayCommon(EGLenum platform,
         void *display_id, const EGLAttrib *attrib_list)
 {
 	// We have nothing to do with attrib_list at the moment. Silence the unused
@@ -535,14 +538,18 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 	switch (_egl_context_client_version) {
 		case 1:  // OpenGL ES 1.x API
 			if (_hybris_libgles1 == NULL) {
-				_hybris_libgles1 = (void *) dlopen(getenv("HYBRIS_LIBGLESV1") ?: "libGLESv1_CM.so.1", RTLD_LAZY);
+				_hybris_libgles1 = (void *) dlopen(
+					getenv("HYBRIS_LIBGLESV1") ?: "libGLESv1_CM" GL_LIB_SUFFIX ".so.1",
+					RTLD_LOCAL | RTLD_LAZY);
 			}
 			ret = _hybris_libgles1 ? dlsym(_hybris_libgles1, procname) : NULL;
 			break;
 		case 2:  // OpenGL ES 2.0 API
 		case 3:  // OpenGL ES 3.x API, backwards compatible with OpenGL ES 2.0 so we implement in same library
 			if (_hybris_libgles2 == NULL) {
-				_hybris_libgles2 = (void *) dlopen(getenv("HYBRIS_LIBGLESV2") ?: "libGLESv2.so.2", RTLD_LAZY);
+				_hybris_libgles2 = (void *) dlopen(
+					getenv("HYBRIS_LIBGLESV2") ?: "libGLESv2" GL_LIB_SUFFIX ".so.2",
+					RTLD_LOCAL | RTLD_LAZY);
 			}
 			ret = _hybris_libgles2 ? dlsym(_hybris_libgles2, procname) : NULL;
 			break;

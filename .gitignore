@@ -32,6 +32,9 @@ arm-*-linux-gnueabi-libtool
 hybris/camera/libcamera.pc
 hybris/documentation.list
 hybris/egl/egl.pc
+hybris/egl/glvnd/10_libhybris.json
+hybris/egl/glvnd/g_egldispatchstubs.h
+hybris/egl/glvnd/g_egldispatchstubs.c
 hybris/egl/platforms/common/hybris-egl-platform.pc
 hybris/egl/platforms/common/wayland-android-client-protocol.h
 hybris/egl/platforms/common/wayland-android-protocol.c
