@@ -26,6 +26,8 @@
 extern "C" {
 #endif
 
+void __eglHybrisSetError(EGLint error);
+
 void hybris_dump_buffer_to_file(struct ANativeWindowBuffer *buf);
 
 void *hybris_android_egl_dlsym(const char *symbol);

@@ -45,6 +45,8 @@ static void *_hybris_libgles1 = NULL;
 static void *_hybris_libgles2 = NULL;
 static int _egl_context_client_version = 1;
 
+static EGLint      (*_eglGetError)(void) = NULL;
+
 static EGLDisplay  (*_eglGetDisplay)(EGLNativeDisplayType display_id) = NULL;
 static EGLBoolean  (*_eglTerminate)(EGLDisplay dpy) = NULL;
 
@@ -104,7 +106,35 @@ struct ws_egl_interface hybris_egl_interface = {
 	egl_helper_get_mapping,
 };
 
-HYBRIS_IMPLEMENT_FUNCTION0(egl, EGLint, eglGetError);
+static __thread EGLint __eglHybrisError = EGL_SUCCESS;
+
+void __eglHybrisSetError(EGLint error)
+{
+	__eglHybrisError = error;
+}
+
+EGLint eglGetError(void)
+{
+	/*
+	 * EGL requires that eglGetError() reports only the "most recent" error
+	 * and clear the error afterward. Because we don't hook every function,
+	 * both us and Android can have a separated error and we won't know what
+	 * is the most recent. But whatever error we report, we have to clear both
+	 * error. So we report our error over Android's because it's easier this
+	 * way.
+	 */
+	HYBRIS_DLSYSM(egl, &_eglGetError, "eglGetError");
+
+	EGLint androidError = _eglGetError();
+
+	if (__eglHybrisError != EGL_SUCCESS) {
+		EGLint ourError = __eglHybrisError;
+		__eglHybrisError = EGL_SUCCESS;
+		return ourError;
+	}
+
+	return androidError;
+}
 
 #define _EGL_MAX_DISPLAYS 100
 
@@ -375,6 +405,7 @@ static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 	OVERRIDE_MY(eglSwapBuffersWithDamageEXT),
 	OVERRIDE_MY(glEGLImageTargetTexture2DOES),
 	OVERRIDE_MY(eglDestroyImageKHR),
+	OVERRIDE_SAMENAME(eglGetError),
 	OVERRIDE_SAMENAME(eglGetDisplay),
 	OVERRIDE_SAMENAME(eglTerminate),
 	OVERRIDE_SAMENAME(eglCreateWindowSurface),
