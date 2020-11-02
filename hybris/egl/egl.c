@@ -173,6 +173,12 @@ struct _EGLDisplay *hybris_egl_display_get_mapping(EGLDisplay display)
 EGLDisplay eglGetDisplay(EGLNativeDisplayType display_id)
 {
 	HYBRIS_DLSYSM(egl, &_eglGetDisplay, "eglGetDisplay");
+
+	if (!_eglGetDisplay) {
+		__eglHybrisSetError(EGL_NOT_INITIALIZED);
+		return EGL_NO_DISPLAY;
+	}
+
 	EGLNativeDisplayType real_display;
 
 	real_display = (*_eglGetDisplay)(EGL_DEFAULT_DISPLAY);
