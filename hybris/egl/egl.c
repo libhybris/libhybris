@@ -33,6 +33,7 @@
 
 
 #include <hybris/common/binding.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <system/window.h>
@@ -349,25 +350,68 @@ static void _my_glEGLImageTargetTexture2DOES(GLenum target, GLeglImageOES image)
 	(*_glEGLImageTargetTexture2DOES)(target, img ? img->egl_image : NULL);
 }
 
+struct FuncNamePair {
+	const char * name;
+	__eglMustCastToProperFunctionPointerType func;
+};
+
+#define OVERRIDE_SAMENAME(function) { .name = #function, .func = (__eglMustCastToProperFunctionPointerType) function }
+#define OVERRIDE_MY(function) { .name = #function, .func = (__eglMustCastToProperFunctionPointerType) _my_ ## function }
+
+static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
+	OVERRIDE_MY(eglCreateImageKHR),
+	OVERRIDE_SAMENAME(eglDestroyImageKHR),
+	OVERRIDE_MY(eglSwapBuffersWithDamageEXT),
+	OVERRIDE_MY(glEGLImageTargetTexture2DOES),
+	OVERRIDE_SAMENAME(eglGetDisplay),
+	OVERRIDE_SAMENAME(eglTerminate),
+	OVERRIDE_SAMENAME(eglCreateWindowSurface),
+	OVERRIDE_SAMENAME(eglDestroySurface),
+	OVERRIDE_SAMENAME(eglSwapInterval),
+	OVERRIDE_SAMENAME(eglCreateContext),
+	OVERRIDE_SAMENAME(eglSwapBuffers),
+	OVERRIDE_SAMENAME(eglGetProcAddress),
+};
+static EGLBoolean _eglHybrisOverrideFunctions_sorted = EGL_FALSE;
+
+#undef OVERRIDE_SANENAME
+#undef OVERRIDE_MY
+
+static int compare_sort(const void * a, const void * b)
+{
+	const struct FuncNamePair *f_a = a, *f_b = b;
+	return strcmp(f_a->name, f_b->name);
+}
+
+static int compare_search(const void * key, const void * item)
+{
+	const struct FuncNamePair *f_item = item;
+	return strcmp(key, f_item->name);
+}
+
 __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 {
 	HYBRIS_DLSYSM(egl, &_eglGetProcAddress, "eglGetProcAddress");
-	if (strcmp(procname, "eglCreateImageKHR") == 0)
-	{
-		return (__eglMustCastToProperFunctionPointerType) _my_eglCreateImageKHR;
+
+	if (!_eglHybrisOverrideFunctions_sorted) {
+		_eglHybrisOverrideFunctions_sorted = EGL_TRUE;
+		qsort(
+			_eglHybrisOverrideFunctions,
+			sizeof(_eglHybrisOverrideFunctions) / sizeof(_eglHybrisOverrideFunctions[0]),
+			sizeof(struct FuncNamePair),
+			compare_sort
+		);
 	}
-	else if (strcmp(procname, "eglDestroyImageKHR") == 0)
-	{
-		return (__eglMustCastToProperFunctionPointerType) eglDestroyImageKHR;
-	}
-	else if (strcmp(procname, "eglSwapBuffersWithDamageEXT") == 0)
-	{
-		return (__eglMustCastToProperFunctionPointerType) _my_eglSwapBuffersWithDamageEXT;
-	}
-	else if (strcmp(procname, "glEGLImageTargetTexture2DOES") == 0)
-	{
-		return (__eglMustCastToProperFunctionPointerType) _my_glEGLImageTargetTexture2DOES;
-	}
+
+	struct FuncNamePair *result = bsearch(
+		procname,
+		_eglHybrisOverrideFunctions,
+		sizeof(_eglHybrisOverrideFunctions) / sizeof(_eglHybrisOverrideFunctions[0]),
+		sizeof(struct FuncNamePair),
+		compare_search
+	);
+	if (result)
+		return result->func;
 
 	__eglMustCastToProperFunctionPointerType ret = NULL;
 
