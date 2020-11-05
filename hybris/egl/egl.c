@@ -170,12 +170,63 @@ struct _EGLDisplay *hybris_egl_display_get_mapping(EGLDisplay display)
 	return EGL_NO_DISPLAY;
 }
 
-EGLDisplay eglGetDisplay(EGLNativeDisplayType display_id)
+static const char * _defaultEglPlatform()
 {
+	char *egl_platform;
+
+	// Mesa uses EGL_PLATFORM for its own purposes.
+	// Add HYBRIS_EGLPLATFORM to avoid the conflicts
+	egl_platform = getenv("HYBRIS_EGLPLATFORM");
+
+	if (egl_platform == NULL)
+		egl_platform = getenv("EGL_PLATFORM");
+
+	// The env variables may be defined yet empty
+	if (egl_platform == NULL || strcmp(egl_platform, "") == 0)
+		egl_platform = DEFAULT_EGL_PLATFORM;
+
+	return egl_platform;
+}
+
+static EGLDisplay __eglHybrisGetPlatformDisplayCommon(EGLenum platform,
+        void *display_id, const EGLAttrib *attrib_list)
+{
+	// We have nothing to do with attrib_list at the moment. Silence the unused
+	// variable warning.
+	(void) attrib_list;
+
 	HYBRIS_DLSYSM(egl, &_eglGetDisplay, "eglGetDisplay");
 
 	if (!_eglGetDisplay) {
 		__eglHybrisSetError(EGL_NOT_INITIALIZED);
+		return EGL_NO_DISPLAY;
+	}
+
+	const char * hybris_ws;
+	switch (platform) {
+		case EGL_NONE:
+			hybris_ws = _defaultEglPlatform();
+			break;
+
+		case EGL_PLATFORM_ANDROID_KHR:
+			// "null" ws passthrough everything, which essentially means
+			// the Android platform. Not to be confused with NULL (0) value.
+			hybris_ws = "null";
+			break;
+
+#ifdef WANT_WAYLAND
+		case EGL_PLATFORM_WAYLAND_KHR:
+			hybris_ws = "wayland";
+			break;
+#endif
+
+		default:
+			__eglHybrisSetError(EGL_BAD_PARAMETER);
+			return EGL_NO_DISPLAY;
+	}
+
+	if (ws_init(hybris_ws) == EGL_FALSE) { // Other ws already loaded.
+		__eglHybrisSetError(EGL_BAD_PARAMETER);
 		return EGL_NO_DISPLAY;
 	}
 
@@ -198,6 +249,22 @@ EGLDisplay eglGetDisplay(EGLNativeDisplayType display_id)
 	}
 
 	return real_display;
+}
+
+EGLDisplay eglGetDisplay(EGLNativeDisplayType display_id)
+{
+	return __eglHybrisGetPlatformDisplayCommon(EGL_NONE, display_id, NULL);
+}
+
+EGLDisplay eglGetPlatformDisplay(EGLenum platform,
+        void *display_id, const EGLAttrib *attrib_list)
+{
+	if (platform == EGL_NONE) {
+		__eglHybrisSetError(EGL_BAD_PARAMETER);
+		return EGL_NO_DISPLAY;
+	}
+
+	return __eglHybrisGetPlatformDisplayCommon(platform, display_id, attrib_list);
 }
 
 HYBRIS_IMPLEMENT_FUNCTION3(egl, EGLBoolean, eglInitialize, EGLDisplay, EGLint *, EGLint *);
@@ -413,6 +480,7 @@ static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 	OVERRIDE_MY(eglDestroyImageKHR),
 	OVERRIDE_SAMENAME(eglGetError),
 	OVERRIDE_SAMENAME(eglGetDisplay),
+	OVERRIDE_SAMENAME(eglGetPlatformDisplay),
 	OVERRIDE_SAMENAME(eglTerminate),
 	OVERRIDE_SAMENAME(eglCreateWindowSurface),
 	OVERRIDE_SAMENAME(eglDestroySurface),
