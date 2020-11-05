@@ -39,6 +39,8 @@ struct ws_module {
 	void (*setSwapInterval)(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval);
 };
 
+EGLBoolean ws_init(const char * egl_platform);
+
 struct _EGLDisplay *ws_GetDisplay(EGLNativeDisplayType native);
 void ws_Terminate(struct _EGLDisplay *dpy);
 EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, struct _EGLDisplay *display);
