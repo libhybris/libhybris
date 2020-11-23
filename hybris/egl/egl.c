@@ -25,6 +25,7 @@
 #include <GLES2/gl2ext.h>
 #include <dlfcn.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <malloc.h>
 #include "ws.h"
@@ -315,6 +316,21 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 	return result;
 }
 
+static EGLSurface _my_eglCreatePlatformWindowSurfaceEXT(EGLDisplay dpy, EGLConfig config,
+		void *native_window, const EGLint *attrib_list)
+{
+	/*
+	 * TODO: Convert type of parameters here if semantics for native_window
+	 * differs from EGLNativeWindowType. Both Android(-based) platform and
+	 * Wayland platform doesn't have this problem (they both accept a pointer).
+	 * However, a patch for X11 exists, and for X11 platform you pass a pointer
+	 * to Window in this function, but the Window itself (which is an XID) as
+	 * EGLNativeWindowType. The patch probably have to patch this function.
+	 */
+
+	return eglCreateWindowSurface(dpy, config, (uintptr_t) native_window, attrib_list);
+}
+
 HYBRIS_IMPLEMENT_FUNCTION3(egl, EGLSurface, eglCreatePbufferSurface, EGLDisplay, EGLConfig, const EGLint *);
 HYBRIS_IMPLEMENT_FUNCTION4(egl, EGLSurface, eglCreatePixmapSurface, EGLDisplay, EGLConfig, EGLNativePixmapType, const EGLint *);
 
@@ -475,6 +491,7 @@ struct FuncNamePair {
 
 #define OVERRIDE_SAMENAME(function) { .name = #function, .func = (__eglMustCastToProperFunctionPointerType) function }
 #define OVERRIDE_MY(function) { .name = #function, .func = (__eglMustCastToProperFunctionPointerType) _my_ ## function }
+#define OVERRIDE_TO(function_from, function) { .name = #function_from, .func = (__eglMustCastToProperFunctionPointerType) function }
 
 static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 	OVERRIDE_MY(eglCreateImageKHR),
@@ -491,11 +508,41 @@ static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 	OVERRIDE_SAMENAME(eglCreateContext),
 	OVERRIDE_SAMENAME(eglSwapBuffers),
 	OVERRIDE_SAMENAME(eglGetProcAddress),
+	/*
+	 * EGL_EXT_platform_base, in case Android EGL or glvnd advertise its
+	 * support.
+	 * 
+	 * For glvnd, it will advertise EGL_EXT_platform_base when one of
+	 * the vendor libraries support the extension. And most of the time, we're
+	 * installed together with Mesa, which support the extension, so we're
+	 * forced to support it or some client (e.g. Weston nested) will not work
+	 * properly (see [1]).
+	 * 
+	 * Nonetheless, we should wrap these functions anyway, as we have to wrap
+	 * both eglGetDisplay() and eglCreateWindowSurface().
+	 *
+	 * Note that the signature of eglGetPlatformDisplayEXT() isn't exactly the
+	 * same as eglGetPlatformDisplay(); the EXT one uses EGLint for attrib_list
+	 * but non-EXT one uses EGLAttrib (introduced in EGL 1.5). However, because
+	 * we don't use attrib_list (at the moment), we can simply ignore that.
+	 * 
+	 * eglCreatePlatformWindowSurfaceEXT() can have different schematic from
+	 * non-platform version (see the function's body, and also [1]). I don't
+	 * know what's up with eglCreatePlatformPixmapSurfaceEXT(); it seems to
+	 * require cooperation from WS, but it seems to be implemented by only the
+	 * standard Hybris wrapper.
+	 *
+	 * [1] https://gitlab.freedesktop.org/glvnd/libglvnd/-/issues/214
+	 */
+	OVERRIDE_TO(eglGetPlatformDisplayEXT, eglGetPlatformDisplay),
+	OVERRIDE_MY(eglCreatePlatformWindowSurfaceEXT),
+	OVERRIDE_TO(eglCreatePlatformPixmapSurfaceEXT, eglCreatePixmapSurface),
 };
 static EGLBoolean _eglHybrisOverrideFunctions_sorted = EGL_FALSE;
 
 #undef OVERRIDE_SANENAME
 #undef OVERRIDE_MY
+#undef OVERRIDE_TO
 
 static int compare_sort(const void * a, const void * b)
 {
