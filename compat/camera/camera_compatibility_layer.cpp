@@ -182,6 +182,19 @@ sp<GraphicBuffer> NativeBufferAlloc::createGraphicBuffer(uint32_t w, uint32_t h,
 }
 #endif
 
+static void setParameters_resilient(CameraControl* control)
+{
+	android::status_t err = control->camera->setParameters(control->camera_parameters.flatten());
+
+	if (err != android::NO_ERROR) {
+		// The parameters that we have is now stale. Reset to the current parameter
+		// to prevent the bad value from blocking other values.
+
+		ALOGW("Fails to set camera parameters: %s", strerror(-err));
+		control->camera_parameters = android::CameraParameters(control->camera->getParameters());
+	}
+}
+
 int android_camera_get_number_of_devices()
 {
 	REPORT_FUNCTION();
@@ -310,7 +323,7 @@ void android_camera_set_flash_mode(CameraControl* control, FlashMode mode)
 	control->camera_parameters.set(
 			android::CameraParameters::KEY_FLASH_MODE,
 			flash_modes[mode]);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_get_flash_mode(CameraControl* control, FlashMode* mode)
@@ -369,7 +382,7 @@ void android_camera_set_white_balance_mode(CameraControl* control, WhiteBalanceM
 	control->camera_parameters.set(
 			android::CameraParameters::KEY_WHITE_BALANCE,
 			white_balance_modes[mode]);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_get_white_balance_mode(CameraControl* control, WhiteBalanceMode* mode)
@@ -395,7 +408,7 @@ void android_camera_set_scene_mode(CameraControl* control, SceneMode mode)
 	control->camera_parameters.set(
 			android::CameraParameters::KEY_SCENE_MODE,
 			scene_modes[mode]);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_enumerate_supported_scene_modes(CameraControl* control, scene_mode_callback cb, void* ctx)
@@ -446,7 +459,7 @@ void android_camera_set_auto_focus_mode(CameraControl* control, AutoFocusMode mo
 	control->camera_parameters.set(
 			android::CameraParameters::KEY_FOCUS_MODE,
 			auto_focus_modes[mode]);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_get_auto_focus_mode(CameraControl* control, AutoFocusMode* mode)
@@ -473,7 +486,7 @@ void android_camera_set_effect_mode(CameraControl* control, EffectMode mode)
 	control->camera_parameters.set(
 			android::CameraParameters::KEY_EFFECT,
 			effect_modes[mode]);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_get_effect_mode(CameraControl* control, EffectMode* mode)
@@ -506,7 +519,7 @@ void android_camera_set_preview_fps(CameraControl* control, int fps)
 
 	android::Mutex::Autolock al(control->guard);
 	control->camera_parameters.setPreviewFrameRate(fps);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_get_preview_fps(CameraControl* control, int* fps)
@@ -564,7 +577,7 @@ void android_camera_set_preview_size(CameraControl* control, int width, int heig
 	android::Mutex::Autolock al(control->guard);
 
 	control->camera_parameters.setPreviewSize(width, height);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_get_picture_size(CameraControl* control, int* width, int* height)
@@ -590,7 +603,7 @@ void android_camera_set_thumbnail_size(struct CameraControl* control, int width,
 	control->camera_parameters.set(
 			android::CameraParameters::KEY_JPEG_THUMBNAIL_HEIGHT,
 			height);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_get_thumbnail_size(struct CameraControl* control, int* width, int* height)
@@ -646,7 +659,7 @@ void android_camera_set_picture_size(CameraControl* control, int width, int heig
 	android::Mutex::Autolock al(control->guard);
 
 	control->camera_parameters.setPictureSize(width, height);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_get_current_zoom(CameraControl* control, int* zoom)
@@ -857,7 +870,7 @@ void android_camera_set_zoom(CameraControl* control, int32_t zoom)
 			android::CameraParameters::KEY_ZOOM,
 			zoom);
 
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_stop_zoom(CameraControl* control)
@@ -908,7 +921,7 @@ void android_camera_set_preview_format(CameraControl* control, CameraPixelFormat
 			android::CameraParameters::KEY_PREVIEW_FORMAT,
 			camera_pixel_formats[pf]);
 
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_get_preview_format(CameraControl* control, CameraPixelFormat* pf)
@@ -947,7 +960,7 @@ void android_camera_set_focus_region(
 			android::CameraParameters::KEY_FOCUS_AREAS,
 			focus_region);
 
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_reset_focus_region(CameraControl* control)
@@ -980,7 +993,7 @@ void android_camera_set_metering_region(
                         android::CameraParameters::KEY_METERING_AREAS,
                         metering_region);
 
-        control->camera->setParameters(control->camera_parameters.flatten());
+        setParameters_resilient(control);
 }
 
 void android_camera_reset_metering_region(CameraControl* control)
@@ -999,7 +1012,7 @@ void android_camera_set_rotation(CameraControl* control, int rotation)
 	control->camera_parameters.set(
 			android::CameraParameters::KEY_ROTATION,
 			rotation);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_set_location(CameraControl* control, const float* latitude, const float* longitude, const float* altitude, int timestamp, const char* method)
@@ -1023,7 +1036,7 @@ void android_camera_set_location(CameraControl* control, const float* latitude, 
 	control->camera_parameters.set(
 			android::CameraParameters::KEY_GPS_PROCESSING_METHOD,
 			method);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_enumerate_supported_video_sizes(CameraControl* control, size_callback cb, void* ctx)
@@ -1059,7 +1072,7 @@ void android_camera_set_video_size(CameraControl* control, int width, int height
 	android::Mutex::Autolock al(control->guard);
 
 	control->camera_parameters.setVideoSize(width, height);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_set_jpeg_quality(CameraControl* control, int quality)
@@ -1071,7 +1084,7 @@ void android_camera_set_jpeg_quality(CameraControl* control, int quality)
 	control->camera_parameters.set(
 			android::CameraParameters::KEY_JPEG_QUALITY,
 			quality);
-	control->camera->setParameters(control->camera_parameters.flatten());
+	setParameters_resilient(control);
 }
 
 void android_camera_get_jpeg_quality(CameraControl* control, int* quality)
