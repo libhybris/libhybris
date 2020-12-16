@@ -61,7 +61,7 @@ AC_ARG_ENABLE(trace,
 AM_CONDITIONAL( [WANT_TRACE], [test x"$trace" = x"yes"])
 
 AC_ARG_ENABLE(arm_tracing,
-  [  --enable-arm-tracing            Enable ARM (32-bit only) tracing, useful for understanding what the blob is doing, currently only the mm linker is supported. (default=disabled)],
+  [  --enable-arm-tracing            Enable ARM (both 32 and 64-bit) tracing, useful for understanding what the blob is doing, currently only the mm linker is supported. (default=disabled)],
   [arm_tracing=$enableval],
   [arm_tracing="no"])
 AM_CONDITIONAL([WANT_ARM_TRACING], [test x"$arm_tracing" = x"yes"])
