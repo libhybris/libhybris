@@ -113,6 +113,11 @@ public:
     virtual status_t getActiveMicrophones(
                         std::vector<media::MicrophoneInfo>* activeMicrophones);
 #endif
+#if ANDROID_VERSION_MAJOR>=10
+    virtual status_t setPreferredMicrophoneDirection(audio_microphone_direction_t direction);
+    virtual status_t setPreferredMicrophoneFieldDimension(float zoom);
+    virtual status_t getPortId(audio_port_handle_t *portId);
+#endif
 
 private:
     sp<BpMediaRecorderObserver> media_recorder_observer;

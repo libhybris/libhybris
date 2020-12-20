@@ -82,7 +82,9 @@ size_t media_codec_list_get_num_supported_types(size_t index)
     REPORT_FUNCTION()
 
     Vector<AString> types;
-#if ANDROID_VERSION_MAJOR>=5
+#if ANDROID_VERSION_MAJOR>=10
+    MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMediaTypes(&types);
+#elif ANDROID_VERSION_MAJOR>=5
     MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMimes(&types);
 #else
     status_t err = MediaCodecList::getInstance()->getSupportedTypes(index, &types);
@@ -102,7 +104,9 @@ size_t media_codec_list_get_nth_supported_type_len(size_t index, size_t n)
     REPORT_FUNCTION()
 
     Vector<AString> types;
-#if ANDROID_VERSION_MAJOR>=5
+#if ANDROID_VERSION_MAJOR>=10
+    MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMediaTypes(&types);
+#elif ANDROID_VERSION_MAJOR>=5
     MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMimes(&types);
 #else
     status_t err = MediaCodecList::getInstance()->getSupportedTypes(index, &types);
@@ -122,7 +126,9 @@ int media_codec_list_get_nth_supported_type(size_t index, char *type, size_t n)
     }
 
     Vector<AString> types;
-#if ANDROID_VERSION_MAJOR>=5
+#if ANDROID_VERSION_MAJOR>=10
+    MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMediaTypes(&types);
+#elif ANDROID_VERSION_MAJOR>=5
     MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMimes(&types);
 #else
     status_t err = MediaCodecList::getInstance()->getSupportedTypes(index, &types);

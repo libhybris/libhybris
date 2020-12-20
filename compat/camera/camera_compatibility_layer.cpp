@@ -125,6 +125,7 @@ void CameraControl::postData(
 	case CAMERA_MSG_PREVIEW_FRAME:
 		if (listener->on_preview_frame_cb)
 			listener->on_preview_frame_cb(data->pointer(), data->size(), listener->context);
+		break;
 	default:
 		break;
 	}

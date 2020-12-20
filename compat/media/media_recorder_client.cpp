@@ -16,13 +16,14 @@
  * Authored by: Jim Hodapp <jim.hodapp@canonical.com>
  */
 
+// #define LOG_NDEBUG 0
+#define LOG_TAG "MediaRecorderClient"
+
 #include "media_recorder_client.h"
 
 #include <libmediaplayerservice/StagefrightRecorder.h>
 #include <binder/IServiceManager.h>
 
-// #define LOG_NDEBUG 0
-#define LOG_TAG "MediaRecorderClient"
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__)
 
@@ -446,6 +447,36 @@ status_t MediaRecorderClient::getActiveMicrophones(
     Mutex::Autolock lock(recorder_lock);
     if (recorder != NULL) {
         return recorder->getActiveMicrophones(activeMicrophones);
+    }
+    return NO_INIT;
+}
+#endif
+
+#if ANDROID_VERSION_MAJOR>=10
+status_t MediaRecorderClient::setPreferredMicrophoneDirection(audio_microphone_direction_t direction) {
+    REPORT_FUNCTION();
+    ALOGV("setPreferredMicrophoneDirection(%d)", direction);
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->setPreferredMicrophoneDirection(direction);
+    }
+    return NO_INIT;
+}
+status_t MediaRecorderClient::setPreferredMicrophoneFieldDimension(float zoom) {
+    REPORT_FUNCTION();
+    ALOGV("setPreferredMicrophoneFieldDimension(%f)", zoom);
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->setPreferredMicrophoneFieldDimension(zoom);
+    }
+    return NO_INIT;
+}
+status_t MediaRecorderClient::getPortId(audio_port_handle_t *portId) {
+    REPORT_FUNCTION();
+    ALOGV("getPortId");
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->getPortId(portId);
     }
     return NO_INIT;
 }

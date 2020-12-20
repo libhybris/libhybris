@@ -574,6 +574,7 @@ a::status_t a::MediaRecorder::reset()
             if (OK != ret) {
                 return ret;  // No need to continue
             }
+            FALLTHROUGH_INTENDED;
         }  // Intentional fall through
         case MEDIA_RECORDER_INITIALIZED:
             ret = close();
