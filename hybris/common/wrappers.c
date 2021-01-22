@@ -100,7 +100,11 @@ get_wrapper_code_size(void *wrapper)
 void *create_wrapper(const char *symbol, void *function, int wrapper_type)
 {
     size_t wrapper_size = 0;
+#ifdef __arm__
     void *wrapper_code = (void*)((uint32_t)wrapper_code_generic & 0xFFFFFFFE);
+#elif defined(__aarch64__)
+    void *wrapper_code = (void*)(wrapper_code_generic);
+#endif
     void *wrapper_addr = NULL;
     int helper = 0;
 
@@ -136,7 +140,7 @@ void *create_wrapper(const char *symbol, void *function, int wrapper_type)
     wrapper_size = get_wrapper_code_size(wrapper_code);
 
     // 4 additional longs for data storage, see below
-    wrapper_size += 4 * sizeof(uint32_t);
+    wrapper_size += 4 * sizeof(uintptr_t);
 
     // reserve memory for the generated wrapper
     wrapper_addr = mmap(NULL, wrapper_size,
@@ -153,17 +157,17 @@ void *create_wrapper(const char *symbol, void *function, int wrapper_type)
     memcpy(wrapper_addr, wrapper_code, wrapper_size);
 
     // Helper = offset of data fields in wrapper_addr (interpreted as int32_t)
-    helper = wrapper_size / sizeof(uint32_t) - 4;
+    helper = wrapper_size / sizeof(uintptr_t) - 4;
 
     switch(wrapper_type)
     {
         case WRAPPER_HOOKED:
         case WRAPPER_UNHOOKED:
         case WRAPPER_DYNHOOK:
-            ((int32_t*)wrapper_addr)[helper++] = (uint32_t)symbol;
-            ((int32_t*)wrapper_addr)[helper++] = (uint32_t)function;
-            ((int32_t*)wrapper_addr)[helper++] = (uint32_t)trace_callback;
-            ((int32_t*)wrapper_addr)[helper++] = (uint32_t)msg;
+            ((uintptr_t*)wrapper_addr)[helper++] = (uintptr_t)symbol;
+            ((uintptr_t*)wrapper_addr)[helper++] = (uintptr_t)function;
+            ((uintptr_t*)wrapper_addr)[helper++] = (uintptr_t)trace_callback;
+            ((uintptr_t*)wrapper_addr)[helper++] = (uintptr_t)msg;
             break;
         default:
             assert(0);
