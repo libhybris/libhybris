@@ -135,6 +135,7 @@ static const char* const kDefaultLdPaths[] = {
   kSystemLibDir,
   kOdmLibDir,
   kVendorLibDir,
+  kRuntimeApexLibDir,
   nullptr
 };
 
@@ -145,6 +146,7 @@ static const char* const kAsanDefaultLdPaths[] = {
   kOdmLibDir,
   kAsanVendorLibDir,
   kVendorLibDir,
+  kRuntimeApexLibDir,
   nullptr
 };
 
