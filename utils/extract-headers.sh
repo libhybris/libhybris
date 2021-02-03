@@ -206,6 +206,11 @@ check_header_exists frameworks/opt/net/wifi/libwifi_hal/include/hardware_legacy/
 extract_headers_to hardware_legacy \
     hardware/libhardware_legacy/include/hardware_legacy/audio_policy_conf.h
 
+
+check_header_exists system/media/audio/include/system/audio.h && \
+	extract_headers_to system \
+	                   system/media/audio/include/system
+
 extract_headers_to cutils \
     system/core/include/cutils
 
@@ -219,10 +224,27 @@ check_header_exists system/media/audio/include/system/audio.h && \
     extract_headers_to system \
         system/media/audio/include/system
 
+if [ $MAJOR -ge 10 ]; then
+    extract_headers_to vndk \
+        frameworks/native/libs/nativewindow/include/vndk/window.h
+    extract_headers_to system \
+        frameworks/native/libs/nativewindow/include/system/window.h
+    extract_headers_to nativebase \
+        frameworks/native/libs/nativebase/include/nativebase/nativebase.h
+fi
+
 extract_headers_to android \
     system/core/include/android
 
-check_header_exists bionic/libc/kernel/common/linux/sync.h && \
+if [ $MAJOR -ge 10 ]; then
+    extract_headers_to android \
+        frameworks/native/libs/nativewindow/include/android
+    extract_headers_to android \
+        frameworks/native/libs/arect/include/android
+fi
+
+if [ $MAJOR -eq 4 -a $MINOR -ge 1 ]; then
+    check_header_exists bionic/libc/kernel/common/linux/sync.h && \
     extract_headers_to linux \
         bionic/libc/kernel/common/linux/sync.h \
         bionic/libc/kernel/common/linux/sw_sync.h

@@ -16,10 +16,21 @@ bin_PROGRAMS = \
 	test_opencl \
 	test_wifi \
 	test_hwcomposer \
-	test_nfc
+	test_nfc \
+	test_dlopen
+
+
+test_dlopen_SOURCES = test_dlopen.c
+test_dlopen_CFLAGS = \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/hybris/include \
+	-I$(top_srcdir)/include/android
+test_dlopen_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/hardware/libhardware.la
 
 test_audio_SOURCES = test_audio.c
-test_audio_CFLAGS = \
+test_audio_CFLAGS = -std=c99\
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/include/android
 test_audio_LDADD = \

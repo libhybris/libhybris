@@ -35,7 +35,11 @@ static EGLNativeWindowType nullws_CreateWindow(EGLNativeWindowType win, struct _
 {
 	if (win == 0)
 	{
+#if (ANDROID_VERSION_MAJOR <= 7)
 		return android_createDisplaySurface();
+#else
+		return win;
+#endif
 	}
 	else
 		return win;

@@ -184,7 +184,7 @@ if test x$ac_with_android_headers == x""; then
     AM_CONDITIONAL([HAS_LIBNFC_NXP_HEADERS], [test x"$HAS_LIBNFC_NXP_HEADERS" = x"yes"])
     AC_CHECK_HEADERS(hardware_legacy/wifi.h, HAS_WIFI_LEGACY_HEADERS=yes)
     AM_CONDITIONAL([HAS_WIFI_LEGACY_HEADERS], [test x"$HAS_WIFI_LEGACY_HEADERS" = x"yes"])
-    AC_CHECK_HEADERS(hardware/hwcomposer2.h, HAS_HWCOMPOSER2_HEADERS=yes)
+    AC_CHECK_HEADERS(hardware/hwcomposer2.h, HAS_HWCOMPOSER2_HEADERS=yes, HAS_HWCOMPOSER2_HEADERS=no, [# include <stdbool.h>])
     AM_CONDITIONAL([HAS_HWCOMPOSER2_HEADERS], [test x"$HAS_HWCOMPOSER2_HEADERS" = x"yes"])
     AC_CHECK_HEADERS(hardware/gralloc1.h, HAS_GRALLOC1_HEADER=yes)
     AM_CONDITIONAL([HAS_GRALLOC1_HEADER], [test x"$HAS_GRALLOC1_HEADER" = x"yes"])
@@ -242,6 +242,7 @@ AC_SUBST(ANDROID_VERSION_PATCH, [$android_headers_patch])
 AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch")
 
 # Add automake tests for version/API needs here that you need in code, including test .am's
+AM_CONDITIONAL([HAS_ANDROID_10_0_0],[test $android_headers_major -ge 10 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_9_0_0], [test $android_headers_major -ge 9 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_8_0_0], [test $android_headers_major -ge 8 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_7_0_0], [test $android_headers_major -ge 7 -a $android_headers_minor -ge 0 ])
@@ -277,6 +278,7 @@ AC_CONFIG_FILES([
 	common/mm/Makefile
 	common/n/Makefile
 	common/o/Makefile
+	common/q/Makefile
 	egl/egl.pc
 	egl/Makefile
 	egl/platforms/Makefile
