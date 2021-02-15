@@ -137,3 +137,32 @@ wrapper_code_generic()
     );
 #endif
 }
+
+#ifdef __arm__
+void
+wrapper_code_generic_thumb()
+{
+    // we can never use r0-r11, neither the stack
+    asm volatile(
+        // preserve the registers
+        "push {r0-r11, lr}\n"
+
+        "ldr r0, tfun\n" // load the function pointer to r0
+        "ldr r1, tname\n" // load the address of the functions name to r1
+        "ldr r2, tstr\n" // load the string to print
+        "ldr r4, ttc\n" // load the address of trace_callback to r4
+        "blx r4\n" // call trace_callback
+
+        // restore the registers
+        "pop {r0-r11, lr}\n"
+        "ldr pc, tfun\n"     // jump to function
+
+        // dummy instructions, this is where we locate our pointers
+        "tname: .word 0xFFFFFFFF\n" // name of function to call
+        "tfun: .word 0xFFFFFFFF\n" // function to call
+        "ttc: .word 0xFFFFFFFF\n" // address of trace_callback
+        "tstr: .word 0xFFFFFFFF\n" // the string being printed in trace_callback
+    );
+}
+#endif
+

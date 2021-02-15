@@ -59,16 +59,6 @@ if WANT_ADRENO_QUIRKS
 libhybris_common_la_CPPFLAGS += -DWANT_ADRENO_QUIRKS
 endif
 
-if WANT_ARM_TRACING
-if WANT_ARCH_ARM
-# thumb mode not supported
-libhybris_common_la_CFLAGS += \
-	-marm
-libhybris_common_la_CPPFLAGS += \
-	-marm
-endif
-endif
-
 if WANT_TRACE
 libhybris_common_la_CPPFLAGS += -DDEBUG
 endif
