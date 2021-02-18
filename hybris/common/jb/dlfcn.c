@@ -23,6 +23,12 @@
 #include "linker.h"
 #include "linker_format.h"
 
+#ifdef WANT_ARM_TRACING
+#include "../wrappers.h"
+
+extern void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
+#endif
+
 /* This file hijacks the symbols stubbed out in libdl.so. */
 
 #define DL_SUCCESS                    0
@@ -115,6 +121,15 @@ void *android_dlsym(void *handle, const char *symbol)
 
         if(likely((bind == STB_GLOBAL) && (sym->st_shndx != 0))) {
             unsigned ret = sym->st_value + found->base;
+#ifdef WANT_ARM_TRACING
+              switch(ELF32_ST_TYPE(sym->st_info))
+              {
+                case STT_FUNC:
+                case STT_GNU_IFUNC:
+                case STT_ARM_TFUNC:
+                  ret = (void*)(_create_wrapper((char*)symbol, (void*)ret, WRAPPER_DYNHOOK));
+              }
+#endif
             pthread_mutex_unlock(&dl_lock);
             return (void*)ret;
         }

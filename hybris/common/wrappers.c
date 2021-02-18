@@ -107,6 +107,15 @@ void *create_wrapper(const char *symbol, void *function, int wrapper_type)
 #endif
     void *wrapper_addr = NULL;
     int helper = 0;
+    int thumb_fixup = 0;
+
+#ifdef __arm__
+    if ((uint32_t)function & 1) {
+        // thumb
+        wrapper_code = (void*)((uint32_t)wrapper_code_generic_thumb & 0xFFFFFFFE);
+        thumb_fixup = 1;
+    }
+#endif
 
     const char *msg = NULL;
 
@@ -176,7 +185,7 @@ void *create_wrapper(const char *symbol, void *function, int wrapper_type)
 
     register_wrapper(wrapper_addr, wrapper_size, symbol, wrapper_type);
 
-    return (void*)wrapper_addr;
+    return (void*)wrapper_addr + thumb_fixup;
 }
 
 void release_all_wrappers()
