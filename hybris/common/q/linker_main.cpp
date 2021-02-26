@@ -785,10 +785,10 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
     ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
   }
 
-  if (DEFAULT_HYBRIS_LD_LIBRARY_PATH)
-    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
-  else
+  if (ldpath_env)
     parse_LD_LIBRARY_PATH(ldpath_env);
+  else
+    parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
   parse_LD_PRELOAD(ldpreload_env);
 
   DEBUG("sdk_version %d\n", sdk_version);
@@ -798,6 +798,7 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
 
   _get_hooked_symbol = get_hooked_symbol;
   _linker_enable_gdb_support = enable_linker_gdb_support;
+  _create_wrapper = create_wrapper;
 
   soinfo tmp_linker_so(nullptr, nullptr, nullptr, 0, 0);
   generate_tmpsoinfo(tmp_linker_so);

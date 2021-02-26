@@ -82,6 +82,10 @@ char* linker_get_error_buffer();
 size_t linker_get_error_buffer_size();
 extern void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 
+#ifdef WANT_ARM_TRACING
+extern void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
+#endif
+
 class DlErrorRestorer {
  public:
   DlErrorRestorer() {

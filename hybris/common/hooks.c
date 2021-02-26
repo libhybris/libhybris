@@ -3073,6 +3073,7 @@ static struct _hook hooks_mm[] = {
     HOOK_DIRECT_NO_DEBUG(ptsname),
     HOOK_TO(__hybris_set_errno_internal, _hybris_hook___set_errno),
     HOOK_DIRECT_NO_DEBUG(getservbyname),
+    HOOK_DIRECT_NO_DEBUG(close), /* avoid calling fdsan functions */
     /* libgen.h */
     HOOK_INDIRECT(basename),
     HOOK_INDIRECT(dirname),
