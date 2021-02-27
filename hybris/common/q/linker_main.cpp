@@ -798,7 +798,9 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
 
   _get_hooked_symbol = get_hooked_symbol;
   _linker_enable_gdb_support = enable_linker_gdb_support;
+#ifdef WANT_ARM_TRACING
   _create_wrapper = create_wrapper;
+#endif
 
   soinfo tmp_linker_so(nullptr, nullptr, nullptr, 0, 0);
   generate_tmpsoinfo(tmp_linker_so);
