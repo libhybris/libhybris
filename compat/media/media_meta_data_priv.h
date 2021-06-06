@@ -29,11 +29,58 @@ struct MediaMetaDataPrivate
 public:
     static MediaMetaDataPrivate* toPrivate(MediaMetaDataWrapper *md);
 
+#if ANDROID_VERSION_MAJOR>=8
+    struct MetaDataPtr {
+        MetaDataPtr(android::MediaBufferBase *buf = nullptr):
+            buffer(buf)
+        {
+            if (buffer) {
+                buffer->add_ref();
+                data = &buffer->meta_data();
+            } else {
+                data = new android::MetaDataBase;
+            }
+        }
+
+        MetaDataPtr(const android::sp<android::MetaData> &md):
+            buffer(nullptr),
+            data(new android::MetaDataBase(*md))
+        {
+        }
+
+        ~MetaDataPtr() {
+            if (buffer) {
+                buffer->release();
+                buffer = nullptr;
+                data = nullptr;
+            } else {
+                delete data;
+            }
+        }
+
+        inline android::MetaDataBase &operator*() const { return *data; }
+        inline android::MetaDataBase *operator->() const { return data; }
+        inline android::MetaDataBase *get() const { return data; }
+        inline operator android::MetaData *() { return new android::MetaData(*data); }
+
+    private:
+        android::MediaBufferBase *buffer;
+        android::MetaDataBase *data;
+    };
+#endif
+
     MediaMetaDataPrivate();
+#if ANDROID_VERSION_MAJOR>=8
+    MediaMetaDataPrivate(android::MediaBufferBase *buffer);
+#endif
     MediaMetaDataPrivate(const android::sp<android::MetaData> &md);
     ~MediaMetaDataPrivate();
 
+#if ANDROID_VERSION_MAJOR>=8
+    MetaDataPtr data;
+#else
     android::sp<android::MetaData> data;
+#endif
 };
 
 #endif
