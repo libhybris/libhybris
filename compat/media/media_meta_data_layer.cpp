@@ -33,9 +33,20 @@ MediaMetaDataPrivate* MediaMetaDataPrivate::toPrivate(MediaMetaDataWrapper *md)
 }
 
 MediaMetaDataPrivate::MediaMetaDataPrivate() :
+#if ANDROID_VERSION_MAJOR>=8
+    data(nullptr)
+#else
     data(new android::MetaData)
+#endif
 {
 }
+
+#if ANDROID_VERSION_MAJOR>=8
+MediaMetaDataPrivate::MediaMetaDataPrivate(android::MediaBufferBase *buffer) :
+    data(buffer)
+{
+}
+#endif
 
 MediaMetaDataPrivate::MediaMetaDataPrivate(const android::sp<android::MetaData> &md) :
     data(md)
