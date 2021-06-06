@@ -172,8 +172,7 @@ MediaMetaDataWrapper* media_buffer_get_meta_data(MediaBufferWrapper *buffer)
         return NULL;
 
 #if ANDROID_VERSION_MAJOR>=8
-    android::MetaData *md = new android::MetaData(d->buffer->meta_data());
-    return new MediaMetaDataPrivate(md);
+    return new MediaMetaDataPrivate(d->buffer);
 #else
     return new MediaMetaDataPrivate(d->buffer->meta_data());
 #endif
