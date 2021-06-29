@@ -8,7 +8,6 @@ bin_PROGRAMS = \
 	test_sensors \
 	test_input \
 	test_lights \
-	test_camera \
 	test_vibrator \
 	test_media \
 	test_recorder \
@@ -19,6 +18,10 @@ bin_PROGRAMS = \
 	test_nfc \
 	test_dlopen
 
+if WANT_WAYLAND
+bin_PROGRAMS += \
+	test_camera
+endif
 
 test_dlopen_SOURCES = test_dlopen.c
 test_dlopen_CFLAGS = \
