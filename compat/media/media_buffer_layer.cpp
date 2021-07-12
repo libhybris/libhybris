@@ -159,7 +159,11 @@ MediaMetaDataWrapper* media_buffer_get_meta_data(MediaBufferWrapper *buffer)
     if (!d || !d->buffer)
         return NULL;
 
+#if ANDROID_VERSION_MAJOR>=8
+    return new MediaMetaDataPrivate(d->buffer);
+#else
     return new MediaMetaDataPrivate(d->buffer->meta_data());
+#endif
 }
 
 void media_buffer_set_return_callback(MediaBufferWrapper *buffer,
