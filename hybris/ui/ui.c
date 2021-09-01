@@ -17,12 +17,19 @@
 #include <dlfcn.h>
 #include <stddef.h>
 
+#include <android-version.h>
+#if ANDROID_VERSION_MAJOR>=10
+#include <android/rect.h>
+#include <cutils/native_handle.h>
+#endif
+
 #include <hybris/common/binding.h>
-#include <hybris/ui/ui_compatibility_layer.h>
+#include <hybris/ui/ui.h>
 
 #define COMPAT_LIBRARY_PATH		"libui_compat_layer.so"
 
 HYBRIS_LIBRARY_INITIALIZE(ui, COMPAT_LIBRARY_PATH);
+HYBRIS_LIRBARY_CHECK_SYMBOL(ui);
 
 HYBRIS_IMPLEMENT_FUNCTION0(ui, struct graphic_buffer*, graphic_buffer_new);
 HYBRIS_IMPLEMENT_FUNCTION4(ui, struct graphic_buffer*,
@@ -56,3 +63,30 @@ HYBRIS_IMPLEMENT_FUNCTION1(ui, int, graphic_buffer_get_index,
 #endif
 HYBRIS_IMPLEMENT_FUNCTION1(ui, int, graphic_buffer_init_check,
 	struct graphic_buffer*);
+
+#if ANDROID_VERSION_MAJOR>=10
+HYBRIS_IMPLEMENT_FUNCTION9(ui, status_t, graphic_buffer_allocator_allocate,
+                           uint32_t, uint32_t,
+                           PixelFormat, uint32_t, uint64_t,
+                           buffer_handle_t*, uint32_t*,
+                           uint64_t, const char*);
+HYBRIS_IMPLEMENT_FUNCTION1(ui, status_t, graphic_buffer_allocator_free,
+                           buffer_handle_t);
+
+HYBRIS_IMPLEMENT_FUNCTION8(ui, status_t, graphic_buffer_mapper_import_buffer,
+                           buffer_handle_t, uint32_t, uint32_t, uint32_t,
+                           PixelFormat, uint64_t, uint32_t,
+                           buffer_handle_t*);
+
+HYBRIS_IMPLEMENT_FUNCTION2(ui, status_t, graphic_buffer_mapper_import_buffer_no_size,
+                           buffer_handle_t, buffer_handle_t*);
+
+HYBRIS_IMPLEMENT_FUNCTION1(ui, status_t, graphic_buffer_mapper_free_buffer,
+                           buffer_handle_t);
+
+HYBRIS_IMPLEMENT_FUNCTION6(ui, status_t, graphic_buffer_mapper_lock,
+                           buffer_handle_t, uint32_t, const ARect*,
+                           void**, int32_t*, int32_t*);
+HYBRIS_IMPLEMENT_FUNCTION1(ui, status_t, graphic_buffer_mapper_unlock,
+                           buffer_handle_t);
+#endif
