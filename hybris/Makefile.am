@@ -8,6 +8,10 @@ SUBDIRS += libsync
 endif
 SUBDIRS += platforms egl glesv1 glesv2 ui sf input camera vibrator media opencl wifi hwc2
 
+if HAS_VULKAN_HEADERS
+SUBDIRS += vulkan
+endif
+
 SUBDIRS += libnfc_nxp libnfc_ndef_nxp
 
 SUBDIRS += utils tests
