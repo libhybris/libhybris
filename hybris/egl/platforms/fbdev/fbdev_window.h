@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 libhybris
+ * Copyright (C) 2013-2022 libhybris
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 #ifndef FBDEV_WINDOW_H
 #define FBDEV_WINDOW_H
 
-#include "nativewindowbase.h"
+#include "eglnativewindowbase.h"
 #include <linux/fb.h>
 #include <hardware/gralloc.h>
 
@@ -40,7 +40,7 @@ protected:
 };
 
 
-class FbDevNativeWindow : public BaseNativeWindow {
+class FbDevNativeWindow : public EGLBaseNativeWindow {
 public:
     FbDevNativeWindow();
     ~FbDevNativeWindow();

@@ -7,6 +7,6 @@ Name: hybris-egl-platform
 Description: libhybris EGL platform library
 Version: @VERSION@
 Requires: @ANDROID_HEADERS_PKGCONFIG@
-Libs: -L${libdir} -lhybris-common -lhybris-eglplatformcommon
-Cflags: -I${includedir} -I${includedir}/hybris/eglplatformcommon @ANDROID_HEADERS_CFLAGS@
+Libs: -L${libdir} -lhybris-common -lhybris-eglplatformcommon -lhybris-platformcommon
+Cflags: -I${includedir} -I${includedir}/hybris/eglplatformcommon -I${includedir}/hybris/platformcommon @ANDROID_HEADERS_CFLAGS@
 

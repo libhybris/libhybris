@@ -17,7 +17,7 @@
 #ifndef FBDEV_WINDOW_H
 #define FBDEV_WINDOW_H
 
-#include "nativewindowbase.h"
+#include "eglnativewindowbase.h"
 #include <linux/fb.h>
 #include <hardware/gralloc.h>
 
@@ -41,7 +41,7 @@ protected:
 };
 
 
-class HWComposerNativeWindow : public BaseNativeWindow {
+class HWComposerNativeWindow : public EGLBaseNativeWindow {
 public:
     HWComposerNativeWindow(unsigned int width, unsigned int height, unsigned int format);
     ~HWComposerNativeWindow();

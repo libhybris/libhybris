@@ -294,6 +294,8 @@ AC_CONFIG_FILES([
 	common/n/Makefile
 	common/o/Makefile
 	common/q/Makefile
+	platforms/Makefile
+	platforms/common/Makefile
 	egl/egl.pc
 	egl/Makefile
 	egl/glvnd/10_libhybris.json

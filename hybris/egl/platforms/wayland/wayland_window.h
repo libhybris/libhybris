@@ -25,7 +25,7 @@
 
 #ifndef Wayland_WINDOW_H
 #define Wayland_WINDOW_H
-#include "nativewindowbase.h"
+#include "eglnativewindowbase.h"
 #include <linux/fb.h>
 
 #include <hybris/gralloc/gralloc.h>
@@ -140,7 +140,7 @@ public:
 
 #endif // HYBRIS_NO_SERVER_SIDE_BUFFERS
 
-class WaylandNativeWindow : public BaseNativeWindow {
+class WaylandNativeWindow : public EGLBaseNativeWindow {
 public:
     WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, android_wlegl *wlegl);
     ~WaylandNativeWindow();

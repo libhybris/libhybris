@@ -1,5 +1,4 @@
 /*
- * Copyright (c) 2012 Simon Busch <morphis@gravedo.de>
  * Copyright (c) 2022 Jolla Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,31 +12,30 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-#ifndef EGL_HYBRIS_H_
-#define EGL_HYBRIS_H_
+#ifndef EGLNATIVEWINDOWBASE_H
+#define EGLNATIVEWINDOWBASE_H
 
-/* Needed for ICS window.h */
+/* for ICS window.h */
 #include <string.h>
 #include <system/window.h>
-#include "platformcommon.h"
+#include <EGL/egl.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "nativewindowbase.h"
 
-void __eglHybrisSetError(EGLint error);
-
-void *hybris_android_egl_dlsym(const char *symbol);
-int hybris_egl_has_mapping(EGLSurface surface);
-EGLNativeWindowType hybris_egl_get_mapping(EGLSurface surface);
-
-struct _EGLDisplay *hybris_egl_display_get_mapping(EGLDisplay dpy);
-
-#ifdef __cplusplus
-}
-#endif
+/**
+ * @brief A Class to do common ANativeWindow initialization and thunk c-style
+ *        callbacks into C++ method calls.
+ **/
+class EGLBaseNativeWindow : public BaseNativeWindow
+{
+public:
+	operator EGLNativeWindowType()
+	{
+		EGLNativeWindowType ret = reinterpret_cast<EGLNativeWindowType>(static_cast<ANativeWindow *>(this));
+		return ret;
+	}
+};
 
 #endif

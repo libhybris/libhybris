@@ -1,5 +1,6 @@
 /*
  * Copyright © 2012 Collabora, Ltd.
+ * Copyright © 2022 Jolla Ltd.
  *
  * Permission to use, copy, modify, distribute, and sell this software and
  * its documentation for any purpose is hereby granted without fee, provided
@@ -23,8 +24,6 @@
 #ifndef SERVER_WLEGL_H
 #define SERVER_WLEGL_H
 
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
 #include <system/window.h>
 
 extern "C" {
