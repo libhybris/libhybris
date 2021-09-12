@@ -1,5 +1,7 @@
 if HAS_VULKAN_HEADERS
 
+SUBDIRS = platforms
+
 lib_LTLIBRARIES = \
 	libvulkan.la
 
