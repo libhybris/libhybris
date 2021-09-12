@@ -348,7 +348,8 @@ AM_COND_IF([HAS_VULKAN_HEADERS], [AC_CONFIG_FILES([
 	vulkan/Makefile
 	vulkan/platforms/Makefile
 	vulkan/platforms/common/Makefile
-	vulkan/platforms/null/Makefile])])
+	vulkan/platforms/null/Makefile
+	vulkan/platforms/wayland/Makefile])])
 
 AC_OUTPUT
 

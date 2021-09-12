@@ -50,6 +50,25 @@ VkResult nullws_vkCreateInstance(const VkInstanceCreateInfo *pCreateInfo, const 
     return (*_vkCreateInstance)(pCreateInfo, pAllocator, pInstance);
 }
 
+#ifdef WANT_WAYLAND
+static VkResult nullws_vkCreateWaylandSurfaceKHR(VkInstance instance,
+        const VkWaylandSurfaceCreateInfoKHR* pCreateInfo,
+        const VkAllocationCallbacks* pAllocator,
+        VkSurfaceKHR* pSurface)
+{
+    return VK_ERROR_OUT_OF_HOST_MEMORY;
+}
+
+static VkBool32 nullws_vkGetPhysicalDeviceWaylandPresentationSupportKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, struct wl_display* display)
+{
+    return VK_FALSE;
+}
+
+static void nullws_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator)
+{
+}
+#endif
+
 static void nullws_vkSetInstanceProcAddrFunc(PFN_vkVoidFunction addr)
 {
     if (_vkGetInstanceProcAddr == NULL)
@@ -60,5 +79,10 @@ struct ws_module ws_module_info = {
     nullws_init_module,
     nullws_vkEnumerateInstanceExtensionProperties,
     nullws_vkCreateInstance,
+#ifdef WANT_WAYLAND
+    nullws_vkCreateWaylandSurfaceKHR,
+    nullws_vkGetPhysicalDeviceWaylandPresentationSupportKHR,
+    nullws_vkDestroySurfaceKHR,
+#endif
     nullws_vkSetInstanceProcAddrFunc,
 };

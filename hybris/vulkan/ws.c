@@ -67,6 +67,29 @@ VkResult ws_vkCreateInstance(const VkInstanceCreateInfo *pCreateInfo, const VkAl
     return ws->vkCreateInstance(pCreateInfo, pAllocator, pInstance);
 }
 
+#ifdef WANT_WAYLAND
+VkResult ws_vkCreateWaylandSurfaceKHR(VkInstance instance,
+        const VkWaylandSurfaceCreateInfoKHR* pCreateInfo,
+        const VkAllocationCallbacks* pAllocator,
+        VkSurfaceKHR* pSurface)
+{
+    _init_ws();
+    return ws->vkCreateWaylandSurfaceKHR(instance, pCreateInfo, pAllocator, pSurface);
+}
+
+VkBool32 ws_vkGetPhysicalDeviceWaylandPresentationSupportKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, struct wl_display* display)
+{
+    _init_ws();
+    return ws->vkGetPhysicalDeviceWaylandPresentationSupportKHR(physicalDevice, queueFamilyIndex, display);
+}
+
+void ws_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator)
+{
+    _init_ws();
+    ws->vkDestroySurfaceKHR(instance, surface, pAllocator);
+}
+#endif
+
 void ws_vkSetInstanceProcAddrFunc(PFN_vkVoidFunction addr)
 {
     _init_ws();

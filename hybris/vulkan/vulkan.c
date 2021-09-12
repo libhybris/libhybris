@@ -104,6 +104,26 @@ VkResult vkEnumerateInstanceExtensionProperties(const char* pLayerName, uint32_t
     return ws_vkEnumerateInstanceExtensionProperties(pLayerName, pPropertyCount, pProperties);
 }
 
+#ifdef WANT_WAYLAND
+VkResult vkCreateWaylandSurfaceKHR(VkInstance instance,
+        const VkWaylandSurfaceCreateInfoKHR* pCreateInfo,
+        const VkAllocationCallbacks* pAllocator,
+        VkSurfaceKHR* pSurface)
+{
+    return ws_vkCreateWaylandSurfaceKHR(instance, pCreateInfo, pAllocator, pSurface);
+}
+
+VkBool32 vkGetPhysicalDeviceWaylandPresentationSupportKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, struct wl_display* display)
+{
+    return ws_vkGetPhysicalDeviceWaylandPresentationSupportKHR(physicalDevice, queueFamilyIndex, display);
+}
+
+void vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator)
+{
+    ws_vkDestroySurfaceKHR(instance, surface, pAllocator);
+}
+#endif
+
 PFN_vkVoidFunction vkGetInstanceProcAddr(VkInstance instance, const char* pName)
 {
     if (_vkGetInstanceProcAddr == NULL) {
@@ -116,6 +136,14 @@ PFN_vkVoidFunction vkGetInstanceProcAddr(VkInstance instance, const char* pName)
         return (PFN_vkVoidFunction)vkCreateInstance;
     } else if (!strcmp(pName, "vkGetInstanceProcAddr")) {
         return (PFN_vkVoidFunction)vkGetInstanceProcAddr;
+#ifdef WANT_WAYLAND
+    } else if (!strcmp(pName, "vkCreateWaylandSurfaceKHR")) {
+        return (PFN_vkVoidFunction)vkCreateWaylandSurfaceKHR;
+    } else if (!strcmp(pName, "vkGetPhysicalDeviceWaylandPresentationSupportKHR")) {
+        return (PFN_vkVoidFunction)vkGetPhysicalDeviceWaylandPresentationSupportKHR;
+#endif
+    } else if (!strcmp(pName, "vkDestroySurfaceKHR")) {
+        return (PFN_vkVoidFunction)vkDestroySurfaceKHR;
     }
 
     return (*_vkGetInstanceProcAddr)(instance, pName);
@@ -288,7 +316,6 @@ VULKAN_IDLOAD(vkSignalSemaphore);
 VULKAN_IDLOAD(vkGetBufferDeviceAddress);
 VULKAN_IDLOAD(vkGetBufferOpaqueCaptureAddress);
 VULKAN_IDLOAD(vkGetDeviceMemoryOpaqueCaptureAddress);
-VULKAN_IDLOAD(vkDestroySurfaceKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceSupportKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceFormatsKHR);
