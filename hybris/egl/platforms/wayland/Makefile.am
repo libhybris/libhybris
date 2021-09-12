@@ -1,6 +1,6 @@
 pkglib_LTLIBRARIES = eglplatform_wayland.la
 
-eglplatform_wayland_la_SOURCES = eglplatform_wayland.cpp wayland_window.cpp
+eglplatform_wayland_la_SOURCES = eglplatform_wayland.cpp wayland_window.cpp $(top_srcdir)/platforms/wayland/wayland_window_common.cpp
 eglplatform_wayland_la_CXXFLAGS = \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/platforms/common \
