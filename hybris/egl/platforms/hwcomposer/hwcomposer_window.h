@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 libhybris
+ * Copyright (C) 2013-2022 libhybris
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ protected:
     virtual unsigned int transformHint() const;
     virtual unsigned int getUsage() const;
     // perform calls
-    virtual int setUsage(int usage);
+    virtual int setUsage(uint64_t usage);
     virtual int setBuffersFormat(int format);
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
@@ -78,7 +78,7 @@ private:
     void allocateBuffers();
 
 private:
-    unsigned int m_usage;
+    uint64_t m_usage;
     unsigned int m_bufFormat;
     std::vector<HWComposerNativeWindowBuffer*> m_bufList;
     unsigned int m_bufferCount;

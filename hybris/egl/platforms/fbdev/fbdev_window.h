@@ -64,7 +64,7 @@ protected:
     virtual unsigned int transformHint() const;
     virtual unsigned int getUsage() const;
     // perform calls
-    virtual int setUsage(int usage);
+    virtual int setUsage(uint64_t usage);
     virtual int setBuffersFormat(int format);
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
@@ -74,7 +74,7 @@ private:
     void reallocateBuffers();
 
 private:
-    int m_usage;
+    uint64_t m_usage;
     int m_bufFormat;
     int m_bufferCount;
     int m_freeBufs;

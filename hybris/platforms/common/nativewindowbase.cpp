@@ -264,6 +264,9 @@ const char *BaseNativeWindow::_native_window_operation(int what)
 		case NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS: return "NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS";
 		case NATIVE_WINDOW_SET_POST_TRANSFORM_CROP: return "NATIVE_WINDOW_SET_POST_TRANSFORM_CROP";
 #endif
+#if ANDROID_VERSION_MAJOR>=9
+		case NATIVE_WINDOW_SET_USAGE64: return "NATIVE_WINDOW_SET_USAGE64";
+#endif
 		default: return "NATIVE_UNKNOWN_OPERATION";
 	}
 }
@@ -371,7 +374,7 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 	switch(operation) {
 	case NATIVE_WINDOW_SET_USAGE                 : //  0,
 	{
-		int usage = va_arg(args, int);
+		uint64_t usage = va_arg(args, uint32_t);
 		va_end(args);
 		return self->setUsage(usage);
 	}
@@ -437,6 +440,15 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 		TRACE("set post transform crop");
 		break;
 #endif
+#if ANDROID_VERSION_MAJOR>=9
+	case NATIVE_WINDOW_SET_USAGE64               : // 30,
+		TRACE("set usage 64");
+		uint64_t usage = va_arg(args, uint64_t);
+		va_end(args);
+		return self->setUsage(usage);
+		break;
+#endif
+
 	}
 	va_end(args);
 	return NO_ERROR;
