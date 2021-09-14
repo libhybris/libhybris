@@ -96,6 +96,24 @@ AC_ARG_ENABLE(wayland,
 AM_CONDITIONAL( [WANT_WAYLAND], [test x"$wayland" = x"yes"])
 AM_CONDITIONAL( [WANT_WAYLAND_EGL], [test x"$WANT_WAYLAND_EGL" = x"yes"])
 
+AC_ARG_ENABLE(glvnd,
+  [  --enable-glvnd                                 Enable GLVND support])
+AM_CONDITIONAL( [WANT_GLVND], [test "$enable_glvnd" = "yes"])
+AS_IF( [test "$enable_glvnd" = "yes"], [
+  AM_PATH_PYTHON([3.0])
+  PKG_CHECK_MODULES(GLVND, libglvnd)
+  PKG_CHECK_MODULES(EGL, egl)
+  PKG_CHECK_MODULES(GLESV2, glesv2)
+
+  AC_DEFINE([WANT_GLVND], [], [Enable GLVND support])
+
+  AC_SUBST([GL_LIB_SUFFIX], ["_libhybris"])
+  AC_DEFINE([GL_LIB_SUFFIX], ["_libhybris"], [Suffix for GL-related libraries])
+], [
+  AC_SUBST([GL_LIB_SUFFIX], [""])
+  AC_DEFINE([GL_LIB_SUFFIX], [""], [Suffix for GL-related libraries])
+])
+
 AC_ARG_ENABLE(wayland_serverside_buffers,
   [  --enable-wayland_serverside_buffers            Enable serverside buffer allocation for wayland (default=enabled)],
   [wayland_serverside_buffers=$enableval],
@@ -281,6 +299,7 @@ AC_CONFIG_FILES([
 	common/q/Makefile
 	egl/egl.pc
 	egl/Makefile
+	egl/glvnd/10_libhybris.json
 	egl/platforms/Makefile
 	egl/platforms/common/Makefile
 	egl/platforms/common/hybris-egl-platform.pc

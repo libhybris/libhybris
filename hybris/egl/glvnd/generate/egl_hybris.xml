@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<registry>
+    <!--
+        Copyright (c) 2021 UBports Foundation.
+
+        Licensed under the Apache License, Version 2.0 (the "License");
+        you may not use this file except in compliance with the License.
+        You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+        Unless required by applicable law or agreed to in writing, software
+        distributed under the License is distributed on an "AS IS" BASIS,
+        WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        See the License for the specific language governing permissions and
+        limitations under the License.
+    -->
+    <comment>
+        This file contains libhybris-specific functions.
+    </comment>
+    <commands namespace="EGL">
+        <!-- EGL_HYBRIS_native_buffer2 -->
+        <command>
+            <proto>EGLBoolean <name>eglHybrisNativeBufferHandle</name></proto>
+            <param><ptype>EGLDisplay</ptype> <name>dpy</name></param>
+            <param><ptype>EGLClientBuffer</ptype> <name>buffer</name></param>
+            <param><ptype>void **</ptype> <name>handle</name></param>
+        </command>
+
+        <command>
+            <proto>void <name>eglHybrisGetNativeBufferInfo</name></proto>
+            <param><ptype>EGLClientBuffer</ptype> <name>buffer</name></param>
+            <param><ptype>int *</ptype> <name>num_ints</name></param>
+            <param><ptype>int *</ptype> <name>num_fds</name></param>
+        </command>
+
+        <command>
+            <proto>void <name></name>eglHybrisSerializeNativeBuffer</proto>
+            <param><ptype>EGLClientBuffer</ptype> <name>buffer</name></param>
+            <param><ptype>int *</ptype> <name>ints</name></param>
+            <param><ptype>int *</ptype> <name>fds</name></param>
+        </command>
+
+        <command>
+            <proto>EGLBoolean <name>eglHybrisCreateRemoteBuffer</name></proto>
+            <param><ptype>EGLint</ptype> <name>width</name></param>
+            <param><ptype>EGLint</ptype> <name>height</name></param>
+            <param><ptype>EGLint</ptype> <name>usage</name></param>
+            <param><ptype>EGLint</ptype> <name>format</name></param>
+            <param><ptype>EGLint</ptype> <name>stride</name></param>
+            <param><ptype>int</ptype> <name>num_ints</name></param>
+            <param><ptype>int *</ptype> <name>ints</name></param>
+            <param><ptype>int</ptype> <name>num_fds</name></param>
+            <param><ptype>int *</ptype> <name>fds</name></param>
+            <param><ptype>EGLClientBuffer *</ptype> <name>buffer</name></param>
+        </command>
+
+        <command>
+            <proto>EGLBoolean <name>eglHybrisCreateNativeBuffer</name></proto>
+            <param><ptype>EGLint</ptype> <name>width</name></param>
+            <param><ptype>EGLint</ptype> <name>height</name></param>
+            <param><ptype>EGLint</ptype> <name>usage</name></param>
+            <param><ptype>EGLint</ptype> <name>format</name></param>
+            <param><ptype>EGLint *</ptype> <name>stride</name></param>
+            <param><ptype>EGLClientBuffer *</ptype> <name>buffer</name></param>
+        </command>
+
+        <command>
+            <proto>EGLBoolean <name>eglHybrisLockNativeBuffer</name></proto>
+            <param><ptype>EGLClientBuffer</ptype> <name>buffer</name></param>
+            <param>EGLint<ptype></ptype> <name>usage</name></param>
+            <param>EGLint<ptype></ptype> <name>l</name></param>
+            <param>EGLint<ptype></ptype> <name>t</name></param>
+            <param>EGLint<ptype></ptype> <name>w</name></param>
+            <param>EGLint<ptype></ptype> <name>h</name></param>
+            <param>void **<ptype></ptype> <name>vaddr</name></param>
+        </command>
+
+        <command>
+            <proto>EGLBoolean <name>eglHybrisUnlockNativeBuffer</name></proto>
+            <param><ptype>EGLClientBuffer</ptype> <name>buffer</name></param>
+        </command>
+
+        <command>
+            <proto>EGLBoolean <name>eglHybrisReleaseNativeBuffer</name></proto>
+            <param><ptype>EGLClientBuffer</ptype> <name>buffer</name></param>
+        </command>
+
+        <!-- EGL_HYBRIS_WL_acquire_native_buffer -->
+        <command>
+            <proto>EGLBoolean <name>eglHybrisAcquireNativeBufferWL</name></proto>
+            <param><ptype>EGLDisplay</ptype> <name>dpy</name></param>
+            <param><ptype>struct wl_resource *</ptype> <name>wlBuffer</name></param>
+            <param><ptype>EGLClientBuffer *</ptype> <name>buffer</name></param>
+        </command>
+
+        <!--
+            ??? No associated extension ???
+            The function is implemented in eglplatform_wayland.cpp. The only
+            reference I found outside of libhybris is at [1]. And that's the
+            old version; the newer version no longer uses this function.
+
+            [1] https://github.com/krnlyng/sfdroid_renderer
+        -->
+
+        <command>
+            <proto>int <name>eglHybrisWaylandPostBuffer</name></proto>
+            <param><ptype>EGLNativeWindowType</ptype> <name>win</name></param>
+            <param><ptype>void *</ptype> <name>buffer</name></param>
+        </command>
+    </commands>
+</registry>
