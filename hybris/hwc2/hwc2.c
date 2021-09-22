@@ -40,6 +40,9 @@ HYBRIS_IMPLEMENT_FUNCTION2(hwc2, hwc2_compat_display_t*,
                            hwc2_compat_device_t*,
                            hwc2_display_t);
 
+HYBRIS_IMPLEMENT_VOID_FUNCTION2(hwc2, hwc2_compat_device_destroy_display,
+                                hwc2_compat_device_t*, hwc2_compat_display_t*);
+
 HYBRIS_IMPLEMENT_FUNCTION1(hwc2, HWC2DisplayConfig*,
                            hwc2_compat_display_get_active_config,
                            hwc2_compat_display_t*);

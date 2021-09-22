@@ -82,6 +82,9 @@ extern "C" {
                                 hwc2_compat_device_t* device,
                                 hwc2_display_t id);
 
+    void hwc2_compat_device_destroy_display(hwc2_compat_device_t* device,
+                                            hwc2_compat_display_t* display);
+
     HWC2DisplayConfig* hwc2_compat_display_get_active_config(
                                 hwc2_compat_display_t* display);
 
