@@ -1406,6 +1406,7 @@ struct bionic_sbuf {
 #endif
 
 typedef off_t bionic_fpos_t;
+typedef off64_t bionic_fpos64_t;
 
 /* "struct __sFILE" from bionic/libc/include/stdio.h */
 struct bionic_file {
@@ -1530,6 +1531,18 @@ static int _hybris_hook_fgetpos(FILE *fp, bionic_fpos_t *pos)
     return ret;
 }
 
+static int _hybris_hook_fgetpos64(FILE *fp, bionic_fpos64_t *pos)
+{
+    TRACE_HOOK("fp %p pos %p", fp, pos);
+
+    fpos64_t my_fpos;
+    int ret = fgetpos64(_get_actual_fp(fp), &my_fpos);
+
+    *pos = my_fpos.__pos;
+
+    return ret;
+}
+
 static char* _hybris_hook_fgets(char *s, int n, FILE *fp)
 {
     TRACE_HOOK("s %s n %d fp %p", s, n, fp);
@@ -1579,6 +1592,13 @@ static FILE* _hybris_hook_freopen(const char *filename, const char *mode, FILE *
     return freopen(filename, mode, _get_actual_fp(fp));
 }
 
+static FILE* _hybris_hook_freopen64(const char *filename, const char *mode, FILE *fp)
+{
+    TRACE_HOOK("filename '%s' mode '%s' fp %p", filename, mode, fp);
+
+    return freopen64(filename, mode, _get_actual_fp(fp));
+}
+
 FP_ATTRIB static int _hybris_hook_fscanf(FILE *fp, const char *fmt, ...)
 {
     int ret = 0;
@@ -1607,6 +1627,13 @@ static int _hybris_hook_fseeko(FILE *fp, off_t offset, int whence)
     return fseeko(_get_actual_fp(fp), offset, whence);
 }
 
+static int _hybris_hook_fseeko64(FILE *fp, off64_t offset, int whence)
+{
+    TRACE_HOOK("fp %p offset %ld whence %d", fp, offset, whence);
+
+    return fseeko64(_get_actual_fp(fp), offset, whence);
+}
+
 static int _hybris_hook_fsetpos(FILE *fp, const bionic_fpos_t *pos)
 {
     TRACE_HOOK("fp %p pos %p", fp, pos);
@@ -1616,6 +1643,17 @@ static int _hybris_hook_fsetpos(FILE *fp, const bionic_fpos_t *pos)
     memset(&my_fpos.__state, 0, sizeof(mbstate_t));
 
     return fsetpos(_get_actual_fp(fp), &my_fpos);
+}
+
+static int _hybris_hook_fsetpos64(FILE *fp, const bionic_fpos64_t *pos)
+{
+    TRACE_HOOK("fp %p pos %p", fp, pos);
+
+    fpos64_t my_fpos;
+    my_fpos.__pos = *pos;
+    memset(&my_fpos.__state, 0, sizeof(mbstate_t));
+
+    return fsetpos64(_get_actual_fp(fp), &my_fpos);
 }
 
 static long _hybris_hook_ftell(FILE *fp)
@@ -1630,6 +1668,13 @@ static off_t _hybris_hook_ftello(FILE *fp)
     TRACE_HOOK("fp %p", fp);
 
     return ftello(_get_actual_fp(fp));
+}
+
+static off_t _hybris_hook_ftello64(FILE *fp)
+{
+    TRACE_HOOK("fp %p", fp);
+
+    return ftello64(_get_actual_fp(fp));
 }
 
 static size_t _hybris_hook_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *fp)
@@ -1744,6 +1789,80 @@ static void _hybris_hook_funlockfile(FILE *fp)
     return funlockfile(_get_actual_fp(fp));
 }
 
+static void _hybris_hook_clearerr_unlocked(FILE *fp)
+{
+    TRACE_HOOK("fp %p", fp);
+
+    clearerr_unlocked(_get_actual_fp(fp));
+}
+
+static int _hybris_hook_feof_unlocked(FILE *fp)
+{
+    TRACE_HOOK("fp %p", fp);
+
+    return feof_unlocked(_get_actual_fp(fp));
+}
+
+static int _hybris_hook_ferror_unlocked(FILE *fp)
+{
+    TRACE_HOOK("fp %p", fp);
+
+    return ferror_unlocked(_get_actual_fp(fp));
+}
+
+static int _hybris_hook_fflush_unlocked(FILE *fp)
+{
+    TRACE_HOOK("fp %p", fp);
+
+    if(fileno_unlocked(_get_actual_fp(fp)) < 0) {
+        return 0;
+    }
+
+    return fflush_unlocked(_get_actual_fp(fp));
+}
+
+static int _hybris_hook_fgetc_unlocked(FILE *fp)
+{
+    TRACE_HOOK("fp %p", fp);
+
+    return fgetc_unlocked(_get_actual_fp(fp));
+}
+
+static char* _hybris_hook_fgets_unlocked(char *s, int n, FILE *fp)
+{
+    TRACE_HOOK("s %s n %d fp %p", s, n, fp);
+
+    return fgets_unlocked(s, n, _get_actual_fp(fp));
+}
+
+static int _hybris_hook_fputc_unlocked(int c, FILE *fp)
+{
+    TRACE_HOOK("c %d fp %p", c, fp);
+
+    return fputc_unlocked(c, _get_actual_fp(fp));
+}
+
+static int _hybris_hook_fputs_unlocked(const char *s, FILE *fp)
+{
+    TRACE_HOOK("s '%s' fp %p", s, fp);
+
+    return fputs_unlocked(s, _get_actual_fp(fp));
+}
+
+static size_t _hybris_hook_fread_unlocked(void *ptr, size_t size, size_t nmemb, FILE *fp)
+{
+    TRACE_HOOK("ptr %p size %zu nmemb %zu fp %p", ptr, size, nmemb, fp);
+
+    return fread_unlocked(ptr, size, nmemb, _get_actual_fp(fp));
+}
+
+static size_t _hybris_hook_fwrite_unlocked(const void *ptr, size_t size, size_t nmemb, FILE *fp)
+{
+    TRACE_HOOK("ptr %p size %zu nmemb %zu fp %p", ptr, size, nmemb, fp);
+
+    return fwrite_unlocked(ptr, size, nmemb, _get_actual_fp(fp));
+}
+
 static int _hybris_hook_getc_unlocked(FILE *fp)
 {
     TRACE_HOOK("fp %p", fp);
@@ -1753,9 +1872,16 @@ static int _hybris_hook_getc_unlocked(FILE *fp)
 
 static int _hybris_hook_putc_unlocked(int c, FILE *fp)
 {
-    TRACE_HOOK("fp %p", fp);
+    TRACE_HOOK("c %d fp %p", c, fp);
 
     return putc_unlocked(c, _get_actual_fp(fp));
+}
+
+static int _hybris_hook_fileno_unlocked(FILE *fp)
+{
+    TRACE_HOOK("fp %p", fp);
+
+    return fileno_unlocked(_get_actual_fp(fp));
 }
 
 /* exists only on the BSD platform
@@ -2733,6 +2859,20 @@ void _hybris_hook_free(void *ptr)
 #define cfree free
 #endif
 
+void _hybris_hook_android_fdsan_exchange_owner_tag(int fd, uint64_t expected_tag, uint64_t new_tag)
+{
+    (void)expected_tag;
+    (void)new_tag;
+    TRACE_HOOK("fd %d", fd);
+}
+
+int _hybris_hook_android_fdsan_close_with_tag(int fd, uint64_t tag)
+{
+    (void)tag;
+    TRACE_HOOK("fd %d", fd);
+    return close(fd);
+}
+
 // old property hooks for pre-android 8 approach
 static struct _hook hooks_properties[] = {
     HOOK_INDIRECT(property_get),
@@ -2947,6 +3087,9 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(flockfile),
     HOOK_INDIRECT(ftrylockfile),
     HOOK_INDIRECT(funlockfile),
+    HOOK_INDIRECT(clearerr_unlocked),
+    HOOK_INDIRECT(feof_unlocked),
+    HOOK_INDIRECT(ferror_unlocked),
     HOOK_INDIRECT(getc_unlocked),
     HOOK_INDIRECT(putc_unlocked),
     //HOOK(fgetln),
@@ -3000,12 +3143,10 @@ static struct _hook hooks_common[] = {
     HOOK_DIRECT_NO_DEBUG(telldir),
     HOOK_DIRECT_NO_DEBUG(dirfd),
     HOOK_INDIRECT(scandir),
-    HOOK_INDIRECT(scandirat),
     HOOK_INDIRECT(alphasort),
     HOOK_INDIRECT(versionsort),
     /* fcntl.h */
     HOOK_INDIRECT(open),
-    // TODO: scandir, scandirat, alphasort, versionsort
     HOOK_INDIRECT(__get_tls_hooks),
     HOOK_DIRECT_NO_DEBUG(sscanf),
     HOOK_DIRECT_NO_DEBUG(scanf),
@@ -3148,10 +3289,36 @@ static struct _hook hooks_mm[] = {
     HOOK_TO(readdir64, _hybris_hook_readdir),
     HOOK_TO(readdir64_r, _hybris_hook_readdir_r),
     HOOK_INDIRECT(scandir),
-    HOOK_INDIRECT(scandirat),
     HOOK_TO(scandir64, _hybris_hook_scandir),
 };
 
+static struct _hook hooks_n[] = {
+    /* stdio.h */
+    HOOK_INDIRECT(fgetpos64),
+    HOOK_INDIRECT(fsetpos64),
+    HOOK_INDIRECT(fseeko64),
+    HOOK_INDIRECT(ftello64),
+    HOOK_DIRECT_NO_DEBUG(fopen64),
+    HOOK_INDIRECT(freopen64),
+    HOOK_INDIRECT(fileno_unlocked),
+    /* dirent.h */
+    HOOK_INDIRECT(scandirat),
+    HOOK_TO(scandirat64, _hybris_hook_scandirat),
+};
+
+static struct _hook hooks_p[] = {
+    /* stdio.h */
+    HOOK_INDIRECT(fflush_unlocked),
+    HOOK_INDIRECT(fputc_unlocked),
+    HOOK_INDIRECT(fread_unlocked),
+    HOOK_INDIRECT(fgetc_unlocked),
+    HOOK_INDIRECT(fwrite_unlocked),
+    HOOK_INDIRECT(fgets_unlocked),
+    HOOK_INDIRECT(fputs_unlocked),
+    /* fdsan.h */
+    HOOK_INDIRECT(android_fdsan_exchange_owner_tag),
+    HOOK_INDIRECT(android_fdsan_close_with_tag),
+};
 
 static int hook_cmp(const void *a, const void *b)
 {
@@ -3269,6 +3436,8 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
         qsort(hooks_properties, HOOKS_SIZE(hooks_properties), sizeof(hooks_properties[0]), hook_cmp);
         qsort(hooks_common, HOOKS_SIZE(hooks_common), sizeof(hooks_common[0]), hook_cmp);
         qsort(hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
+        qsort(hooks_n, HOOKS_SIZE(hooks_n), sizeof(hooks_n[0]), hook_cmp);
+        qsort(hooks_p, HOOKS_SIZE(hooks_p), sizeof(hooks_p[0]), hook_cmp);
         sorted = 1;
     }
 
@@ -3276,8 +3445,16 @@ static void* __hybris_get_hooked_symbol(const char *sym, const char *requester)
     key.name = sym;
     sdk_version = get_android_sdk_version();
 
+#if defined(WANT_LINKER_O) || defined(WANT_LINKER_Q)
+    if (sdk_version > 27)
+        found = bsearch(&key, hooks_p, HOOKS_SIZE(hooks_p), sizeof(hooks_p[0]), hook_cmp);
+#endif
+#if defined(WANT_LINKER_N) || defined(WANT_LINKER_O) || defined(WANT_LINKER_Q)
+    if (!found && sdk_version > 23)
+        found = bsearch(&key, hooks_n, HOOKS_SIZE(hooks_n), sizeof(hooks_n[0]), hook_cmp);
+#endif
 #if defined(WANT_LINKER_MM) || defined(WANT_LINKER_N) || defined(WANT_LINKER_O) || defined(WANT_LINKER_Q)
-    if (sdk_version > 21)
+    if (!found && sdk_version > 21)
         found = bsearch(&key, hooks_mm, HOOKS_SIZE(hooks_mm), sizeof(hooks_mm[0]), hook_cmp);
 #endif
     // make sure to skip the property hooks only when o.so is actually loaded
