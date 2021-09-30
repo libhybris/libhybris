@@ -30,6 +30,7 @@ static int trace_dynhooked = 0;
 static int trace_unhooked = 0;
 static int trace_hooked = 0;
 static int trace_env_checked = 0;
+static int tracing_enabled = 1;
 
 struct wrapper {
     char *name;
@@ -125,6 +126,7 @@ void *create_wrapper(const char *symbol, void *function, int wrapper_type)
         trace_unhooked = getenv("HYBRIS_TRACE_UNHOOKED") ? atoi(getenv("HYBRIS_TRACE_UNHOOKED")) : 0;
         trace_dynhooked = getenv("HYBRIS_TRACE_DYNHOOKED") ? atoi(getenv("HYBRIS_TRACE_DYNHOOKED")) : 0;
 
+        tracing_enabled = trace_hooked || trace_unhooked || trace_dynhooked;
         trace_env_checked = 1;
     }
 
@@ -198,5 +200,10 @@ void release_all_wrappers()
         free(it);
         it = next;
     }
+}
+
+int wrappers_enabled()
+{
+    return tracing_enabled;
 }
 

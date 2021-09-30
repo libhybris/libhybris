@@ -372,6 +372,7 @@ static void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 
 #ifdef WANT_ARM_TRACING
 void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
+static int _wrapping_enabled = 0;
 #endif
 
 static char __linker_dl_err_buf[768];
@@ -2648,14 +2649,20 @@ bool do_dlsym(void* handle, const char* sym_name, const char* sym_ver,
 
     if ((bind == STB_GLOBAL || bind == STB_WEAK) && sym->st_shndx != 0) {
 #ifdef WANT_ARM_TRACING
-      switch(ELF_ST_TYPE(sym->st_info))
-      {
-        case STT_FUNC:
-        case STT_GNU_IFUNC:
-        case STT_ARM_TFUNC:
-          *symbol = reinterpret_cast<void*>(_create_wrapper((char*)symbol, (void*)found->resolve_symbol_address(sym), WRAPPER_DYNHOOK));
-        default:
-          *symbol = reinterpret_cast<void*>(found->resolve_symbol_address(sym));
+      if (_wrapping_enabled) {
+        switch(ELF_ST_TYPE(sym->st_info))
+        {
+          case STT_FUNC:
+          case STT_GNU_IFUNC:
+          case STT_ARM_TFUNC:
+            *symbol = reinterpret_cast<void*>(_create_wrapper((char*)symbol, (void*)found->resolve_symbol_address(sym), WRAPPER_DYNHOOK));
+            break;
+          default:
+            *symbol = reinterpret_cast<void*>(found->resolve_symbol_address(sym));
+            break;
+        }
+      } else {
+        *symbol = reinterpret_cast<void*>(found->resolve_symbol_address(sym));
       }
 #else
       *symbol = reinterpret_cast<void*>(found->resolve_symbol_address(sym));
@@ -2953,7 +2960,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
         }
       }
 #ifdef WANT_ARM_TRACING
-      else
+      else if (_wrapping_enabled)
       {
         // this will be slower.
         if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
@@ -3049,20 +3056,24 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
 #endif
 
 #ifdef WANT_ARM_TRACING
-        switch(ELF_ST_TYPE(s->st_info))
-        {
-          case STT_FUNC:
-          case STT_GNU_IFUNC:
-          case STT_ARM_TFUNC:
-            sym_addr = (ElfW(Addr))_create_wrapper(sym_name,
-                    (void*)lsi->resolve_symbol_address(s), WRAPPER_UNHOOKED);
-            break;
-          default:
-            sym_addr = lsi->resolve_symbol_address(s);
-            break;
+        if(_wrapping_enabled) {
+          switch(ELF_ST_TYPE(s->st_info))
+          {
+            case STT_FUNC:
+            case STT_GNU_IFUNC:
+            case STT_ARM_TFUNC:
+              sym_addr = (ElfW(Addr))_create_wrapper(sym_name,
+                      (void*)lsi->resolve_symbol_address(s), WRAPPER_UNHOOKED);
+              break;
+            default:
+              sym_addr = lsi->resolve_symbol_address(s);
+              break;
+          }
+        } else {
+          sym_addr = lsi->resolve_symbol_address(s);
         }
 #else
-         sym_addr = lsi->resolve_symbol_address(s);
+        sym_addr = lsi->resolve_symbol_address(s);
 #endif
 
 #if !defined(__LP64__)
@@ -4702,7 +4713,7 @@ static void __linker_cannot_link(KernelArgumentBlock& args) {
 }
 
 #ifdef WANT_ARM_TRACING
-extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(create_wrapper)(const char*, void*, int)) {
+extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(create_wrapper)(const char*, void*, int), int wrapping_enabled) {
 #else
 extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) {
 #endif
@@ -4732,6 +4743,7 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
   _linker_enable_gdb_support = enable_linker_gdb_support;
 #ifdef WANT_ARM_TRACING
   _create_wrapper = create_wrapper;
+  _wrapping_enabled = wrapping_enabled;
 #endif
 }
 

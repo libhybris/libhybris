@@ -96,7 +96,7 @@ static int locale_inited = 0;
 static hybris_hook_cb hook_callback = NULL;
 
 #ifdef WANT_ARM_TRACING
-static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(_create_wrapper)(const char*, void*, int)) = NULL;
+static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(_create_wrapper)(const char*, void*, int), int wrapping_enabled) = NULL;
 #else
 static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) = NULL;
 #endif
@@ -3427,7 +3427,7 @@ static void __hybris_linker_init()
 #endif
     /* Now its time to setup the linker itself */
 #ifdef WANT_ARM_TRACING
-    _android_linker_init(sdk_version, __hybris_get_hooked_symbol, enable_linker_gdb_support, create_wrapper);
+    _android_linker_init(sdk_version, __hybris_get_hooked_symbol, enable_linker_gdb_support, create_wrapper, wrappers_enabled());
 #else
     _android_linker_init(sdk_version, __hybris_get_hooked_symbol, enable_linker_gdb_support);
 #endif
