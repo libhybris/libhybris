@@ -651,6 +651,13 @@ bool ElfReader::LoadSegments() {
         add_dlwarning(name_.c_str(), "W+E load segments");
       }
 
+      if ((prot & PROT_EXEC) != 0) {
+        // hybris: make sure executable code is mapped as readable to neutralize
+        // https://source.android.com/devices/tech/debug/execute-only-memory
+        // without this libgcc's unwind on host may crash
+        prot |= PROT_READ;
+      }
+
       void* seg_addr = mmap64(reinterpret_cast<void*>(seg_page_start),
                             file_length,
                             prot,
@@ -715,6 +722,13 @@ static int _phdr_table_set_load_prot(const ElfW(Phdr)* phdr_table, size_t phdr_c
     if ((extra_prot_flags & PROT_WRITE) != 0) {
       // make sure we're never simultaneously writable / executable
       prot &= ~PROT_EXEC;
+    }
+
+    if ((prot & PROT_EXEC) != 0) {
+      // hybris: make sure executable code is mapped as readable to neutralize
+      // https://source.android.com/devices/tech/debug/execute-only-memory
+      // without this libgcc's unwind on host may crash
+      prot |= PROT_READ;
     }
 
     int ret = mprotect(reinterpret_cast<void*>(seg_page_start),
