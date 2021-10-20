@@ -905,6 +905,13 @@ static int _hybris_hook_pthread_cond_destroy(pthread_cond_t *cond)
     }
 
     if (!hybris_is_pointer_in_shm((void*)realcond)) {
+        /* Bionic and glibc implementations of pthread_cond_destroy are different.
+         * Bionic implementation does not block whereas the glibc implementation
+         * requires that there are no threads waiting for the condition variable
+         * when it is destroyed and bionic code does not always follow this
+         * requirement. To prevent deadlocks reset the reference count of the
+         * condition variable. */
+        realcond->__data.__wrefs = 0;
         ret = pthread_cond_destroy(realcond);
         free(realcond);
     }
