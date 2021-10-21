@@ -1,5 +1,4 @@
-# (C) Copyright 2015, 2019 NVIDIA CORPORATION.
-# (C) Copyright 2017-2020 Mesa Authors.
+# (C) Copyright 2016, NVIDIA CORPORATION.
 # (C) Copyright 2021 UBports Foundation.
 # All Rights Reserved.
 #
@@ -21,6 +20,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
+#
+# Authors:
+#    Kyle Brenneman <kbrenneman@nvidia.com>
 
 """
 Contains a list of EGL functions to generate dispatch functions for.
