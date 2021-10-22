@@ -132,6 +132,13 @@ hwc2_compat_display_t* hwc2_compat_device_get_display_by_id(
     return display;
 }
 
+void hwc2_compat_device_destroy_display(hwc2_compat_device_t* device,
+                                        hwc2_compat_display_t* display)
+{
+    device->self->destroyDisplay(display->self->getId());
+    free(display);
+}
+
 HWC2DisplayConfig* hwc2_compat_display_get_active_config(
                             hwc2_compat_display_t* display)
 {
