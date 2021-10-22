@@ -10,7 +10,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libhwc2_compat_layer
 LOCAL_SRC_FILES := HWC2.cpp ComposerHal.cpp hwc2_compatibility_layer.cpp
 
-LOCAL_C_INCLUDES := ../hybris/include
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../hybris/include
 
 ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 9 && echo true),true)
 LOCAL_C_INCLUDES += \

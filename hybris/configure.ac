@@ -260,6 +260,7 @@ AC_SUBST(ANDROID_VERSION_PATCH, [$android_headers_patch])
 AC_MSG_NOTICE("Android headers version is $android_headers_major.$android_headers_minor.$android_headers_patch")
 
 # Add automake tests for version/API needs here that you need in code, including test .am's
+AM_CONDITIONAL([HAS_ANDROID_11_0_0],[test $android_headers_major -ge 11 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_10_0_0],[test $android_headers_major -ge 10 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_9_0_0], [test $android_headers_major -ge 9 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_8_0_0], [test $android_headers_major -ge 8 -a $android_headers_minor -ge 0 ])

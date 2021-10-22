@@ -15,9 +15,16 @@ LOCAL_SHARED_LIBRARIES := \
 	libinput \
 	libcutils \
 	libutils \
-	libskia \
 	libgui \
 	libandroidfw
+
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 11 && echo true),true)
+static_libraries := \
+	libskia
+else
+LOCAL_SHARED_LIBRARIES += \
+	libskia
+endif
 
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include \
@@ -70,12 +77,20 @@ LOCAL_SHARED_LIBRARIES := \
 	libis_compat_layer \
 	libcutils \
 	libutils \
-	libskia \
 	libgui \
 	libandroidfw
 
 static_libraries := \
 	libgtest \
 	libgtest_main
+
+
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 11 && echo true),true)
+static_libraries += \
+	libskia
+else
+LOCAL_SHARED_LIBRARIES += \
+	libskia
+endif
 
 include $(BUILD_EXECUTABLE)
