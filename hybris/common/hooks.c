@@ -100,6 +100,7 @@ static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(
 #else
 static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) = NULL;
 #endif
+static void* __hybris_get_hooked_symbol(const char *sym, const char *requester);
 
 void *(*_android_dlopen)(const char* filename, int flag) = NULL;
 char *(*_android_dlerror)() = NULL;
@@ -2601,6 +2602,12 @@ static void *_hybris_hook_dlopen(const char *filename, int flag)
 static void *_hybris_hook_dlsym(void *handle, const char *symbol)
 {
     TRACE("handle %p symbol %s", handle, symbol);
+
+    void *hook = __hybris_get_hooked_symbol(symbol, "android_dlsym");
+
+    if (hook) {
+        return hook;
+    }
 
     return _android_dlsym(handle,symbol);
 }
