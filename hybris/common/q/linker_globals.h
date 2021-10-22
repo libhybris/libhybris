@@ -84,6 +84,7 @@ extern void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 
 #ifdef WANT_ARM_TRACING
 extern void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
+extern int _wrapping_enabled;
 #endif
 
 class DlErrorRestorer {

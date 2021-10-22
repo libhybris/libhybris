@@ -2432,13 +2432,17 @@ bool do_dlsym(void* handle,
         *symbol = TLS_GET_ADDR(&ti);
       } else {
 #ifdef WANT_ARM_TRACING
-        switch(ELF_ST_TYPE(sym->st_info))
-        {
-          case STT_FUNC:
-          case STT_GNU_IFUNC:
-          case STT_ARM_TFUNC:
-            *symbol = reinterpret_cast<void*>(_create_wrapper((char*)symbol, (void*)found->resolve_symbol_address(sym), WRAPPER_DYNHOOK));
-          default:
+        if (_wrapping_enabled) {
+          switch(ELF_ST_TYPE(sym->st_info))
+          {
+            case STT_FUNC:
+            case STT_GNU_IFUNC:
+            case STT_ARM_TFUNC:
+              *symbol = reinterpret_cast<void*>(_create_wrapper((char*)symbol, (void*)found->resolve_symbol_address(sym), WRAPPER_DYNHOOK));
+            default:
+              *symbol = reinterpret_cast<void*>(found->resolve_symbol_address(sym));
+            }
+          } else {
             *symbol = reinterpret_cast<void*>(found->resolve_symbol_address(sym));
           }
 #else
@@ -2958,7 +2962,7 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
         }
       }
 #ifdef WANT_ARM_TRACING
-      else
+      else if (_wrapping_enabled)
       {
         // this will be slower.
         if (!lookup_version_info(version_tracker, sym, sym_name, &vi)) {
@@ -3077,17 +3081,21 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
             return false;
           }
 #ifdef WANT_ARM_TRACING
-          switch(ELF_ST_TYPE(s->st_info))
-          {
-            case STT_FUNC:
-            case STT_GNU_IFUNC:
-            case STT_ARM_TFUNC:
-              sym_addr = (ElfW(Addr))_create_wrapper(sym_name,
-                      (void*)lsi->resolve_symbol_address(s), WRAPPER_UNHOOKED);
-              break;
-            default:
-              sym_addr = lsi->resolve_symbol_address(s);
-              break;
+          if (_wrapping_enabled) {
+            switch(ELF_ST_TYPE(s->st_info))
+            {
+              case STT_FUNC:
+              case STT_GNU_IFUNC:
+              case STT_ARM_TFUNC:
+                sym_addr = (ElfW(Addr))_create_wrapper(sym_name,
+                        (void*)lsi->resolve_symbol_address(s), WRAPPER_UNHOOKED);
+                break;
+              default:
+                sym_addr = lsi->resolve_symbol_address(s);
+                break;
+            }
+          } else {
+            sym_addr = lsi->resolve_symbol_address(s);
           }
 #else
           sym_addr = lsi->resolve_symbol_address(s);

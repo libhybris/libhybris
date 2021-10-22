@@ -36,7 +36,7 @@
 #endif
 
 extern void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
-
+extern int _wrapping_enabled;
 /* This file hijacks the symbols stubbed out in libdl.so. */
 
 static __thread const char *dl_err_str;
@@ -139,14 +139,18 @@ extern "C" void* android_dlsym(void* handle, const char* symbol) {
 
     if ((bind == STB_GLOBAL || bind == STB_WEAK) && sym->st_shndx != 0) {
 #ifdef WANT_ARM_TRACING
-      switch(ELF_ST_TYPE(sym->st_info))
-      {
-        case STT_FUNC:
-        case STT_GNU_IFUNC:
-        case STT_ARM_TFUNC:
-          return reinterpret_cast<void*>(_create_wrapper((char*)symbol, (void*)found->resolve_symbol_address(sym), WRAPPER_DYNHOOK));
-        default:
-          return reinterpret_cast<void*>(found->resolve_symbol_address(sym));
+      if (_wrapping_enabled) {
+        switch(ELF_ST_TYPE(sym->st_info))
+        {
+          case STT_FUNC:
+          case STT_GNU_IFUNC:
+          case STT_ARM_TFUNC:
+            return reinterpret_cast<void*>(_create_wrapper((char*)symbol, (void*)found->resolve_symbol_address(sym), WRAPPER_DYNHOOK));
+          default:
+            return reinterpret_cast<void*>(found->resolve_symbol_address(sym));
+        }
+      } else {
+        return reinterpret_cast<void*>(found->resolve_symbol_address(sym));
       }
 #else
       return reinterpret_cast<void*>(found->resolve_symbol_address(sym));

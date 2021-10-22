@@ -41,6 +41,8 @@ enum wrapper_type_t {
 void *create_wrapper(const char *symbol, void *function, int wrapper_type);
 void release_all_wrappers();
 
+int wrappers_enabled();
+
 // taken from <linux/elf.h>
 #define ELF_ST_TYPE(x)       (((unsigned int) x) & 0xf)
 
