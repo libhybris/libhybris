@@ -54,6 +54,7 @@ LOCAL_C_INCLUDES := \
 IS_ANDROID_5 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 5 && echo true)
 IS_ANDROID_8 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 8 && echo true)
 IS_ANDROID_10 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 10 && echo true)
+IS_ANDROID_11 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 11 && echo true)
 
 ifeq ($(IS_ANDROID_5),true)
 LOCAL_C_INCLUDES += system/media/camera/include
@@ -68,6 +69,11 @@ LOCAL_MODULE := camera_service
 
 ifeq ($(IS_ANDROID_8),true)
 LOCAL_INIT_RC := camera_service.rc
+endif
+
+ifeq ($(IS_ANDROID_11),true)
+LOCAL_HEADER_LIBRARIES += \
+	libmedia_headers
 endif
 
 ifdef TARGET_2ND_ARCH
@@ -169,6 +175,15 @@ ifeq ($(IS_ANDROID_10),false)
 LOCAL_SHARED_LIBRARIES += \
 	libmediaextractor
 endif
+endif
+
+ifeq ($(IS_ANDROID_11),true)
+LOCAL_HEADER_LIBRARIES += \
+	libmediadrm_headers \
+	libmediametrics_headers
+
+LOCAL_SHARED_LIBRARIES += \
+	libmedia_codeclist
 endif
 
 LOCAL_C_INCLUDES := \

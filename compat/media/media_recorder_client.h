@@ -118,6 +118,10 @@ public:
     virtual status_t setPreferredMicrophoneFieldDimension(float zoom);
     virtual status_t getPortId(audio_port_handle_t *portId);
 #endif
+#if ANDROID_VERSION_MAJOR>=11
+   virtual status_t setPrivacySensitive(bool privacySensitive);
+   virtual status_t isPrivacySensitive(bool *privacySensitive) const;
+#endif
 
 private:
     sp<BpMediaRecorderObserver> media_recorder_observer;

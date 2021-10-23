@@ -116,15 +116,27 @@ void CameraControl::postData(
 	switch (msg_type) {
 	case CAMERA_MSG_RAW_IMAGE:
 		if (listener->on_data_raw_image_cb)
+#if ANDROID_VERSION_MAJOR>=11
+			listener->on_data_raw_image_cb(data->unsecurePointer(), data->size(), listener->context);
+#else
 			listener->on_data_raw_image_cb(data->pointer(), data->size(), listener->context);
+#endif
 		break;
 	case CAMERA_MSG_COMPRESSED_IMAGE:
 		if (listener->on_data_compressed_image_cb)
+#if ANDROID_VERSION_MAJOR>=11
+			listener->on_data_compressed_image_cb(data->unsecurePointer(), data->size(), listener->context);
+#else
 			listener->on_data_compressed_image_cb(data->pointer(), data->size(), listener->context);
+#endif
 		break;
 	case CAMERA_MSG_PREVIEW_FRAME:
 		if (listener->on_preview_frame_cb)
+#if ANDROID_VERSION_MAJOR>=11
+			listener->on_preview_frame_cb(data->unsecurePointer(), data->size(), listener->context);
+#else
 			listener->on_preview_frame_cb(data->pointer(), data->size(), listener->context);
+#endif
 		break;
 	default:
 		break;

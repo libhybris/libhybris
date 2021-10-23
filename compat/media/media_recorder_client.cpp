@@ -481,3 +481,23 @@ status_t MediaRecorderClient::getPortId(audio_port_handle_t *portId) {
     return NO_INIT;
 }
 #endif
+
+#if ANDROID_VERSION_MAJOR>=11
+status_t MediaRecorderClient::setPrivacySensitive(bool privacySensitive) {
+    REPORT_FUNCTION();
+    ALOGV("setPrivacySensitive(%d)", privacySensitive);
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->setPrivacySensitive(privacySensitive);
+    }
+    return NO_INIT;
+}
+status_t MediaRecorderClient::isPrivacySensitive(bool *privacySensitive) const {
+    REPORT_FUNCTION();
+    ALOGV("isPrivacySensitive");
+    if (recorder != NULL) {
+        return recorder->isPrivacySensitive(privacySensitive);
+    }
+    return NO_INIT;
+}
+#endif

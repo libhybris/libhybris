@@ -22,7 +22,11 @@
 
 #include <gui/Surface.h>
 
+#if ANDROID_VERSION_MAJOR>=11
+#include <mediadrm/ICrypto.h>
+#else
 #include <media/ICrypto.h>
+#endif
 
 #include <media/stagefright/foundation/AHandler.h>
 #include <media/stagefright/foundation/AString.h>
