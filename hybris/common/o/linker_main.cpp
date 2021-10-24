@@ -498,7 +498,7 @@ static void __linker_cannot_link(const char* argv0) {
 void* (*_get_hooked_symbol)(const char *sym, const char *requester);
 #ifdef WANT_ARM_TRACING
 void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
-int wrapping_enabled = 0;
+int _wrapping_enabled = 0;
 extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(create_wrapper)(const char*, void*, int), int wrapping_enabled) {
 #else
 extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) {
