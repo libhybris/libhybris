@@ -20,6 +20,7 @@ bin_PROGRAMS = \
 
 if WANT_WAYLAND
 bin_PROGRAMS += \
+	test_vulkan \
 	test_camera
 endif
 
@@ -376,3 +377,14 @@ test_opencl_CFLAGS = \
 test_opencl_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/opencl/libOpenCL.la
+
+if WANT_WAYLAND
+test_vulkan_SOURCES = test_vulkan.cpp
+test_vulkan_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS)
+test_vulkan_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/vulkan/libvulkan.la \
+	$(WAYLAND_CLIENT_LIBS)
+endif
