@@ -100,9 +100,11 @@ server_wlegl_create_buffer(struct wl_client *client,
 
 	buffer = server_wlegl_buffer_create(client, id, width, height, stride,
 					    format, usage, native, wlegl);
+	// hybris_gralloc_import_buffer copied the raw handle
+	native_handle_close((native_handle_t *)native);
+	native_handle_delete((native_handle_t *)native);
+
 	if (!buffer) {
-		native_handle_close((native_handle_t *)native);
-		native_handle_delete((native_handle_t *)native);
 		wl_resource_post_error(resource,
 				       ANDROID_WLEGL_ERROR_BAD_HANDLE,
 				       "invalid native handle");

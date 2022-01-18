@@ -584,11 +584,15 @@ static void ssb_buffer(void *data, android_wlegl_server_buffer_handle *,
     /* ownership of fds passed to native_handle_t */
     wsb->fds.size = 0;
 
-    wsb->handle = (buffer_handle_t) native;
+    wsb->handle = NULL;
     wsb->format = format;
     wsb->stride = stride;
 
-    int ret = hybris_gralloc_retain(wsb->handle);
+    int ret = hybris_gralloc_import_buffer(native, &wsb->handle);
+
+    native_handle_close(native);
+    native_handle_delete(native);
+
     if (ret) {
         fprintf(stderr,"failed to register buffer\n");
         return;

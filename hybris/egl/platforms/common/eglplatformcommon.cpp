@@ -159,11 +159,14 @@ extern "C" EGLBoolean eglplatformcommon_eglHybrisCreateRemoteBuffer(EGLint width
 	memcpy(&native->data[0], fds, num_fds * sizeof(int));
 	memcpy(&native->data[num_fds], ints, num_ints * sizeof(int));
 
-	int ret = hybris_gralloc_retain(native);
+	const native_handle_t* out_handle = NULL;
+	int ret = hybris_gralloc_import_buffer(native, &out_handle);
+	native_handle_close(native);
+	native_handle_delete(native);
 
 	if (ret == 0)
 	{
-		RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, stride, format, usage, (buffer_handle_t)native);
+		RemoteWindowBuffer *buf = new RemoteWindowBuffer(width, height, stride, format, usage, (buffer_handle_t)out_handle);
 		buf->common.incRef(&buf->common);
 		*buffer = (EGLClientBuffer) static_cast<ANativeWindowBuffer *>(buf);
 		return EGL_TRUE;
