@@ -1,7 +1,6 @@
 /****************************************************************************************
  **
- ** Copyright (C) 2013 Jolla Ltd.
- ** Contact: Carsten Munk <carsten.munk@jollamobile.com>
+ ** Copyright (C) 2013-2022 Jolla Ltd.
  ** All rights reserved.
  **
  ** This file is part of Wayland enablement for libhybris
@@ -28,7 +27,7 @@
 #include <android-config.h>
 #include <hardware/gralloc.h>
 #include "wayland_window.h"
-#include "wayland-egl-priv.h"
+#include <wayland-egl-backend.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -132,26 +131,6 @@ WaylandNativeWindow::sync_callback(void *data, struct wl_callback *callback, uin
 static const struct wl_callback_listener sync_listener = {
     WaylandNativeWindow::sync_callback
 };
-
-
-#if WAYLAND_VERSION_MAJOR == 0 || (WAYLAND_VERSION_MAJOR == 1 && WAYLAND_VERSION_MINOR < 6)
-int
-WaylandNativeWindow::wl_display_roundtrip_queue(struct wl_display *display,
-                                                struct wl_event_queue *queue)
-{
-    struct wl_callback *callback;
-    int done = 0, ret = 0;
-    wl_display_dispatch_queue_pending(display, queue);
-
-    callback = wl_display_sync(display);
-    wl_callback_add_listener(callback, &sync_listener, &done);
-    wl_proxy_set_queue((struct wl_proxy *) callback, queue);
-    while (ret >= 0 && !done)
-        ret = wl_display_dispatch_queue(display, queue);
-
-    return ret;
-}
-#endif
 
 static void check_fatal_error(struct wl_display *display)
 {

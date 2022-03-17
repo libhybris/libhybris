@@ -1,7 +1,6 @@
 /****************************************************************************************
  **
- ** Copyright (C) 2013 Jolla Ltd.
- ** Contact: Carsten Munk <carsten.munk@jollamobile.com>
+ ** Copyright (C) 2013-2022 Jolla Ltd.
  ** All rights reserved.
  **
  ** This file is part of Wayland enablement for libhybris
@@ -213,10 +212,6 @@ private:
     EGLint *m_damage_rects, m_damage_n_rects;
     struct wl_callback *frame_callback;
     int m_swap_interval;
-#if WAYLAND_VERSION_MAJOR == 0 || (WAYLAND_VERSION_MAJOR == 1 && WAYLAND_VERSION_MINOR < 6)
-    static int wl_roundtrip_queue(struct wl_display *display,
-                                  struct wl_event_queue *queue);
-#endif
 };
 
 #endif

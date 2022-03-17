@@ -78,15 +78,12 @@ AC_ARG_ENABLE(ubuntu-camera-headers,
   [ubuntu_camera_headers="no"])
 AM_CONDITIONAL( [WANT_UBUNTU_CAMERA_HEADERS], [test x"$ubuntu_camera_headers" = x"yes"])
 
-WANT_WAYLAND_EGL="no"
-
 AC_ARG_ENABLE(wayland,
   [  --enable-wayland            Enable wayland support (default=disabled)],
   [wayland=$enableval
 	PKG_CHECK_MODULES(WAYLAND_CLIENT, wayland-client,, exit)
 	PKG_CHECK_MODULES(WAYLAND_SERVER, wayland-server,, exit)
-	PKG_CHECK_MODULES(WAYLAND_EGL, [wayland-egl >= 1.15], , [WANT_WAYLAND_EGL="yes"])
-	AC_DEFINE(WANT_WAYLAND_EGL, [], [We use internal Wayland EGL support])
+	PKG_CHECK_MODULES(WAYLAND_EGL, [wayland-egl >= 1.15],, exit)
 	WAYLAND_PREFIX=`$PKG_CONFIG --variable=prefix wayland-client`
 
 	AC_PATH_PROG([WAYLAND_SCANNER], [wayland-scanner],, [${WAYLAND_PREFIX}/bin$PATH_SEPARATOR$PATH])
@@ -94,7 +91,6 @@ AC_ARG_ENABLE(wayland,
 ],
   [wayland="no"])
 AM_CONDITIONAL( [WANT_WAYLAND], [test x"$wayland" = x"yes"])
-AM_CONDITIONAL( [WANT_WAYLAND_EGL], [test x"$WANT_WAYLAND_EGL" = x"yes"])
 
 AC_ARG_ENABLE(glvnd,
   [  --enable-glvnd                                 Enable GLVND support])
@@ -343,7 +339,6 @@ AC_CONFIG_FILES([
 	tests/Makefile
 ])
 
-AM_COND_IF([WANT_WAYLAND_EGL], [AC_CONFIG_FILES([egl/platforms/common/wayland-egl.pc])])
 AC_OUTPUT
 
 echo
