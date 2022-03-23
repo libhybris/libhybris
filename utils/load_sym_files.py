@@ -84,8 +84,9 @@ class LoadSymFiles(gdb.Command):
             if not lib.startswith(libdir):
                 continue
 
-            p = subprocess.Popen("objdump -h " + lib , shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            for header in p.stdout.read().decode('ascii').split("\n"):
+            outs = subprocess.check_output(["objdump", "-h", lib])
+
+            for header in outs.decode('ascii').split("\n"):
                 #6 .text         00044ef7  00017f80  00017f80  00017f80  2**4
                 t = re.match("\s*[0-9]+\s+\.text\s+([0-9A-Fa-f]+\s+){3}([0-9A-Fa-f]+)", header)
                 if t:
