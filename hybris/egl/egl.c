@@ -609,7 +609,7 @@ __eglMustCastToProperFunctionPointerType eglGetProcAddress(const char *procname)
 		ret = ws_eglGetProcAddress(procname);
 	}
 
-	if (ret == NULL) {
+	if (ret == NULL && _eglGetProcAddress != NULL) {
 		ret = (*_eglGetProcAddress)(procname);
 	}
 
