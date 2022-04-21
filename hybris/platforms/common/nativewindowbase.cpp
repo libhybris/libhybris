@@ -35,7 +35,6 @@ extern "C" {
 #endif
 
 #ifdef ANDROID_BUILD
-#define TRACE(...)
 #define HYBRIS_TRACE_BEGIN(...)
 #define HYBRIS_TRACE_END(...)
 #endif

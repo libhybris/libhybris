@@ -330,7 +330,7 @@ int main()
 
     glClearColor (1., 1., 1., 1.); // background color
     float phase = 0;
-    int i, oldretire = -1, oldrelease = -1, oldrelease2 = -1;
+    int i;
     for (i=0; i<60*60; ++i) {
         glClear(GL_COLOR_BUFFER_BIT);
         glUniform1f (phase_loc, phase);

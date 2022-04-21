@@ -1,4 +1,6 @@
+#ifndef ANDROID_BUILD
 #include <android-config.h>
+#endif
 #include <stdlib.h>
 
 #include <hardware/hardware.h>
