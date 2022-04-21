@@ -1,5 +1,6 @@
 /*
  * Copyright © 2012 Collabora, Ltd.
+ * Copyright © 2022 Jolla Ltd.
  *
  * Permission to use, copy, modify, distribute, and sell this software and
  * its documentation for any purpose is hereby granted without fee, provided
@@ -22,9 +23,6 @@
 
 #include <android-config.h>
 #include <cstring>
-
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
 
 extern "C" {
 #include <cutils/native_handle.h>

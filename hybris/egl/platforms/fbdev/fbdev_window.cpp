@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 libhybris
+ * Copyright (C) 2013-2022 libhybris
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 
 #include <errno.h>
 #include <assert.h>
+#include <inttypes.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
@@ -468,10 +469,10 @@ unsigned int FbDevNativeWindow::getUsage() const
  *  Calling this function will usually cause following buffers to be
  *  reallocated.
  */
-int FbDevNativeWindow::setUsage(int usage)
+int FbDevNativeWindow::setUsage(uint64_t usage)
 {
     m_allocateBuffers = (m_usage != usage);
-    TRACE("usage=x%x m_allocateBuffers=%d", usage, m_allocateBuffers);
+    TRACE("usage=x%" PRIx64 " m_allocateBuffers=%d", usage, m_allocateBuffers);
     m_usage = usage;
     return NO_ERROR;
 }

@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2012 Simon Busch <morphis@gravedo.de>
- * Copyright (c) 2022 Jolla Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +15,16 @@
  *
  */
 
-#ifndef EGL_HYBRIS_H_
-#define EGL_HYBRIS_H_
+#ifndef VULKAN_HYBRIS_H_
+#define VULKAN_HYBRIS_H_
 
-/* Needed for ICS window.h */
-#include <string.h>
-#include <system/window.h>
 #include "platformcommon.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void __eglHybrisSetError(EGLint error);
-
-void *hybris_android_egl_dlsym(const char *symbol);
-int hybris_egl_has_mapping(EGLSurface surface);
-EGLNativeWindowType hybris_egl_get_mapping(EGLSurface surface);
-
-struct _EGLDisplay *hybris_egl_display_get_mapping(EGLDisplay dpy);
+void *hybris_android_vulkan_dlsym(const char *symbol);
 
 #ifdef __cplusplus
 }

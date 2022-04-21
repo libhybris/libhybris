@@ -23,10 +23,9 @@
  **
  ****************************************************************************************/
 
-#ifndef Wayland_WINDOW_H
-#define Wayland_WINDOW_H
-#include "eglnativewindowbase.h"
-#include <linux/fb.h>
+#ifndef WAYLAND_WINDOW_H
+#define WAYLAND_WINDOW_H
+#include "nativewindowbase.h"
 
 #include <hybris/gralloc/gralloc.h>
 
@@ -39,7 +38,6 @@ extern "C" {
 }
 
 #include <list>
-#include <deque>
 
 class WaylandNativeWindowBuffer : public BaseNativeWindowBuffer
 {
@@ -113,7 +111,7 @@ protected:
 
     void init(struct android_wlegl *android_wlegl,
                                      struct wl_display *display,
-                                     struct wl_event_queue *queue);
+                                     struct wl_event_queue *queue) override;
 
 protected:
     void* vaddr;
@@ -127,11 +125,11 @@ public:
 class ServerWaylandBuffer : public WaylandNativeWindowBuffer
 {
 public:
-    ServerWaylandBuffer(unsigned int w, unsigned int h, int format, int usage, android_wlegl *android_wlegl, struct wl_event_queue *queue);
+    ServerWaylandBuffer(unsigned int w, unsigned int h, int _format, int _usage, android_wlegl *android_wlegl, struct wl_event_queue *queue);
     ~ServerWaylandBuffer();
     void init(struct android_wlegl *android_wlegl,
-                                     struct wl_display *display,
-                                     struct wl_event_queue *queue);
+              struct wl_display *display,
+              struct wl_event_queue *queue) override;
 
     struct wl_array ints;
     struct wl_array fds;
@@ -140,10 +138,11 @@ public:
 
 #endif // HYBRIS_NO_SERVER_SIDE_BUFFERS
 
-class WaylandNativeWindow : public EGLBaseNativeWindow {
+class WaylandNativeWindow : public BaseNativeWindow {
 public:
-    WaylandNativeWindow(struct wl_egl_window *win, struct wl_display *display, android_wlegl *wlegl);
+    WaylandNativeWindow(struct wl_egl_window *window, struct wl_display *display, android_wlegl *wlegl);
     ~WaylandNativeWindow();
+    void destroyWlEGLWindow();
 
     void lock();
     void unlock();
@@ -153,8 +152,6 @@ public:
     int postBuffer(ANativeWindowBuffer *buffer);
 
     virtual int setSwapInterval(int interval);
-    void prepareSwap(EGLint *damage_rects, EGLint damage_n_rects);
-    void finishSwap();
 
     static void sync_callback(void *data, struct wl_callback *callback, uint32_t serial);
     static void registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
@@ -188,13 +185,13 @@ private:
     WaylandNativeWindowBuffer *addBuffer();
     void destroyBuffer(WaylandNativeWindowBuffer *);
     void destroyBuffers();
+    void presentBuffer(WaylandNativeWindowBuffer *wnb);
     int readQueue(bool block);
 
     std::list<WaylandNativeWindowBuffer *> m_bufList;
     std::list<WaylandNativeWindowBuffer *> fronted;
     std::list<WaylandNativeWindowBuffer *> posted;
     std::list<WaylandNativeWindowBuffer *> post_registered;
-    std::deque<WaylandNativeWindowBuffer *> queue;
     struct wl_egl_window *m_window;
     struct wl_display *m_display;
     WaylandNativeWindowBuffer *m_lastBuffer;
@@ -209,7 +206,9 @@ private:
     pthread_cond_t cond;
     int m_queueReads;
     int m_freeBufs;
-    EGLint *m_damage_rects, m_damage_n_rects;
+    // TODO damage rects
+    struct android_native_rect_t *m_damage_rects;
+    size_t m_damage_n_rects;
     struct wl_callback *frame_callback;
     int m_swap_interval;
 };

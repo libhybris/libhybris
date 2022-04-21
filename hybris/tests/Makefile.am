@@ -20,6 +20,7 @@ bin_PROGRAMS = \
 
 if WANT_WAYLAND
 bin_PROGRAMS += \
+	test_vulkan \
 	test_camera
 endif
 
@@ -59,6 +60,7 @@ test_egl_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/platforms/common \
 	-I$(top_srcdir)/egl/platforms/common \
 	-I$(top_srcdir)/egl/platforms/hwcomposer \
 	-I$(top_srcdir)/libsync \
@@ -94,6 +96,7 @@ test_glesv2_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/platforms/common \
 	-I$(top_srcdir)/egl/platforms/common \
 	-I$(top_srcdir)/egl/platforms/hwcomposer \
 	-I$(top_srcdir)/libsync \
@@ -126,6 +129,7 @@ test_glesv3_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/platforms/common \
 	-I$(top_srcdir)/egl/platforms/common \
 	-I$(top_srcdir)/egl/platforms/hwcomposer \
 	-I$(top_srcdir)/libsync \
@@ -158,6 +162,7 @@ test_hwcomposer_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/platforms/common \
 	-I$(top_srcdir)/egl/platforms/common \
 	-I$(top_srcdir)/egl/platforms/hwcomposer \
 	-I$(top_srcdir)/libsync \
@@ -245,6 +250,7 @@ test_camera_CXXFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
 	-I$(top_srcdir)/common \
+	-I$(top_srcdir)/platforms/common \
 	-I$(top_srcdir)/egl/platforms/common \
 	-I$(top_srcdir)/egl/platforms/hwcomposer \
 	-I$(top_srcdir)/libsync \
@@ -256,25 +262,14 @@ else
 test_camera_CXXFLAGS += \
 	-DHAS_HWCOMPOSER2_HEADERS=0
 endif
-if WANT_WAYLAND_EGL
 test_camera_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(libegl) \
 	$(libglesv2) \
 	$(top_builddir)/camera/libcamera.la \
 	$(top_builddir)/input/libis.la \
-	$(top_builddir)/egl/platforms/common/libwayland-egl.la \
+	$(WAYLAND_EGL_LIBS) \
 	$(WAYLAND_CLIENT_LIBS)
-else
-test_camera_LDADD = \
-	$(top_builddir)/common/libhybris-common.la \
-	$(libegl) \
-	$(libglesv2) \
-	$(top_builddir)/camera/libcamera.la \
-	$(top_builddir)/input/libis.la \
-	$(WAYLAND_EGL_LIBS)
-	$(WAYLAND_CLIENT_LIBS)
-endif
 
 test_media_SOURCES = test_media.cpp test_common.cpp
 test_media_CFLAGS = \
@@ -382,3 +377,14 @@ test_opencl_CFLAGS = \
 test_opencl_LDADD = \
 	$(top_builddir)/common/libhybris-common.la \
 	$(top_builddir)/opencl/libOpenCL.la
+
+if WANT_WAYLAND
+test_vulkan_SOURCES = test_vulkan.cpp
+test_vulkan_CPPFLAGS = \
+	-I$(top_srcdir)/include \
+	$(ANDROID_HEADERS_CFLAGS)
+test_vulkan_LDADD = \
+	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/vulkan/libvulkan.la \
+	$(WAYLAND_CLIENT_LIBS)
+endif

@@ -19,6 +19,7 @@
 #include <ui/GraphicBuffer.h>
 #include <ui/Region.h>
 #include <sync/sync.h>
+#include <cutils/properties.h>
 
 #include "HWC2.h"
 #include "hwc2_compatibility_layer.h"
@@ -95,6 +96,10 @@ hwc2_compat_device_t* hwc2_compat_device_new(bool useVrComposer)
         return nullptr;
 
     device->self = new HWC2::Device(useVrComposer);
+
+    bool presentTimestamp =
+        !device->self->getCapabilities().count(HWC2::Capability::PresentFenceIsNotReliable);
+    property_set("service.sf.present_timestamp", presentTimestamp ? "1" : "0");
 
     return device;
 }

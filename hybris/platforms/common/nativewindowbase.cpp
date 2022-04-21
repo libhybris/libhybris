@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2013-2022 Jolla Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #ifndef ANDROID_BUILD
 #include <android-config.h>
@@ -249,6 +264,9 @@ const char *BaseNativeWindow::_native_window_operation(int what)
 		case NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS: return "NATIVE_WINDOW_SET_BUFFERS_USER_DIMENSIONS";
 		case NATIVE_WINDOW_SET_POST_TRANSFORM_CROP: return "NATIVE_WINDOW_SET_POST_TRANSFORM_CROP";
 #endif
+#if ANDROID_VERSION_MAJOR>=9
+		case NATIVE_WINDOW_SET_USAGE64: return "NATIVE_WINDOW_SET_USAGE64";
+#endif
 		default: return "NATIVE_UNKNOWN_OPERATION";
 	}
 }
@@ -340,7 +358,7 @@ int BaseNativeWindow::_query(const struct ANativeWindow* window, int what, int* 
 			return NO_ERROR;
 #endif
 	}
-	TRACE("EGL error: unkown window attribute! %i", what);
+	TRACE("NativeWindow error: unknown window attribute! %i", what);
 	*value = 0;
 	return BAD_VALUE;
 }
@@ -356,7 +374,7 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 	switch(operation) {
 	case NATIVE_WINDOW_SET_USAGE                 : //  0,
 	{
-		int usage = va_arg(args, int);
+		uint64_t usage = va_arg(args, uint32_t);
 		va_end(args);
 		return self->setUsage(usage);
 	}
@@ -422,6 +440,15 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 		TRACE("set post transform crop");
 		break;
 #endif
+#if ANDROID_VERSION_MAJOR>=9
+	case NATIVE_WINDOW_SET_USAGE64               : // 30,
+		TRACE("set usage 64");
+		uint64_t usage = va_arg(args, uint64_t);
+		va_end(args);
+		return self->setUsage(usage);
+		break;
+#endif
+
 	}
 	va_end(args);
 	return NO_ERROR;
