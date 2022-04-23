@@ -35,8 +35,8 @@ clinclude_HEADERS = \
 	CL/cl_gl_ext.h \
 	CL/cl_gl.h \
 	CL/cl.h \
-	CL/cl.hpp \
 	CL/cl_platform.h \
+	CL/cl_version.h \
 	CL/opencl.h
 
 uiincludedir = $(includedir)/hybris/ui
