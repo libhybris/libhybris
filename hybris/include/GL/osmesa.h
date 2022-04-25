@@ -1,6 +1,5 @@
 /*
  * Mesa 3-D graphics library
- * Version:  6.5
  * 
  * Copyright (C) 1999-2005  Brian Paul   All Rights Reserved.
  * 
@@ -17,9 +16,10 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * BRIAN PAUL BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
- * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 
@@ -41,10 +41,8 @@
  *   OSMesaGetIntegerv - return OSMesa state parameters
  *
  *
- * The limits on the width and height of an image buffer are MAX_WIDTH and
- * MAX_HEIGHT as defined in Mesa/src/config.h.  Defaults are 1280 and 1024.
- * You can increase them as needed but beware that many temporary arrays in
- * Mesa are dimensioned by MAX_WIDTH or MAX_HEIGHT.
+ * The limits on the width and height of an image buffer can be retrieved
+ * via OSMesaGetIntegerv(OSMESA_MAX_WIDTH/OSMESA_MAX_HEIGHT).
  */
 
 
@@ -60,8 +58,8 @@ extern "C" {
 #include <GL/gl.h>
 
 
-#define OSMESA_MAJOR_VERSION 6
-#define OSMESA_MINOR_VERSION 5
+#define OSMESA_MAJOR_VERSION 11
+#define OSMESA_MINOR_VERSION 2
 #define OSMESA_PATCH_VERSION 0
 
 
@@ -97,13 +95,20 @@ extern "C" {
 #define OSMESA_MAX_WIDTH	0x24  /* new in 4.0 */
 #define OSMESA_MAX_HEIGHT	0x25  /* new in 4.0 */
 
+/*
+ * Accepted in OSMesaCreateContextAttrib's attribute list.
+ */
+#define OSMESA_DEPTH_BITS            0x30
+#define OSMESA_STENCIL_BITS          0x31
+#define OSMESA_ACCUM_BITS            0x32
+#define OSMESA_PROFILE               0x33
+#define OSMESA_CORE_PROFILE          0x34
+#define OSMESA_COMPAT_PROFILE        0x35
+#define OSMESA_CONTEXT_MAJOR_VERSION 0x36
+#define OSMESA_CONTEXT_MINOR_VERSION 0x37
+
 
 typedef struct osmesa_context *OSMesaContext;
-
-
-#if defined(__QUICKDRAW__)
-#pragma export on
-#endif
 
 
 /*
@@ -132,6 +137,35 @@ OSMesaCreateContext( GLenum format, OSMesaContext sharelist );
 GLAPI OSMesaContext GLAPIENTRY
 OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
                         GLint accumBits, OSMesaContext sharelist);
+
+
+/*
+ * Create an Off-Screen Mesa rendering context with attribute list.
+ * The list is composed of (attribute, value) pairs and terminated with
+ * attribute==0.  Supported Attributes:
+ *
+ * Attributes                    Values
+ * --------------------------------------------------------------------------
+ * OSMESA_FORMAT                 OSMESA_RGBA*, OSMESA_BGRA, OSMESA_ARGB, etc.
+ * OSMESA_DEPTH_BITS             0*, 16, 24, 32
+ * OSMESA_STENCIL_BITS           0*, 8
+ * OSMESA_ACCUM_BITS             0*, 16
+ * OSMESA_PROFILE                OSMESA_COMPAT_PROFILE*, OSMESA_CORE_PROFILE
+ * OSMESA_CONTEXT_MAJOR_VERSION  1*, 2, 3
+ * OSMESA_CONTEXT_MINOR_VERSION  0+
+ *
+ * Note: * = default value
+ *
+ * We return a context version >= what's specified by OSMESA_CONTEXT_MAJOR/
+ * MINOR_VERSION for the given profile.  For example, if you request a GL 1.4
+ * compat profile, you might get a GL 3.0 compat profile.
+ * Otherwise, null is returned if the version/profile is not supported.
+ *
+ * New in Mesa 11.2
+ */
+GLAPI OSMesaContext GLAPIENTRY
+OSMesaCreateContextAttribs( const int *attribList, OSMesaContext sharelist );
+
 
 
 /*
@@ -274,6 +308,21 @@ OSMesaGetProcAddress( const char *funcName );
  */
 GLAPI void GLAPIENTRY
 OSMesaColorClamp(GLboolean enable);
+
+
+/**
+ * Enable/disable Gallium post-process filters.
+ * This should be called after a context is created, but before it is
+ * made current for the first time.  After a context has been made
+ * current, this function has no effect.
+ * If the enable_value param is zero, the filter is disabled.  Otherwise
+ * the filter is enabled, and the value may control the filter's quality.
+ * New in Mesa 10.0
+ */
+GLAPI void GLAPIENTRY
+OSMesaPostprocess(OSMesaContext osmesa, const char *filter,
+                  unsigned enable_value);
+
 
 #ifdef __cplusplus
 }
