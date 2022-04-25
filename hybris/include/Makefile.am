@@ -40,13 +40,6 @@ clinclude_HEADERS = \
 	CL/cl_platform.h \
 	CL/opencl.h
 
-vgincludedir = $(includedir)/VG
-vginclude_HEADERS = \
-	VG/openvg.h \
-	VG/vgext.h \
-	VG/vgplatform.h \
-	VG/vgu.h
-
 uiincludedir = $(includedir)/hybris/ui
 uiinclude_HEADERS = \
 	hybris/ui/ui_compatibility_layer.h
