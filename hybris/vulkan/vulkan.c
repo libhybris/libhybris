@@ -545,7 +545,11 @@ VULKAN_IDLOAD(vkCmdSetFragmentShadingRateEnumNV);
 VULKAN_IDLOAD(vkAcquireWinrtDisplayNV);
 VULKAN_IDLOAD(vkGetWinrtDisplayNV);
 VULKAN_IDLOAD(vkCmdSetVertexInputEXT);
+#if VK_HEADER_VERSION >= 184
+VULKAN_IDLOAD(vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI);
+#else
 VULKAN_IDLOAD(vkGetSubpassShadingMaxWorkgroupSizeHUAWEI);
+#endif
 VULKAN_IDLOAD(vkCmdSubpassShadingHUAWEI);
 VULKAN_IDLOAD(vkCmdSetPatchControlPointsEXT);
 VULKAN_IDLOAD(vkCmdSetRasterizerDiscardEnableEXT);
