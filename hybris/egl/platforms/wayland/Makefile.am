@@ -31,6 +31,7 @@ endif
 
 eglplatform_wayland_la_LDFLAGS = \
 	-avoid-version -module -shared -export-dynamic \
+	$(top_builddir)/platforms/common/libhybris-platformcommon.la \
 	$(top_builddir)/egl/platforms/common/libhybris-eglplatformcommon.la \
 	$(top_builddir)/gralloc/libgralloc.la \
 	$(WAYLAND_CLIENT_LIBS)
