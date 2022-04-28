@@ -40,6 +40,7 @@ libhybris_eglplatformcommon_la_CXXFLAGS += -ggdb -O0
 endif
 libhybris_eglplatformcommon_la_LDFLAGS = \
 	$(top_builddir)/common/libhybris-common.la \
+	$(top_builddir)/gralloc/libgralloc.la \
 	$(top_builddir)/platforms/common/libhybris-platformcommon.la \
 	-version-info "1":"0":"0"
 

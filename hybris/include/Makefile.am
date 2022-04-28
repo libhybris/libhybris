@@ -23,7 +23,6 @@ gles3include_HEADERS = \
 	GLES3/gl3.h \
 	GLES3/gl31.h \
 	GLES3/gl32.h \
-	GLES3/gl3ext.h \
 	GLES3/gl3platform.h
 
 khrincludedir = $(includedir)/KHR
@@ -36,16 +35,9 @@ clinclude_HEADERS = \
 	CL/cl_gl_ext.h \
 	CL/cl_gl.h \
 	CL/cl.h \
-	CL/cl.hpp \
 	CL/cl_platform.h \
+	CL/cl_version.h \
 	CL/opencl.h
-
-vgincludedir = $(includedir)/VG
-vginclude_HEADERS = \
-	VG/openvg.h \
-	VG/vgext.h \
-	VG/vgplatform.h \
-	VG/vgu.h
 
 uiincludedir = $(includedir)/hybris/ui
 uiinclude_HEADERS = \

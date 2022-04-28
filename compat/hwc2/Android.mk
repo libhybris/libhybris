@@ -4,6 +4,16 @@ ANDROID_VERSION_MAJOR := $(word 1, $(subst ., , $(PLATFORM_VERSION)))
 ANDROID_VERSION_MINOR := $(word 2, $(subst ., , $(PLATFORM_VERSION)))
 ANDROID_VERSION_PATCH := $(word 3, $(subst ., , $(PLATFORM_VERSION)))
 
+ifeq ($(strip $(ANDROID_VERSION_MINOR)),)
+$(warning *** ANDROID_VERSION_MINOR undefined. Assuming 0)
+ANDROID_VERSION_MINOR = 0
+endif
+
+ifeq ($(strip $(ANDROID_VERSION_MICRO)),)
+$(warning *** ANDROID_VERSION_MICRO undefined. Assuming 0)
+ANDROID_VERSION_MICRO = 0
+endif
+
 LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -65,7 +75,7 @@ LOCAL_MODULE := libhybris-gralloc
 LOCAL_SRC_FILES := tests/hybris-gralloc.c \
     GrallocUsageConversion.cpp
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/tests
-LOCAL_SHARED_LIBRARIES := libcutils
+LOCAL_SHARED_LIBRARIES := libcutils libnativewindow
 LOCAL_CFLAGS := \
     -DANDROID_VERSION_MAJOR=$(ANDROID_VERSION_MAJOR) \
     -DANDROID_VERSION_MINOR=$(ANDROID_VERSION_MINOR) \

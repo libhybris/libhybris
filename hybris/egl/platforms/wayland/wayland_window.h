@@ -82,7 +82,7 @@ class ClientWaylandBuffer : public WaylandNativeWindowBuffer
 friend class WaylandNativeWindow;
 protected:
     ClientWaylandBuffer()
-        : {}
+    {}
 
     ClientWaylandBuffer(    unsigned int width,
                             unsigned int height,
@@ -100,7 +100,7 @@ protected:
         this->other = NULL;
         int alloc_ok = hybris_gralloc_allocate(this->width ? this->width : 1, this->height ? this->height : 1,
                 this->format, this->usage,
-                &this->handle, &this->stride);
+                &this->handle, (uint32_t*)&this->stride);
         assert(alloc_ok == 0);
         this->youngest = 0;
         this->common.incRef(&this->common);

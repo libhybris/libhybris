@@ -1,1 +1,1 @@
-../../../../libhybris/hybris/egl/platforms/common/nativewindowbase.cpp
+../../../hybris/platforms/common/nativewindowbase.cpp

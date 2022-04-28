@@ -122,6 +122,8 @@ void vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkAllo
 {
     ws_vkDestroySurfaceKHR(instance, surface, pAllocator);
 }
+#else
+VULKAN_IDLOAD(vkDestroySurfaceKHR);
 #endif
 
 PFN_vkVoidFunction vkGetInstanceProcAddr(VkInstance instance, const char* pName)
@@ -141,9 +143,9 @@ PFN_vkVoidFunction vkGetInstanceProcAddr(VkInstance instance, const char* pName)
         return (PFN_vkVoidFunction)vkCreateWaylandSurfaceKHR;
     } else if (!strcmp(pName, "vkGetPhysicalDeviceWaylandPresentationSupportKHR")) {
         return (PFN_vkVoidFunction)vkGetPhysicalDeviceWaylandPresentationSupportKHR;
-#endif
     } else if (!strcmp(pName, "vkDestroySurfaceKHR")) {
         return (PFN_vkVoidFunction)vkDestroySurfaceKHR;
+#endif
     }
 
     return (*_vkGetInstanceProcAddr)(instance, pName);
@@ -545,7 +547,11 @@ VULKAN_IDLOAD(vkCmdSetFragmentShadingRateEnumNV);
 VULKAN_IDLOAD(vkAcquireWinrtDisplayNV);
 VULKAN_IDLOAD(vkGetWinrtDisplayNV);
 VULKAN_IDLOAD(vkCmdSetVertexInputEXT);
+#if VK_HEADER_VERSION >= 184
+VULKAN_IDLOAD(vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI);
+#else
 VULKAN_IDLOAD(vkGetSubpassShadingMaxWorkgroupSizeHUAWEI);
+#endif
 VULKAN_IDLOAD(vkCmdSubpassShadingHUAWEI);
 VULKAN_IDLOAD(vkCmdSetPatchControlPointsEXT);
 VULKAN_IDLOAD(vkCmdSetRasterizerDiscardEnableEXT);
