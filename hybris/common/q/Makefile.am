@@ -51,6 +51,11 @@ q_la_CPPFLAGS = \
 	-D_USING_LIBCXX \
 	$(ARCH_FLAGS) \
 	$(ANDROID_HEADERS_CFLAGS)
+
+if HAS_ANDROID_11_0_0
+q_la_CPPFLAGS += -DHAS_ANDROID_11_0_0
+endif
+
 q_la_LDFLAGS = \
 	-lsupc++ \
 	-module \
