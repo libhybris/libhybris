@@ -20,8 +20,11 @@ bin_PROGRAMS = \
 
 if WANT_WAYLAND
 bin_PROGRAMS += \
-	test_vulkan \
 	test_camera
+if HAS_VULKAN_HEADERS
+bin_PROGRAMS += \
+	test_vulkan
+endif
 endif
 
 test_dlopen_SOURCES = test_dlopen.c
