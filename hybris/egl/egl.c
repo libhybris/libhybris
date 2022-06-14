@@ -107,7 +107,7 @@ struct ws_egl_interface hybris_egl_interface = {
 	egl_helper_get_mapping,
 };
 
-static __thread EGLint __eglHybrisError = EGL_SUCCESS;
+static EGLint __eglHybrisError = EGL_SUCCESS;
 
 void __eglHybrisSetError(EGLint error)
 {
