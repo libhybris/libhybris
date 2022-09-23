@@ -4331,9 +4331,10 @@ std::vector<android_namespace_t*> init_default_namespaces(const char* executable
   for (auto it : namespaces) {
 // hybris we have no libdl soinfo
   //  it.second->add_soinfo(ld_android_so);
-    if (vdso != nullptr) {
-      it.second->add_soinfo(vdso);
-    }
+// hybris adding vdso without the previous command causes a crash
+  //  if (vdso != nullptr) {
+  //    it.second->add_soinfo(vdso);
+  //  }
     // somain and ld_preloads are added to these namespaces after LD_PRELOAD libs are linked
   }
 
