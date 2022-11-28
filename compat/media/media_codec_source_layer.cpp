@@ -360,7 +360,9 @@ bool media_codec_source_read(MediaCodecSourceWrapper *source, MediaBufferWrapper
     if (err != android::OK)
         return false;
 
-    *buffer = new MediaBufferPrivate(buff);
+    // This MediaCodecSource layer is the oddball here. It's using a MediaBuffer that's
+    // created by MediaCodecSource into our private object, hence it's already managed.
+    *buffer = new MediaBufferPrivate(buff, false);
 
     return true;
 }
