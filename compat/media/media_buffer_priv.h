@@ -34,9 +34,9 @@ public:
     static MediaBufferPrivate* toPrivate(MediaBufferWrapper *source);
 
 #if ANDROID_VERSION_MAJOR>=8
-    MediaBufferPrivate(android::MediaBufferBase *data);
+    MediaBufferPrivate(android::MediaBufferBase *data, bool managedByWrapper = true);
 #else
-    MediaBufferPrivate(android::MediaBuffer *data);
+    MediaBufferPrivate(android::MediaBuffer *data, bool managedByWrapper = true);
 #endif
     MediaBufferPrivate();
     ~MediaBufferPrivate();
@@ -52,6 +52,7 @@ public:
 #endif
     MediaBufferReturnCallback return_callback;
     void *return_callback_data;
+    bool isBufferManagedByWrapper;
 };
 
 struct MediaABufferPrivate

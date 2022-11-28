@@ -35,24 +35,26 @@ MediaBufferPrivate* MediaBufferPrivate::toPrivate(MediaBufferWrapper *buffer)
 }
 
 #if ANDROID_VERSION_MAJOR>=8
-MediaBufferPrivate::MediaBufferPrivate(android::MediaBufferBase *buffer) :
+MediaBufferPrivate::MediaBufferPrivate(android::MediaBufferBase *buffer, bool managedByWrapper) :
 #else
-MediaBufferPrivate::MediaBufferPrivate(android::MediaBuffer *buffer) :
+MediaBufferPrivate::MediaBufferPrivate(android::MediaBuffer *buffer, bool managedByWrapper) :
 #endif
     buffer(buffer),
     return_callback(NULL),
-    return_callback_data(NULL)
+    return_callback_data(NULL),
+    isBufferManagedByWrapper(managedByWrapper)
 {
 }
 
 MediaBufferPrivate::MediaBufferPrivate() :
-    buffer(NULL)
+    buffer(NULL),
+    isBufferManagedByWrapper(true)
 {
 }
 
 MediaBufferPrivate::~MediaBufferPrivate()
 {
-    if (buffer)
+    if (isBufferManagedByWrapper && buffer)
         buffer->release();
 }
 
