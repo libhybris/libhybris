@@ -315,6 +315,11 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 	HYBRIS_TRACE_END("hybris-egl", "eglCreateWindowSurface", "");
 	return result;
 }
+EGLSurface eglCreatePlatformWindowSurface(EGLDisplay dpy, EGLConfig config,
+		void *native_window, const EGLAttrib *attrib_list)
+{
+	return eglCreateWindowSurface(dpy, config, (uintptr_t) native_window, (const EGLint *) attrib_list);
+}
 
 static EGLSurface _my_eglCreatePlatformWindowSurfaceEXT(EGLDisplay dpy, EGLConfig config,
 		void *native_window, const EGLint *attrib_list)
@@ -503,6 +508,7 @@ static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 	OVERRIDE_SAMENAME(eglGetPlatformDisplay),
 	OVERRIDE_SAMENAME(eglTerminate),
 	OVERRIDE_SAMENAME(eglCreateWindowSurface),
+	OVERRIDE_SAMENAME(eglCreatePlatformWindowSurface),
 	OVERRIDE_SAMENAME(eglDestroySurface),
 	OVERRIDE_SAMENAME(eglSwapInterval),
 	OVERRIDE_SAMENAME(eglCreateContext),
