@@ -127,6 +127,18 @@ server_wlegl_get_server_buffer_handle(wl_client *client, wl_resource *res, uint3
 
 	usage |= GRALLOC_USAGE_HW_COMPOSER;
 
+	// frameworks/native/libs/gui/BufferQueueProducer.cpp:1434 (android-11.0.0_r37)
+	// TODO: do we need to specify a different default format in some cases?
+	// This avoids a crash if the pixel format is unspecified.
+	// Initially i chose HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, but the documentation
+	// for the pixel formats says about the IMPLEMENTATION_DEFINED format:
+	// "This format must never be used with any of the BufferUsage::CPU_* usage flags."
+	// (hardware/interfaces/graphics/common/1.0/types.hal).
+	// The default in android seems to be RGBA_8888 if format == 0 (unless changed,
+	// via a call to setDefaultBufferFormat), so let's just use RGBA_8888 for now such
+	// that we don't need to analyze the usage flags.
+	if (format == 0) format = HAL_PIXEL_FORMAT_RBGA_8888;
+
 	int r = hybris_gralloc_allocate(width, height, format, usage, &_handle, (uint32_t*)&_stride);
         if (r) {
             HYBRIS_ERROR_LOG(SERVER_WLEGL, "failed to allocate buffer\n");
