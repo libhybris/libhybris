@@ -137,7 +137,7 @@ server_wlegl_get_server_buffer_handle(wl_client *client, wl_resource *res, uint3
 	// The default in android seems to be RGBA_8888 if format == 0 (unless changed,
 	// via a call to setDefaultBufferFormat), so let's just use RGBA_8888 for now such
 	// that we don't need to analyze the usage flags.
-	if (format == 0) format = HAL_PIXEL_FORMAT_RBGA_8888;
+	if (format == 0) format = HAL_PIXEL_FORMAT_RGBA_8888;
 
 	int r = hybris_gralloc_allocate(width, height, format, usage, &_handle, (uint32_t*)&_stride);
         if (r) {
