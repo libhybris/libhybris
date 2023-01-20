@@ -29,6 +29,7 @@ void hybris_gralloc_deinitialize(void);
 void hybris_gralloc_initialize(int framebuffer);
 void hybris_gralloc_deinitialize(void);
 int hybris_gralloc_release(buffer_handle_t handle, int was_allocated);
+int hybris_gralloc_import_buffer(buffer_handle_t raw_handle, buffer_handle_t* out_handle);
 int hybris_gralloc_retain(buffer_handle_t handle);
 int hybris_gralloc_allocate(int width, int height, int format, int usage, buffer_handle_t *handle, uint32_t *stride);
 int hybris_gralloc_lock(buffer_handle_t handle, int usage, int l, int t, int w, int h, void **vaddr);

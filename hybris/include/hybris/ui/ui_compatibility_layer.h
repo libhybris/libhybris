@@ -57,6 +57,31 @@ extern "C" {
 
     int graphic_buffer_init_check(struct graphic_buffer *buffer);
 
+#if ANDROID_VERSION_MAJOR>=10
+    typedef int32_t status_t;
+    typedef int32_t PixelFormat;
+
+    status_t graphic_buffer_allocator_allocate(uint32_t width, uint32_t height,
+                                               PixelFormat format, uint32_t layerCount, uint64_t usage,
+                                               buffer_handle_t* handle, uint32_t* stride,
+                                               uint64_t graphicBufferId, const char* requestorName);
+    status_t graphic_buffer_allocator_free(buffer_handle_t handle);
+
+    status_t graphic_buffer_mapper_import_buffer(buffer_handle_t rawHandle,
+                                                 uint32_t width, uint32_t height, uint32_t layerCount,
+                                                 PixelFormat format, uint64_t usage, uint32_t stride,
+                                                 buffer_handle_t* outHandle);
+    status_t graphic_buffer_mapper_import_buffer_no_size(buffer_handle_t rawHandle,
+                                                 buffer_handle_t* outHandle);
+
+    status_t graphic_buffer_mapper_free_buffer(buffer_handle_t handle);
+
+    status_t graphic_buffer_mapper_lock(buffer_handle_t handle, uint32_t usage, const ARect* bounds,
+                                        void** vaddr, int32_t* outBytesPerPixel,
+                                        int32_t* outBytesPerStride);
+    status_t graphic_buffer_mapper_unlock(buffer_handle_t handle);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

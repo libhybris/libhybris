@@ -33,6 +33,7 @@
 #include "hybris-gralloc.h"
 #else
 #include <hybris/gralloc/gralloc.h>
+#include <hybris/ui/ui.h>
 #include <hybris/common/binding.h>
 #endif
 
@@ -43,6 +44,7 @@
 #include <assert.h>
 
 #include <dlfcn.h>
+#include "logging.h"
 
 static int version = -1;
 static hw_module_t *gralloc_hardware_module = NULL;
@@ -92,6 +94,12 @@ static void gralloc1_init(void);
 #else
 #define GRALLOC0(code) (version == 0) { code }
 #define GRALLOC1(code) (0) {}
+#endif
+
+#if ANDROID_VERSION_MAJOR>=10
+#define GRALLOC_COMPAT(code) (version == 2) { code }
+#else
+#define GRALLOC_COMPAT(code) (0) {}
 #endif
 
 #define NO_GRALLOC { fprintf(stderr, "%s:%d: called gralloc method without gralloc loaded\n", __func__, __LINE__); assert(NULL); }
@@ -144,12 +152,19 @@ void hybris_gralloc_initialize(int framebuffer)
                 assert(NULL);
             }
         } else {
-            fprintf(stderr, "failed to find/load gralloc module\n");
-            assert(NULL);
+#if ANDROID_VERSION_MAJOR>=10
+            hybris_ui_initialize();
+            if (hybris_ui_check_for_symbol("graphic_buffer_allocator_allocate")) {
+                version = 2;
+            } else
+#endif
+            {
+                fprintf(stderr, "failed to find/load gralloc module\n");
+                assert(NULL);
+            }
         }
     } else {
-        // shouldn't reach here.
-        assert(NULL);
+        TRACE("hybris gralloc module has been already initialized\n");
     }
 }
 
@@ -228,7 +243,13 @@ int hybris_gralloc_release(buffer_handle_t handle, int was_allocated)
 {
     int ret = -ENOSYS;
 
-    if GRALLOC1(
+    if GRALLOC_COMPAT(
+        if (was_allocated) {
+            ret = graphic_buffer_allocator_free(handle);
+        } else {
+            ret = graphic_buffer_mapper_free_buffer(handle);
+        }
+    ) else if GRALLOC1(
         ret = gralloc1_release(gralloc1_device, handle);
 
         // this needs to happen if the last reference is gone, this function is
@@ -253,6 +274,27 @@ int hybris_gralloc_release(buffer_handle_t handle, int was_allocated)
     return ret;
 }
 
+int hybris_gralloc_import_buffer(buffer_handle_t raw_handle, buffer_handle_t* out_handle)
+{
+    int ret = -ENOSYS;
+
+    if GRALLOC_COMPAT(
+        ret = graphic_buffer_mapper_import_buffer_no_size(raw_handle, out_handle);
+    ) else {
+        // clone input buffer first when using gralloc 1 or 0
+        // to keep same ownership semantics with HIDL HAL
+        buffer_handle_t handle = NULL;
+        handle = native_handle_clone((native_handle_t*)raw_handle);
+        if (!handle)
+            return -ENOSYS;
+
+        ret = hybris_gralloc_retain(handle);
+        *out_handle = handle;
+    }
+
+    return ret;
+}
+
 int hybris_gralloc_retain(buffer_handle_t handle)
 {
     int ret = -ENOSYS;
@@ -270,7 +312,10 @@ int hybris_gralloc_allocate(int width, int height, int format, int usage, buffer
 {
     int ret = -ENOSYS;
 
-    if GRALLOC1(
+    if GRALLOC_COMPAT(
+        ret = graphic_buffer_allocator_allocate(width, height, format, 1 /*layerCount*/, usage,
+                                                handle_ptr, stride_ptr, 0 /*graphicBufferId*/, "hybris-gralloc");
+    ) else if GRALLOC1(
         gralloc1_buffer_descriptor_t desc;
         uint64_t producer_usage;
         uint64_t consumer_usage;
@@ -303,7 +348,19 @@ int hybris_gralloc_lock(buffer_handle_t handle, int usage, int l, int t, int w, 
 {
     int ret = -ENOSYS;
 
-    if GRALLOC1(
+    if GRALLOC_COMPAT(
+        ARect bounds;
+        int32_t outBytesPerPixel;
+        int32_t outBytesPerStride;
+
+        bounds.left = l;
+        bounds.top = t;
+        bounds.right = l + w;
+        bounds.bottom = t + h;
+
+        ret = graphic_buffer_mapper_lock(handle, usage, &bounds,
+                                         vaddr, &outBytesPerPixel, &outBytesPerStride);
+    ) else if GRALLOC1(
         uint64_t producer_usage;
         uint64_t consumer_usage;
         gralloc1_rect_t access_region;
@@ -327,7 +384,9 @@ int hybris_gralloc_unlock(buffer_handle_t handle)
 {
     int ret = -ENOSYS;
 
-    if GRALLOC1(
+    if GRALLOC_COMPAT(
+        ret = graphic_buffer_mapper_unlock(handle);
+    ) else if GRALLOC1(
         int releaseFence = 0;
         ret = gralloc1_unlock(gralloc1_device, handle, &releaseFence);
         close(releaseFence);
