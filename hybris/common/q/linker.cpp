@@ -106,6 +106,10 @@ static const char* const kLdConfigArchFilePath = "/system/etc/ld.config." ABI_ST
 static const char* const kLdConfigFilePath = "/system/etc/ld.config.txt";
 static const char* const kLdConfigVndkLiteFilePath = "/system/etc/ld.config.vndk_lite.txt";
 
+#ifdef HAS_ANDROID_11_0_0
+static const char* const kLdGeneratedConfigFilePath = "/linkerconfig/ld.config.txt";
+#endif
+
 #if defined(__LP64__)
 static const char* const kSystemLibDir        = "/system/lib64";
 static const char* const kOdmLibDir           = "/odm/lib64";
@@ -4211,6 +4215,16 @@ static std::string get_ld_config_file_path(const char* executable_path) {
     return path;
   }
 
+#ifdef HAS_ANDROID_11_0_0
+  if (file_exists(kLdGeneratedConfigFilePath)) {
+    return kLdGeneratedConfigFilePath;
+  } else {
+    // TODO(b/146386369) : Adjust log level and add more condition to log only when necessary
+    INFO("Warning: failed to find generated linker configuration from \"%s\"",
+         kLdGeneratedConfigFilePath);
+  }
+#endif
+
   path = get_ld_config_file_vndk_path();
   if (file_exists(path.c_str())) {
     return path;
@@ -4320,9 +4334,10 @@ std::vector<android_namespace_t*> init_default_namespaces(const char* executable
   for (auto it : namespaces) {
 // hybris we have no libdl soinfo
   //  it.second->add_soinfo(ld_android_so);
-    if (vdso != nullptr) {
-      it.second->add_soinfo(vdso);
-    }
+// hybris adding vdso without the previous command causes a crash
+  //  if (vdso != nullptr) {
+  //    it.second->add_soinfo(vdso);
+  //  }
     // somain and ld_preloads are added to these namespaces after LD_PRELOAD libs are linked
   }
 
