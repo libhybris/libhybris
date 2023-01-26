@@ -35,9 +35,9 @@ LOCAL_SHARED_LIBRARIES := \
 	libbinder
 
 LOCAL_C_INCLUDES := \
-    frameworks/av/media/libmediaplayerservice \
-    frameworks/av/services/medialog \
-    frameworks/av/services/camera/libcameraservice
+	frameworks/av/media/libmediaplayerservice \
+	frameworks/av/services/medialog \
+	frameworks/av/services/camera/libcameraservice
 
 IS_ANDROID_5 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 5 && echo true)
 
@@ -124,9 +124,9 @@ LOCAL_SHARED_LIBRARIES := \
 
 ifeq ($(IS_ANDROID_8),true)
 LOCAL_SHARED_LIBRARIES += \
-    liblog \
-    libmedia_omx \
-    libmediaextractor
+	liblog \
+	libmedia_omx \
+	libmediaextractor
 endif
 
 LOCAL_C_INCLUDES := \

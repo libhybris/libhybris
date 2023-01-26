@@ -409,7 +409,8 @@ status_t MediaRecorderClient::getMetrics(Parcel* reply)
     return recorder->getMetrics(reply);
 }
 
-status_t MediaRecorderClient::setInputDevice(audio_port_handle_t deviceId) {
+status_t MediaRecorderClient::setInputDevice(audio_port_handle_t deviceId)
+{
     REPORT_FUNCTION();
     ALOGV("setInputDevice(%d)", deviceId);
     Mutex::Autolock lock(recorder_lock);
@@ -419,7 +420,8 @@ status_t MediaRecorderClient::setInputDevice(audio_port_handle_t deviceId) {
     return NO_INIT;
 }
 
-status_t MediaRecorderClient::getRoutedDeviceId(audio_port_handle_t* deviceId) {
+status_t MediaRecorderClient::getRoutedDeviceId(audio_port_handle_t* deviceId)
+{
     REPORT_FUNCTION();
     ALOGV("getRoutedDeviceId");
     Mutex::Autolock lock(recorder_lock);
@@ -429,7 +431,8 @@ status_t MediaRecorderClient::getRoutedDeviceId(audio_port_handle_t* deviceId) {
     return NO_INIT;
 }
 
-status_t MediaRecorderClient::enableAudioDeviceCallback(bool enabled) {
+status_t MediaRecorderClient::enableAudioDeviceCallback(bool enabled)
+{
     REPORT_FUNCTION();
     ALOGV("enableDeviceCallback: %d", enabled);
     Mutex::Autolock lock(recorder_lock);
@@ -440,7 +443,8 @@ status_t MediaRecorderClient::enableAudioDeviceCallback(bool enabled) {
 }
 
 status_t MediaRecorderClient::getActiveMicrophones(
-        std::vector<media::MicrophoneInfo>* activeMicrophones) {
+        std::vector<media::MicrophoneInfo>* activeMicrophones)
+{
     REPORT_FUNCTION();
     ALOGV("getActiveMicrophones");
     Mutex::Autolock lock(recorder_lock);
