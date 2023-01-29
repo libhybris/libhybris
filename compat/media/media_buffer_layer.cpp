@@ -305,7 +305,7 @@ MediaBufferWrapper* media_abuffer_get_media_buffer_base(MediaABufferWrapper *buf
     android::sp<android::RefBase> holder;
     if (d->buffer->meta()->findObject("mediaBufferHolder", &holder)) {
         mbufb = (holder != nullptr) ?
-        static_cast<android::MediaBufferHolder*>(holder.get())->mediaBuffer() : nullptr;
+            static_cast<android::MediaBufferHolder*>(holder.get())->mediaBuffer() : nullptr;
     }
 #else
     android::MediaBufferBase *mbufb = d->buffer->getMediaBufferBase();

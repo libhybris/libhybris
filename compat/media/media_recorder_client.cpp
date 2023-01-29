@@ -410,7 +410,8 @@ status_t MediaRecorderClient::getMetrics(Parcel* reply)
     return recorder->getMetrics(reply);
 }
 
-status_t MediaRecorderClient::setInputDevice(audio_port_handle_t deviceId) {
+status_t MediaRecorderClient::setInputDevice(audio_port_handle_t deviceId)
+{
     REPORT_FUNCTION();
     ALOGV("setInputDevice(%d)", deviceId);
     Mutex::Autolock lock(recorder_lock);
@@ -420,7 +421,8 @@ status_t MediaRecorderClient::setInputDevice(audio_port_handle_t deviceId) {
     return NO_INIT;
 }
 
-status_t MediaRecorderClient::getRoutedDeviceId(audio_port_handle_t* deviceId) {
+status_t MediaRecorderClient::getRoutedDeviceId(audio_port_handle_t* deviceId)
+{
     REPORT_FUNCTION();
     ALOGV("getRoutedDeviceId");
     Mutex::Autolock lock(recorder_lock);
@@ -430,7 +432,8 @@ status_t MediaRecorderClient::getRoutedDeviceId(audio_port_handle_t* deviceId) {
     return NO_INIT;
 }
 
-status_t MediaRecorderClient::enableAudioDeviceCallback(bool enabled) {
+status_t MediaRecorderClient::enableAudioDeviceCallback(bool enabled)
+{
     REPORT_FUNCTION();
     ALOGV("enableDeviceCallback: %d", enabled);
     Mutex::Autolock lock(recorder_lock);
@@ -441,7 +444,8 @@ status_t MediaRecorderClient::enableAudioDeviceCallback(bool enabled) {
 }
 
 status_t MediaRecorderClient::getActiveMicrophones(
-        std::vector<media::MicrophoneInfo>* activeMicrophones) {
+        std::vector<media::MicrophoneInfo>* activeMicrophones)
+{
     REPORT_FUNCTION();
     ALOGV("getActiveMicrophones");
     Mutex::Autolock lock(recorder_lock);
@@ -453,7 +457,8 @@ status_t MediaRecorderClient::getActiveMicrophones(
 #endif
 
 #if ANDROID_VERSION_MAJOR>=10
-status_t MediaRecorderClient::setPreferredMicrophoneDirection(audio_microphone_direction_t direction) {
+status_t MediaRecorderClient::setPreferredMicrophoneDirection(audio_microphone_direction_t direction)
+{
     REPORT_FUNCTION();
     ALOGV("setPreferredMicrophoneDirection(%d)", direction);
     Mutex::Autolock lock(recorder_lock);
@@ -462,7 +467,9 @@ status_t MediaRecorderClient::setPreferredMicrophoneDirection(audio_microphone_d
     }
     return NO_INIT;
 }
-status_t MediaRecorderClient::setPreferredMicrophoneFieldDimension(float zoom) {
+
+status_t MediaRecorderClient::setPreferredMicrophoneFieldDimension(float zoom)
+{
     REPORT_FUNCTION();
     ALOGV("setPreferredMicrophoneFieldDimension(%f)", zoom);
     Mutex::Autolock lock(recorder_lock);
@@ -471,7 +478,9 @@ status_t MediaRecorderClient::setPreferredMicrophoneFieldDimension(float zoom) {
     }
     return NO_INIT;
 }
-status_t MediaRecorderClient::getPortId(audio_port_handle_t *portId) {
+
+status_t MediaRecorderClient::getPortId(audio_port_handle_t *portId)
+{
     REPORT_FUNCTION();
     ALOGV("getPortId");
     Mutex::Autolock lock(recorder_lock);
@@ -483,7 +492,8 @@ status_t MediaRecorderClient::getPortId(audio_port_handle_t *portId) {
 #endif
 
 #if ANDROID_VERSION_MAJOR>=11
-status_t MediaRecorderClient::setPrivacySensitive(bool privacySensitive) {
+status_t MediaRecorderClient::setPrivacySensitive(bool privacySensitive)
+{
     REPORT_FUNCTION();
     ALOGV("setPrivacySensitive(%d)", privacySensitive);
     Mutex::Autolock lock(recorder_lock);
@@ -492,7 +502,8 @@ status_t MediaRecorderClient::setPrivacySensitive(bool privacySensitive) {
     }
     return NO_INIT;
 }
-status_t MediaRecorderClient::isPrivacySensitive(bool *privacySensitive) const {
+status_t MediaRecorderClient::isPrivacySensitive(bool *privacySensitive) const
+{
     REPORT_FUNCTION();
     ALOGV("isPrivacySensitive");
     if (recorder != NULL) {

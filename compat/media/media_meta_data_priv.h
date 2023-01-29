@@ -31,7 +31,7 @@ public:
 
 #if ANDROID_VERSION_MAJOR>=8
     struct MetaDataPtr {
-        MetaDataPtr(android::MediaBufferBase *buf = nullptr):
+        MetaDataPtr(android::MediaBufferBase *buf = nullptr) :
             buffer(buf)
         {
             if (buffer) {
@@ -42,7 +42,7 @@ public:
             }
         }
 
-        MetaDataPtr(const android::sp<android::MetaData> &md):
+        MetaDataPtr(const android::sp<android::MetaData> &md) :
             buffer(nullptr),
             data(new android::MetaDataBase(*md))
         {

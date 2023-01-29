@@ -9,7 +9,7 @@ endif
 endif
 
 ifeq ($(HYBRIS_MEDIA_32_BIT_ONLY),)
-    HYBRIS_MEDIA_32_BIT_ONLY := $(shell cat frameworks/av/media/libmediaplayerservice/Android.bp | grep compile_multilib | grep -o "32" | sed "s/32/true/")
+HYBRIS_MEDIA_32_BIT_ONLY := $(shell cat frameworks/av/media/libmediaplayerservice/Android.bp | grep compile_multilib | grep -o "32" | sed "s/32/true/")
 endif
 
 ifeq ($(HYBRIS_MEDIA_32_BIT_ONLY),true)
@@ -47,9 +47,9 @@ LOCAL_SHARED_LIBRARIES += \
 endif
 
 LOCAL_C_INCLUDES := \
-    frameworks/av/media/libmediaplayerservice \
-    frameworks/av/services/medialog \
-    frameworks/av/services/camera/libcameraservice
+	frameworks/av/media/libmediaplayerservice \
+	frameworks/av/services/medialog \
+	frameworks/av/services/camera/libcameraservice
 
 IS_ANDROID_5 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 5 && echo true)
 IS_ANDROID_8 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 8 && echo true)
