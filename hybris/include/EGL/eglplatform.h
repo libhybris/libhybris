@@ -103,7 +103,7 @@ typedef intptr_t EGLNativeDisplayType;
 typedef intptr_t EGLNativePixmapType;
 typedef intptr_t EGLNativeWindowType;
 
-#elif defined(USE_X11)
+#elif defined(USE_X11) && !defined(MESA_EGL_NO_X11_HEADERS)
 
 /* X11 (tentative)  */
 #include <X11/Xlib.h>
