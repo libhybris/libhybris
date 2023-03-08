@@ -3332,6 +3332,8 @@ static struct _hook hooks_p[] = {
     /* fdsan.h */
     HOOK_INDIRECT(android_fdsan_exchange_owner_tag),
     HOOK_INDIRECT(android_fdsan_close_with_tag),
+    /* pthread.h */
+    HOOK_DIRECT_NO_DEBUG(pthread_setschedprio),
 };
 
 static int hook_cmp(const void *a, const void *b)
