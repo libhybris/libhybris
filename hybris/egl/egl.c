@@ -17,6 +17,8 @@
 
 #include "config.h"
 
+#include <android-config.h>
+
 /* EGL function pointers */
 #define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>

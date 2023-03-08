@@ -23,6 +23,8 @@
 #ifndef SERVER_WLEGL_BUFFER_H
 #define SERVER_WLEGL_BUFFER_H
 
+#include <android-config.h>
+
 #include <cutils/native_handle.h>
 #include <string.h>
 #include <system/window.h>

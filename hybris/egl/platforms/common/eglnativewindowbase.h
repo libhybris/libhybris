@@ -17,12 +17,12 @@
 #ifndef EGLNATIVEWINDOWBASE_H
 #define EGLNATIVEWINDOWBASE_H
 
+#include "nativewindowbase.h"
+
 /* for ICS window.h */
 #include <string.h>
 #include <system/window.h>
 #include <EGL/egl.h>
-
-#include "nativewindowbase.h"
 
 /**
  * @brief A Class to do common ANativeWindow initialization and thunk c-style

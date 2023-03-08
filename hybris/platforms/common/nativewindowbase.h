@@ -17,6 +17,8 @@
 #ifndef NATIVEWINDOWBASE_H
 #define NATIVEWINDOWBASE_H
 
+#include <android-config.h>
+
 /* for ICS window.h */
 #include <string.h>
 #include <system/window.h>

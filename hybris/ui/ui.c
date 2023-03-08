@@ -17,7 +17,8 @@
 #include <dlfcn.h>
 #include <stddef.h>
 
-#include <android-version.h>
+#include <android-config.h>
+
 #if ANDROID_VERSION_MAJOR>=10
 #include <android/rect.h>
 #include <cutils/native_handle.h>
