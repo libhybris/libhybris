@@ -20,7 +20,7 @@ include $(CLEAR_VARS)
 include $(LOCAL_PATH)/../Android.common.mk
 
 ifeq ($(CAMERA_SERVICE_WANT_UBUNTU_HEADERS),1)
-    LOCAL_CPPFLAGS += -DWANT_UBUNTU_CAMERA_HEADERS
+	LOCAL_CPPFLAGS += -DWANT_UBUNTU_CAMERA_HEADERS
 endif
 
 LOCAL_SRC_FILES := \
@@ -108,7 +108,7 @@ include $(LOCAL_PATH)/../Android.common.mk
 HYBRIS_PATH := $(LOCAL_PATH)/../../hybris
 
 ifneq ($(IS_ANDROID_8),true)
-    LOCAL_CFLAGS += -std=gnu++0x
+	LOCAL_CFLAGS += -std=gnu++0x
 endif
 
 ifeq ($(BOARD_HAS_MEDIA_RECORDER_PAUSE),true)
@@ -120,10 +120,10 @@ endif
 
 ifeq ($(IS_ANDROID_8),true)
 LOCAL_CFLAGS += \
-    -Wno-unused-parameter \
-    -Wno-multichar \
-    -Wno-unused-variable \
-    -Wno-unused-private-field
+	-Wno-unused-parameter \
+	-Wno-multichar \
+	-Wno-unused-variable \
+	-Wno-unused-private-field
 endif
 
 LOCAL_SRC_FILES:= \
