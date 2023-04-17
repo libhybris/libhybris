@@ -29,7 +29,7 @@
 #include <ui/Region.h>
 #include <ui/Rect.h>
 #if ANDROID_VERSION_MAJOR>=5
-  #include <hardware/hwcomposer_defs.h>
+#include <hardware/hwcomposer_defs.h>
 #endif
 
 #include <cassert>
@@ -170,19 +170,19 @@ size_t sf_get_display_info(size_t display_id, SfDisplayInfo* display_info)
 	android::DisplayInfo info;
 	android::SurfaceComposerClient::getDisplayInfo(display, &info);
 
-        if (display_info == NULL) {
-            fprintf(stderr, "Warning: sf_get_display_info: display_info is null! Please allocate it before \n");
-            return -2;
-        }
+	if (display_info == NULL) {
+		fprintf(stderr, "Warning: sf_get_display_info: display_info is null! Please allocate it before \n");
+		return -2;
+	}
 
-        // partial copy
-        display_info->w = info.w;
-        display_info->h = info.h;
-        display_info->xdpi = info.xdpi;
-        display_info->ydpi = info.ydpi;
-        display_info->fps = info.fps;
-        display_info->density = info.density;
-        display_info->orientation = info.orientation;
+	// partial copy
+	display_info->w = info.w;
+	display_info->h = info.h;
+	display_info->xdpi = info.xdpi;
+	display_info->ydpi = info.ydpi;
+	display_info->fps = info.fps;
+	display_info->density = info.density;
+	display_info->orientation = info.orientation;
 
 	return 0;
 }
@@ -333,21 +333,21 @@ SfSurface* sf_surface_create(SfClient* client, SfSurfaceCreationParameters* para
 	}
 
 #if ANDROID_VERSION_MAJOR>=8
-    uint32_t mDisplayLayerStack = 0;
-    android::SurfaceComposerClient::Transaction()
-        .setLayerStack(surface->surface_control, mDisplayLayerStack)
-        .setLayer(surface->surface_control, params->layer)
-        .setAlpha(surface->surface_control, params->alpha)
-        .setPosition(surface->surface_control, params->x, params->y)
-        .apply();
+	uint32_t mDisplayLayerStack = 0;
+	android::SurfaceComposerClient::Transaction()
+		.setLayerStack(surface->surface_control, mDisplayLayerStack)
+		.setLayer(surface->surface_control, params->layer)
+		.setAlpha(surface->surface_control, params->alpha)
+		.setPosition(surface->surface_control, params->x, params->y)
+		.apply();
 #else
-    sf_client_begin_transaction(client);
-    {
-        surface->surface_control->setPosition(params->x, params->y);
-        surface->surface_control->setLayer(params->layer);
-        surface->surface_control->setAlpha(params->alpha);
-    }
-    sf_client_end_transaction(client);
+	sf_client_begin_transaction(client);
+	{
+		surface->surface_control->setPosition(params->x, params->y);
+		surface->surface_control->setLayer(params->layer);
+		surface->surface_control->setAlpha(params->alpha);
+	}
+	sf_client_end_transaction(client);
 #endif
 
 	if (params->create_egl_window_surface) {
@@ -405,11 +405,11 @@ void sf_surface_move_to(SfSurface* surface, int x, int y)
 {
 	assert(surface);
 #if ANDROID_VERSION_MAJOR>=8
-    android::SurfaceComposerClient::Transaction()
-        .setPosition(surface->surface_control, x, y)
-        .apply(true);
+	android::SurfaceComposerClient::Transaction()
+		.setPosition(surface->surface_control, x, y)
+		.apply(true);
 #else
-    surface->surface_control->setPosition(x, y);
+	surface->surface_control->setPosition(x, y);
 #endif
 }
 
@@ -417,11 +417,11 @@ void sf_surface_set_size(SfSurface* surface, int w, int h)
 {
 	assert(surface);
 #if ANDROID_VERSION_MAJOR>=8
-    android::SurfaceComposerClient::Transaction()
-        .setSize(surface->surface_control, w, h)
-        .apply(true);
+	android::SurfaceComposerClient::Transaction()
+		.setSize(surface->surface_control, w, h)
+		.apply(true);
 #else
-    surface->surface_control->setSize(w, h);
+	surface->surface_control->setSize(w, h);
 #endif
 }
 
@@ -429,11 +429,11 @@ void sf_surface_set_layer(SfSurface* surface, int layer)
 {
 	assert(surface);
 #if ANDROID_VERSION_MAJOR>=8
-    android::SurfaceComposerClient::Transaction()
-        .setLayer(surface->surface_control, layer)
-        .apply(true);
+	android::SurfaceComposerClient::Transaction()
+		.setLayer(surface->surface_control, layer)
+		.apply(true);
 #else
-    surface->surface_control->setLayer(layer);
+	surface->surface_control->setLayer(layer);
 #endif
 }
 
@@ -441,10 +441,10 @@ void sf_surface_set_alpha(SfSurface* surface, float alpha)
 {
 	assert(surface);
 #if ANDROID_VERSION_MAJOR>=8
-    android::SurfaceComposerClient::Transaction()
-        .setAlpha(surface->surface_control, alpha)
-        .apply(true);
+	android::SurfaceComposerClient::Transaction()
+		.setAlpha(surface->surface_control, alpha)
+		.apply(true);
 #else
-    surface->surface_control->setAlpha(alpha);
+	surface->surface_control->setAlpha(alpha);
 #endif
 }

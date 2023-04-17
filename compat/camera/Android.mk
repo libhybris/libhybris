@@ -33,8 +33,8 @@ LOCAL_C_INCLUDES := \
 
 ifeq ($(IS_ANDROID_8),true)
 LOCAL_CFLAGS += \
-    -Wno-unused-parameter \
-    -Wno-unused-variable
+	-Wno-unused-parameter \
+	-Wno-unused-variable
 endif
 
 LOCAL_SHARED_LIBRARIES := \
