@@ -82,7 +82,9 @@ size_t media_codec_list_get_num_supported_types(size_t index)
     REPORT_FUNCTION()
 
     Vector<AString> types;
-#if ANDROID_VERSION_MAJOR>=5
+#if ANDROID_VERSION_MAJOR>=10
+    MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMediaTypes(&types);
+#elif ANDROID_VERSION_MAJOR>=5
     MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMimes(&types);
 #else
     status_t err = MediaCodecList::getInstance()->getSupportedTypes(index, &types);
@@ -92,7 +94,7 @@ size_t media_codec_list_get_num_supported_types(size_t index)
         return 0;
     }
 #endif
-    ALOGD("Number of supported codec types: %d", types.size());
+    ALOGD("Number of supported codec types: %zu", types.size());
 
     return types.size();
 }
@@ -102,7 +104,9 @@ size_t media_codec_list_get_nth_supported_type_len(size_t index, size_t n)
     REPORT_FUNCTION()
 
     Vector<AString> types;
-#if ANDROID_VERSION_MAJOR>=5
+#if ANDROID_VERSION_MAJOR>=10
+    MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMediaTypes(&types);
+#elif ANDROID_VERSION_MAJOR>=5
     MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMimes(&types);
 #else
     status_t err = MediaCodecList::getInstance()->getSupportedTypes(index, &types);
@@ -122,7 +126,9 @@ int media_codec_list_get_nth_supported_type(size_t index, char *type, size_t n)
     }
 
     Vector<AString> types;
-#if ANDROID_VERSION_MAJOR>=5
+#if ANDROID_VERSION_MAJOR>=10
+    MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMediaTypes(&types);
+#elif ANDROID_VERSION_MAJOR>=5
     MediaCodecList::getInstance()->getCodecInfo(index)->getSupportedMimes(&types);
 #else
     status_t err = MediaCodecList::getInstance()->getSupportedTypes(index, &types);
@@ -147,7 +153,7 @@ static void media_codec_list_get_num_codec_capabilities(size_t index, const char
     Vector<MediaCodecList::ProfileLevel> profile_levels;
 #endif
     Vector<uint32_t> color_formats;
-    ALOGD("index: %d, type: '%s'", index, type);
+    ALOGD("index: %zu, type: '%s'", index, type);
 #if ANDROID_VERSION_MAJOR>=5
     MediaCodecList::getInstance()->getCodecInfo(index)->getCapabilitiesFor(type)->getSupportedProfileLevels(&profile_levels);
     MediaCodecList::getInstance()->getCodecInfo(index)->getCapabilitiesFor(type)->getSupportedColorFormats(&color_formats);
@@ -167,12 +173,12 @@ static void media_codec_list_get_num_codec_capabilities(size_t index, const char
 
     if (num_profile_levels != NULL)
     {
-        ALOGD("Number of codec profile levels: %d", profile_levels.size());
+        ALOGD("Number of codec profile levels: %zu", profile_levels.size());
         *num_profile_levels = profile_levels.size();
     }
     if (num_color_formats != NULL)
     {
-        ALOGD("Number of codec color formats: %d", color_formats.size());
+        ALOGD("Number of codec color formats: %zu", color_formats.size());
         *num_color_formats = color_formats.size();
     }
 }
@@ -274,7 +280,7 @@ int media_codec_list_get_codec_color_formats(size_t index, const char *type, uin
     for (size_t i=0; i<formats.size(); ++i)
     {
         color_formats[i] = formats[i];
-        ALOGD("Color format [%d]: %d", i, formats[i]);
+        ALOGD("Color format [%zu]: %d", i, formats[i]);
     }
 
     return OK;

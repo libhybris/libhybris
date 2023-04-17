@@ -36,6 +36,9 @@
 #else
 #include <gui/GLConsumer.h>
 #endif
+#if ANDROID_VERSION_MAJOR>=8
+#include <gui/BufferQueue.h>
+#endif
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
@@ -477,7 +480,7 @@ int android_media_set_data_source(MediaPlayerWrapper *mp, const char* url)
 		struct stat st;
 		stat(url, &st);
 
-		ALOGD("source file length: %lld\n", st.st_size);
+		ALOGD("source file length: %lld\n", (long long)st.st_size);
 
 		mp->setDataSource(fd, 0, st.st_size);
 	}

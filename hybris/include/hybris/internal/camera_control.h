@@ -31,6 +31,10 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#if ANDROID_VERSION_MAJOR >= 9
+#include <vector>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -48,10 +52,16 @@ struct CameraControl : public android::CameraListener,
     CameraControlListener* listener;
     android::sp<android::Camera> camera;
     android::CameraParameters camera_parameters;
+    int preview_texture_id = 0;
 #if ANDROID_VERSION_MAJOR==4 && ANDROID_VERSION_MINOR<=2
     android::sp<android::SurfaceTexture> preview_texture;
 #else
     android::sp<android::GLConsumer> preview_texture;
+#endif
+#if ANDROID_VERSION_MAJOR >= 5
+    android::sp<android::IGraphicBufferProducer> preview_bq;
+#else
+    android::sp<android::BufferQueue> preview_bq;
 #endif
     // From android::SurfaceTexture/GLConsumer::FrameAvailableListener
 #if ANDROID_VERSION_MAJOR==5 && ANDROID_VERSION_MINOR>=1 || ANDROID_VERSION_MAJOR>=6
@@ -74,6 +84,10 @@ struct CameraControl : public android::CameraListener,
         const android::sp<android::IMemory>& data);
 #if ANDROID_VERSION_MAJOR >= 7
     void postRecordingFrameHandleTimestamp(nsecs_t timestamp, native_handle_t* handle);
+#endif
+#if ANDROID_VERSION_MAJOR >= 9
+    void postRecordingFrameHandleTimestampBatch(const std::vector<nsecs_t>& timestamps,
+                                                const std::vector<native_handle_t*>& handles);
 #endif
 };
 

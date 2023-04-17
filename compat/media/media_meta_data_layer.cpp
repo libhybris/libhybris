@@ -33,9 +33,20 @@ MediaMetaDataPrivate* MediaMetaDataPrivate::toPrivate(MediaMetaDataWrapper *md)
 }
 
 MediaMetaDataPrivate::MediaMetaDataPrivate() :
+#if ANDROID_VERSION_MAJOR>=8
+    data(nullptr)
+#else
     data(new android::MetaData)
+#endif
 {
 }
+
+#if ANDROID_VERSION_MAJOR>=8
+MediaMetaDataPrivate::MediaMetaDataPrivate(android::MediaBufferBase *buffer) :
+    data(buffer)
+{
+}
+#endif
 
 MediaMetaDataPrivate::MediaMetaDataPrivate(const android::sp<android::MetaData> &md) :
     data(md)
@@ -70,8 +81,6 @@ uint32_t media_meta_data_get_key_id(int key)
         return android::kKeySliceHeight;
     case MEDIA_META_DATA_KEY_FRAMERATE:
         return android::kKeyFrameRate;
-    case MEDIA_META_DATA_KEY_MEDIA_BUFFER:
-        return 'mediaBuffer';
     default:
         break;
     }

@@ -34,7 +34,6 @@ typedef void* EGLDisplay;
 typedef void* EGLSyncKHR;
 
 #include <ui/GraphicBuffer.h>
-#include <gui/GraphicBufferAlloc.h>
 #include <gui/IGraphicBufferProducer.h>
 #include <gui/IGraphicBufferConsumer.h>
 #include <gui/Surface.h>
@@ -278,10 +277,6 @@ status_t DecodingService::unregisterSession()
 
 void DecodingService::createBufferQueue()
 {
-    // Use a new native buffer allocator vs the default one, which means it'll use the proper one
-    // that will allow rendering to work with Mir
-    sp<IGraphicBufferAlloc> g_buffer_alloc(new GraphicBufferAlloc());
-
     // This BuferQueue is shared between the client and the service
 #if ANDROID_VERSION_MAJOR>=5
     BufferQueue::createBufferQueue(&producer, &consumer);

@@ -18,7 +18,7 @@ LOCAL_SHARED_LIBRARIES := \
 	libgui \
 	libandroidfw
 
-ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 11 && echo true),true)
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 10 && echo true),true)
 static_libraries := \
 	libskia
 else
@@ -85,7 +85,7 @@ static_libraries := \
 	libgtest_main
 
 
-ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 11 && echo true),true)
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 10 && echo true),true)
 static_libraries += \
 	libskia
 else

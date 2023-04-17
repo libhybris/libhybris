@@ -8,6 +8,10 @@ HYBRIS_MEDIA_32_BIT_ONLY := $(shell cat frameworks/av/media/mediaserver/Android.
 endif
 endif
 
+ifeq ($(HYBRIS_MEDIA_32_BIT_ONLY),)
+HYBRIS_MEDIA_32_BIT_ONLY := $(shell cat frameworks/av/media/libmediaplayerservice/Android.bp | grep compile_multilib | grep -o "32" | sed "s/32/true/")
+endif
+
 ifeq ($(HYBRIS_MEDIA_32_BIT_ONLY),true)
 HYBRIS_MEDIA_MULTILIB := 32
 endif
@@ -17,6 +21,8 @@ include $(LOCAL_PATH)/../Android.common.mk
 
 HYBRIS_PATH := $(LOCAL_PATH)/../../hybris
 
+IS_ANDROID_8 := $(shell test $(ANDROID_VERSION_MAJOR) -ge 8 && echo true)
+
 LOCAL_SRC_FILES := camera_compatibility_layer.cpp
 
 LOCAL_MODULE := libcamera_compat_layer
@@ -25,9 +31,16 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_C_INCLUDES := \
 	$(HYBRIS_PATH)/include
 
+ifeq ($(IS_ANDROID_8),true)
+LOCAL_CFLAGS += \
+    -Wno-unused-parameter \
+    -Wno-unused-variable
+endif
+
 LOCAL_SHARED_LIBRARIES := \
 	libcutils \
 	libcamera_client \
+	liblog \
 	libutils \
 	libbinder \
 	libhardware \

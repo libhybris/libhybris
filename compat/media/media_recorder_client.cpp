@@ -16,13 +16,14 @@
  * Authored by: Jim Hodapp <jim.hodapp@canonical.com>
  */
 
+// #define LOG_NDEBUG 0
+#define LOG_TAG "MediaRecorderClient"
+
 #include "media_recorder_client.h"
 
 #include <libmediaplayerservice/StagefrightRecorder.h>
 #include <binder/IServiceManager.h>
 
-#define LOG_NDEBUG 0
-#define LOG_TAG "MediaRecorderClient"
 
 #define REPORT_FUNCTION() ALOGV("%s \n", __PRETTY_FUNCTION__)
 
@@ -147,7 +148,11 @@ status_t MediaRecorderClient::setOutputFile(const char* path)
     return recorder->setOutputFile(path);
 }
 #else
+#if ANDROID_VERSION_MAJOR>=8
+status_t MediaRecorderClient::setInputSurface(const sp<PersistentSurface>& surface)
+#else
 status_t MediaRecorderClient::setInputSurface(const sp<IGraphicBufferConsumer>& surface)
+#endif
 {
     REPORT_FUNCTION();
     Mutex::Autolock lock(recorder_lock);
@@ -159,7 +164,11 @@ status_t MediaRecorderClient::setInputSurface(const sp<IGraphicBufferConsumer>& 
 }
 #endif
 
+#if ANDROID_VERSION_MAJOR>=8
+status_t MediaRecorderClient::setOutputFile(int fd)
+#else
 status_t MediaRecorderClient::setOutputFile(int fd, int64_t offset, int64_t length)
+#endif
 {
     REPORT_FUNCTION();
     Mutex::Autolock lock(recorder_lock);
@@ -167,7 +176,11 @@ status_t MediaRecorderClient::setOutputFile(int fd, int64_t offset, int64_t leng
         ALOGE("recorder must not be NULL");
         return NO_INIT;
     }
+#if ANDROID_VERSION_MAJOR>=8
+    return recorder->setOutputFile(fd);
+#else
     return recorder->setOutputFile(fd, offset, length);
+#endif
 }
 
 status_t MediaRecorderClient::setVideoSize(int width, int height)
@@ -348,7 +361,11 @@ status_t MediaRecorderClient::release()
     return NO_ERROR;
 }
 
+#if ANDROID_VERSION_MAJOR>=8
+status_t MediaRecorderClient::dump(int fd, const Vector<String16>& args)
+#else
 status_t MediaRecorderClient::dump(int fd, const Vector<String16>& args) const
+#endif
 {
     REPORT_FUNCTION();
     if (recorder != NULL) {
@@ -367,3 +384,131 @@ sp<IGraphicBufferProducer> MediaRecorderClient::querySurfaceMediaSource()
     }
     return recorder->querySurfaceMediaSource();
 }
+
+#if ANDROID_VERSION_MAJOR>=8
+status_t MediaRecorderClient::setNextOutputFile(int fd)
+{
+    REPORT_FUNCTION();
+    ALOGV("setNextOutputFile(%d)", fd);
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder == NULL) {
+        ALOGE("recorder is not initialized");
+        return NO_INIT;
+    }
+    return recorder->setNextOutputFile(fd);
+}
+
+status_t MediaRecorderClient::getMetrics(Parcel* reply)
+{
+    REPORT_FUNCTION();
+    ALOGV("MediaRecorderClient::getMetrics");
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder == NULL) {
+        ALOGE("recorder is not initialized");
+        return NO_INIT;
+    }
+    return recorder->getMetrics(reply);
+}
+
+status_t MediaRecorderClient::setInputDevice(audio_port_handle_t deviceId)
+{
+    REPORT_FUNCTION();
+    ALOGV("setInputDevice(%d)", deviceId);
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->setInputDevice(deviceId);
+    }
+    return NO_INIT;
+}
+
+status_t MediaRecorderClient::getRoutedDeviceId(audio_port_handle_t* deviceId)
+{
+    REPORT_FUNCTION();
+    ALOGV("getRoutedDeviceId");
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->getRoutedDeviceId(deviceId);
+    }
+    return NO_INIT;
+}
+
+status_t MediaRecorderClient::enableAudioDeviceCallback(bool enabled)
+{
+    REPORT_FUNCTION();
+    ALOGV("enableDeviceCallback: %d", enabled);
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->enableAudioDeviceCallback(enabled);
+    }
+    return NO_INIT;
+}
+
+status_t MediaRecorderClient::getActiveMicrophones(
+        std::vector<media::MicrophoneInfo>* activeMicrophones)
+{
+    REPORT_FUNCTION();
+    ALOGV("getActiveMicrophones");
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->getActiveMicrophones(activeMicrophones);
+    }
+    return NO_INIT;
+}
+#endif
+
+#if ANDROID_VERSION_MAJOR>=10
+status_t MediaRecorderClient::setPreferredMicrophoneDirection(audio_microphone_direction_t direction)
+{
+    REPORT_FUNCTION();
+    ALOGV("setPreferredMicrophoneDirection(%d)", direction);
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->setPreferredMicrophoneDirection(direction);
+    }
+    return NO_INIT;
+}
+
+status_t MediaRecorderClient::setPreferredMicrophoneFieldDimension(float zoom)
+{
+    REPORT_FUNCTION();
+    ALOGV("setPreferredMicrophoneFieldDimension(%f)", zoom);
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->setPreferredMicrophoneFieldDimension(zoom);
+    }
+    return NO_INIT;
+}
+
+status_t MediaRecorderClient::getPortId(audio_port_handle_t *portId)
+{
+    REPORT_FUNCTION();
+    ALOGV("getPortId");
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->getPortId(portId);
+    }
+    return NO_INIT;
+}
+#endif
+
+#if ANDROID_VERSION_MAJOR>=11
+status_t MediaRecorderClient::setPrivacySensitive(bool privacySensitive)
+{
+    REPORT_FUNCTION();
+    ALOGV("setPrivacySensitive(%d)", privacySensitive);
+    Mutex::Autolock lock(recorder_lock);
+    if (recorder != NULL) {
+        return recorder->setPrivacySensitive(privacySensitive);
+    }
+    return NO_INIT;
+}
+status_t MediaRecorderClient::isPrivacySensitive(bool *privacySensitive) const
+{
+    REPORT_FUNCTION();
+    ALOGV("isPrivacySensitive");
+    if (recorder != NULL) {
+        return recorder->isPrivacySensitive(privacySensitive);
+    }
+    return NO_INIT;
+}
+#endif

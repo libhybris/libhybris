@@ -36,7 +36,14 @@
 
 #include <media/stagefright/foundation/AHandler.h>
 #include <media/stagefright/foundation/AString.h>
+#if ANDROID_VERSION_MAJOR>=11
+#include <mediadrm/ICrypto.h>
+#else
 #include <media/ICrypto.h>
+#endif
+#if ANDROID_VERSION_MAJOR>=8
+#include <media/MediaCodecBuffer.h>
+#endif
 #include <media/stagefright/foundation/ABuffer.h>
 #include <media/stagefright/foundation/ADebug.h>
 #include <media/stagefright/foundation/AMessage.h>
@@ -79,8 +86,13 @@ public:
     sp<MediaCodec> media_codec;
     sp<ALooper> looper;
 
+#if ANDROID_VERSION_MAJOR>=8
+    Vector<sp<MediaCodecBuffer> > input_buffers;
+    Vector<sp<MediaCodecBuffer> > output_buffers;
+#else
     Vector<sp<ABuffer> > input_buffers;
     Vector<sp<ABuffer> > output_buffers;
+#endif
     List<MediaCodecBufferInfo> available_output_buffer_infos;
     Mutex mtx_output_buffer_infos;
     List<size_t> available_input_buffer_indices;
@@ -429,7 +441,11 @@ int media_codec_queue_csd(MediaCodecDelegate delegate, MediaFormat format)
 
     status_t err = OK;
 
+#if ANDROID_VERSION_MAJOR>=8
+    Vector<sp<MediaCodecBuffer> > input_bufs[1];
+#else
     Vector<sp<ABuffer> > input_bufs[1];
+#endif
     err = d->media_codec->getInputBuffers(&input_bufs[0]);
     CHECK_EQ(err, static_cast<status_t>(OK));
 
@@ -441,7 +457,11 @@ int media_codec_queue_csd(MediaCodecDelegate delegate, MediaFormat format)
         err = d->media_codec->dequeueInputBuffer(&index, -1ll);
         CHECK_EQ(err, static_cast<status_t>(OK));
 
+#if ANDROID_VERSION_MAJOR>=8
+        const sp<MediaCodecBuffer> &dstBuffer = input_bufs[0].itemAt(index);
+#else
         const sp<ABuffer> &dstBuffer = input_bufs[0].itemAt(index);
+#endif
 
         CHECK_LE(srcBuffer->size(), dstBuffer->capacity());
         dstBuffer->setRange(0, srcBuffer->size());
@@ -527,7 +547,7 @@ size_t media_codec_get_input_buffers_size(MediaCodecDelegate delegate)
         ALOGE("Failed to get input buffers size");
         return 0;
     }
-    ALOGD("Got %d input buffers", d->input_buffers.size());
+    ALOGD("Got %zu input buffers", d->input_buffers.size());
 
     return d->input_buffers.size();
 }
@@ -552,7 +572,7 @@ uint8_t *media_codec_get_nth_input_buffer(MediaCodecDelegate delegate, size_t n)
 
     if (n > d->input_buffers.size())
     {
-      ALOGE("Failed to get %uth input buffer, n > total buffer size", n);
+      ALOGE("Failed to get %zu input buffer, n > total buffer size", n);
       return NULL;
     }
 
@@ -579,7 +599,7 @@ MediaABufferWrapper* media_codec_get_nth_input_buffer_as_abuffer(MediaCodecDeleg
 
     if (n > d->input_buffers.size())
     {
-      ALOGE("Failed to get %uth input buffer, n > total buffer size", n);
+      ALOGE("Failed to get %zu input buffer, n > total buffer size", n);
       return NULL;
     }
 
@@ -594,7 +614,11 @@ size_t media_codec_get_nth_input_buffer_capacity(MediaCodecDelegate delegate, si
     if (d == NULL)
         return BAD_VALUE;
 
+#if ANDROID_VERSION_MAJOR>=8
+    Vector<sp<MediaCodecBuffer> > input_buffers;
+#else
     Vector<sp<ABuffer> > input_buffers;
+#endif
     status_t ret = d->media_codec->getInputBuffers(&input_buffers);
     if (ret != OK)
     {
@@ -604,7 +628,7 @@ size_t media_codec_get_nth_input_buffer_capacity(MediaCodecDelegate delegate, si
 
     if (n > input_buffers.size())
     {
-      ALOGE("Failed to get %uth input buffer capacity, n > total buffer size", n);
+      ALOGE("Failed to get %zu input buffer capacity, n > total buffer size", n);
       return 0;
     }
 
@@ -625,7 +649,7 @@ size_t media_codec_get_output_buffers_size(MediaCodecDelegate delegate)
         ALOGE("Failed to get output buffers size");
         return 0;
     }
-    ALOGD("Got %d output buffers", d->output_buffers.size());
+    ALOGD("Got %zu output buffers", d->output_buffers.size());
 
     return d->output_buffers.size();
 }
@@ -647,7 +671,7 @@ uint8_t *media_codec_get_nth_output_buffer(MediaCodecDelegate delegate, size_t n
 
     if (n > d->output_buffers.size())
     {
-      ALOGE("Failed to get %uth output buffer, n > total buffer size", n);
+      ALOGE("Failed to get %zu output buffer, n > total buffer size", n);
       return NULL;
     }
 
@@ -674,7 +698,7 @@ MediaABufferWrapper* media_codec_get_nth_output_buffer_as_abuffer(MediaCodecDele
 
     if (n > d->output_buffers.size())
     {
-      ALOGE("Failed to get %uth output buffer, n > total buffer size", n);
+      ALOGE("Failed to get %zu output buffer, n > total buffer size", n);
       return NULL;
     }
 
@@ -698,7 +722,7 @@ size_t media_codec_get_nth_output_buffer_capacity(MediaCodecDelegate delegate, s
 
     if (n > d->output_buffers.size())
     {
-      ALOGE("Failed to get %uth output buffer capacity, n > total buffer size", n);
+      ALOGE("Failed to get %zu output buffer capacity, n > total buffer size", n);
       return 0;
     }
 
@@ -746,10 +770,10 @@ int media_codec_dequeue_output_buffer(MediaCodecDelegate delegate, MediaCodecBuf
     }
 
     ALOGD("Dequeued output buffer:\n-----------------------");
-    ALOGD("index: %u", info->index);
-    ALOGD("offset: %d", info->offset);
-    ALOGD("size: %d", info->size);
-    ALOGD("presentation_time_us: %lld", info->presentation_time_us);
+    ALOGD("index: %zu", info->index);
+    ALOGD("offset: %zu", info->offset);
+    ALOGD("size: %zu", info->size);
+    ALOGD("presentation_time_us: %lld", (long long)info->presentation_time_us);
     ALOGD("flags: %d", info->flags);
 
     d->mtx_output_buffer_infos.lock();
@@ -779,17 +803,17 @@ int media_codec_queue_input_buffer(MediaCodecDelegate delegate, const MediaCodec
     // Make sure that there is at least one dequeued input buffer available
     if (d->available_input_buffer_indices.empty())
     {
-        ALOGE("Input buffer index %d has not been dequeued, cannot queue input buffer", info->index);
+        ALOGE("Input buffer index %zu has not been dequeued, cannot queue input buffer", info->index);
         return BAD_VALUE;
     }
 
     const size_t index = *d->available_input_buffer_indices.begin();
     d->available_input_buffer_indices.erase(d->available_input_buffer_indices.begin());
 
-    ALOGD("info->index: %d", index);
-    ALOGD("info->offset: %d", info->offset);
-    ALOGD("info->size: %d", info->size);
-    ALOGD("info->presentation_time_us: %lld", info->presentation_time_us);
+    ALOGD("info->index: %zu", index);
+    ALOGD("info->offset: %zu", info->offset);
+    ALOGD("info->size: %zu", info->size);
+    ALOGD("info->presentation_time_us: %lld", (long long)info->presentation_time_us);
     ALOGD("info->flags: %d", info->flags);
 
     AString err_msg;
@@ -797,7 +821,7 @@ int media_codec_queue_input_buffer(MediaCodecDelegate delegate, const MediaCodec
             info->presentation_time_us, info->flags, &err_msg);
     if (ret != OK)
     {
-        ALOGE("Failed to queue input buffer (err: %d, index: %d)", ret, index);
+        ALOGE("Failed to queue input buffer (err: %d, index: %zu)", ret, index);
         ALOGE("Detailed error message: %s", err_msg.c_str());
     }
 
@@ -821,16 +845,16 @@ int media_codec_dequeue_input_buffer(MediaCodecDelegate delegate, size_t *index,
     status_t ret = d->media_codec->dequeueInputBuffer(index, timeout_us);
     if (ret == -EAGAIN)
     {
-        ALOGD("dequeueInputBuffer returned %d, tried timeout: %lld", ret, timeout_us);
+        ALOGD("dequeueInputBuffer returned %d, tried timeout: %lld", ret, (long long)timeout_us);
         return INFO_TRY_AGAIN_LATER;
     }
     else if (ret == OK)
     {
-        ALOGD("Dequeued input buffer (index: %d)", *index);
+        ALOGD("Dequeued input buffer (index: %zu)", *index);
         d->available_input_buffer_indices.push_back(*index);
     }
     else
-        ALOGE("Failed to dequeue input buffer (err: %d, index: %d)", ret, *index);
+        ALOGE("Failed to dequeue input buffer (err: %d, index: %zu)", ret, *index);
 
     return ret;
 }
@@ -838,7 +862,7 @@ int media_codec_dequeue_input_buffer(MediaCodecDelegate delegate, size_t *index,
 int media_codec_release_output_buffer(MediaCodecDelegate delegate, size_t index, uint8_t render)
 {
     REPORT_FUNCTION()
-    ALOGV("Requesting to release output buffer index: %d, render: %d", index, render);
+    ALOGV("Requesting to release output buffer index: %zu, render: %d", index, render);
 
     _MediaCodecDelegate *d = get_internal_delegate(delegate);
     if (d == NULL)
@@ -853,26 +877,26 @@ int media_codec_release_output_buffer(MediaCodecDelegate delegate, size_t index,
     while (it != d->available_output_buffer_infos.end())
     {
         MediaCodecBufferInfo *info = &*it;
-        ALOGD("info index: %d", info->index);
+        ALOGD("info index: %zu", info->index);
         ALOGD("info render_retries: %u", info->render_retries);
         if (info->render_retries == 1)
         {
-            ALOGV("Rendering and releasing output buffer %d from the available indices list", info->index);
+            ALOGV("Rendering and releasing output buffer %zu from the available indices list", info->index);
             ret = d->media_codec->renderOutputBufferAndRelease(info->index);
             if (ret != OK)
             {
-                ALOGE("Failed to release output buffer (ret: %d, index: %d)", ret, info->index);
+                ALOGE("Failed to release output buffer (ret: %d, index: %zu)", ret, info->index);
                 ++info->render_retries;
             }
             else
             {
-                ALOGV("Successfully rendered output buffer %d on a second try.", info->index);
+                ALOGV("Successfully rendered output buffer %zu on a second try.", info->index);
                 d->available_output_buffer_infos.erase(it);
             }
         }
         else if (info->render_retries > 1)
         {
-            ALOGV("Tried to render output buffer %d twice, dropping.", info->index);
+            ALOGV("Tried to render output buffer %zu twice, dropping.", info->index);
             ret = d->media_codec->releaseOutputBuffer(info->index);
             d->available_output_buffer_infos.erase(d->available_output_buffer_infos.begin());
         }
@@ -884,20 +908,20 @@ int media_codec_release_output_buffer(MediaCodecDelegate delegate, size_t index,
     // Either render and release the output buffer, or just release.
     if (render)
     {
-        ALOGV("Rendering and releasing output buffer %d from the available indices list", info->index);
+        ALOGV("Rendering and releasing output buffer %zu from the available indices list", info->index);
         ret = d->media_codec->renderOutputBufferAndRelease(info->index);
     }
     else
     {
-        ALOGV("Releasing output buffer %d from the available indices list", info->index);
+        ALOGV("Releasing output buffer %zu from the available indices list", info->index);
         ret = d->media_codec->releaseOutputBuffer(info->index);
     }
     if (ret != OK)
     {
-        ALOGE("Failed to release output buffer (ret: %d, index: %d)", ret, info->index);
+        ALOGE("Failed to release output buffer (ret: %d, index: %zu)", ret, info->index);
         ++info->render_retries;
     } else {
-        ALOGV("Released output buffer %d from the available buffer infos list", info->index);
+        ALOGV("Released output buffer %zu from the available buffer infos list", info->index);
         d->available_output_buffer_infos.erase(d->available_output_buffer_infos.begin());
     }
 
@@ -927,8 +951,10 @@ MediaFormat media_codec_get_output_format(MediaCodecDelegate delegate)
     CHECK(msg_format->findString("mime", &f->mime));
     CHECK(msg_format->findInt32("width", &f->width));
     CHECK(msg_format->findInt32("height", &f->height));
-    CHECK(msg_format->findInt32("stride", &f->stride));
-    CHECK(msg_format->findInt32("slice-height", &f->slice_height));
+    if (!msg_format->findInt32("stride", &f->stride))
+        f->stride = f->width;
+    if (!msg_format->findInt32("slice-height", &f->slice_height))
+        f->slice_height = f->height;
     CHECK(msg_format->findInt32("color-format", &f->color_format));
     Rect crop;
     CHECK(msg_format->findRect("crop", &crop.left, &crop.top, &crop.right, &crop.bottom));
