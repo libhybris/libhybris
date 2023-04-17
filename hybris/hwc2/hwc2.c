@@ -19,6 +19,8 @@
 #include <dlfcn.h>
 #include <stddef.h>
 
+#include <android-config.h>
+
 #include <hybris/common/binding.h>
 #include <hybris/hwc2/hwc2_compatibility_layer.h>
 

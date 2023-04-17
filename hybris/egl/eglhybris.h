@@ -19,10 +19,11 @@
 #ifndef EGL_HYBRIS_H_
 #define EGL_HYBRIS_H_
 
+#include "platformcommon.h"
+
 /* Needed for ICS window.h */
 #include <string.h>
 #include <system/window.h>
-#include "platformcommon.h"
 
 #ifdef __cplusplus
 extern "C" {

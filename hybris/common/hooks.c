@@ -2933,6 +2933,8 @@ static struct _hook hooks_common[] = {
     // HOOK_DIRECT(memswap),
     HOOK_DIRECT_NO_DEBUG(index),
     HOOK_DIRECT_NO_DEBUG(rindex),
+    HOOK_DIRECT_NO_DEBUG(stpcpy),
+    HOOK_DIRECT_NO_DEBUG(stpncpy),
     HOOK_DIRECT_NO_DEBUG(strchr),
     HOOK_DIRECT_NO_DEBUG(strrchr),
     HOOK_INDIRECT(strlen),
@@ -3332,6 +3334,8 @@ static struct _hook hooks_p[] = {
     /* fdsan.h */
     HOOK_INDIRECT(android_fdsan_exchange_owner_tag),
     HOOK_INDIRECT(android_fdsan_close_with_tag),
+    /* pthread.h */
+    HOOK_DIRECT_NO_DEBUG(pthread_setschedprio),
 };
 
 static int hook_cmp(const void *a, const void *b)

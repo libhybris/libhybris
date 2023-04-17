@@ -21,9 +21,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <android-version.h>
+#include <android-config.h>
 
-#if (ANDROID_VERSION_MAJOR >= 10)
+#if (ANDROID_VERSION_MAJOR >= 10) && (ANDROID_VERSION_MAJOR < 12)
 #include <linux/sync_file.h>
 struct sync_file_info* sync_file_info(int32_t fd);
 static inline struct sync_fence_info* sync_get_fence_info(const struct sync_file_info* info) {

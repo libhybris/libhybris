@@ -22,6 +22,8 @@
 extern "C" {
 #endif
 
+#include <android-config.h>
+
 #include <cutils/native_handle.h>
 #include <system/window.h>
 

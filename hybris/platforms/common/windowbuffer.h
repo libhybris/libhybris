@@ -23,6 +23,8 @@
 #ifndef WINDOWBUFFER_H
 #define WINDOWBUFFER_H
 
+#include <android-config.h>
+
 #include <cutils/native_handle.h>
 #include <string.h>
 #include <system/window.h>

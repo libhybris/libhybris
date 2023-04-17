@@ -21,6 +21,8 @@
 #define TRACE(message, ...)
 #endif
 
+#include "nativewindowbase.h"
+
 #include <string.h>
 #include <system/window.h>
 #include <system/graphics.h>
@@ -38,8 +40,6 @@ extern "C" {
 #define HYBRIS_TRACE_BEGIN(...)
 #define HYBRIS_TRACE_END(...)
 #endif
-
-#include "nativewindowbase.h"
 
 BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 {

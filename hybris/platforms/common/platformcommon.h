@@ -18,6 +18,8 @@
 #ifndef PLATFORM_COMMON_H_
 #define PLATFORM_COMMON_H_
 
+#include <android-config.h>
+
 /* Needed for ICS window.h */
 #include <string.h>
 #include <system/window.h>

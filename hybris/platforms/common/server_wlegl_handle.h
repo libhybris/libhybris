@@ -23,6 +23,8 @@
 #ifndef SERVER_WLEGL_HANDLE_H
 #define SERVER_WLEGL_HANDLE_H
 
+#include <android-config.h>
+
 #include <stdint.h>
 #include <string.h>
 #include <wayland-server.h>

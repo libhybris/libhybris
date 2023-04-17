@@ -24,6 +24,8 @@
 #include <android-config.h>
 #include <cstring>
 
+#include "server_wlegl.h"
+
 extern "C" {
 #include <cutils/native_handle.h>
 }
