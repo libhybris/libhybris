@@ -19,6 +19,7 @@ AM_CXXFLAGS = \
 
 q_la_SOURCES = \
 	hybris_compat.cpp \
+	bionic/libc/bionic/bionic_call_ifunc_resolver.cpp \
 	dlfcn.cpp \
 	linker_allocator.cpp \
 	linker_block_allocator.cpp \

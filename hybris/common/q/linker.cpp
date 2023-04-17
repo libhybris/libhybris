@@ -70,6 +70,7 @@
 #include "linker_tls.h"
 #include "linker_utils.h"
 
+#include "private/bionic_call_ifunc_resolver.h"
 #include "private/bionic_globals.h"
 #include "android-base/macros.h"
 //#include "android-base/strings.h"
@@ -2640,11 +2641,9 @@ bool link_namespaces_all_libs(android_namespace_t* namespace_from,
 }
 
 ElfW(Addr) call_ifunc_resolver(ElfW(Addr) resolver_addr) {
-  typedef ElfW(Addr) (*ifunc_resolver_t)(void);
-  ifunc_resolver_t ifunc_resolver = reinterpret_cast<ifunc_resolver_t>(resolver_addr);
-  ElfW(Addr) ifunc_addr = ifunc_resolver();
+  ElfW(Addr) ifunc_addr = __bionic_call_ifunc_resolver(resolver_addr);
   TRACE_TYPE(RELO, "Called ifunc_resolver@%p. The result is %p",
-      ifunc_resolver, reinterpret_cast<void*>(ifunc_addr));
+      reinterpret_cast<void *>(resolver_addr), reinterpret_cast<void*>(ifunc_addr));
 
   return ifunc_addr;
 }
