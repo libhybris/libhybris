@@ -544,8 +544,6 @@ VULKAN_IDLOAD(vkDestroyPrivateDataSlotEXT);
 VULKAN_IDLOAD(vkSetPrivateDataEXT);
 VULKAN_IDLOAD(vkGetPrivateDataEXT);
 VULKAN_IDLOAD(vkCmdSetFragmentShadingRateEnumNV);
-VULKAN_IDLOAD(vkAcquireWinrtDisplayNV);
-VULKAN_IDLOAD(vkGetWinrtDisplayNV);
 VULKAN_IDLOAD(vkCmdSetVertexInputEXT);
 #if VK_HEADER_VERSION >= 184
 VULKAN_IDLOAD(vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI);
