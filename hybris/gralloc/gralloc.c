@@ -109,6 +109,12 @@ void hybris_gralloc_deinitialize(void);
 void hybris_gralloc_initialize(int framebuffer)
 {
     if (version == -1) {
+#if ANDROID_VERSION_MAJOR>=10
+        hybris_ui_initialize();
+        if (hybris_ui_check_for_symbol("graphic_buffer_allocator_allocate")) {
+            version = 2;
+        } else
+#endif
         if (hw_get_module(GRALLOC_HARDWARE_MODULE_ID, (const struct hw_module_t **)&gralloc_hardware_module) == 0) {
 #if HAS_GRALLOC1_HEADER
             uint8_t majorVersion = (gralloc_hardware_module->module_api_version >> 8) & 0xFF;
@@ -152,16 +158,8 @@ void hybris_gralloc_initialize(int framebuffer)
                 assert(NULL);
             }
         } else {
-#if ANDROID_VERSION_MAJOR>=10
-            hybris_ui_initialize();
-            if (hybris_ui_check_for_symbol("graphic_buffer_allocator_allocate")) {
-                version = 2;
-            } else
-#endif
-            {
-                fprintf(stderr, "failed to find/load gralloc module\n");
-                assert(NULL);
-            }
+            fprintf(stderr, "failed to find/load gralloc module\n");
+            assert(NULL);
         }
     } else {
         TRACE("hybris gralloc module has been already initialized\n");
