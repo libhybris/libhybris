@@ -26,6 +26,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <assert.h>
+#include <mutex>
+#include <algorithm>
 extern "C" {
 #include <eglplatformcommon.h>
 };
@@ -34,7 +36,8 @@ extern "C" {
 
 #include <hybris/gralloc/gralloc.h>
 
-static HWComposerNativeWindow *_nativewindow = NULL;
+static std::vector<HWComposerNativeWindow *> _nativewindows;
+static std::mutex _nativewindows_mutex;
 
 extern "C" void hwcomposerws_init_module(struct ws_egl_interface *egl_iface)
 {
@@ -58,22 +61,26 @@ extern "C" void hwcomposerws_Terminate(_EGLDisplay *dpy)
 
 extern "C" EGLNativeWindowType hwcomposerws_CreateWindow(EGLNativeWindowType win, _EGLDisplay *display)
 {
-	assert (_nativewindow == NULL);
-
 	HWComposerNativeWindow *window = static_cast<HWComposerNativeWindow *>((ANativeWindow *) win);
-	_nativewindow = window;
-	_nativewindow->common.incRef(&_nativewindow->common);
-	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(_nativewindow);
+	std::lock_guard<std::mutex> lock(_nativewindows_mutex);
+
+	window->common.incRef(&window->common);
+	_nativewindows.push_back(window);
+
+	return (EGLNativeWindowType) static_cast<struct ANativeWindow *>(window);
 }
 
 extern "C" void hwcomposerws_DestroyWindow(EGLNativeWindowType win)
 {
-	assert (_nativewindow != NULL);
-	assert (static_cast<HWComposerNativeWindow *>((struct ANativeWindow *)win) == _nativewindow);
+	HWComposerNativeWindow *window = static_cast<HWComposerNativeWindow *>((ANativeWindow *) win);
+	std::lock_guard<std::mutex> lock(_nativewindows_mutex);
 
-	_nativewindow->common.decRef(&_nativewindow->common);
-	/* We are done with it, refcounting will delete the window when appropriate */
-	_nativewindow = NULL;
+	std::vector<HWComposerNativeWindow *>::iterator it = std::find(_nativewindows.begin(),
+		_nativewindows.end(), window);
+	if (it != _nativewindows.end()) {
+		window->common.decRef(&window->common);
+		_nativewindows.erase(it);
+	}
 }
 
 extern "C" __eglMustCastToProperFunctionPointerType hwcomposerws_eglGetProcAddress(const char *procname) 
