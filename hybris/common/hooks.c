@@ -2996,6 +2996,8 @@ static struct _hook hooks_common[] = {
     HOOK_DIRECT_NO_DEBUG(pthread_mutexattr_gettype),
     HOOK_DIRECT_NO_DEBUG(pthread_mutexattr_settype),
     HOOK_DIRECT_NO_DEBUG(pthread_mutexattr_getpshared),
+    HOOK_DIRECT_NO_DEBUG(pthread_mutexattr_getprotocol),
+    HOOK_DIRECT_NO_DEBUG(pthread_mutexattr_setprotocol),
     HOOK_DIRECT(pthread_mutexattr_setpshared),
     HOOK_DIRECT_NO_DEBUG(pthread_condattr_init),
     HOOK_DIRECT_NO_DEBUG(pthread_condattr_getpshared),
