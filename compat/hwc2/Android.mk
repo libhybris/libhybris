@@ -18,7 +18,7 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libhwc2_compat_layer
-LOCAL_SRC_FILES := HWC2.cpp ComposerHal.cpp hwc2_compatibility_layer.cpp
+LOCAL_SRC_FILES := HWC2.cpp HidlComposerHal.cpp ComposerHal.cpp hwc2_compatibility_layer.cpp
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../hybris/include
 
@@ -36,6 +36,9 @@ LOCAL_SHARED_LIBRARIES := \
     android.frameworks.vr.composer@1.0 \
     android.hardware.graphics.allocator@2.0 \
     android.hardware.graphics.composer@2.1 \
+    android.hardware.graphics.composer@2.2 \
+    android.hardware.graphics.composer@2.3 \
+    android.hardware.graphics.composer@2.4 \
     android.hardware.configstore@1.0 \
     android.hardware.configstore-utils \
     libcutils \
@@ -58,6 +61,9 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := \
     android.hardware.graphics.allocator@2.0 \
     android.hardware.graphics.composer@2.1 \
+    android.hardware.graphics.composer@2.2 \
+    android.hardware.graphics.composer@2.3 \
+    android.hardware.graphics.composer@2.4 \
     libhidlbase \
     libhidltransport \
     libhwbinder
@@ -67,6 +73,22 @@ LOCAL_CFLAGS += \
     -DANDROID_VERSION_MAJOR=$(ANDROID_VERSION_MAJOR) \
     -DANDROID_VERSION_MINOR=$(ANDROID_VERSION_MINOR) \
     -DANDROID_VERSION_PATCH=$(ANDROID_VERSION_PATCH)
+
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 12 && echo true),true)
+LOCAL_SRC_FILES += AidlComposerHal.cpp
+
+LOCAL_HEADER_LIBRARIES += \
+    android.hardware.graphics.composer@2.4-command-buffer \
+    android.hardware.graphics.composer3-command-buffer
+
+LOCAL_SHARED_LIBRARIES += \
+    android.hardware.graphics.composer3-V1-ndk \
+    libbinder_ndk \
+
+LOCAL_STATIC_LIBRARIES := \
+    libaidlcommonsupport
+
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 
