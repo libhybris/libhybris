@@ -14,282 +14,274 @@
  * limitations under the License.
  */
 
-#ifndef ANDROID_SF_COMPOSER_HAL_H
-#define ANDROID_SF_COMPOSER_HAL_H
+#pragma once
 
 #include <memory>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 
-#include <android/frameworks/vr/composer/1.0/IVrComposerClient.h>
-#include <android/hardware/graphics/composer/2.1/IComposer.h>
+// TODO(b/129481165): remove the #pragma below and fix conversion issues
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+#pragma clang diagnostic ignored "-Wextra"
+
+#include <composer-command-buffer/2.4/ComposerCommandBuffer.h>
+#include <gui/BufferQueue.h>
+#include <gui/HdrMetadata.h>
+#include <math/mat4.h>
+#include <ui/DisplayedFrameStats.h>
+#include <ui/GraphicBuffer.h>
 #include <utils/StrongPointer.h>
-#if ANDROID_VERSION_MAJOR >= 9
-#include <composer-command-buffer/2.1/ComposerCommandBuffer.h>
-#else
-#include <IComposerCommandBuffer.h>
-#endif
+
+#include <aidl/android/hardware/graphics/common/DisplayDecorationSupport.h>
+#include <aidl/android/hardware/graphics/composer3/Capability.h>
+#include <aidl/android/hardware/graphics/composer3/ClientTargetPropertyWithBrightness.h>
+#include <aidl/android/hardware/graphics/composer3/Color.h>
+#include <aidl/android/hardware/graphics/composer3/Composition.h>
+#include <aidl/android/hardware/graphics/composer3/DisplayCapability.h>
+#include <aidl/android/hardware/graphics/composer3/IComposerCallback.h>
+
+#include <aidl/android/hardware/graphics/common/Transform.h>
+#include <optional>
+
+// TODO(b/129481165): remove the #pragma below and fix conversion issues
+#pragma clang diagnostic pop // ignored "-Wconversion -Wextra"
 
 namespace android {
+namespace HWC2 {
+struct ComposerCallback;
+} // namespace HWC2
 
 namespace Hwc2 {
 
-using android::frameworks::vr::composer::V1_0::IVrComposerClient;
+namespace types = hardware::graphics::common;
 
-using android::hardware::graphics::common::V1_0::ColorMode;
-using android::hardware::graphics::common::V1_0::ColorTransform;
-using android::hardware::graphics::common::V1_0::Dataspace;
-using android::hardware::graphics::common::V1_0::Hdr;
-using android::hardware::graphics::common::V1_0::PixelFormat;
-using android::hardware::graphics::common::V1_0::Transform;
+namespace V2_1 = hardware::graphics::composer::V2_1;
+namespace V2_2 = hardware::graphics::composer::V2_2;
+namespace V2_3 = hardware::graphics::composer::V2_3;
+namespace V2_4 = hardware::graphics::composer::V2_4;
+namespace V3_0 = ::aidl::android::hardware::graphics::composer3;
 
-using android::hardware::graphics::composer::V2_1::IComposer;
-using android::hardware::graphics::composer::V2_1::IComposerCallback;
-using android::hardware::graphics::composer::V2_1::IComposerClient;
-using android::hardware::graphics::composer::V2_1::Error;
-using android::hardware::graphics::composer::V2_1::Display;
-using android::hardware::graphics::composer::V2_1::Layer;
-using android::hardware::graphics::composer::V2_1::Config;
+using types::V1_0::ColorTransform;
+using types::V1_0::Transform;
+using types::V1_1::RenderIntent;
+using types::V1_2::ColorMode;
+using types::V1_2::Dataspace;
+using types::V1_2::Hdr;
+using types::V1_2::PixelFormat;
 
-using android::hardware::graphics::composer::V2_1::CommandWriterBase;
-using android::hardware::graphics::composer::V2_1::CommandReaderBase;
+using V2_1::Config;
+using V2_1::Display;
+using V2_1::Error;
+using V2_1::Layer;
+using V2_4::CommandReaderBase;
+using V2_4::CommandWriterBase;
+using V2_4::IComposer;
+using V2_4::IComposerCallback;
+using V2_4::IComposerClient;
+using V2_4::VsyncPeriodChangeTimeline;
+using V2_4::VsyncPeriodNanos;
+using PerFrameMetadata = IComposerClient::PerFrameMetadata;
+using PerFrameMetadataKey = IComposerClient::PerFrameMetadataKey;
+using PerFrameMetadataBlob = IComposerClient::PerFrameMetadataBlob;
+using AidlTransform = ::aidl::android::hardware::graphics::common::Transform;
 
-using android::hardware::kSynchronizedReadWrite;
-using android::hardware::MessageQueue;
-using android::hardware::MQDescriptorSync;
-using android::hardware::hidl_vec;
-using android::hardware::hidl_handle;
-
-class CommandReader : public CommandReaderBase {
-public:
-    ~CommandReader();
-
-    // Parse and execute commands from the command queue.  The commands are
-    // actually return values from the server and will be saved in ReturnData.
-    Error parse();
-
-    // Get and clear saved errors.
-    struct CommandError {
-        uint32_t location;
-        Error error;
-    };
-    std::vector<CommandError> takeErrors();
-
-    bool hasChanges(Display display, uint32_t* outNumChangedCompositionTypes,
-            uint32_t* outNumLayerRequestMasks) const;
-
-    // Get and clear saved changed composition types.
-    void takeChangedCompositionTypes(Display display,
-            std::vector<Layer>* outLayers,
-            std::vector<IComposerClient::Composition>* outTypes);
-
-    // Get and clear saved display requests.
-    void takeDisplayRequests(Display display,
-        uint32_t* outDisplayRequestMask, std::vector<Layer>* outLayers,
-        std::vector<uint32_t>* outLayerRequestMasks);
-
-    // Get and clear saved release fences.
-    void takeReleaseFences(Display display, std::vector<Layer>* outLayers,
-            std::vector<int>* outReleaseFences);
-
-    // Get and clear saved present fence.
-    void takePresentFence(Display display, int* outPresentFence);
-
-    // Get what stage succeeded during PresentOrValidate: Present or Validate
-    void takePresentOrValidateStage(Display display, uint32_t * state);
-
-private:
-    void resetData();
-
-    bool parseSelectDisplay(uint16_t length);
-    bool parseSetError(uint16_t length);
-    bool parseSetChangedCompositionTypes(uint16_t length);
-    bool parseSetDisplayRequests(uint16_t length);
-    bool parseSetPresentFence(uint16_t length);
-    bool parseSetReleaseFences(uint16_t length);
-    bool parseSetPresentOrValidateDisplayResult(uint16_t length);
-
-    struct ReturnData {
-        uint32_t displayRequests = 0;
-
-        std::vector<Layer> changedLayers;
-        std::vector<IComposerClient::Composition> compositionTypes;
-
-        std::vector<Layer> requestedLayers;
-        std::vector<uint32_t> requestMasks;
-
-        int presentFence = -1;
-
-        std::vector<Layer> releasedLayers;
-        std::vector<int> releaseFences;
-
-        uint32_t presentOrValidateState;
-    };
-
-    std::vector<CommandError> mErrors;
-    std::unordered_map<Display, ReturnData> mReturnData;
-
-    // When SELECT_DISPLAY is parsed, this is updated to point to the
-    // display's return data in mReturnData.  We use it to avoid repeated
-    // map lookups.
-    ReturnData* mCurrentReturnData;
-};
-
-// Composer is a wrapper to IComposer, a proxy to server-side composer.
 class Composer {
 public:
-    Composer(bool useVrComposer);
+    static std::unique_ptr<Composer> create(const std::string& serviceName);
 
-    std::vector<IComposer::Capability> getCapabilities();
-    std::string dumpDebugInfo();
+    virtual ~Composer() = 0;
 
-    void registerCallback(const sp<IComposerCallback>& callback);
+    enum class OptionalFeature {
+        RefreshRateSwitching,
+        ExpectedPresentTime,
+        // Whether setDisplayBrightness is able to be applied as part of a display command.
+        DisplayBrightnessCommand,
+        KernelIdleTimer,
+        PhysicalDisplayOrientation,
+    };
 
-    // Returns true if the connected composer service is running in a remote
-    // process, false otherwise. This will return false if the service is
-    // configured in passthrough mode, for example.
-    bool isRemote();
+    virtual bool isSupported(OptionalFeature) const = 0;
+
+    virtual std::vector<aidl::android::hardware::graphics::composer3::Capability>
+    getCapabilities() = 0;
+    virtual std::string dumpDebugInfo() = 0;
+
+    virtual void registerCallback(HWC2::ComposerCallback& callback) = 0;
 
     // Reset all pending commands in the command buffer. Useful if you want to
     // skip a frame but have already queued some commands.
-    void resetCommands();
+    virtual void resetCommands() = 0;
 
-    uint32_t getMaxVirtualDisplayCount();
-    bool isUsingVrComposer() const { return mIsUsingVrComposer; }
-    Error createVirtualDisplay(uint32_t width, uint32_t height,
-            PixelFormat* format, Display* outDisplay);
-    Error destroyVirtualDisplay(Display display);
+    // Explicitly flush all pending commands in the command buffer.
+    virtual Error executeCommands() = 0;
 
-    Error acceptDisplayChanges(Display display);
+    virtual uint32_t getMaxVirtualDisplayCount() = 0;
+    virtual Error createVirtualDisplay(uint32_t width, uint32_t height, PixelFormat*,
+                                       Display* outDisplay) = 0;
+    virtual Error destroyVirtualDisplay(Display display) = 0;
 
-    Error createLayer(Display display, Layer* outLayer);
-    Error destroyLayer(Display display, Layer layer);
+    virtual Error acceptDisplayChanges(Display display) = 0;
 
-    Error getActiveConfig(Display display, Config* outConfig);
-    Error getChangedCompositionTypes(Display display,
-            std::vector<Layer>* outLayers,
-            std::vector<IComposerClient::Composition>* outTypes);
-    Error getColorModes(Display display, std::vector<ColorMode>* outModes);
-    Error getDisplayAttribute(Display display, Config config,
-            IComposerClient::Attribute attribute, int32_t* outValue);
-    Error getDisplayConfigs(Display display, std::vector<Config>* outConfigs);
-    Error getDisplayName(Display display, std::string* outName);
+    virtual Error createLayer(Display display, Layer* outLayer) = 0;
+    virtual Error destroyLayer(Display display, Layer layer) = 0;
 
-    Error getDisplayRequests(Display display, uint32_t* outDisplayRequestMask,
-            std::vector<Layer>* outLayers,
-            std::vector<uint32_t>* outLayerRequestMasks);
+    virtual Error getActiveConfig(Display display, Config* outConfig) = 0;
+    virtual Error getChangedCompositionTypes(Display display, std::vector<Layer>* outLayers,
+                                             std::vector<V3_0::Composition>* outTypes) = 0;
+    virtual Error getColorModes(Display display, std::vector<ColorMode>* outModes) = 0;
+    virtual Error getDisplayAttribute(Display display, Config config,
+                                      IComposerClient::Attribute attribute, int32_t* outValue) = 0;
+    virtual Error getDisplayConfigs(Display display, std::vector<Config>* outConfigs) = 0;
+    virtual Error getDisplayName(Display display, std::string* outName) = 0;
 
-    Error getDisplayType(Display display,
-            IComposerClient::DisplayType* outType);
-    Error getDozeSupport(Display display, bool* outSupport);
-    Error getHdrCapabilities(Display display, std::vector<Hdr>* outTypes,
-            float* outMaxLuminance, float* outMaxAverageLuminance,
-            float* outMinLuminance);
+    virtual Error getDisplayRequests(Display display, uint32_t* outDisplayRequestMask,
+                                     std::vector<Layer>* outLayers,
+                                     std::vector<uint32_t>* outLayerRequestMasks) = 0;
 
-    Error getReleaseFences(Display display, std::vector<Layer>* outLayers,
-            std::vector<int>* outReleaseFences);
+    virtual Error getDozeSupport(Display display, bool* outSupport) = 0;
+    virtual Error hasDisplayIdleTimerCapability(Display display, bool* outSupport) = 0;
+    virtual Error getHdrCapabilities(Display display, std::vector<Hdr>* outTypes,
+                                     float* outMaxLuminance, float* outMaxAverageLuminance,
+                                     float* outMinLuminance) = 0;
 
-    Error presentDisplay(Display display, int* outPresentFence);
+    virtual Error getReleaseFences(Display display, std::vector<Layer>* outLayers,
+                                   std::vector<int>* outReleaseFences) = 0;
 
-    Error setActiveConfig(Display display, Config config);
+    virtual Error presentDisplay(Display display, int* outPresentFence) = 0;
+
+    virtual Error setActiveConfig(Display display, Config config) = 0;
 
     /*
      * The composer caches client targets internally.  When target is nullptr,
      * the composer uses slot to look up the client target from its cache.
      * When target is not nullptr, the cache is updated with the new target.
      */
-    Error setClientTarget(Display display, uint32_t slot,
-            const sp<GraphicBuffer>& target,
-            int acquireFence, Dataspace dataspace,
-            const std::vector<IComposerClient::Rect>& damage);
-    Error setColorMode(Display display, ColorMode mode);
-    Error setColorTransform(Display display, const float* matrix,
-            ColorTransform hint);
-    Error setOutputBuffer(Display display, const native_handle_t* buffer,
-            int releaseFence);
-    Error setPowerMode(Display display, IComposerClient::PowerMode mode);
-    Error setVsyncEnabled(Display display, IComposerClient::Vsync enabled);
+    virtual Error setClientTarget(Display display, uint32_t slot, const sp<GraphicBuffer>& target,
+                                  int acquireFence, Dataspace dataspace,
+                                  const std::vector<IComposerClient::Rect>& damage) = 0;
+    virtual Error setColorMode(Display display, ColorMode mode, RenderIntent renderIntent) = 0;
+    virtual Error setColorTransform(Display display, const float* matrix) = 0;
+    virtual Error setOutputBuffer(Display display, const native_handle_t* buffer,
+                                  int releaseFence) = 0;
+    virtual Error setPowerMode(Display display, IComposerClient::PowerMode mode) = 0;
+    virtual Error setVsyncEnabled(Display display, IComposerClient::Vsync enabled) = 0;
 
-    Error setClientTargetSlotCount(Display display);
+    virtual Error setClientTargetSlotCount(Display display) = 0;
 
-    Error validateDisplay(Display display, uint32_t* outNumTypes,
-            uint32_t* outNumRequests);
+    virtual Error validateDisplay(Display display, nsecs_t expectedPresentTime,
+                                  uint32_t* outNumTypes, uint32_t* outNumRequests) = 0;
 
-    Error presentOrValidateDisplay(Display display, uint32_t* outNumTypes,
-                                   uint32_t* outNumRequests,
-                                   int* outPresentFence,
-                                   uint32_t* state);
+    virtual Error presentOrValidateDisplay(Display display, nsecs_t expectedPresentTime,
+                                           uint32_t* outNumTypes, uint32_t* outNumRequests,
+                                           int* outPresentFence, uint32_t* state) = 0;
 
-    Error setCursorPosition(Display display, Layer layer,
-            int32_t x, int32_t y);
+    virtual Error setCursorPosition(Display display, Layer layer, int32_t x, int32_t y) = 0;
     /* see setClientTarget for the purpose of slot */
-    Error setLayerBuffer(Display display, Layer layer, uint32_t slot,
-            const sp<GraphicBuffer>& buffer, int acquireFence);
-    Error setLayerSurfaceDamage(Display display, Layer layer,
-            const std::vector<IComposerClient::Rect>& damage);
-    Error setLayerBlendMode(Display display, Layer layer,
-            IComposerClient::BlendMode mode);
-    Error setLayerColor(Display display, Layer layer,
-            const IComposerClient::Color& color);
-    Error setLayerCompositionType(Display display, Layer layer,
-            IComposerClient::Composition type);
-    Error setLayerDataspace(Display display, Layer layer,
-            Dataspace dataspace);
-    Error setLayerDisplayFrame(Display display, Layer layer,
-            const IComposerClient::Rect& frame);
-    Error setLayerPlaneAlpha(Display display, Layer layer,
-            float alpha);
-    Error setLayerSidebandStream(Display display, Layer layer,
-            const native_handle_t* stream);
-    Error setLayerSourceCrop(Display display, Layer layer,
-            const IComposerClient::FRect& crop);
-    Error setLayerTransform(Display display, Layer layer,
-            Transform transform);
-    Error setLayerVisibleRegion(Display display, Layer layer,
-            const std::vector<IComposerClient::Rect>& visible);
-    Error setLayerZOrder(Display display, Layer layer, uint32_t z);
-    Error setLayerInfo(Display display, Layer layer, uint32_t type,
-                       uint32_t appId);
-private:
-    class CommandWriter : public CommandWriterBase {
-    public:
-        CommandWriter(uint32_t initialMaxSize);
-        ~CommandWriter() override;
+    virtual Error setLayerBuffer(Display display, Layer layer, uint32_t slot,
+                                 const sp<GraphicBuffer>& buffer, int acquireFence) = 0;
+    virtual Error setLayerSurfaceDamage(Display display, Layer layer,
+                                        const std::vector<IComposerClient::Rect>& damage) = 0;
+    virtual Error setLayerBlendMode(Display display, Layer layer,
+                                    IComposerClient::BlendMode mode) = 0;
+    virtual Error setLayerColor(
+            Display display, Layer layer,
+            const aidl::android::hardware::graphics::composer3::Color& color) = 0;
+    virtual Error setLayerCompositionType(
+            Display display, Layer layer,
+            aidl::android::hardware::graphics::composer3::Composition type) = 0;
+    virtual Error setLayerDataspace(Display display, Layer layer, Dataspace dataspace) = 0;
+    virtual Error setLayerDisplayFrame(Display display, Layer layer,
+                                       const IComposerClient::Rect& frame) = 0;
+    virtual Error setLayerPlaneAlpha(Display display, Layer layer, float alpha) = 0;
+    virtual Error setLayerSidebandStream(Display display, Layer layer,
+                                         const native_handle_t* stream) = 0;
+    virtual Error setLayerSourceCrop(Display display, Layer layer,
+                                     const IComposerClient::FRect& crop) = 0;
+    virtual Error setLayerTransform(Display display, Layer layer, Transform transform) = 0;
+    virtual Error setLayerVisibleRegion(Display display, Layer layer,
+                                        const std::vector<IComposerClient::Rect>& visible) = 0;
+    virtual Error setLayerZOrder(Display display, Layer layer, uint32_t z) = 0;
 
-        void setLayerInfo(uint32_t type, uint32_t appId);
-        void setClientTargetMetadata(
-                const IVrComposerClient::BufferMetadata& metadata);
-        void setLayerBufferMetadata(
-                const IVrComposerClient::BufferMetadata& metadata);
+    // Composer HAL 2.2
+    virtual Error setLayerPerFrameMetadata(
+            Display display, Layer layer,
+            const std::vector<IComposerClient::PerFrameMetadata>& perFrameMetadatas) = 0;
+    virtual std::vector<IComposerClient::PerFrameMetadataKey> getPerFrameMetadataKeys(
+            Display display) = 0;
+    virtual Error getRenderIntents(Display display, ColorMode colorMode,
+            std::vector<RenderIntent>* outRenderIntents) = 0;
+    virtual Error getDataspaceSaturationMatrix(Dataspace dataspace, mat4* outMatrix) = 0;
 
-    private:
-        void writeBufferMetadata(
-                const IVrComposerClient::BufferMetadata& metadata);
+    // Composer HAL 2.3
+    virtual Error getDisplayIdentificationData(Display display, uint8_t* outPort,
+                                               std::vector<uint8_t>* outData) = 0;
+    virtual Error setLayerColorTransform(Display display, Layer layer,
+                                         const float* matrix) = 0;
+    virtual Error getDisplayedContentSamplingAttributes(Display display, PixelFormat* outFormat,
+                                                        Dataspace* outDataspace,
+                                                        uint8_t* outComponentMask) = 0;
+    virtual Error setDisplayContentSamplingEnabled(Display display, bool enabled,
+                                                   uint8_t componentMask, uint64_t maxFrames) = 0;
+    virtual Error getDisplayedContentSample(Display display, uint64_t maxFrames, uint64_t timestamp,
+                                            DisplayedFrameStats* outStats) = 0;
+    virtual Error setLayerPerFrameMetadataBlobs(
+            Display display, Layer layer, const std::vector<PerFrameMetadataBlob>& metadata) = 0;
+    // Options for setting the display brightness
+    struct DisplayBrightnessOptions {
+        // If true, then immediately submits a brightness change request to composer. Otherwise,
+        // submission of the brightness change may be deferred until presenting the next frame.
+        // applyImmediately should only be false if OptionalFeature::DisplayBrightnessCommand is
+        // supported.
+        bool applyImmediately = true;
+
+        bool operator==(const DisplayBrightnessOptions& other) const {
+            return applyImmediately == other.applyImmediately;
+        }
     };
+    virtual Error setDisplayBrightness(Display display, float brightness, float brightnessNits,
+                                       const DisplayBrightnessOptions& options) = 0;
 
-    // Many public functions above simply write a command into the command
-    // queue to batch the calls.  validateDisplay and presentDisplay will call
-    // this function to execute the command queue.
-    Error execute();
+    // Composer HAL 2.4
+    virtual Error getDisplayCapabilities(Display display,
+                                         std::vector<V3_0::DisplayCapability>* outCapabilities) = 0;
+    virtual V2_4::Error getDisplayConnectionType(
+            Display display, IComposerClient::DisplayConnectionType* outType) = 0;
+    virtual V2_4::Error getDisplayVsyncPeriod(Display display,
+                                              VsyncPeriodNanos* outVsyncPeriod) = 0;
+    virtual V2_4::Error setActiveConfigWithConstraints(
+            Display display, Config config,
+            const IComposerClient::VsyncPeriodChangeConstraints& vsyncPeriodChangeConstraints,
+            VsyncPeriodChangeTimeline* outTimeline) = 0;
 
-    sp<IComposer> mComposer;
-    sp<IComposerClient> mClient;
+    virtual V2_4::Error setAutoLowLatencyMode(Display displayId, bool on) = 0;
+    virtual V2_4::Error getSupportedContentTypes(
+            Display displayId,
+            std::vector<IComposerClient::ContentType>* outSupportedContentTypes) = 0;
+    virtual V2_4::Error setContentType(Display displayId,
+                                       IComposerClient::ContentType contentType) = 0;
+    virtual V2_4::Error setLayerGenericMetadata(Display display, Layer layer,
+                                                const std::string& key, bool mandatory,
+                                                const std::vector<uint8_t>& value) = 0;
+    virtual V2_4::Error getLayerGenericMetadataKeys(
+            std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys) = 0;
 
-    // 64KiB minus a small space for metadata such as read/write pointers
-    static constexpr size_t kWriterInitialSize =
-        64 * 1024 / sizeof(uint32_t) - 16;
-    CommandWriter mWriter;
-    CommandReader mReader;
+    virtual Error getClientTargetProperty(
+            Display display, V3_0::ClientTargetPropertyWithBrightness* outClientTargetProperty) = 0;
 
-    // When true, the we attach to the vr_hwcomposer service instead of the
-    // hwcomposer. This allows us to redirect surfaces to 3d surfaces in vr.
-    const bool mIsUsingVrComposer;
+    // AIDL Composer
+    virtual Error setLayerBrightness(Display display, Layer layer, float brightness) = 0;
+    virtual Error setLayerBlockingRegion(Display display, Layer layer,
+                                         const std::vector<IComposerClient::Rect>& blocking) = 0;
+    virtual Error setBootDisplayConfig(Display displayId, Config) = 0;
+    virtual Error clearBootDisplayConfig(Display displayId) = 0;
+    virtual Error getPreferredBootDisplayConfig(Display displayId, Config*) = 0;
+    virtual Error getDisplayDecorationSupport(
+            Display display,
+            std::optional<::aidl::android::hardware::graphics::common::DisplayDecorationSupport>*
+                    support) = 0;
+    virtual Error setIdleTimerEnabled(Display displayId, std::chrono::milliseconds timeout) = 0;
+    virtual Error getPhysicalDisplayOrientation(Display displayId,
+                                                AidlTransform* outDisplayOrientation) = 0;
 };
 
 } // namespace Hwc2
-
 } // namespace android
-
-#endif // ANDROID_SF_COMPOSER_HAL_H
