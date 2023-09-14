@@ -36,10 +36,12 @@
 #include <iterator>
 #include <set>
 
+#if ANDROID_VERSION_MAJOR >= 13
 using aidl::android::hardware::graphics::composer3::Color;
 using aidl::android::hardware::graphics::composer3::Composition;
 using AidlCapability = aidl::android::hardware::graphics::composer3::Capability;
 using aidl::android::hardware::graphics::composer3::DisplayCapability;
+#endif
 
 namespace android {
 
@@ -216,7 +218,7 @@ float Display::Config::Builder::getDefaultDensity() {
 namespace impl {
 
 Display::Display(android::Hwc2::Composer& composer,
-                 const std::unordered_set<AidlCapability>& capabilities, HWDisplayId id,
+                 const std::unordered_set<hal::Capability>& capabilities, HWDisplayId id,
                  DisplayType type)
       : mComposer(composer), mCapabilities(capabilities), mId(id), mType(type) {
     ALOGV("Created display %" PRIu64, id);
@@ -378,10 +380,12 @@ bool Display::hasDisplayIdleTimerCapability() const {
             isCapabilitySupported;
 }
 
+#if ANDROID_VERSION_MAJOR >= 13
 Error Display::getPhysicalDisplayOrientation(Hwc2::AidlTransform* outTransform) const {
     auto error = mComposer.getPhysicalDisplayOrientation(mId, outTransform);
     return static_cast<Error>(error);
 }
+#endif
 
 Error Display::getChangedCompositionTypes(std::unordered_map<HWC2::Layer*, Composition>* outTypes) {
     std::vector<Hwc2::Layer> layerIds;
@@ -727,7 +731,7 @@ Error Display::setPowerMode(PowerMode mode)
             } else if (error == Error::UNSUPPORTED) {
                 std::scoped_lock lock(mDisplayCapabilitiesMutex);
                 mDisplayCapabilities.emplace();
-                if (mCapabilities.count(AidlCapability::SKIP_CLIENT_COLOR_TRANSFORM)) {
+                if (mCapabilities.count(hal::Capability::SKIP_CLIENT_COLOR_TRANSFORM)) {
                     mDisplayCapabilities->emplace(DisplayCapability::SKIP_CLIENT_COLOR_TRANSFORM);
                 }
                 bool dozeSupport = false;
@@ -788,6 +792,7 @@ Error Display::presentOrValidate(nsecs_t expectedPresentTime, uint32_t* outNumTy
     return error;
 }
 
+#if ANDROID_VERSION_MAJOR >= 13
 ftl::Future<Error> Display::setDisplayBrightness(
         float brightness, float brightnessNits,
         const Hwc2::Composer::DisplayBrightnessOptions& options) {
@@ -797,7 +802,17 @@ ftl::Future<Error> Display::setDisplayBrightness(
         return static_cast<Error>(intError);
     });
 }
+#else
+Error Display::setDisplayBrightness(
+        float brightness, float brightnessNits,
+        const Hwc2::Composer::DisplayBrightnessOptions& options) {
+    const auto intError =
+            mComposer.setDisplayBrightness(mId, brightness, brightnessNits, options);
+    return static_cast<Error>(intError);
+}
+#endif
 
+#if ANDROID_VERSION_MAJOR >= 13
 Error Display::setBootDisplayConfig(hal::HWConfigId configId) {
     auto intError = mComposer.setBootDisplayConfig(mId, configId);
     return static_cast<Error>(intError);
@@ -812,6 +827,7 @@ Error Display::getPreferredBootDisplayConfig(hal::HWConfigId* configId) const {
     auto intError = mComposer.getPreferredBootDisplayConfig(mId, configId);
     return static_cast<Error>(intError);
 }
+#endif
 
 Error Display::setAutoLowLatencyMode(bool on) {
     auto intError = mComposer.setAutoLowLatencyMode(mId, on);
@@ -833,12 +849,13 @@ Error Display::setContentType(ContentType contentType) {
 }
 
 Error Display::getClientTargetProperty(
-        aidl::android::hardware::graphics::composer3::ClientTargetPropertyWithBrightness*
+        Hwc2::ClientTargetProperty*
                 outClientTargetProperty) {
     const auto error = mComposer.getClientTargetProperty(mId, outClientTargetProperty);
     return static_cast<Error>(error);
 }
 
+#if ANDROID_VERSION_MAJOR >= 13
 Error Display::getDisplayDecorationSupport(
         std::optional<aidl::android::hardware::graphics::common::DisplayDecorationSupport>*
                 support) {
@@ -850,6 +867,7 @@ Error Display::setIdleTimerEnabled(std::chrono::milliseconds timeout) {
     const auto error = mComposer.setIdleTimerEnabled(mId, timeout);
     return static_cast<Error>(error);
 }
+#endif
 
 // For use by Device
 
@@ -938,7 +956,7 @@ Layer::~Layer() = default;
 namespace impl {
 
 Layer::Layer(android::Hwc2::Composer& composer,
-             const std::unordered_set<AidlCapability>& capabilities, HWC2::Display& display,
+             const std::unordered_set<hal::Capability>& capabilities, HWC2::Display& display,
              HWLayerId layerId)
       : mComposer(composer),
         mCapabilities(capabilities),
@@ -1169,7 +1187,7 @@ Error Layer::setSidebandStream(const native_handle_t* stream)
         return Error::BAD_DISPLAY;
     }
 
-    if (mCapabilities.count(AidlCapability::SIDEBAND_STREAM) == 0) {
+    if (mCapabilities.count(hal::Capability::SIDEBAND_STREAM) == 0) {
         ALOGE("Attempted to call setSidebandStream without checking that the "
                 "device supports sideband streams");
         return Error::UNSUPPORTED;
@@ -1257,6 +1275,7 @@ Error Layer::setLayerGenericMetadata(const std::string& name, bool mandatory,
     return static_cast<Error>(intError);
 }
 
+#if ANDROID_VERSION_MAJOR >= 13
 // AIDL HAL
 Error Layer::setBrightness(float brightness) {
     if (CC_UNLIKELY(!mDisplay)) {
@@ -1281,6 +1300,7 @@ Error Layer::setBlockingRegion(const Region& region) {
     const auto intError = mComposer.setLayerBlockingRegion(mDisplay->getId(), mId, hwcRects);
     return static_cast<Error>(intError);
 }
+#endif
 
 } // namespace impl
 } // namespace HWC2

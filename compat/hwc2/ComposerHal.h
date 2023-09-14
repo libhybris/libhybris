@@ -31,6 +31,7 @@
 #include <ui/GraphicBuffer.h>
 #include <utils/StrongPointer.h>
 
+#if ANDROID_VERSION_MAJOR >= 13
 #include <aidl/android/hardware/graphics/common/DisplayDecorationSupport.h>
 #include <aidl/android/hardware/graphics/composer3/Capability.h>
 #include <aidl/android/hardware/graphics/composer3/ClientTargetPropertyWithBrightness.h>
@@ -38,8 +39,9 @@
 #include <aidl/android/hardware/graphics/composer3/Composition.h>
 #include <aidl/android/hardware/graphics/composer3/DisplayCapability.h>
 #include <aidl/android/hardware/graphics/composer3/IComposerCallback.h>
-
 #include <aidl/android/hardware/graphics/common/Transform.h>
+#endif
+
 #include <optional>
 
 // TODO(b/129481165): remove the #pragma below and fix conversion issues
@@ -58,7 +60,9 @@ namespace V2_1 = hardware::graphics::composer::V2_1;
 namespace V2_2 = hardware::graphics::composer::V2_2;
 namespace V2_3 = hardware::graphics::composer::V2_3;
 namespace V2_4 = hardware::graphics::composer::V2_4;
+#if ANDROID_VERSION_MAJOR >= 13
 namespace V3_0 = ::aidl::android::hardware::graphics::composer3;
+#endif
 
 using types::V1_0::ColorTransform;
 using types::V1_0::Transform;
@@ -82,7 +86,21 @@ using V2_4::VsyncPeriodNanos;
 using PerFrameMetadata = IComposerClient::PerFrameMetadata;
 using PerFrameMetadataKey = IComposerClient::PerFrameMetadataKey;
 using PerFrameMetadataBlob = IComposerClient::PerFrameMetadataBlob;
+
+#if ANDROID_VERSION_MAJOR >= 13
 using AidlTransform = ::aidl::android::hardware::graphics::common::Transform;
+using V3_0::Capability;
+using V3_0::Color;
+using V3_0::Composition;
+using V3_0::DisplayCapability;
+using ClientTargetProperty = V3_0::ClientTargetPropertyWithBrightness;
+#else
+using Capability = IComposer::Capability;
+using ClientTargetProperty = IComposerClient::ClientTargetProperty;
+using Color = IComposerClient::Color;
+using Composition = IComposerClient::Composition;
+using DisplayCapability = IComposerClient::DisplayCapability;
+#endif
 
 class Composer {
 public:
@@ -101,7 +119,7 @@ public:
 
     virtual bool isSupported(OptionalFeature) const = 0;
 
-    virtual std::vector<aidl::android::hardware::graphics::composer3::Capability>
+    virtual std::vector<Capability>
     getCapabilities() = 0;
     virtual std::string dumpDebugInfo() = 0;
 
@@ -126,7 +144,7 @@ public:
 
     virtual Error getActiveConfig(Display display, Config* outConfig) = 0;
     virtual Error getChangedCompositionTypes(Display display, std::vector<Layer>* outLayers,
-                                             std::vector<V3_0::Composition>* outTypes) = 0;
+                                             std::vector<Composition>* outTypes) = 0;
     virtual Error getColorModes(Display display, std::vector<ColorMode>* outModes) = 0;
     virtual Error getDisplayAttribute(Display display, Config config,
                                       IComposerClient::Attribute attribute, int32_t* outValue) = 0;
@@ -184,10 +202,10 @@ public:
                                     IComposerClient::BlendMode mode) = 0;
     virtual Error setLayerColor(
             Display display, Layer layer,
-            const aidl::android::hardware::graphics::composer3::Color& color) = 0;
+            const Color& color) = 0;
     virtual Error setLayerCompositionType(
             Display display, Layer layer,
-            aidl::android::hardware::graphics::composer3::Composition type) = 0;
+            Composition type) = 0;
     virtual Error setLayerDataspace(Display display, Layer layer, Dataspace dataspace) = 0;
     virtual Error setLayerDisplayFrame(Display display, Layer layer,
                                        const IComposerClient::Rect& frame) = 0;
@@ -242,7 +260,7 @@ public:
 
     // Composer HAL 2.4
     virtual Error getDisplayCapabilities(Display display,
-                                         std::vector<V3_0::DisplayCapability>* outCapabilities) = 0;
+                                         std::vector<DisplayCapability>* outCapabilities) = 0;
     virtual V2_4::Error getDisplayConnectionType(
             Display display, IComposerClient::DisplayConnectionType* outType) = 0;
     virtual V2_4::Error getDisplayVsyncPeriod(Display display,
@@ -265,8 +283,9 @@ public:
             std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys) = 0;
 
     virtual Error getClientTargetProperty(
-            Display display, V3_0::ClientTargetPropertyWithBrightness* outClientTargetProperty) = 0;
+            Display display, ClientTargetProperty* outClientTargetProperty) = 0;
 
+#if ANDROID_VERSION_MAJOR >= 13
     // AIDL Composer
     virtual Error setLayerBrightness(Display display, Layer layer, float brightness) = 0;
     virtual Error setLayerBlockingRegion(Display display, Layer layer,
@@ -281,6 +300,7 @@ public:
     virtual Error setIdleTimerEnabled(Display displayId, std::chrono::milliseconds timeout) = 0;
     virtual Error getPhysicalDisplayOrientation(Display displayId,
                                                 AidlTransform* outDisplayOrientation) = 0;
+#endif
 };
 
 } // namespace Hwc2
