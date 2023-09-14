@@ -36,10 +36,12 @@
 #include <algorithm>
 #include <cinttypes>
 
+#if ANDROID_VERSION_MAJOR >= 13
 using aidl::android::hardware::graphics::composer3::Capability;
 using aidl::android::hardware::graphics::composer3::ClientTargetPropertyWithBrightness;
 using aidl::android::hardware::graphics::composer3::DimmingStage;
 using aidl::android::hardware::graphics::composer3::DisplayCapability;
+#endif
 
 namespace android {
 
@@ -369,7 +371,7 @@ Error HidlComposer::getActiveConfig(Display display, Config* outConfig) {
 
 Error HidlComposer::getChangedCompositionTypes(
         Display display, std::vector<Layer>* outLayers,
-        std::vector<aidl::android::hardware::graphics::composer3::Composition>* outTypes) {
+        std::vector<Hwc2::Composition>* outTypes) {
     mReader.takeChangedCompositionTypes(display, outLayers, outTypes);
     return Error::NONE;
 }
@@ -710,7 +712,8 @@ Error HidlComposer::setLayerBlendMode(Display display, Layer layer,
 }
 
 static IComposerClient::Color to_hidl_type(
-        aidl::android::hardware::graphics::composer3::Color color) {
+        Hwc2::Color color) {
+#if ANDROID_VERSION_MAJOR >= 13
     const auto floatColorToUint8Clamped = [](float val) -> uint8_t {
         const auto intVal = static_cast<uint64_t>(std::round(255.0f * val));
         const auto minVal = static_cast<uint64_t>(0);
@@ -724,11 +727,14 @@ static IComposerClient::Color to_hidl_type(
             floatColorToUint8Clamped(color.b),
             floatColorToUint8Clamped(color.a),
     };
+#else
+    return color;
+#endif
 }
 
 Error HidlComposer::setLayerColor(
         Display display, Layer layer,
-        const aidl::android::hardware::graphics::composer3::Color& color) {
+        const Hwc2::Color& color) {
     mWriter.selectDisplay(display);
     mWriter.selectLayer(layer);
     mWriter.setLayerColor(to_hidl_type(color));
@@ -736,7 +742,7 @@ Error HidlComposer::setLayerColor(
 }
 
 static IComposerClient::Composition to_hidl_type(
-        aidl::android::hardware::graphics::composer3::Composition type) {
+        Hwc2::Composition type) {
     LOG_ALWAYS_FATAL_IF(static_cast<int32_t>(type) >
                                 static_cast<int32_t>(IComposerClient::Composition::SIDEBAND),
                         "Trying to use %s, which is not supported by HidlComposer!",
@@ -747,7 +753,7 @@ static IComposerClient::Composition to_hidl_type(
 
 Error HidlComposer::setLayerCompositionType(
         Display display, Layer layer,
-        aidl::android::hardware::graphics::composer3::Composition type) {
+        Hwc2::Composition type) {
     mWriter.selectDisplay(display);
     mWriter.selectLayer(layer);
     mWriter.setLayerCompositionType(to_hidl_type(type));
@@ -1291,6 +1297,7 @@ V2_4::Error HidlComposer::getLayerGenericMetadataKeys(
     return error;
 }
 
+#if ANDROID_VERSION_MAJOR >= 13
 Error HidlComposer::setBootDisplayConfig(Display /*displayId*/, Config) {
     return Error::UNSUPPORTED;
 }
@@ -1302,9 +1309,13 @@ Error HidlComposer::clearBootDisplayConfig(Display /*displayId*/) {
 Error HidlComposer::getPreferredBootDisplayConfig(Display /*displayId*/, Config*) {
     return Error::UNSUPPORTED;
 }
+#endif
 
 Error HidlComposer::getClientTargetProperty(
-        Display display, ClientTargetPropertyWithBrightness* outClientTargetProperty) {
+        Display display, ClientTargetProperty* outClientTargetProperty) {
+#if ANDROID_VERSION_MAJOR < 13
+    mReader.takeClientTargetProperty(display, outClientTargetProperty);
+#else
     IComposerClient::ClientTargetProperty property;
     mReader.takeClientTargetProperty(display, &property);
     outClientTargetProperty->display = display;
@@ -1315,9 +1326,11 @@ Error HidlComposer::getClientTargetProperty(
                     property.pixelFormat);
     outClientTargetProperty->brightness = 1.f;
     outClientTargetProperty->dimmingStage = DimmingStage::NONE;
+#endif
     return Error::NONE;
 }
 
+#if ANDROID_VERSION_MAJOR >= 13
 Error HidlComposer::setLayerBrightness(Display, Layer, float) {
     return Error::NONE;
 }
@@ -1344,6 +1357,7 @@ Error HidlComposer::getPhysicalDisplayOrientation(Display, AidlTransform*) {
     LOG_ALWAYS_FATAL("getPhysicalDisplayOrientation should have never been called on this as "
                      "OptionalFeature::PhysicalDisplayOrientation is not supported on HIDL");
 }
+#endif
 
 void HidlComposer::registerCallback(ComposerCallback& callback) {
     const bool vsyncSwitchingSupported =
@@ -1443,7 +1457,7 @@ bool CommandReader::parseSetChangedCompositionTypes(uint16_t length) {
     mCurrentReturnData->compositionTypes.reserve(count);
     while (count > 0) {
         auto layer = read64();
-        auto type = static_cast<aidl::android::hardware::graphics::composer3::Composition>(
+        auto type = static_cast<Hwc2::Composition>(
                 readSigned());
 
         mCurrentReturnData->changedLayers.push_back(layer);
@@ -1572,7 +1586,7 @@ bool CommandReader::hasChanges(Display display, uint32_t* outNumChangedCompositi
 
 void CommandReader::takeChangedCompositionTypes(
         Display display, std::vector<Layer>* outLayers,
-        std::vector<aidl::android::hardware::graphics::composer3::Composition>* outTypes) {
+        std::vector<Hwc2::Composition>* outTypes) {
     auto found = mReturnData.find(display);
     if (found == mReturnData.end()) {
         outLayers->clear();

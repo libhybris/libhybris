@@ -18,7 +18,9 @@
 #define LOG_TAG "HwcComposer"
 #define ATRACE_TAG ATRACE_TAG_GRAPHICS
 
+#if ANDROID_VERSION_MAJOR >= 13
 #include "AidlComposerHal.h"
+#endif
 #include "HidlComposerHal.h"
 
 namespace android::Hwc2 {
@@ -26,10 +28,11 @@ namespace android::Hwc2 {
 Composer::~Composer() = default;
 
 std::unique_ptr<Composer> Composer::create(const std::string& serviceName) {
+#if ANDROID_VERSION_MAJOR >= 13
     if (AidlComposer::isDeclared(serviceName)) {
         return std::make_unique<AidlComposer>(serviceName);
     }
-
+#endif
     return std::make_unique<HidlComposer>(serviceName);
 }
 

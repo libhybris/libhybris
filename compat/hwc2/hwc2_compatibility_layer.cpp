@@ -26,9 +26,6 @@
 #include "hwc2_compatibility_layer.h"
 
 using namespace android;
-using aidl::android::hardware::graphics::composer3::Capability;
-using aidl::android::hardware::graphics::composer3::Color;
-using aidl::android::hardware::graphics::composer3::Composition;
 
 namespace hal = android::hardware::graphics::composer::hal;
 
@@ -97,7 +94,7 @@ hwc2_compat_device_t* hwc2_compat_device_new(bool useVrComposer)
     device->self = new HWC2::Device(Hwc2::Composer::create(buf));
 
     bool presentTimestamp =
-        !device->self->getCapabilities().count(Capability::PRESENT_FENCE_IS_NOT_RELIABLE);
+        !device->self->getCapabilities().count(hal::Capability::PRESENT_FENCE_IS_NOT_RELIABLE);
     property_set("service.sf.present_timestamp", presentTimestamp ? "1" : "0");
 
     return device;
@@ -308,13 +305,17 @@ hwc2_error_t hwc2_compat_layer_set_blend_mode(hwc2_compat_layer_t* layer, int mo
 hwc2_error_t hwc2_compat_layer_set_color(hwc2_compat_layer_t* layer,
                                     hwc_color_t color)
 {
-    Color aidl_color{
+#if ANDROID_VERSION_MAJOR >= 13
+    hal::Error error = layer->self->setColor({
         color.r / 255.0f,
         color.g / 255.0f,
         color.b / 255.0f,
         color.a / 255.0f,
-    };
-    hal::Error error = layer->self->setColor(aidl_color);
+    });
+#else
+    hal::Error error = layer->self->setColor({
+        color.r, color.g, color.b, color.a});
+#endif
     return static_cast<hwc2_error_t>(error);
 }
 
@@ -322,7 +323,7 @@ hwc2_error_t hwc2_compat_layer_set_composition_type(hwc2_compat_layer_t* layer,
                                             int type)
 {
     hal::Error error = layer->self->setCompositionType(
-        static_cast<Composition>(type));
+        static_cast<hal::Composition>(type));
     return static_cast<hwc2_error_t>(error);
 }
 

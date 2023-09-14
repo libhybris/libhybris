@@ -37,7 +37,9 @@
 #include <ui/GraphicBuffer.h>
 #include <utils/StrongPointer.h>
 
+#if ANDROID_VERSION_MAJOR >= 13
 #include <aidl/android/hardware/graphics/composer3/Composition.h>
+#endif
 
 // TODO(b/129481165): remove the #pragma below and fix conversion issues
 #pragma clang diagnostic pop // ignored "-Wconversion -Wextra"
@@ -95,7 +97,7 @@ public:
     // Get and clear saved changed composition types.
     void takeChangedCompositionTypes(
             Display display, std::vector<Layer>* outLayers,
-            std::vector<aidl::android::hardware::graphics::composer3::Composition>* outTypes);
+            std::vector<Composition>* outTypes);
 
     // Get and clear saved display requests.
     void takeDisplayRequests(Display display, uint32_t* outDisplayRequestMask,
@@ -132,7 +134,7 @@ private:
         uint32_t displayRequests = 0;
 
         std::vector<Layer> changedLayers;
-        std::vector<aidl::android::hardware::graphics::composer3::Composition> compositionTypes;
+        std::vector<Composition> compositionTypes;
 
         std::vector<Layer> requestedLayers;
         std::vector<uint32_t> requestMasks;
@@ -169,7 +171,7 @@ public:
 
     bool isSupported(OptionalFeature) const;
 
-    std::vector<aidl::android::hardware::graphics::composer3::Capability> getCapabilities()
+    std::vector<Capability> getCapabilities()
             override;
     std::string dumpDebugInfo() override;
 
@@ -195,7 +197,7 @@ public:
     Error getActiveConfig(Display display, Config* outConfig) override;
     Error getChangedCompositionTypes(
             Display display, std::vector<Layer>* outLayers,
-            std::vector<aidl::android::hardware::graphics::composer3::Composition>* outTypes)
+            std::vector<Composition>* outTypes)
             override;
     Error getColorModes(Display display, std::vector<ColorMode>* outModes) override;
     Error getDisplayAttribute(Display display, Config config, IComposerClient::Attribute attribute,
@@ -251,10 +253,10 @@ public:
                                 const std::vector<IComposerClient::Rect>& damage) override;
     Error setLayerBlendMode(Display display, Layer layer, IComposerClient::BlendMode mode) override;
     Error setLayerColor(Display display, Layer layer,
-                        const aidl::android::hardware::graphics::composer3::Color& color) override;
+                        const Color& color) override;
     Error setLayerCompositionType(
             Display display, Layer layer,
-            aidl::android::hardware::graphics::composer3::Composition type) override;
+            Composition type) override;
     Error setLayerDataspace(Display display, Layer layer, Dataspace dataspace) override;
     Error setLayerDisplayFrame(Display display, Layer layer,
                                const IComposerClient::Rect& frame) override;
@@ -298,7 +300,7 @@ public:
     // Composer HAL 2.4
     Error getDisplayCapabilities(
             Display display,
-            std::vector<aidl::android::hardware::graphics::composer3::DisplayCapability>*
+            std::vector<DisplayCapability>*
                     outCapabilities) override;
     V2_4::Error getDisplayConnectionType(Display display,
                                          IComposerClient::DisplayConnectionType* outType) override;
@@ -319,9 +321,10 @@ public:
             std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys) override;
     Error getClientTargetProperty(
             Display display,
-            aidl::android::hardware::graphics::composer3::ClientTargetPropertyWithBrightness*
+            ClientTargetProperty*
                     outClientTargetProperty) override;
 
+#if ANDROID_VERSION_MAJOR >= 13
     // AIDL Composer HAL
     Error setLayerBrightness(Display display, Layer layer, float brightness) override;
     Error setLayerBlockingRegion(Display display, Layer layer,
@@ -337,6 +340,7 @@ public:
 
     Error getPhysicalDisplayOrientation(Display displayId,
                                         AidlTransform* outDisplayOrientation) override;
+#endif
 
 private:
     class CommandWriter : public CommandWriterBase {
