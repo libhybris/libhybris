@@ -3015,6 +3015,7 @@ static struct _hook hooks_common[] = {
     HOOK_TO(pthread_cond_timedwait_monotonic_np, _hybris_hook_pthread_cond_timedwait),
     HOOK_INDIRECT(pthread_cond_timedwait_relative_np),
     HOOK_DIRECT_NO_DEBUG(pthread_key_delete),
+    HOOK_DIRECT_NO_DEBUG(pthread_getname_np),
     HOOK_INDIRECT(pthread_setname_np),
     HOOK_DIRECT_NO_DEBUG(pthread_once),
     HOOK_DIRECT_NO_DEBUG(pthread_key_create),
