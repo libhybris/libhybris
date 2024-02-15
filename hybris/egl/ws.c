@@ -27,6 +27,7 @@
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static struct ws_module *ws = NULL;
+static void* wsmod = NULL;
 static char ws_name[32] = { 0 };
 
 static EGLBoolean ensureCorrectWs(const char * egl_platform)
@@ -66,7 +67,7 @@ EGLBoolean ws_init(const char * egl_platform)
 
 	snprintf(ws_lib_path, 2048, "%s/eglplatform_%s.so", eglplatform_dir, egl_platform);
 
-	void *wsmod = (void *) dlopen(ws_lib_path, RTLD_LAZY);
+	wsmod = (void *) dlopen(ws_lib_path, RTLD_LAZY);
 	if (wsmod==NULL)
 	{
 		fprintf(stderr, "ERROR: %s\n\t%s\n", ws_lib_path, dlerror());
@@ -94,6 +95,11 @@ void ws_Terminate(struct _EGLDisplay *dpy)
 {
 	assert(ws != NULL);
 	ws->Terminate(dpy);
+	if (wsmod != NULL) {
+		dlclose(wsmod);
+		wsmod = NULL;
+	}
+	ws = NULL;
 }
 
 EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, struct _EGLDisplay *display)
