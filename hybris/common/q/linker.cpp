@@ -3891,6 +3891,14 @@ bool soinfo::prelink_image() {
         // resolves everything eagerly, so these can be ignored.
         break;
 
+#if defined(__aarch64__)
+      case DT_AARCH64_BTI_PLT:
+      case DT_AARCH64_PAC_PLT:
+      case DT_AARCH64_VARIANT_PCS:
+        // Ignored: AArch64 processor-specific dynamic array tags.
+        break;
+#endif
+
       default:
         if (!relocating_linker) {
           const char* tag_name;
