@@ -318,6 +318,45 @@ VULKAN_IDLOAD(vkSignalSemaphore);
 VULKAN_IDLOAD(vkGetBufferDeviceAddress);
 VULKAN_IDLOAD(vkGetBufferOpaqueCaptureAddress);
 VULKAN_IDLOAD(vkGetDeviceMemoryOpaqueCaptureAddress);
+#if VK_HEADER_VERSION >= 204
+VULKAN_IDLOAD(vkGetPhysicalDeviceToolProperties);
+VULKAN_IDLOAD(vkCreatePrivateDataSlot);
+VULKAN_IDLOAD(vkDestroyPrivateDataSlot);
+VULKAN_IDLOAD(vkSetPrivateData);
+VULKAN_IDLOAD(vkGetPrivateData);
+VULKAN_IDLOAD(vkCmdSetEvent2);
+VULKAN_IDLOAD(vkCmdResetEvent2);
+VULKAN_IDLOAD(vkCmdWaitEvents2);
+VULKAN_IDLOAD(vkCmdPipelineBarrier2);
+VULKAN_IDLOAD(vkCmdWriteTimestamp2);
+VULKAN_IDLOAD(vkQueueSubmit2);
+VULKAN_IDLOAD(vkCmdCopyBuffer2);
+VULKAN_IDLOAD(vkCmdCopyImage2);
+VULKAN_IDLOAD(vkCmdCopyBufferToImage2);
+VULKAN_IDLOAD(vkCmdCopyImageToBuffer2);
+VULKAN_IDLOAD(vkCmdBlitImage2);
+VULKAN_IDLOAD(vkCmdResolveImage2);
+VULKAN_IDLOAD(vkCmdBeginRendering);
+VULKAN_IDLOAD(vkCmdEndRendering);
+VULKAN_IDLOAD(vkCmdSetCullMode);
+VULKAN_IDLOAD(vkCmdSetFrontFace);
+VULKAN_IDLOAD(vkCmdSetPrimitiveTopology);
+VULKAN_IDLOAD(vkCmdSetViewportWithCount);
+VULKAN_IDLOAD(vkCmdSetScissorWithCount);
+VULKAN_IDLOAD(vkCmdBindVertexBuffers2);
+VULKAN_IDLOAD(vkCmdSetDepthTestEnable);
+VULKAN_IDLOAD(vkCmdSetDepthWriteEnable);
+VULKAN_IDLOAD(vkCmdSetDepthCompareOp);
+VULKAN_IDLOAD(vkCmdSetDepthBoundsTestEnable);
+VULKAN_IDLOAD(vkCmdSetStencilTestEnable);
+VULKAN_IDLOAD(vkCmdSetStencilOp);
+VULKAN_IDLOAD(vkCmdSetRasterizerDiscardEnable);
+VULKAN_IDLOAD(vkCmdSetDepthBiasEnable);
+VULKAN_IDLOAD(vkCmdSetPrimitiveRestartEnable);
+VULKAN_IDLOAD(vkGetDeviceBufferMemoryRequirements);
+VULKAN_IDLOAD(vkGetDeviceImageMemoryRequirements);
+VULKAN_IDLOAD(vkGetDeviceImageSparseMemoryRequirements);
+#endif
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceSupportKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceFormatsKHR);
@@ -339,6 +378,25 @@ VULKAN_IDLOAD(vkCreateDisplayModeKHR);
 VULKAN_IDLOAD(vkGetDisplayPlaneCapabilitiesKHR);
 VULKAN_IDLOAD(vkCreateDisplayPlaneSurfaceKHR);
 VULKAN_IDLOAD(vkCreateSharedSwapchainsKHR);
+#if VK_HEADER_VERSION >= 238
+VULKAN_IDLOAD(vkGetPhysicalDeviceVideoCapabilitiesKHR);
+VULKAN_IDLOAD(vkGetPhysicalDeviceVideoFormatPropertiesKHR);
+VULKAN_IDLOAD(vkCreateVideoSessionKHR);
+VULKAN_IDLOAD(vkDestroyVideoSessionKHR);
+VULKAN_IDLOAD(vkGetVideoSessionMemoryRequirementsKHR);
+VULKAN_IDLOAD(vkBindVideoSessionMemoryKHR);
+VULKAN_IDLOAD(vkCreateVideoSessionParametersKHR);
+VULKAN_IDLOAD(vkUpdateVideoSessionParametersKHR);
+VULKAN_IDLOAD(vkDestroyVideoSessionParametersKHR);
+VULKAN_IDLOAD(vkCmdBeginVideoCodingKHR);
+VULKAN_IDLOAD(vkCmdEndVideoCodingKHR);
+VULKAN_IDLOAD(vkCmdControlVideoCodingKHR);
+VULKAN_IDLOAD(vkCmdDecodeVideoKHR);
+#endif
+#if VK_HEADER_VERSION >= 197
+VULKAN_IDLOAD(vkCmdBeginRenderingKHR);
+VULKAN_IDLOAD(vkCmdEndRenderingKHR);
+#endif
 VULKAN_IDLOAD(vkGetPhysicalDeviceFeatures2KHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceProperties2KHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceFormatProperties2KHR);
@@ -395,6 +453,13 @@ VULKAN_IDLOAD(vkWaitSemaphoresKHR);
 VULKAN_IDLOAD(vkSignalSemaphoreKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceFragmentShadingRatesKHR);
 VULKAN_IDLOAD(vkCmdSetFragmentShadingRateKHR);
+#if VK_HEADER_VERSION >= 276
+VULKAN_IDLOAD(vkCmdSetRenderingAttachmentLocationsKHR);
+VULKAN_IDLOAD(vkCmdSetRenderingInputAttachmentIndicesKHR);
+#endif
+#if VK_HEADER_VERSION >= 185
+VULKAN_IDLOAD(vkWaitForPresentKHR);
+#endif
 VULKAN_IDLOAD(vkGetBufferDeviceAddressKHR);
 VULKAN_IDLOAD(vkGetBufferOpaqueCaptureAddressKHR);
 VULKAN_IDLOAD(vkGetDeviceMemoryOpaqueCaptureAddressKHR);
@@ -406,6 +471,15 @@ VULKAN_IDLOAD(vkDeferredOperationJoinKHR);
 VULKAN_IDLOAD(vkGetPipelineExecutablePropertiesKHR);
 VULKAN_IDLOAD(vkGetPipelineExecutableStatisticsKHR);
 VULKAN_IDLOAD(vkGetPipelineExecutableInternalRepresentationsKHR);
+#if VK_HEADER_VERSION >= 244
+VULKAN_IDLOAD(vkMapMemory2KHR);
+VULKAN_IDLOAD(vkUnmapMemory2KHR);
+#endif
+#if VK_HEADER_VERSION >= 274
+VULKAN_IDLOAD(vkGetPhysicalDeviceVideoEncodeQualityLevelPropertiesKHR);
+VULKAN_IDLOAD(vkGetEncodedVideoSessionParametersKHR);
+VULKAN_IDLOAD(vkCmdEncodeVideoKHR);
+#endif
 VULKAN_IDLOAD(vkCmdSetEvent2KHR);
 VULKAN_IDLOAD(vkCmdResetEvent2KHR);
 VULKAN_IDLOAD(vkCmdWaitEvents2KHR);
@@ -420,6 +494,38 @@ VULKAN_IDLOAD(vkCmdCopyBufferToImage2KHR);
 VULKAN_IDLOAD(vkCmdCopyImageToBuffer2KHR);
 VULKAN_IDLOAD(vkCmdBlitImage2KHR);
 VULKAN_IDLOAD(vkCmdResolveImage2KHR);
+#if VK_HEADER_VERSION >= 213
+VULKAN_IDLOAD(vkCmdTraceRaysIndirect2KHR);
+#endif
+#if VK_HEADER_VERSION >= 195
+VULKAN_IDLOAD(vkGetDeviceBufferMemoryRequirementsKHR);
+VULKAN_IDLOAD(vkGetDeviceImageMemoryRequirementsKHR);
+VULKAN_IDLOAD(vkGetDeviceImageSparseMemoryRequirementsKHR);
+#endif
+#if VK_HEADER_VERSION >= 260
+VULKAN_IDLOAD(vkCmdBindIndexBuffer2KHR);
+VULKAN_IDLOAD(vkGetRenderingAreaGranularityKHR);
+VULKAN_IDLOAD(vkGetDeviceImageSubresourceLayoutKHR);
+VULKAN_IDLOAD(vkGetImageSubresourceLayout2KHR);
+#endif
+#if VK_HEADER_VERSION >= 255
+VULKAN_IDLOAD(vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR);
+#endif
+#if VK_HEADER_VERSION >= 276
+VULKAN_IDLOAD(vkCmdSetLineStippleKHR);
+#endif
+#if VK_HEADER_VERSION >= 273
+VULKAN_IDLOAD(vkGetPhysicalDeviceCalibrateableTimeDomainsKHR);
+VULKAN_IDLOAD(vkGetCalibratedTimestampsKHR);
+#endif
+#if VK_HEADER_VERSION >= 274
+VULKAN_IDLOAD(vkCmdBindDescriptorSets2KHR);
+VULKAN_IDLOAD(vkCmdPushConstants2KHR);
+VULKAN_IDLOAD(vkCmdPushDescriptorSet2KHR);
+VULKAN_IDLOAD(vkCmdPushDescriptorSetWithTemplate2KHR);
+VULKAN_IDLOAD(vkCmdSetDescriptorBufferOffsets2EXT);
+VULKAN_IDLOAD(vkCmdBindDescriptorBufferEmbeddedSamplers2EXT);
+#endif
 VULKAN_IDLOAD(vkCreateDebugReportCallbackEXT);
 VULKAN_IDLOAD(vkDestroyDebugReportCallbackEXT);
 VULKAN_IDLOAD(vkDebugReportMessageEXT);
@@ -457,6 +563,10 @@ VULKAN_IDLOAD(vkGetSwapchainCounterEXT);
 VULKAN_IDLOAD(vkGetRefreshCycleDurationGOOGLE);
 VULKAN_IDLOAD(vkGetPastPresentationTimingGOOGLE);
 VULKAN_IDLOAD(vkCmdSetDiscardRectangleEXT);
+#if VK_HEADER_VERSION >= 241
+VULKAN_IDLOAD(vkCmdSetDiscardRectangleEnableEXT);
+VULKAN_IDLOAD(vkCmdSetDiscardRectangleModeEXT);
+#endif
 VULKAN_IDLOAD(vkSetHdrMetadataEXT);
 VULKAN_IDLOAD(vkSetDebugUtilsObjectNameEXT);
 VULKAN_IDLOAD(vkSetDebugUtilsObjectTagEXT);
@@ -499,6 +609,9 @@ VULKAN_IDLOAD(vkGetCalibratedTimestampsEXT);
 VULKAN_IDLOAD(vkCmdDrawMeshTasksNV);
 VULKAN_IDLOAD(vkCmdDrawMeshTasksIndirectNV);
 VULKAN_IDLOAD(vkCmdDrawMeshTasksIndirectCountNV);
+#if VK_HEADER_VERSION >= 241
+VULKAN_IDLOAD(vkCmdSetExclusiveScissorEnableNV);
+#endif
 VULKAN_IDLOAD(vkCmdSetExclusiveScissorNV);
 VULKAN_IDLOAD(vkCmdSetCheckpointNV);
 VULKAN_IDLOAD(vkGetQueueCheckpointDataNV);
@@ -531,19 +644,58 @@ VULKAN_IDLOAD(vkCmdSetDepthCompareOpEXT);
 VULKAN_IDLOAD(vkCmdSetDepthBoundsTestEnableEXT);
 VULKAN_IDLOAD(vkCmdSetStencilTestEnableEXT);
 VULKAN_IDLOAD(vkCmdSetStencilOpEXT);
+#if VK_HEADER_VERSION >= 258
+VULKAN_IDLOAD(vkCopyMemoryToImageEXT);
+VULKAN_IDLOAD(vkCopyImageToMemoryEXT);
+VULKAN_IDLOAD(vkCopyImageToImageEXT);
+VULKAN_IDLOAD(vkTransitionImageLayoutEXT);
+#endif
+#if VK_HEADER_VERSION >= 213
+VULKAN_IDLOAD(vkGetImageSubresourceLayout2EXT);
+#endif
+#if VK_HEADER_VERSION >= 237
+VULKAN_IDLOAD(vkReleaseSwapchainImagesEXT);
+#endif
 VULKAN_IDLOAD(vkGetGeneratedCommandsMemoryRequirementsNV);
 VULKAN_IDLOAD(vkCmdPreprocessGeneratedCommandsNV);
 VULKAN_IDLOAD(vkCmdExecuteGeneratedCommandsNV);
 VULKAN_IDLOAD(vkCmdBindPipelineShaderGroupNV);
 VULKAN_IDLOAD(vkCreateIndirectCommandsLayoutNV);
 VULKAN_IDLOAD(vkDestroyIndirectCommandsLayoutNV);
+#if VK_HEADER_VERSION >= 254
+VULKAN_IDLOAD(vkCmdSetDepthBias2EXT);
+#endif
 VULKAN_IDLOAD(vkAcquireDrmDisplayEXT);
 VULKAN_IDLOAD(vkGetDrmDisplayEXT);
 VULKAN_IDLOAD(vkCreatePrivateDataSlotEXT);
 VULKAN_IDLOAD(vkDestroyPrivateDataSlotEXT);
 VULKAN_IDLOAD(vkSetPrivateDataEXT);
 VULKAN_IDLOAD(vkGetPrivateDataEXT);
+#if VK_HEADER_VERSION >= 269
+VULKAN_IDLOAD(vkCreateCudaModuleNV);
+VULKAN_IDLOAD(vkGetCudaModuleCacheNV);
+VULKAN_IDLOAD(vkCreateCudaFunctionNV);
+VULKAN_IDLOAD(vkDestroyCudaModuleNV);
+VULKAN_IDLOAD(vkDestroyCudaFunctionNV);
+VULKAN_IDLOAD(vkCmdCudaLaunchKernelNV);
+#endif
+#if VK_HEADER_VERSION >= 235
+VULKAN_IDLOAD(vkGetDescriptorSetLayoutSizeEXT);
+VULKAN_IDLOAD(vkGetDescriptorSetLayoutBindingOffsetEXT);
+VULKAN_IDLOAD(vkGetDescriptorEXT);
+VULKAN_IDLOAD(vkCmdBindDescriptorBuffersEXT);
+VULKAN_IDLOAD(vkCmdSetDescriptorBufferOffsetsEXT);
+VULKAN_IDLOAD(vkCmdBindDescriptorBufferEmbeddedSamplersEXT);
+VULKAN_IDLOAD(vkGetBufferOpaqueCaptureDescriptorDataEXT);
+VULKAN_IDLOAD(vkGetImageOpaqueCaptureDescriptorDataEXT);
+VULKAN_IDLOAD(vkGetImageViewOpaqueCaptureDescriptorDataEXT);
+VULKAN_IDLOAD(vkGetSamplerOpaqueCaptureDescriptorDataEXT);
+VULKAN_IDLOAD(vkGetAccelerationStructureOpaqueCaptureDescriptorDataEXT);
+#endif
 VULKAN_IDLOAD(vkCmdSetFragmentShadingRateEnumNV);
+#if VK_HEADER_VERSION >= 230
+VULKAN_IDLOAD(vkGetDeviceFaultInfoEXT);
+#endif
 VULKAN_IDLOAD(vkCmdSetVertexInputEXT);
 #if VK_HEADER_VERSION >= 184
 VULKAN_IDLOAD(vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI);
@@ -551,6 +703,15 @@ VULKAN_IDLOAD(vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI);
 VULKAN_IDLOAD(vkGetSubpassShadingMaxWorkgroupSizeHUAWEI);
 #endif
 VULKAN_IDLOAD(vkCmdSubpassShadingHUAWEI);
+#if VK_HEADER_VERSION >= 185
+VULKAN_IDLOAD(vkCmdBindInvocationMaskHUAWEI);
+#endif
+#if VK_HEADER_VERSION >= 184
+VULKAN_IDLOAD(vkGetMemoryRemoteAddressNV);
+#endif
+#if VK_HEADER_VERSION >= 213
+VULKAN_IDLOAD(vkGetPipelinePropertiesEXT);
+#endif
 VULKAN_IDLOAD(vkCmdSetPatchControlPointsEXT);
 VULKAN_IDLOAD(vkCmdSetRasterizerDiscardEnableEXT);
 VULKAN_IDLOAD(vkCmdSetDepthBiasEnableEXT);
@@ -559,6 +720,115 @@ VULKAN_IDLOAD(vkCmdSetPrimitiveRestartEnableEXT);
 VULKAN_IDLOAD(vkCmdSetColorWriteEnableEXT);
 VULKAN_IDLOAD(vkCmdDrawMultiEXT);
 VULKAN_IDLOAD(vkCmdDrawMultiIndexedEXT);
+#if VK_HEADER_VERSION >= 230
+VULKAN_IDLOAD(vkCreateMicromapEXT);
+VULKAN_IDLOAD(vkDestroyMicromapEXT);
+VULKAN_IDLOAD(vkCmdBuildMicromapsEXT);
+VULKAN_IDLOAD(vkBuildMicromapsEXT);
+VULKAN_IDLOAD(vkCopyMicromapEXT);
+VULKAN_IDLOAD(vkCopyMicromapToMemoryEXT);
+VULKAN_IDLOAD(vkCopyMemoryToMicromapEXT);
+VULKAN_IDLOAD(vkWriteMicromapsPropertiesEXT);
+VULKAN_IDLOAD(vkCmdCopyMicromapEXT);
+VULKAN_IDLOAD(vkCmdCopyMicromapToMemoryEXT);
+VULKAN_IDLOAD(vkCmdCopyMemoryToMicromapEXT);
+VULKAN_IDLOAD(vkCmdWriteMicromapsPropertiesEXT);
+VULKAN_IDLOAD(vkGetDeviceMicromapCompatibilityEXT);
+VULKAN_IDLOAD(vkGetMicromapBuildSizesEXT);
+#endif
+#if VK_HEADER_VERSION >= 239
+VULKAN_IDLOAD(vkCmdDrawClusterHUAWEI);
+VULKAN_IDLOAD(vkCmdDrawClusterIndirectHUAWEI);
+#endif
+#if VK_HEADER_VERSION >= 191
+VULKAN_IDLOAD(vkSetDeviceMemoryPriorityEXT);
+#endif
+#if VK_HEADER_VERSION >= 207
+VULKAN_IDLOAD(vkGetDescriptorSetLayoutHostMappingInfoVALVE);
+VULKAN_IDLOAD(vkGetDescriptorSetHostMappingVALVE);
+#endif
+#if VK_HEADER_VERSION >= 233
+VULKAN_IDLOAD(vkCmdCopyMemoryIndirectNV);
+VULKAN_IDLOAD(vkCmdCopyMemoryToImageIndirectNV);
+VULKAN_IDLOAD(vkCmdDecompressMemoryNV);
+VULKAN_IDLOAD(vkCmdDecompressMemoryIndirectCountNV);
+#endif
+#if VK_HEADER_VERSION >= 258
+VULKAN_IDLOAD(vkGetPipelineIndirectMemoryRequirementsNV);
+#endif
+#if VK_HEADER_VERSION == 258
+VULKAN_IDLOAD(vkCmdUpdatePipelineIndirectBuffer);
+#endif
+#if VK_HEADER_VERSION >= 259
+VULKAN_IDLOAD(vkCmdUpdatePipelineIndirectBufferNV);
+#endif
+#if VK_HEADER_VERSION >= 258
+VULKAN_IDLOAD(vkGetPipelineIndirectDeviceAddressNV);
+#endif
+#if VK_HEADER_VERSION >= 230
+VULKAN_IDLOAD(vkCmdSetDepthClampEnableEXT);
+VULKAN_IDLOAD(vkCmdSetPolygonModeEXT);
+VULKAN_IDLOAD(vkCmdSetRasterizationSamplesEXT);
+VULKAN_IDLOAD(vkCmdSetSampleMaskEXT);
+VULKAN_IDLOAD(vkCmdSetAlphaToCoverageEnableEXT);
+VULKAN_IDLOAD(vkCmdSetAlphaToOneEnableEXT);
+VULKAN_IDLOAD(vkCmdSetLogicOpEnableEXT);
+VULKAN_IDLOAD(vkCmdSetColorBlendEnableEXT);
+VULKAN_IDLOAD(vkCmdSetColorBlendEquationEXT);
+VULKAN_IDLOAD(vkCmdSetColorWriteMaskEXT);
+VULKAN_IDLOAD(vkCmdSetTessellationDomainOriginEXT);
+VULKAN_IDLOAD(vkCmdSetRasterizationStreamEXT);
+VULKAN_IDLOAD(vkCmdSetConservativeRasterizationModeEXT);
+VULKAN_IDLOAD(vkCmdSetExtraPrimitiveOverestimationSizeEXT);
+VULKAN_IDLOAD(vkCmdSetDepthClipEnableEXT);
+VULKAN_IDLOAD(vkCmdSetSampleLocationsEnableEXT);
+VULKAN_IDLOAD(vkCmdSetColorBlendAdvancedEXT);
+VULKAN_IDLOAD(vkCmdSetProvokingVertexModeEXT);
+VULKAN_IDLOAD(vkCmdSetLineRasterizationModeEXT);
+VULKAN_IDLOAD(vkCmdSetLineStippleEnableEXT);
+VULKAN_IDLOAD(vkCmdSetDepthClipNegativeOneToOneEXT);
+VULKAN_IDLOAD(vkCmdSetViewportWScalingEnableNV);
+VULKAN_IDLOAD(vkCmdSetViewportSwizzleNV);
+VULKAN_IDLOAD(vkCmdSetCoverageToColorEnableNV);
+VULKAN_IDLOAD(vkCmdSetCoverageToColorLocationNV);
+VULKAN_IDLOAD(vkCmdSetCoverageModulationModeNV);
+VULKAN_IDLOAD(vkCmdSetCoverageModulationTableEnableNV);
+VULKAN_IDLOAD(vkCmdSetCoverageModulationTableNV);
+VULKAN_IDLOAD(vkCmdSetShadingRateImageEnableNV);
+VULKAN_IDLOAD(vkCmdSetRepresentativeFragmentTestEnableNV);
+VULKAN_IDLOAD(vkCmdSetCoverageReductionModeNV);
+#endif
+#if VK_HEADER_VERSION >= 219
+VULKAN_IDLOAD(vkGetShaderModuleIdentifierEXT);
+VULKAN_IDLOAD(vkGetShaderModuleCreateInfoIdentifierEXT);
+#endif
+#if VK_HEADER_VERSION >= 230
+VULKAN_IDLOAD(vkGetPhysicalDeviceOpticalFlowImageFormatsNV);
+VULKAN_IDLOAD(vkCreateOpticalFlowSessionNV);
+VULKAN_IDLOAD(vkDestroyOpticalFlowSessionNV);
+VULKAN_IDLOAD(vkBindOpticalFlowSessionImageNV);
+VULKAN_IDLOAD(vkCmdOpticalFlowExecuteNV);
+#endif
+#if VK_HEADER_VERSION >= 246
+VULKAN_IDLOAD(vkCreateShadersEXT);
+VULKAN_IDLOAD(vkDestroyShaderEXT);
+VULKAN_IDLOAD(vkGetShaderBinaryDataEXT);
+VULKAN_IDLOAD(vkCmdBindShadersEXT);
+#endif
+#if VK_HEADER_VERSION >= 222
+VULKAN_IDLOAD(vkGetFramebufferTilePropertiesQCOM);
+VULKAN_IDLOAD(vkGetDynamicRenderingTilePropertiesQCOM);
+#endif
+#if VK_HEADER_VERSION >= 266
+VULKAN_IDLOAD(vkSetLatencySleepModeNV);
+VULKAN_IDLOAD(vkLatencySleepNV);
+VULKAN_IDLOAD(vkSetLatencyMarkerNV);
+VULKAN_IDLOAD(vkGetLatencyTimingsNV);
+VULKAN_IDLOAD(vkQueueNotifyOutOfBandNV);
+#endif
+#if VK_HEADER_VERSION >= 250
+VULKAN_IDLOAD(vkCmdSetAttachmentFeedbackLoopEnableEXT);
+#endif
 VULKAN_IDLOAD(vkCreateAccelerationStructureKHR);
 VULKAN_IDLOAD(vkDestroyAccelerationStructureKHR);
 VULKAN_IDLOAD(vkCmdBuildAccelerationStructuresKHR);
@@ -581,5 +851,10 @@ VULKAN_IDLOAD(vkGetRayTracingCaptureReplayShaderGroupHandlesKHR);
 VULKAN_IDLOAD(vkCmdTraceRaysIndirectKHR);
 VULKAN_IDLOAD(vkGetRayTracingShaderGroupStackSizeKHR);
 VULKAN_IDLOAD(vkCmdSetRayTracingPipelineStackSizeKHR);
+#if VK_HEADER_VERSION >= 226
+VULKAN_IDLOAD(vkCmdDrawMeshTasksEXT);
+VULKAN_IDLOAD(vkCmdDrawMeshTasksIndirectEXT);
+VULKAN_IDLOAD(vkCmdDrawMeshTasksIndirectCountEXT);
+#endif
 
 // vim:ts=4:sw=4:noexpandtab
