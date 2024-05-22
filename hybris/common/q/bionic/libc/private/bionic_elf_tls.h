@@ -34,6 +34,7 @@
 #include <stdint.h>
 #include <sys/cdefs-android.h>
 
+#define __LIBC_HIDDEN__ __attribute__((visibility("hidden")))
 __LIBC_HIDDEN__ extern _Atomic(size_t) __libc_tls_generation_copy;
 
 struct TlsSegment {
@@ -111,11 +112,33 @@ struct TlsModule {
   void* soinfo_ptr = nullptr;
 };
 
+// Signature of the callbacks that will be called after DTLS creation and
+// before DTLS destruction.
+typedef void (*dtls_listener_t)(void* dynamic_tls_begin, void* dynamic_tls_end);
+
+// Signature of the thread-exit callbacks.
+typedef void (*thread_exit_cb_t)(void);
+
+struct CallbackHolder {
+  thread_exit_cb_t cb;
+  CallbackHolder* prev;
+};
+
 // Table of the ELF TLS modules. Either the dynamic linker or the static
 // initialization code prepares this table, and it's then used during thread
 // creation and for dynamic TLS lookups.
 struct TlsModules {
-  constexpr TlsModules() {}
+  constexpr TlsModules()
+      : generation(kTlsGenerationFirst),
+        generation_libc_so(nullptr),
+        rwlock(PTHREAD_RWLOCK_INITIALIZER),
+        module_count(0),
+        static_module_count(0),
+        module_table(nullptr),
+        on_creation_cb(nullptr),
+        on_destruction_cb(nullptr),
+        first_thread_exit_callback(nullptr),
+        thread_exit_callback_tail_node(nullptr) {}
 
   // A pointer to the TLS generation counter in libc.so. The counter is
   // incremented each time an solib is loaded or unloaded.
@@ -123,12 +146,25 @@ struct TlsModules {
   _Atomic(size_t) *generation_libc_so = nullptr;
 
   // Access to the TlsModule[] table requires taking this lock.
-  pthread_rwlock_t rwlock = PTHREAD_RWLOCK_INITIALIZER;
+  pthread_rwlock_t rwlock;
 
   // Pointer to a block of TlsModule objects. The first module has ID 1 and
   // is stored at index 0 in this table.
-  size_t module_count = 0;
-  TlsModule* module_table = nullptr;
+  size_t module_count;
+  size_t static_module_count;
+  TlsModule* module_table;
+
+  // Callback to be invoked after a dynamic TLS allocation.
+  dtls_listener_t on_creation_cb;
+
+  // Callback to be invoked before a dynamic TLS deallocation.
+  dtls_listener_t on_destruction_cb;
+
+  // The first thread-exit callback; inlined to avoid allocation.
+  thread_exit_cb_t first_thread_exit_callback;
+
+  // The additional callbacks, if any.
+  CallbackHolder* thread_exit_callback_tail_node;
 };
 
 void __init_static_tls(void* static_tls);
@@ -175,3 +211,19 @@ extern "C" void* TLS_GET_ADDR(const TlsIndex* ti) TLS_GET_ADDR_CCONV;
 
 struct bionic_tcb;
 void __free_dynamic_tls(bionic_tcb* tcb);
+void __notify_thread_exit_callbacks();
+
+#if defined(__riscv)
+// TLS_DTV_OFFSET is a constant used in relocation fields, defined in RISC-V ELF Specification[1]
+// The front of the TCB contains a pointer to the DTV, and each pointer in DTV
+// points to 0x800 past the start of a TLS block to make full use of the range
+// of load/store instructions, refer to [2].
+//
+// [1]: RISC-V ELF Specification.
+// https://github.com/riscv-non-isa/riscv-elf-psabi-doc/blob/master/riscv-elf.adoc#constants
+// [2]: Documentation of TLS data structures
+// https://github.com/riscv-non-isa/riscv-elf-psabi-doc/issues/53
+#define TLS_DTV_OFFSET 0x800
+#else
+#define TLS_DTV_OFFSET 0
+#endif

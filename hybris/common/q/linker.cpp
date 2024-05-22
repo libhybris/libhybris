@@ -2420,8 +2420,6 @@ bool do_dlsym(void* handle,
 
     if ((bind == STB_GLOBAL || bind == STB_WEAK) && sym->st_shndx != 0) {
       if (type == STT_TLS) {
-        fprintf(stderr, "TLS relocations not yet implemented in libhybris");
-        abort();
         // For a TLS symbol, dlsym returns the address of the current thread's
         // copy of the symbol. This function may allocate a DTV and/or storage
         // for the source TLS module. (Allocating a DTV isn't necessary if the
@@ -3064,8 +3062,6 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
         }
 #endif
         if (is_tls_reloc(type)) {
-          fprintf(stderr, "TLS relocations not yet implemented in libhybris");
-          abort();
           if (ELF_ST_TYPE(s->st_info) != STT_TLS) {
             DL_ERR("reference to non-TLS symbol \"%s\" from TLS relocation in \"%s\"",
                    sym_name, get_realpath());
@@ -3177,7 +3173,6 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
         }
         break;
       case R_GENERIC_TLS_TPREL:
-#ifdef DISABLED_FOR_HYBRIS_SUPPORT
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
         {
@@ -3202,17 +3197,12 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
                      reinterpret_cast<void*>(tpoff), sym_name);
           *reinterpret_cast<ElfW(Addr)*>(reloc) = tpoff;
         }
-#else
-        fprintf(stderr, "TLS relocations not yet implemented in libhybris");
-        abort();
-#endif
         break;
 
 #if !defined(__aarch64__)
       // Omit support for DTPMOD/DTPREL on arm64, at least until
       // http://b/123385182 is fixed. arm64 uses TLSDESC instead.
       case R_GENERIC_TLS_DTPMOD:
-#ifdef DISABLED_FOR_HYBRIS_SUPPORT
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
         {
@@ -3235,10 +3225,6 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
                    reinterpret_cast<void*>(reloc),
                    reinterpret_cast<void*>(sym_addr + addend), sym_name);
         *reinterpret_cast<ElfW(Addr)*>(reloc) = sym_addr + addend;
-#else
-        fprintf(stderr, "TLS relocations not yet implemented in libhybris");
-        abort();
-#endif
         break;
 #endif  // !defined(__aarch64__)
 
@@ -3246,7 +3232,6 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
       // Bionic currently only implements TLSDESC for arm64. This implementation should work with
       // other architectures, as long as the resolver functions are implemented.
       case R_GENERIC_TLSDESC:
-#ifdef DISABLED_FOR_HYBRIS_SUPPORT
         count_relocation(kRelocRelative);
         MARK(rel->r_offset);
         {
@@ -3268,11 +3253,11 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
                          reinterpret_cast<void*>(reloc), mod.static_offset, tls_tp_base,
                          static_cast<size_t>(sym_addr), static_cast<size_t>(addend), sym_name);
             } else {
-              tlsdesc_args_.push_back({
-                .generation = mod.first_generation,
-                .index.module_id = module_id,
-                .index.offset = sym_addr + addend,
-              });
+              TlsDynamicResolverArg arg;
+              arg.generation = mod.first_generation;
+              arg.index.module_id = module_id;
+              arg.index.offset = sym_addr + addend;
+              tlsdesc_args_.push_back(arg);
               // Defer the TLSDESC relocation until the address of the TlsDynamicResolverArg object
               // is finalized.
               deferred_tlsdesc_relocs.push_back({ desc, tlsdesc_args_.size() - 1 });
@@ -3283,10 +3268,6 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
             }
           }
         }
-#else
-        fprintf(stderr, "TLS relocations not yet implemented in libhybris");
-        abort();
-#endif
         break;
 #endif  // defined(__aarch64__)
 
@@ -3468,7 +3449,6 @@ bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& r
     desc->arg = reinterpret_cast<size_t>(&tlsdesc_args_[pair.second]);
   }
 #endif
-
   return true;
 }
 #endif  // !defined(__mips__)
@@ -3504,7 +3484,7 @@ bool soinfo::prelink_image() {
                                   &ARM_exidx, &ARM_exidx_count);
 #endif
 
-  /*TlsSegment tls_segment;
+  TlsSegment tls_segment;
   if (__bionic_get_tls_segment(phdr, phnum, load_bias, &tls_segment)) {
     if (!__bionic_check_tls_alignment(&tls_segment.alignment)) {
       if (!relocating_linker) {
@@ -3513,9 +3493,9 @@ bool soinfo::prelink_image() {
       }
       return false;
     }
-    tls_ = std::make_unique<soinfo_tls>();
+    tls_ = std::unique_ptr<soinfo_tls>(new soinfo_tls());
     tls_->segment = tls_segment;
-  }*/
+  }
 
   // Extract useful information from dynamic section.
   // Note that: "Except for the DT_NULL element at the end of the array,

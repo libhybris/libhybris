@@ -128,6 +128,10 @@ struct bionic_tls {
   group_state_t group;
   passwd_state_t passwd;
 
+  char fdtrack_disabled;
+  char bionic_systrace_disabled;
+  char padding[2];
+
   // Initialize the main thread's final object using its bootstrap object.
   void copy_from_bootstrap(const bionic_tls* boot __attribute__((unused))) {
     // Nothing in bionic_tls needs to be preserved in the transition to the
