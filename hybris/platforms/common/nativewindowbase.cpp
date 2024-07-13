@@ -370,7 +370,7 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 	va_start(args, operation);
 
 	// FIXME
-	TRACE("operation = %s", _native_window_operation(operation));
+	TRACE("operation = %s (%i)", _native_window_operation(operation), operation);
 	switch(operation) {
 	case NATIVE_WINDOW_SET_USAGE                 : //  0,
 	{
