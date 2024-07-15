@@ -144,9 +144,11 @@ server_wlegl_get_server_buffer_handle(wl_client *client, wl_resource *res, uint3
 	if (format == 0) format = HAL_PIXEL_FORMAT_RGBA_8888;
 
 	int r = hybris_gralloc_allocate(width, height, format, usage, &_handle, (uint32_t*)&_stride);
-        if (r) {
-            HYBRIS_ERROR_LOG(SERVER_WLEGL, "failed to allocate buffer\n");
-        }
+	if (r) {
+		HYBRIS_ERROR_LOG(SERVER_WLEGL, "failed to allocate buffer\n");
+		wl_resource_destroy(resource);
+		return;
+	}
 	server_wlegl_buffer *buffer = server_wlegl_buffer_create_server(client, width, height, _stride, format, usage, _handle, wlegl);
 
 	struct wl_array ints;

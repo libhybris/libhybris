@@ -265,6 +265,7 @@ const char *BaseNativeWindow::_native_window_operation(int what)
 #endif
 #if ANDROID_VERSION_MAJOR>=9
 		case NATIVE_WINDOW_SET_USAGE64: return "NATIVE_WINDOW_SET_USAGE64";
+		case NATIVE_WINDOW_GET_CONSUMER_USAGE64: return "NATIVE_WINDOW_GET_CONSUMER_USAGE64";
 #endif
 		default: return "NATIVE_UNKNOWN_OPERATION";
 	}
@@ -369,7 +370,7 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 	va_start(args, operation);
 
 	// FIXME
-	TRACE("operation = %s", _native_window_operation(operation));
+	TRACE("operation = %s (%i)", _native_window_operation(operation), operation);
 	switch(operation) {
 	case NATIVE_WINDOW_SET_USAGE                 : //  0,
 	{
@@ -441,11 +442,20 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 #endif
 #if ANDROID_VERSION_MAJOR>=9
 	case NATIVE_WINDOW_SET_USAGE64               : // 30,
+	{
 		TRACE("set usage 64");
 		uint64_t usage = va_arg(args, uint64_t);
 		va_end(args);
 		return self->setUsage(usage);
 		break;
+	}
+	case NATIVE_WINDOW_GET_CONSUMER_USAGE64      : // 31,
+	{
+		TRACE("get consumer usage 64");
+		uint64_t* usage = va_arg(args, uint64_t*);
+		*usage = self->getUsage();
+		break;
+	}
 #endif
 
 	}
