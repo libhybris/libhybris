@@ -141,6 +141,7 @@ public:
     struct wl_array ints;
     struct wl_array fds;
     wl_buffer *m_buf;
+    android_wlegl_server_buffer_handle *ssb;
 };
 
 #endif // HYBRIS_NO_SERVER_SIDE_BUFFERS

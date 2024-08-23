@@ -1,6 +1,7 @@
 /****************************************************************************************
  **
  ** Copyright (C) 2013-2022 Jolla Ltd.
+ ** Copyright (C) 2024 Jollyboys Ltd.
  ** All rights reserved.
  **
  ** This file is part of Wayland enablement for libhybris
@@ -624,7 +625,7 @@ ServerWaylandBuffer::ServerWaylandBuffer(unsigned int w,
     wl_array_init(&ints);
     wl_array_init(&fds);
 
-    android_wlegl_server_buffer_handle *ssb = android_wlegl_get_server_buffer_handle(android_wlegl, width, height, _format, _usage);
+    ssb = android_wlegl_get_server_buffer_handle(android_wlegl, width, height, _format, _usage);
     wl_proxy_set_queue((struct wl_proxy *) ssb, queue);
     android_wlegl_server_buffer_handle_add_listener(ssb, &server_handle_listener, this);
 }
@@ -637,6 +638,7 @@ ServerWaylandBuffer::~ServerWaylandBuffer()
     hybris_gralloc_release(handle, 1);
     wl_array_release(&ints);
     wl_array_release(&fds);
+    android_wlegl_server_buffer_handle_destroy(ssb);
 }
 
 void ServerWaylandBuffer::init(android_wlegl *, wl_display *, wl_event_queue *queue)
