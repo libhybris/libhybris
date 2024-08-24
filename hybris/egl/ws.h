@@ -57,6 +57,7 @@ struct ws_module {
 };
 
 EGLBoolean ws_init(const char * egl_platform);
+void ws_egl_initialized();
 
 struct _EGLDisplay *ws_GetDisplay(EGLNativeDisplayType native);
 void ws_Terminate(struct _EGLDisplay *dpy);
