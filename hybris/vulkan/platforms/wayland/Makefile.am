@@ -4,6 +4,7 @@ vulkanplatform_wayland_la_SOURCES = vulkanplatform_wayland.cpp wayland_window.cp
 vulkanplatform_wayland_la_CXXFLAGS = \
 	-I$(top_srcdir)/common \
 	-I$(top_srcdir)/platforms/common \
+	-I$(top_srcdir)/platforms/wayland \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/vulkan \
 	-I$(top_srcdir)/vulkan/platforms/common \
