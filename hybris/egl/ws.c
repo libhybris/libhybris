@@ -29,10 +29,18 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct ws_module *ws = NULL;
 static void* wsmod = NULL;
 static char ws_name[32] = { 0 };
+static int ws_init_count = 0;
 
 static EGLBoolean ensureCorrectWs(const char * egl_platform)
 {
 	return strcmp(egl_platform, ws_name) == 0;
+}
+
+void ws_egl_initialized()
+{
+	pthread_mutex_lock(&mutex);
+	ws_init_count++;
+	pthread_mutex_unlock(&mutex);
 }
 
 /*
@@ -47,10 +55,22 @@ static EGLBoolean ensureCorrectWs(const char * egl_platform)
  */
 EGLBoolean ws_init(const char * egl_platform)
 {
-	if (ws != NULL)
-		return ensureCorrectWs(egl_platform);
-
 	pthread_mutex_lock(&mutex);
+
+	// We can't unload the ws in eglTerminate since it is allowed to call
+	// eglInitialize again after an eglTerminate with the same display.
+	// So we unload the ws here only if it a different one is requested and
+	// there are no users of the previous one anymore.
+	if (ws_init_count == 0 && ws != NULL) {
+		if (!ensureCorrectWs(egl_platform)) {
+			if (wsmod != NULL) {
+				dlclose(wsmod);
+				wsmod = NULL;
+			}
+			ws = NULL;
+		}
+	}
+
 	if (ws != NULL) {
 		pthread_mutex_unlock(&mutex);
 		return ensureCorrectWs(egl_platform);
@@ -93,13 +113,12 @@ struct _EGLDisplay *ws_GetDisplay(EGLNativeDisplayType display)
 
 void ws_Terminate(struct _EGLDisplay *dpy)
 {
-	assert(ws != NULL);
-	ws->Terminate(dpy);
-	if (wsmod != NULL) {
-		dlclose(wsmod);
-		wsmod = NULL;
+	pthread_mutex_lock(&mutex);
+	if (ws_init_count > 0) {
+		ws->Terminate(dpy);
+		ws_init_count--;
 	}
-	ws = NULL;
+	pthread_mutex_unlock(&mutex);
 }
 
 EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, struct _EGLDisplay *display)
