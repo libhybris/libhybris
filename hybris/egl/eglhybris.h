@@ -36,6 +36,7 @@ int hybris_egl_has_mapping(EGLSurface surface);
 EGLNativeWindowType hybris_egl_get_mapping(EGLSurface surface);
 
 struct _EGLDisplay *hybris_egl_display_get_mapping(EGLDisplay dpy);
+void hybris_egl_display_release_mappings(void);
 
 #ifdef __cplusplus
 }

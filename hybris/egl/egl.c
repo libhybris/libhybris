@@ -174,6 +174,19 @@ struct _EGLDisplay *hybris_egl_display_get_mapping(EGLDisplay display)
 	return EGL_NO_DISPLAY;
 }
 
+void hybris_egl_display_release_mappings(void)
+{
+	int i;
+	for (i = 0; i < _EGL_MAX_DISPLAYS; i++)
+	{
+		if (_displayMappings[i])
+		{
+			ws_releaseDisplay(_displayMappings[i]);
+			_displayMappings[i] = NULL;
+		}
+	}
+}
+
 static const char * _defaultEglPlatform()
 {
 	char *egl_platform;
@@ -279,7 +292,8 @@ EGLBoolean eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 	HYBRIS_DLSYSM(egl, &_eglInitialize, "eglInitialize");
 	EGLBoolean ret = _eglInitialize(dpy, major, minor);
 	if (ret) {
-		ws_egl_initialized();
+		struct _EGLDisplay *display = hybris_egl_display_get_mapping(dpy);
+		ws_eglInitialized(display);
 	}
 	return ret;
 }
