@@ -71,6 +71,8 @@ typedef struct _EGLDisplay *(*PFNHYBRISEGLDISPLAYGETMAPPINGPROC)(EGLDisplay dpy)
 struct WaylandDisplay {
 	_EGLDisplay base;
 
+	// this is protected via mutex in egl.c
+	int init_count;
 	wl_display *wl_dpy;
 	wl_event_queue *queue;
 	wl_registry *registry;
@@ -143,31 +145,57 @@ extern "C" _EGLDisplay *waylandws_GetDisplay(EGLNativeDisplayType display)
 	WaylandDisplay *wdpy = new WaylandDisplay;
 	wdpy->wl_dpy = display ? (wl_display *)display : wl_display_connect(NULL);
 	wdpy->wlegl = NULL;
-	wdpy->queue = wl_display_create_queue(wdpy->wl_dpy);
-	wdpy->registry = wl_display_get_registry(wdpy->wl_dpy);
-	wl_proxy_set_queue((wl_proxy *) wdpy->registry, wdpy->queue);
-	wl_registry_add_listener(wdpy->registry, &registry_listener, wdpy);
-
-	wl_callback *cb = wl_display_sync(wdpy->wl_dpy);
-	wl_proxy_set_queue((wl_proxy *) cb, wdpy->queue);
-	wl_callback_add_listener(cb, &callback_listener, wdpy);
+	wdpy->registry = NULL;
+	wdpy->queue = NULL;
+	wdpy->init_count = 0;
 
 	return &wdpy->base;
+}
+
+extern "C" void waylandws_releaseDisplay(_EGLDisplay *dpy)
+{
+	WaylandDisplay *wdpy = (WaylandDisplay *)dpy;
+	delete wdpy;
+}
+
+extern "C" void waylandws_eglInitialized(_EGLDisplay *dpy)
+{
+	WaylandDisplay *wdpy = (WaylandDisplay *)dpy;
+
+	if (wdpy->init_count == 0) {
+		wdpy->queue = wl_display_create_queue(wdpy->wl_dpy);
+		wdpy->registry = wl_display_get_registry(wdpy->wl_dpy);
+		wl_proxy_set_queue((wl_proxy *) wdpy->registry, wdpy->queue);
+		wl_registry_add_listener(wdpy->registry, &registry_listener, wdpy);
+
+		wl_callback *cb = wl_display_sync(wdpy->wl_dpy);
+		wl_proxy_set_queue((wl_proxy *) cb, wdpy->queue);
+		wl_callback_add_listener(cb, &callback_listener, wdpy);
+	}
+
+	wdpy->init_count++;
 }
 
 extern "C" void waylandws_Terminate(_EGLDisplay *dpy)
 {
 	WaylandDisplay *wdpy = (WaylandDisplay *)dpy;
-	int ret = 0;
-	// We still have the sync callback on flight, wait for it to arrive
-	while (ret == 0 && !wdpy->wlegl) {
-		ret = wl_display_dispatch_queue(wdpy->wl_dpy, wdpy->queue);
+	if (wdpy->init_count > 0) {
+		wdpy->init_count--;
+		if (wdpy->init_count == 0) {
+			int ret = 0;
+			// We still have the sync callback on flight, wait for it to arrive
+			while (ret == 0 && !wdpy->wlegl) {
+				ret = wl_display_dispatch_queue(wdpy->wl_dpy, wdpy->queue);
+			}
+			assert(ret >= 0);
+			android_wlegl_destroy(wdpy->wlegl);
+			wl_registry_destroy(wdpy->registry);
+			wl_event_queue_destroy(wdpy->queue);
+			wdpy->wlegl = NULL;
+			wdpy->registry = NULL;
+			wdpy->queue = NULL;
+		}
 	}
-	assert(ret >= 0);
-	android_wlegl_destroy(wdpy->wlegl);
-	wl_registry_destroy(wdpy->registry);
-	wl_event_queue_destroy(wdpy->queue);
-	delete wdpy;
 }
 
 extern "C" EGLNativeWindowType waylandws_CreateWindow(EGLNativeWindowType win, _EGLDisplay *display)
@@ -329,6 +357,8 @@ struct ws_module ws_module_info = {
 	waylandws_prepareSwap,
 	waylandws_finishSwap,
 	waylandws_setSwapInterval,
+	waylandws_releaseDisplay,
+	waylandws_eglInitialized,
 };
 
 

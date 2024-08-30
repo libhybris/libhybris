@@ -54,7 +54,7 @@ extern "C" _EGLDisplay *hwcomposerws_GetDisplay(EGLNativeDisplayType display)
 	return dpy;
 }
 
-extern "C" void hwcomposerws_Terminate(_EGLDisplay *dpy)
+extern "C" void hwcomposerws_releaseDisplay(_EGLDisplay *dpy)
 {
 	delete dpy;
 }
@@ -96,12 +96,16 @@ extern "C" void hwcomposerws_passthroughImageKHR(EGLContext *ctx, EGLenum *targe
 struct ws_module ws_module_info = {
 	hwcomposerws_init_module,
 	hwcomposerws_GetDisplay,
-	hwcomposerws_Terminate,
+	NULL,
 	hwcomposerws_CreateWindow,
 	hwcomposerws_DestroyWindow,
 	hwcomposerws_eglGetProcAddress,
 	hwcomposerws_passthroughImageKHR,
-	eglplatformcommon_eglQueryString
+	eglplatformcommon_eglQueryString,
+	NULL,
+	NULL,
+	NULL,
+	hwcomposerws_releaseDisplay,
 };
 
 // vim:ts=4:sw=4:noexpandtab

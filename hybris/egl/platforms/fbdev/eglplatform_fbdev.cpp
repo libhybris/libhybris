@@ -51,7 +51,7 @@ extern "C" _EGLDisplay *fbdevws_GetDisplay(EGLNativeDisplayType display)
 	return dpy;
 }
 
-extern "C" void fbdevws_Terminate(_EGLDisplay *dpy)
+extern "C" void fbdevws_releaseDisplay(_EGLDisplay *dpy)
 {
 	delete dpy;
 }
@@ -94,7 +94,7 @@ extern "C" void fbdevws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win,
 struct ws_module ws_module_info = {
 	fbdevws_init_module,
 	fbdevws_GetDisplay,
-	fbdevws_Terminate,
+	NULL,
 	fbdevws_CreateWindow,
 	fbdevws_DestroyWindow,
 	fbdevws_eglGetProcAddress,
@@ -103,6 +103,7 @@ struct ws_module ws_module_info = {
 	NULL,
 	NULL,
 	fbdevws_setSwapInterval,
+	fbdevws_releaseDisplay,
 };
 
 // vim:ts=4:sw=4:noexpandtab

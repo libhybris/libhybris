@@ -24,6 +24,8 @@
 #include <pthread.h>
 #include <string.h>
 
+#include "eglhybris.h"
+
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static struct ws_module *ws = NULL;
@@ -34,13 +36,6 @@ static int ws_init_count = 0;
 static EGLBoolean ensureCorrectWs(const char * egl_platform)
 {
 	return strcmp(egl_platform, ws_name) == 0;
-}
-
-void ws_egl_initialized()
-{
-	pthread_mutex_lock(&mutex);
-	ws_init_count++;
-	pthread_mutex_unlock(&mutex);
 }
 
 /*
@@ -63,6 +58,8 @@ EGLBoolean ws_init(const char * egl_platform)
 	// there are no users of the previous one anymore.
 	if (ws_init_count == 0 && ws != NULL) {
 		if (!ensureCorrectWs(egl_platform)) {
+			hybris_egl_display_release_mappings();
+
 			if (wsmod != NULL) {
 				dlclose(wsmod);
 				wsmod = NULL;
@@ -111,14 +108,34 @@ struct _EGLDisplay *ws_GetDisplay(EGLNativeDisplayType display)
 	return ws->GetDisplay(display);
 }
 
+void ws_eglInitialized(struct _EGLDisplay *dpy)
+{
+	pthread_mutex_lock(&mutex);
+	ws_init_count++;
+	if (ws->eglInitialized) {
+		ws->eglInitialized(dpy);
+	}
+	pthread_mutex_unlock(&mutex);
+}
+
 void ws_Terminate(struct _EGLDisplay *dpy)
 {
 	pthread_mutex_lock(&mutex);
 	if (ws_init_count > 0) {
-		ws->Terminate(dpy);
+		if (ws->Terminate) {
+			ws->Terminate(dpy);
+		}
 		ws_init_count--;
 	}
 	pthread_mutex_unlock(&mutex);
+}
+
+void ws_releaseDisplay(struct _EGLDisplay *dpy)
+{
+	assert(ws != NULL);
+	if (ws->releaseDisplay) {
+		ws->releaseDisplay(dpy);
+	}
 }
 
 EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, struct _EGLDisplay *display)
