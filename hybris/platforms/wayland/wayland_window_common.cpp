@@ -419,6 +419,7 @@ unsigned int WaylandNativeWindow::getUsage() const {
 }
 
 int WaylandNativeWindow::setBuffersFormat(int format) {
+    lock();
     if (format != m_format)
     {
         TRACE("old-format:x%x new-format:x%x", m_format, format);
@@ -427,6 +428,7 @@ int WaylandNativeWindow::setBuffersFormat(int format) {
     } else {
         TRACE("format:x%x", format);
     }
+    unlock();
     return NO_ERROR;
 }
 
@@ -519,6 +521,7 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
 
 
 int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
+    lock();
     if (m_width != width || m_height != height)
     {
         TRACE("old-size:%ix%i new-size:%ix%i", m_width, m_height, width, height);
@@ -528,10 +531,12 @@ int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
     } else {
         TRACE("size:%ix%i", width, height);
     }
+    unlock();
     return NO_ERROR;
 }
 
 int WaylandNativeWindow::setUsage(uint64_t usage) {
+    lock();
     if ((usage | GRALLOC_USAGE_HW_TEXTURE) != m_usage)
     {
         TRACE("old-usage:x%" PRIx64 " new-usage:x%" PRIx64, m_usage, usage);
@@ -540,6 +545,7 @@ int WaylandNativeWindow::setUsage(uint64_t usage) {
     } else {
         TRACE("usage:x%" PRIx64, usage);
     }
+    unlock();
     return NO_ERROR;
 }
 
