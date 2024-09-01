@@ -78,7 +78,7 @@ void WaylandNativeWindowBuffer::wlbuffer_from_native_handle(struct android_wlegl
 
     wlbuffer = android_wlegl_create_buffer(android_wlegl,
             width, height, stride,
-            format, usage, wlegl_handle);
+            format, (uint32_t)usage, wlegl_handle);
     wl_proxy_set_queue((struct wl_proxy *) wlbuffer, queue);
 
     android_wlegl_handle_destroy(wlegl_handle);
@@ -618,7 +618,7 @@ static const struct android_wlegl_server_buffer_handle_listener server_handle_li
 ServerWaylandBuffer::ServerWaylandBuffer(unsigned int w,
                                          unsigned int h,
                                          int _format,
-                                         int _usage,
+                                         uint64_t _usage,
                                          android_wlegl *android_wlegl,
                                          struct wl_event_queue *queue)
                    : WaylandNativeWindowBuffer()
@@ -631,7 +631,7 @@ ServerWaylandBuffer::ServerWaylandBuffer(unsigned int w,
     wl_array_init(&ints);
     wl_array_init(&fds);
 
-    ssb = android_wlegl_get_server_buffer_handle(android_wlegl, width, height, _format, _usage);
+    ssb = android_wlegl_get_server_buffer_handle(android_wlegl, width, height, _format, (uint32_t)_usage);
     wl_proxy_set_queue((struct wl_proxy *) ssb, queue);
     android_wlegl_server_buffer_handle_add_listener(ssb, &server_handle_listener, this);
 }

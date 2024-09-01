@@ -31,7 +31,7 @@ protected:
     FbDevNativeWindowBuffer(unsigned int width,
                             unsigned int height,
                             unsigned int format,
-                            unsigned int usage) ;
+                            uint64_t usage) ;
    virtual ~FbDevNativeWindowBuffer() ;
 
 protected:

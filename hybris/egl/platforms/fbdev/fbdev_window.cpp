@@ -42,7 +42,7 @@ static pthread_mutex_t _mutex = PTHREAD_MUTEX_INITIALIZER;
 FbDevNativeWindowBuffer::FbDevNativeWindowBuffer(unsigned int width,
                             unsigned int height,
                             unsigned int format,
-                            unsigned int usage)
+                            uint64_t usage)
 {
     ANativeWindowBuffer::width  = width;
     ANativeWindowBuffer::height = height;
@@ -51,7 +51,7 @@ FbDevNativeWindowBuffer::FbDevNativeWindowBuffer(unsigned int width,
     busy = 0;
     status = 0;
 
-    hybris_gralloc_allocate(width, height, format, usage, &handle, (uint32_t*)&stride);
+    hybris_gralloc_allocate(width, height, format, (uint32_t)usage, &handle, (uint32_t*)&stride);
 
     TRACE("width=%d height=%d stride=%d format=x%x usage=x%x status=%s this=%p",
         width, height, stride, format, usage, strerror(-status), this);

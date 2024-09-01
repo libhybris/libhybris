@@ -89,7 +89,7 @@ protected:
     ClientWaylandBuffer(unsigned int width,
                         unsigned int height,
                         unsigned int format,
-                        unsigned int usage)
+                        uint64_t usage)
     {
         // Base members
         ANativeWindowBuffer::width = width;
@@ -102,7 +102,7 @@ protected:
         this->other = NULL;
         int alloc_ok = hybris_gralloc_allocate(this->width ? this->width : 1,
                 this->height ? this->height : 1,
-                this->format, this->usage,
+                this->format, (uint32_t)this->usage,
                 &this->handle, (uint32_t*)&this->stride);
         assert(alloc_ok == 0);
         this->youngest = 0;
@@ -130,7 +130,7 @@ public:
     ServerWaylandBuffer(unsigned int w,
                         unsigned int h,
                         int _format,
-                        int _usage,
+                        uint64_t _usage,
                         android_wlegl *android_wlegl,
                         struct wl_event_queue *queue);
     ~ServerWaylandBuffer();
