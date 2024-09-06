@@ -2873,6 +2873,12 @@ void _hybris_hook_free(void *ptr)
 #define cfree free
 #endif
 
+int _hybris_hook_android_fdsan_set_error_level(int new_level)
+{
+    TRACE_HOOK("new_level %d", new_level);
+    return new_level;
+}
+
 void _hybris_hook_android_fdsan_exchange_owner_tag(int fd, uint64_t expected_tag, uint64_t new_tag)
 {
     (void)expected_tag;
@@ -3335,6 +3341,7 @@ static struct _hook hooks_p[] = {
     HOOK_INDIRECT(fgets_unlocked),
     HOOK_INDIRECT(fputs_unlocked),
     /* fdsan.h */
+    HOOK_INDIRECT(android_fdsan_set_error_level),
     HOOK_INDIRECT(android_fdsan_exchange_owner_tag),
     HOOK_INDIRECT(android_fdsan_close_with_tag),
     /* pthread.h */
