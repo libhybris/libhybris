@@ -96,7 +96,7 @@ extern "C" void HWCNativeBufferSetFence(struct ANativeWindowBuffer *buf, int fd)
 HWComposerNativeWindowBuffer::HWComposerNativeWindowBuffer(unsigned int width,
                             unsigned int height,
                             unsigned int format,
-                            unsigned int usage)
+                            uint64_t usage)
 {
     ANativeWindowBuffer::width  = width;
     ANativeWindowBuffer::height = height;
@@ -106,7 +106,7 @@ HWComposerNativeWindowBuffer::HWComposerNativeWindowBuffer(unsigned int width,
     busy = 0;
     status = 0;
 
-    hybris_gralloc_allocate(width, height, format, usage, &handle, (uint32_t*)&stride);
+    hybris_gralloc_allocate(width, height, format, (uint32_t)usage, &handle, (uint32_t*)&stride);
 
     TRACE("width=%d height=%d stride=%d format=x%x usage=x%x status=%s this=%p",
         width, height, stride, format, usage, strerror(-status), this);
@@ -435,7 +435,7 @@ unsigned int HWComposerNativeWindow::getUsage() const
 int HWComposerNativeWindow::setUsage(uint64_t usage)
 {
     usage |= GRALLOC_USAGE_HW_COMPOSER|GRALLOC_USAGE_HW_FB;
-    int need_realloc = (m_usage != (unsigned int) usage);
+    int need_realloc = (m_usage != usage);
     TRACE("usage=x%" PRIx64 " realloc=%d", usage, need_realloc);
     m_usage = usage;
     if (need_realloc)

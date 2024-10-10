@@ -36,7 +36,7 @@ extern "C" void hybris_dump_buffer_to_file(ANativeWindowBuffer *buf)
 {
 	static int cnt = 0;
 	void *vaddr;
-	int ret = hybris_gralloc_lock(buf->handle, buf->usage, 0, 0, buf->width, buf->height, &vaddr);
+	int ret = hybris_gralloc_lock(buf->handle, (uint32_t)buf->usage, 0, 0, buf->width, buf->height, &vaddr);
 	(void)ret;
 	TRACE("buf:%p gralloc lock returns %i", buf, ret);
 	TRACE("buf:%p lock to vaddr %p", buf, vaddr);

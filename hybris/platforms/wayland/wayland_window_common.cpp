@@ -78,7 +78,7 @@ void WaylandNativeWindowBuffer::wlbuffer_from_native_handle(struct android_wlegl
 
     wlbuffer = android_wlegl_create_buffer(android_wlegl,
             width, height, stride,
-            format, usage, wlegl_handle);
+            format, (uint32_t)usage, wlegl_handle);
     wl_proxy_set_queue((struct wl_proxy *) wlbuffer, queue);
 
     android_wlegl_handle_destroy(wlegl_handle);
@@ -419,6 +419,7 @@ unsigned int WaylandNativeWindow::getUsage() const {
 }
 
 int WaylandNativeWindow::setBuffersFormat(int format) {
+    lock();
     if (format != m_format)
     {
         TRACE("old-format:x%x new-format:x%x", m_format, format);
@@ -427,6 +428,7 @@ int WaylandNativeWindow::setBuffersFormat(int format) {
     } else {
         TRACE("format:x%x", format);
     }
+    unlock();
     return NO_ERROR;
 }
 
@@ -519,6 +521,7 @@ int WaylandNativeWindow::setBufferCount(int cnt) {
 
 
 int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
+    lock();
     if (m_width != width || m_height != height)
     {
         TRACE("old-size:%ix%i new-size:%ix%i", m_width, m_height, width, height);
@@ -528,10 +531,12 @@ int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
     } else {
         TRACE("size:%ix%i", width, height);
     }
+    unlock();
     return NO_ERROR;
 }
 
 int WaylandNativeWindow::setUsage(uint64_t usage) {
+    lock();
     if ((usage | GRALLOC_USAGE_HW_TEXTURE) != m_usage)
     {
         TRACE("old-usage:x%" PRIx64 " new-usage:x%" PRIx64, m_usage, usage);
@@ -540,6 +545,7 @@ int WaylandNativeWindow::setUsage(uint64_t usage) {
     } else {
         TRACE("usage:x%" PRIx64, usage);
     }
+    unlock();
     return NO_ERROR;
 }
 
@@ -612,7 +618,7 @@ static const struct android_wlegl_server_buffer_handle_listener server_handle_li
 ServerWaylandBuffer::ServerWaylandBuffer(unsigned int w,
                                          unsigned int h,
                                          int _format,
-                                         int _usage,
+                                         uint64_t _usage,
                                          android_wlegl *android_wlegl,
                                          struct wl_event_queue *queue)
                    : WaylandNativeWindowBuffer()
@@ -625,7 +631,7 @@ ServerWaylandBuffer::ServerWaylandBuffer(unsigned int w,
     wl_array_init(&ints);
     wl_array_init(&fds);
 
-    ssb = android_wlegl_get_server_buffer_handle(android_wlegl, width, height, _format, _usage);
+    ssb = android_wlegl_get_server_buffer_handle(android_wlegl, width, height, _format, (uint32_t)_usage);
     wl_proxy_set_queue((struct wl_proxy *) ssb, queue);
     android_wlegl_server_buffer_handle_add_listener(ssb, &server_handle_listener, this);
 }

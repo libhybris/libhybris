@@ -38,7 +38,7 @@ class RemoteWindowBuffer : public BaseNativeWindowBuffer
 				unsigned int height,
 				unsigned int stride,
 				unsigned int format,
-				unsigned int usage,
+				uint64_t usage,
 				buffer_handle_t handle
 				) {
 			// Base members

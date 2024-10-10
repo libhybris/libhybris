@@ -43,12 +43,12 @@ struct server_wlegl_buffer {
 
 server_wlegl_buffer *
 server_wlegl_buffer_create(wl_client *client, uint32_t id, int32_t width, int32_t height,
-			   int32_t stride, int32_t format, int32_t usage,
+			   int32_t stride, int32_t format, int64_t usage,
 			   buffer_handle_t handle, server_wlegl *wlegl);
 
 server_wlegl_buffer *
 server_wlegl_buffer_create_server(wl_client *client, int32_t width, int32_t height,
-			   int32_t stride, int32_t format, int32_t usage,
+			   int32_t stride, int32_t format, int64_t usage,
 			   buffer_handle_t handle, server_wlegl *wlegl);
 
 server_wlegl_buffer *
