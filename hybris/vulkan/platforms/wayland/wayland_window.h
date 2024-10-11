@@ -81,6 +81,7 @@ protected:
     virtual int setBuffersFormat(int format);
     virtual int setBuffersDimensions(int width, int height);
     virtual int setBufferCount(int cnt);
+    virtual int setSurfaceDamage(android_native_rect_t *rect, size_t n_rects);
 
 private:
     WaylandNativeWindowBuffer *addBuffer();

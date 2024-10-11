@@ -267,6 +267,9 @@ const char *BaseNativeWindow::_native_window_operation(int what)
 		case NATIVE_WINDOW_SET_USAGE64: return "NATIVE_WINDOW_SET_USAGE64";
 		case NATIVE_WINDOW_GET_CONSUMER_USAGE64: return "NATIVE_WINDOW_GET_CONSUMER_USAGE64";
 #endif
+#if ANDROID_VERSION_MAJOR>=6
+		case NATIVE_WINDOW_SET_SURFACE_DAMAGE: return "NATIVE_WINDOW_SET_SURFACE_DAMAGE";
+#endif
 		default: return "NATIVE_UNKNOWN_OPERATION";
 	}
 }
@@ -457,8 +460,15 @@ int BaseNativeWindow::_perform(struct ANativeWindow* window, int operation, ... 
 		break;
 	}
 #endif
-
+#if ANDROID_VERSION_MAJOR>=6
+	case NATIVE_WINDOW_SET_SURFACE_DAMAGE:
+		TRACE("set surface damage");
+		android_native_rect_t *rect = va_arg(args, android_native_rect_t*);
+		size_t n_rect = va_arg(args, size_t);
+		self->setSurfaceDamage(rect, n_rect);
+		break;
 	}
+#endif
 	va_end(args);
 	return NO_ERROR;
 }
