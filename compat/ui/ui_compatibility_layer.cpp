@@ -207,13 +207,13 @@ status_t graphic_buffer_mapper_free_buffer(buffer_handle_t handle) {
     return GraphicBufferMapper::getInstance().freeBuffer(handle);
 }
 
-
 status_t graphic_buffer_mapper_lock(buffer_handle_t handle, uint32_t usage, const ARect* bounds,
-                                   void** vaddr, int32_t* outBytesPerPixel,
-                                   int32_t* outBytesPerStride) {
+                                    void** vaddr, int32_t* outBytesPerPixel,
+                                    int32_t* outBytesPerStride) {
+    if (outBytesPerPixel) *outBytesPerPixel = -1;
+    if (outBytesPerStride) *outBytesPerStride = -1;
     auto rect = android::Rect(bounds->left, bounds->top, bounds->right, bounds->bottom);
-    return GraphicBufferMapper::getInstance().lock(handle, usage, rect,
-                                                   vaddr, outBytesPerPixel, outBytesPerStride);
+    return GraphicBufferMapper::getInstance().lock(handle, usage, rect, vaddr);
 }
 
 status_t graphic_buffer_mapper_unlock(buffer_handle_t handle)
