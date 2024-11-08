@@ -507,6 +507,11 @@ int FbDevNativeWindow::setBufferCount(int cnt)
     return NO_ERROR;
 }
 
+int FbDevNativeWindow::setSurfaceDamage(android_native_rect_t *rects, size_t n_rects)
+{
+    return NO_ERROR;
+}
+
 void FbDevNativeWindow::reallocateBuffers()
 {
     destroyBuffers();

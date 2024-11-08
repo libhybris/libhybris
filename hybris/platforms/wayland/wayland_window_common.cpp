@@ -197,6 +197,9 @@ WaylandNativeWindow::~WaylandNativeWindow()
         m_window->resize_callback = NULL;
         m_window->destroy_window_callback = NULL;
     }
+    if (m_damage_rects) {
+        free(m_damage_rects);
+    }
 }
 
 void WaylandNativeWindow::frame() {
