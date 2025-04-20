@@ -66,6 +66,7 @@ q_la_CPPFLAGS += -DHAS_ANDROID_11_0_0
 endif
 
 q_la_LDFLAGS = \
+	-lpthread \
 	-lsupc++ \
 	-module \
 	-avoid-version
