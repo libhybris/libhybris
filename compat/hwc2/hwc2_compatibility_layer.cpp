@@ -35,11 +35,19 @@ public:
     HWComposerCallback(HWC2EventListener* listener) :
         listener(listener) { }
 
+#if ANDROID_VERSION_MAJOR < 14
     void onComposerHalHotplug(hal::HWDisplayId display, hal::Connection connection) {
         listener->on_hotplug_received(listener, 0, display,
                                     connection == hal::Connection::CONNECTED,
                                     true);
     }
+#else
+    void onComposerHalHotplugEvent(hal::HWDisplayId display, HWC2::DisplayHotplugEvent event) {
+        listener->on_hotplug_received(listener, 0, display,
+                                    event == HWC2::DisplayHotplugEvent::CONNECTED,
+                                    true);
+    }
+#endif
 
     void onComposerHalRefresh(hal::HWDisplayId display) {
         listener->on_refresh_received(listener, 0, display);
@@ -52,9 +60,11 @@ public:
 
     void onComposerHalVsyncPeriodTimingChanged(hal::HWDisplayId,
                                                const hal::VsyncPeriodChangeTimeline&) { }
-
     void onComposerHalSeamlessPossible(hal::HWDisplayId) { }
     void onComposerHalVsyncIdle(hal::HWDisplayId) { }
+#if ANDROID_VERSION_MAJOR >= 14
+    void onRefreshRateChangedDebug(const HWC2::RefreshRateChangedDebugData&) override { }
+#endif
 
     virtual ~HWComposerCallback() { };
 private:
@@ -186,8 +196,10 @@ hwc2_compat_layer_t* hwc2_compat_display_create_layer(hwc2_compat_display_t* dis
     if (!layer)
         return nullptr;
 
-    if (display->self->createLayer(&layer->self) != hal::Error::NONE)
+    if (display->self->createLayer(&layer->self) != hal::Error::NONE) {
+        delete layer;
         return nullptr;
+    }
 
     return layer;
 }
@@ -244,8 +256,11 @@ hwc2_error_t hwc2_compat_display_set_client_target(hwc2_compat_display_t* displa
     android::sp<android::Fence> acquireFence(
             new android::Fence(acquireFenceFd));
 
-    hal::Error error = display->self->setClientTarget(0, target,
-                                        acquireFence, hal::Dataspace::UNKNOWN);
+    hal::Error error = display->self->setClientTarget(slot, target,
+                                        acquireFence,
+                                        /*static_cast<hal::Dataspace>(dataspace),*/
+                                        hal::Dataspace::UNKNOWN,
+                                        1.0f /* hdrSdrRatio */);
 
     return static_cast<hwc2_error_t>(error);
 }
@@ -271,7 +286,8 @@ hwc2_error_t hwc2_compat_display_validate(hwc2_compat_display_t* display,
                                  uint32_t* outNumRequests)
 {
     const int expectedPresentTime = 0;
-    hal::Error error = display->self->validate(expectedPresentTime, outNumTypes, outNumRequests);
+    const int frameIntervalNs = 0;
+    hal::Error error = display->self->validate(expectedPresentTime, frameIntervalNs, outNumTypes, outNumRequests);
     return static_cast<hwc2_error_t>(error);
 }
 
@@ -290,7 +306,7 @@ hwc2_error_t hwc2_compat_layer_set_buffer(hwc2_compat_layer_t* layer,
     android::sp<android::Fence> acquireFence(
             new android::Fence(acquireFenceFd));
 
-    hal::Error error = layer->self->setBuffer(0, target, acquireFence);
+    hal::Error error = layer->self->setBuffer(slot, target, acquireFence);
 
     return static_cast<hwc2_error_t>(error);
 }

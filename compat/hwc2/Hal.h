@@ -55,7 +55,6 @@ using Attribute = IComposerClient::Attribute;
 using BlendMode = IComposerClient::BlendMode;
 using Connection = IComposerCallback::Connection;
 using ContentType = IComposerClient::ContentType;
-using ClientTargetProperty = IComposerClient::ClientTargetProperty;
 using DisplayRequest = IComposerClient::DisplayRequest;
 using DisplayType = IComposerClient::DisplayType;
 using HWConfigId = V2_1::Config;
@@ -74,11 +73,13 @@ using VsyncPeriodChangeConstraints = IComposerClient::VsyncPeriodChangeConstrain
 #if ANDROID_VERSION_MAJOR >= 13
 namespace V3_0 = ::aidl::android::hardware::graphics::composer3;
 using V3_0::Capability;
+using ClientTargetProperty = V3_0::ClientTargetPropertyWithBrightness;
 using V3_0::Color;
 using V3_0::Composition;
 using V3_0::DisplayCapability;
 #else
 using Capability = IComposer::Capability;
+using ClientTargetProperty = IComposerClient::ClientTargetProperty;
 using Color = IComposerClient::Color;
 using Composition = IComposerClient::Composition;
 using DisplayCapability = IComposerClient::DisplayCapability;
