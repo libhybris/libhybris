@@ -18,12 +18,10 @@
 
 #include <android-base/expected.h>
 #include <android-base/thread_annotations.h>
-#include <ftl/future.h>
 #include <gui/HdrMetadata.h>
 #include <math/mat4.h>
 #include <ui/HdrCapabilities.h>
 #include <ui/Region.h>
-#include <ui/StaticDisplayInfo.h>
 #include <utils/Log.h>
 #include <utils/StrongPointer.h>
 #include <utils/Timers.h>
@@ -37,7 +35,17 @@
 #include "ComposerHal.h"
 #include "Hal.h"
 
+#if ANDROID_VERSION_MAJOR >= 12
+#include <ui/StaticDisplayInfo.h>
+#else
+namespace android::ui {
+enum class DisplayConnectionType { Internal, External };
+}
+#endif
+
 #if ANDROID_VERSION_MAJOR >= 13
+#include <ftl/future.h>
+
 #include <aidl/android/hardware/graphics/common/DisplayDecorationSupport.h>
 #include <aidl/android/hardware/graphics/composer3/Capability.h>
 #include <aidl/android/hardware/graphics/composer3/ClientTargetPropertyWithBrightness.h>
@@ -65,20 +73,32 @@ class Layer;
 
 namespace hal = android::hardware::graphics::composer::hal;
 
+#if ANDROID_VERSION_MAJOR >= 14
+using aidl::android::hardware::graphics::common::DisplayHotplugEvent;
+using aidl::android::hardware::graphics::composer3::RefreshRateChangedDebugData;
+#endif
+
 // Implement this interface to receive hardware composer events.
 //
 // These callback functions will generally be called on a hwbinder thread, but
-// when first registering the callback the onComposerHalHotplug() function will
-// immediately be called on the thread calling registerCallback().
+// when first registering the callback the onComposerHalHotplugEvent() function
+// will immediately be called on the thread calling registerCallback().
 struct ComposerCallback {
+#if ANDROID_VERSION_MAJOR < 14
     virtual void onComposerHalHotplug(hal::HWDisplayId, hal::Connection) = 0;
+#else
+    virtual void onComposerHalHotplugEvent(hal::HWDisplayId, DisplayHotplugEvent) = 0;
+#endif
     virtual void onComposerHalRefresh(hal::HWDisplayId) = 0;
-    virtual void onComposerHalVsync(hal::HWDisplayId, int64_t timestamp,
+    virtual void onComposerHalVsync(hal::HWDisplayId, nsecs_t timestamp,
                                     std::optional<hal::VsyncPeriodNanos>) = 0;
     virtual void onComposerHalVsyncPeriodTimingChanged(hal::HWDisplayId,
                                                        const hal::VsyncPeriodChangeTimeline&) = 0;
     virtual void onComposerHalSeamlessPossible(hal::HWDisplayId) = 0;
     virtual void onComposerHalVsyncIdle(hal::HWDisplayId) = 0;
+#if ANDROID_VERSION_MAJOR >= 14
+    virtual void onRefreshRateChangedDebug(const RefreshRateChangedDebugData&) = 0;
+#endif
 
 protected:
     ~ComposerCallback() = default;
@@ -215,7 +235,7 @@ public:
 
     virtual hal::HWDisplayId getId() const = 0;
     virtual bool isConnected() const = 0;
-    virtual void setConnected(bool connected) = 0; // For use by Device only
+    virtual void setConnected(bool connected) = 0; // For use by HWComposer only
     virtual bool hasCapability(
             hal::DisplayCapability) const = 0;
     virtual bool isVsyncPeriodSwitchSupported() const = 0;
@@ -249,6 +269,11 @@ public:
     [[nodiscard]] virtual hal::Error supportsDoze(bool* outSupport) const = 0;
     [[nodiscard]] virtual hal::Error getHdrCapabilities(
             android::HdrCapabilities* outCapabilities) const = 0;
+#if ANDROID_VERSION_MAJOR >= 14
+    [[nodiscard]] virtual hal::Error getOverlaySupport(
+            aidl::android::hardware::graphics::composer3::OverlayProperties* outProperties)
+            const = 0;
+#endif
     [[nodiscard]] virtual hal::Error getDisplayedContentSamplingAttributes(
             hal::PixelFormat* outFormat, hal::Dataspace* outDataspace,
             uint8_t* outComponentMask) const = 0;
@@ -261,11 +286,10 @@ public:
     [[nodiscard]] virtual hal::Error getReleaseFences(
             std::unordered_map<Layer*, android::sp<android::Fence>>* outFences) const = 0;
     [[nodiscard]] virtual hal::Error present(android::sp<android::Fence>* outPresentFence) = 0;
-    [[nodiscard]] virtual hal::Error setActiveConfig(
-            const std::shared_ptr<const Config>& config) = 0;
     [[nodiscard]] virtual hal::Error setClientTarget(
             uint32_t slot, const android::sp<android::GraphicBuffer>& target,
-            const android::sp<android::Fence>& acquireFence, hal::Dataspace dataspace) = 0;
+            const android::sp<android::Fence>& acquireFence, hal::Dataspace dataspace,
+            float hdrSdrRatio) = 0;
     [[nodiscard]] virtual hal::Error setColorMode(hal::ColorMode mode,
                                                   hal::RenderIntent renderIntent) = 0;
     [[nodiscard]] virtual hal::Error setColorTransform(const android::mat4& matrix) = 0;
@@ -274,9 +298,10 @@ public:
             const android::sp<android::Fence>& releaseFence) = 0;
     [[nodiscard]] virtual hal::Error setPowerMode(hal::PowerMode mode) = 0;
     [[nodiscard]] virtual hal::Error setVsyncEnabled(hal::Vsync enabled) = 0;
-    [[nodiscard]] virtual hal::Error validate(nsecs_t expectedPresentTime, uint32_t* outNumTypes,
-                                              uint32_t* outNumRequests) = 0;
+    [[nodiscard]] virtual hal::Error validate(nsecs_t expectedPresentTime, int32_t frameIntervalNs,
+                                              uint32_t* outNumTypes, uint32_t* outNumRequests) = 0;
     [[nodiscard]] virtual hal::Error presentOrValidate(nsecs_t expectedPresentTime,
+                                                       int32_t frameIntervalNs,
                                                        uint32_t* outNumTypes,
                                                        uint32_t* outNumRequests,
                                                        android::sp<android::Fence>* outPresentFence,
@@ -304,8 +329,7 @@ public:
             std::vector<hal::ContentType>*) const = 0;
     [[nodiscard]] virtual hal::Error setContentType(hal::ContentType) = 0;
     [[nodiscard]] virtual hal::Error getClientTargetProperty(
-            Hwc2::ClientTargetProperty*
-                    outClientTargetProperty) = 0;
+            hal::ClientTargetProperty* outClientTargetProperty) = 0;
 #if ANDROID_VERSION_MAJOR >= 13
     [[nodiscard]] virtual hal::Error getDisplayDecorationSupport(
             std::optional<aidl::android::hardware::graphics::common::DisplayDecorationSupport>*
@@ -353,6 +377,10 @@ public:
     hal::Error getConnectionType(ui::DisplayConnectionType*) const override;
     hal::Error supportsDoze(bool* outSupport) const override EXCLUDES(mDisplayCapabilitiesMutex);
     hal::Error getHdrCapabilities(android::HdrCapabilities* outCapabilities) const override;
+#if ANDROID_VERSION_MAJOR >= 14
+    hal::Error getOverlaySupport(aidl::android::hardware::graphics::composer3::OverlayProperties*
+                                         outProperties) const override;
+#endif
     hal::Error getDisplayedContentSamplingAttributes(hal::PixelFormat* outFormat,
                                                      hal::Dataspace* outDataspace,
                                                      uint8_t* outComponentMask) const override;
@@ -363,20 +391,19 @@ public:
     hal::Error getReleaseFences(std::unordered_map<HWC2::Layer*, android::sp<android::Fence>>*
                                         outFences) const override;
     hal::Error present(android::sp<android::Fence>* outPresentFence) override;
-    hal::Error setActiveConfig(const std::shared_ptr<const HWC2::Display::Config>& config) override;
     hal::Error setClientTarget(uint32_t slot, const android::sp<android::GraphicBuffer>& target,
                                const android::sp<android::Fence>& acquireFence,
-                               hal::Dataspace dataspace) override;
+                               hal::Dataspace dataspace, float hdrSdrRatio) override;
     hal::Error setColorMode(hal::ColorMode, hal::RenderIntent) override;
     hal::Error setColorTransform(const android::mat4& matrix) override;
     hal::Error setOutputBuffer(const android::sp<android::GraphicBuffer>&,
                                const android::sp<android::Fence>& releaseFence) override;
     hal::Error setPowerMode(hal::PowerMode) override;
     hal::Error setVsyncEnabled(hal::Vsync enabled) override;
-    hal::Error validate(nsecs_t expectedPresentTime, uint32_t* outNumTypes,
+    hal::Error validate(nsecs_t expectedPresentTime, int32_t frameIntervalNs, uint32_t* outNumTypes,
                         uint32_t* outNumRequests) override;
-    hal::Error presentOrValidate(nsecs_t expectedPresentTime, uint32_t* outNumTypes,
-                                 uint32_t* outNumRequests,
+    hal::Error presentOrValidate(nsecs_t expectedPresentTime, int32_t frameIntervalNs,
+                                 uint32_t* outNumTypes, uint32_t* outNumRequests,
                                  android::sp<android::Fence>* outPresentFence,
                                  uint32_t* state) override;
 #if ANDROID_VERSION_MAJOR >= 13
@@ -400,8 +427,7 @@ public:
             std::vector<hal::ContentType>* outSupportedContentTypes) const override;
     hal::Error setContentType(hal::ContentType) override;
     hal::Error getClientTargetProperty(
-            Hwc2::ClientTargetProperty*
-                    outClientTargetProperty) override;
+            hal::ClientTargetProperty* outClientTargetProperty) override;
 #if ANDROID_VERSION_MAJOR >= 13
     hal::Error getDisplayDecorationSupport(
             std::optional<aidl::android::hardware::graphics::common::DisplayDecorationSupport>*
@@ -435,7 +461,7 @@ private:
 
     // Member variables
 
-    // These are references to data owned by HWC2::Device, which will outlive
+    // These are references to data owned by HWComposer, which will outlive
     // this HWC2::Display, so these references are guaranteed to be valid for
     // the lifetime of this object.
     android::Hwc2::Composer& mComposer;
@@ -473,7 +499,7 @@ public:
 
     [[nodiscard]] virtual hal::Error setBlendMode(hal::BlendMode mode) = 0;
     [[nodiscard]] virtual hal::Error setColor(
-            Hwc2::Color color) = 0;
+            hal::Color color) = 0;
     [[nodiscard]] virtual hal::Error setCompositionType(
             hal::Composition type) = 0;
     [[nodiscard]] virtual hal::Error setDataspace(hal::Dataspace dataspace) = 0;

@@ -18,11 +18,18 @@
 
 #include "ComposerHal.h"
 
+#include <functional>
 #include <optional>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
+
+#if ANDROID_VERSION_MAJOR < 14
+#include <shared_mutex>
+#else
+#include <ui/DisplayMap.h>
+#include <ftl/shared_mutex.h>
+#endif
 
 // TODO(b/129481165): remove the #pragma below and fix conversion issues
 #pragma clang diagnostic push
@@ -49,6 +56,12 @@ using aidl::android::hardware::graphics::common::DisplayDecorationSupport;
 using aidl::android::hardware::graphics::composer3::ComposerClientReader;
 using aidl::android::hardware::graphics::composer3::ComposerClientWriter;
 
+#if ANDROID_VERSION_MAJOR >= 14
+using aidl::android::hardware::graphics::common::HdrConversionCapability;
+using aidl::android::hardware::graphics::common::HdrConversionStrategy;
+using aidl::android::hardware::graphics::composer3::OverlayProperties;
+#endif
+
 class AidlIComposerCallbackWrapper;
 
 // Composer is a wrapper to IComposer, a proxy to server-side composer.
@@ -60,6 +73,7 @@ public:
     ~AidlComposer() override;
 
     bool isSupported(OptionalFeature) const;
+    bool isVrrSupported() const;
 
     std::vector<aidl::android::hardware::graphics::composer3::Capability> getCapabilities()
             override;
@@ -67,12 +81,8 @@ public:
 
     void registerCallback(HWC2::ComposerCallback& callback) override;
 
-    // Reset all pending commands in the command buffer. Useful if you want to
-    // skip a frame but have already queued some commands.
-    void resetCommands() override;
-
     // Explicitly flush all pending commands in the command buffer.
-    Error executeCommands() override;
+    Error executeCommands(Display) override;
 
     uint32_t getMaxVirtualDisplayCount() override;
     Error createVirtualDisplay(uint32_t width, uint32_t height, PixelFormat* format,
@@ -93,6 +103,10 @@ public:
     Error getDisplayAttribute(Display display, Config config, IComposerClient::Attribute attribute,
                               int32_t* outValue) override;
     Error getDisplayConfigs(Display display, std::vector<Config>* outConfigs);
+#if ANDROID_VERSION_MAJOR >= 14
+    Error getDisplayConfigurations(Display, int32_t maxFrameIntervalNs,
+                                   std::vector<DisplayConfiguration>*);
+#endif
     Error getDisplayName(Display display, std::string* outName) override;
 
     Error getDisplayRequests(Display display, uint32_t* outDisplayRequestMask,
@@ -101,8 +115,11 @@ public:
 
     Error getDozeSupport(Display display, bool* outSupport) override;
     Error hasDisplayIdleTimerCapability(Display display, bool* outSupport) override;
-    Error getHdrCapabilities(Display display, std::vector<Hdr>* outTypes, float* outMaxLuminance,
+    Error getHdrCapabilities(Display display, std::vector<Hdr>* outHdrTypes, float* outMaxLuminance,
                              float* outMaxAverageLuminance, float* outMinLuminance) override;
+#if ANDROID_VERSION_MAJOR >= 14
+    Error getOverlaySupport(OverlayProperties* outProperties) override;
+#endif
 
     Error getReleaseFences(Display display, std::vector<Layer>* outLayers,
                            std::vector<int>* outReleaseFences) override;
@@ -118,7 +135,8 @@ public:
      */
     Error setClientTarget(Display display, uint32_t slot, const sp<GraphicBuffer>& target,
                           int acquireFence, Dataspace dataspace,
-                          const std::vector<IComposerClient::Rect>& damage) override;
+                          const std::vector<IComposerClient::Rect>& damage,
+                          float hdrSdrRatio) override;
     Error setColorMode(Display display, ColorMode mode, RenderIntent renderIntent) override;
     Error setColorTransform(Display display, const float* matrix) override;
     Error setOutputBuffer(Display display, const native_handle_t* buffer,
@@ -128,12 +146,13 @@ public:
 
     Error setClientTargetSlotCount(Display display) override;
 
-    Error validateDisplay(Display display, nsecs_t expectedPresentTime, uint32_t* outNumTypes,
-                          uint32_t* outNumRequests) override;
+    Error validateDisplay(Display display, nsecs_t expectedPresentTime, int32_t frameIntervalNs,
+                          uint32_t* outNumTypes, uint32_t* outNumRequests) override;
 
     Error presentOrValidateDisplay(Display display, nsecs_t expectedPresentTime,
-                                   uint32_t* outNumTypes, uint32_t* outNumRequests,
-                                   int* outPresentFence, uint32_t* state) override;
+                                   int32_t frameIntervalNs, uint32_t* outNumTypes,
+                                   uint32_t* outNumRequests, int* outPresentFence,
+                                   uint32_t* state) override;
 
     Error setCursorPosition(Display display, Layer layer, int32_t x, int32_t y) override;
     /* see setClientTarget for the purpose of slot */
@@ -226,15 +245,40 @@ public:
 
     Error getPhysicalDisplayOrientation(Display displayId,
                                         AidlTransform* outDisplayOrientation) override;
+    void onHotplugConnect(Display) override;
+    void onHotplugDisconnect(Display) override;
+
+#if ANDROID_VERSION_MAJOR >= 14
+    Error getHdrConversionCapabilities(std::vector<HdrConversionCapability>*) override;
+    Error setHdrConversionStrategy(HdrConversionStrategy, Hdr*) override;
+    Error setRefreshRateChangedCallbackDebugEnabled(Display, bool) override;
+    Error notifyExpectedPresent(Display, nsecs_t expectedPresentTime,
+                                int32_t frameIntervalNs) override;
+#endif
 
 private:
     // Many public functions above simply write a command into the command
     // queue to batch the calls.  validateDisplay and presentDisplay will call
     // this function to execute the command queue.
-    Error execute();
+    Error execute(Display) REQUIRES_SHARED(mMutex);
 
     // returns the default instance name for the given service
     static std::string instance(const std::string& serviceName);
+
+    std::optional<std::reference_wrapper<ComposerClientWriter>> getWriter(Display)
+            REQUIRES_SHARED(mMutex);
+    std::optional<std::reference_wrapper<ComposerClientReader>> getReader(Display)
+            REQUIRES_SHARED(mMutex);
+
+    void addDisplay(Display) EXCLUDES(mMutex);
+    void removeDisplay(Display) EXCLUDES(mMutex);
+
+#if ANDROID_VERSION_MAJOR >= 14
+    void addReader(Display) REQUIRES(mMutex);
+    void removeReader(Display) REQUIRES(mMutex);
+    bool getLayerLifecycleBatchCommand();
+    bool hasMultiThreadedPresentSupport(Display);
+#endif
 
     // 64KiB minus a small space for metadata such as read/write pointers
     static constexpr size_t kWriterInitialSize = 64 * 1024 / sizeof(uint32_t) - 16;
@@ -243,8 +287,37 @@ private:
     // 1. Tightly coupling this cache to the max size of BufferQueue
     // 2. Adding an additional slot for the layer caching feature in SurfaceFlinger (see: Planner.h)
     static const constexpr uint32_t kMaxLayerBufferCount = BufferQueue::NUM_BUFFER_SLOTS + 1;
+
+#if ANDROID_VERSION_MAJOR < 14
     ComposerClientWriter mWriter;
     ComposerClientReader mReader;
+    // Not needed with non-threaded AIDL HAL, but keep it to reduce ifdefs
+    std::shared_mutex mMutex;
+#else
+    // Without DisplayCapability::MULTI_THREADED_PRESENT, we use a single reader
+    // for all displays. With the capability, we use a separate reader for each
+    // display.
+    bool mSingleReader = true;
+    // Invalid displayId used as a key to mReaders when mSingleReader is true.
+    static constexpr int64_t kSingleReaderKey = 0;
+
+    ui::PhysicalDisplayMap<Display, ComposerClientWriter> mWriters GUARDED_BY(mMutex);
+    ui::PhysicalDisplayMap<Display, ComposerClientReader> mReaders GUARDED_BY(mMutex);
+
+    // Protect access to mWriters and mReaders with a shared_mutex. Adding and
+    // removing a display require exclusive access, since the iterator or the
+    // writer/reader may be invalidated. Other calls need shared access while
+    // using the writer/reader, so they can use their display's writer/reader
+    // without it being deleted or the iterator being invalidated.
+    // TODO (b/257958323): Use std::shared_mutex and RAII once they support
+    // threading annotations.
+    ftl::SharedMutex mMutex;
+
+    bool mEnableLayerCommandBatchingFlag = false;
+#endif
+
+    int32_t mComposerInterfaceVersion = 1;
+    std::atomic<int64_t> mLayerID = 1;
 
     // Aidl interface
     using AidlIComposer = aidl::android::hardware::graphics::composer3::IComposer;

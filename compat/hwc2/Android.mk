@@ -82,12 +82,20 @@ LOCAL_HEADER_LIBRARIES += \
     android.hardware.graphics.composer3-command-buffer
 
 LOCAL_SHARED_LIBRARIES += \
-    android.hardware.graphics.composer3-V1-ndk \
-    libbinder_ndk \
+    libbinder_ndk
 
 LOCAL_STATIC_LIBRARIES := \
     libaidlcommonsupport
+endif
 
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -eq 13 && echo true),true)
+LOCAL_SHARED_LIBRARIES += \
+    android.hardware.graphics.composer3-V1-ndk
+endif
+
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 14 && echo true),true)
+LOCAL_SHARED_LIBRARIES += \
+    android.hardware.graphics.composer3-V4-ndk
 endif
 
 include $(BUILD_SHARED_LIBRARY)

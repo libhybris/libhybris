@@ -58,7 +58,9 @@ using types::V1_0::Transform;
 using types::V1_1::RenderIntent;
 using types::V1_2::ColorMode;
 using types::V1_2::Dataspace;
+#if ANDROID_VERSION_MAJOR < 14
 using types::V1_2::Hdr;
+#endif
 using types::V1_2::PixelFormat;
 
 using V2_1::Config;
@@ -170,6 +172,7 @@ public:
     ~HidlComposer() override;
 
     bool isSupported(OptionalFeature) const;
+    bool isVrrSupported() const;
 
     std::vector<Capability> getCapabilities()
             override;
@@ -177,12 +180,8 @@ public:
 
     void registerCallback(HWC2::ComposerCallback& callback) override;
 
-    // Reset all pending commands in the command buffer. Useful if you want to
-    // skip a frame but have already queued some commands.
-    void resetCommands() override;
-
     // Explicitly flush all pending commands in the command buffer.
-    Error executeCommands() override;
+    Error executeCommands(Display) override;
 
     uint32_t getMaxVirtualDisplayCount() override;
     Error createVirtualDisplay(uint32_t width, uint32_t height, PixelFormat* format,
@@ -203,6 +202,10 @@ public:
     Error getDisplayAttribute(Display display, Config config, IComposerClient::Attribute attribute,
                               int32_t* outValue) override;
     Error getDisplayConfigs(Display display, std::vector<Config>* outConfigs);
+#if ANDROID_VERSION_MAJOR >= 14
+    Error getDisplayConfigurations(Display, int32_t maxFrameIntervalNs,
+                                   std::vector<DisplayConfiguration>*);
+#endif
     Error getDisplayName(Display display, std::string* outName) override;
 
     Error getDisplayRequests(Display display, uint32_t* outDisplayRequestMask,
@@ -211,8 +214,12 @@ public:
 
     Error getDozeSupport(Display display, bool* outSupport) override;
     Error hasDisplayIdleTimerCapability(Display display, bool* outSupport) override;
-    Error getHdrCapabilities(Display display, std::vector<Hdr>* outTypes, float* outMaxLuminance,
+    Error getHdrCapabilities(Display display, std::vector<Hdr>* outHdrTypes, float* outMaxLuminance,
                              float* outMaxAverageLuminance, float* outMinLuminance) override;
+#if ANDROID_VERSION_MAJOR >= 14
+    Error getOverlaySupport(aidl::android::hardware::graphics::composer3::OverlayProperties*
+                                    outProperties) override;
+#endif
 
     Error getReleaseFences(Display display, std::vector<Layer>* outLayers,
                            std::vector<int>* outReleaseFences) override;
@@ -228,7 +235,8 @@ public:
      */
     Error setClientTarget(Display display, uint32_t slot, const sp<GraphicBuffer>& target,
                           int acquireFence, Dataspace dataspace,
-                          const std::vector<IComposerClient::Rect>& damage) override;
+                          const std::vector<IComposerClient::Rect>& damage,
+                          float hdrSdrRatio) override;
     Error setColorMode(Display display, ColorMode mode, RenderIntent renderIntent) override;
     Error setColorTransform(Display display, const float* matrix) override;
     Error setOutputBuffer(Display display, const native_handle_t* buffer,
@@ -238,12 +246,13 @@ public:
 
     Error setClientTargetSlotCount(Display display) override;
 
-    Error validateDisplay(Display display, nsecs_t expectedPresentTime, uint32_t* outNumTypes,
-                          uint32_t* outNumRequests) override;
+    Error validateDisplay(Display display, nsecs_t expectedPresentTime, int32_t frameIntervalNs,
+                          uint32_t* outNumTypes, uint32_t* outNumRequests) override;
 
     Error presentOrValidateDisplay(Display display, nsecs_t expectedPresentTime,
-                                   uint32_t* outNumTypes, uint32_t* outNumRequests,
-                                   int* outPresentFence, uint32_t* state) override;
+                                   int32_t frameIntervalNs, uint32_t* outNumTypes,
+                                   uint32_t* outNumRequests, int* outPresentFence,
+                                   uint32_t* state) override;
 
     Error setCursorPosition(Display display, Layer layer, int32_t x, int32_t y) override;
     /* see setClientTarget for the purpose of slot */
@@ -340,6 +349,19 @@ public:
 
     Error getPhysicalDisplayOrientation(Display displayId,
                                         AidlTransform* outDisplayOrientation) override;
+#endif
+
+    void onHotplugConnect(Display) override;
+    void onHotplugDisconnect(Display) override;
+
+#if ANDROID_VERSION_MAJOR >= 14
+    Error getHdrConversionCapabilities(
+            std::vector<aidl::android::hardware::graphics::common::HdrConversionCapability>*)
+            override;
+    Error setHdrConversionStrategy(aidl::android::hardware::graphics::common::HdrConversionStrategy,
+                                   Hdr*) override;
+    Error setRefreshRateChangedCallbackDebugEnabled(Display, bool) override;
+    Error notifyExpectedPresent(Display, nsecs_t, int32_t) override;
 #endif
 
 private:

@@ -30,6 +30,7 @@
 #include <hidl/HidlTransportUtils.h>
 #include <log/log.h>
 #include <utils/Trace.h>
+
 #include "HWC2.h"
 #include "Hal.h"
 
@@ -41,6 +42,14 @@ using aidl::android::hardware::graphics::composer3::Capability;
 using aidl::android::hardware::graphics::composer3::ClientTargetPropertyWithBrightness;
 using aidl::android::hardware::graphics::composer3::DimmingStage;
 using aidl::android::hardware::graphics::composer3::DisplayCapability;
+#endif
+
+#if ANDROID_VERSION_MAJOR >= 14
+#include <aidl/android/hardware/graphics/common/DisplayHotplugEvent.h>
+using aidl::android::hardware::graphics::common::DisplayHotplugEvent;
+using aidl::android::hardware::graphics::common::HdrConversionCapability;
+using aidl::android::hardware::graphics::common::HdrConversionStrategy;
+using aidl::android::hardware::graphics::composer3::OverlayProperties;
 #endif
 
 namespace android {
@@ -61,8 +70,17 @@ public:
     ComposerCallbackBridge(ComposerCallback& callback, bool vsyncSwitchingSupported)
           : mCallback(callback), mVsyncSwitchingSupported(vsyncSwitchingSupported) {}
 
+    // For code sharing purposes, `ComposerCallback` (implemented by SurfaceFlinger)
+    // replaced `onComposerHalHotplug` with `onComposerHalHotplugEvent` by converting
+    // from HIDL's connection into an AIDL DisplayHotplugEvent.
     Return<void> onHotplug(Display display, Connection connection) override {
+#if ANDROID_VERSION_MAJOR < 14
         mCallback.onComposerHalHotplug(display, connection);
+#else
+        const auto event = connection == Connection::CONNECTED ? DisplayHotplugEvent::CONNECTED
+                                                               : DisplayHotplugEvent::DISCONNECTED;
+        mCallback.onComposerHalHotplugEvent(display, event);
+#endif
         return Void();
     }
 
@@ -189,7 +207,8 @@ std::vector<To> translate(const hidl_vec<From>& in) {
 
 } // anonymous namespace
 
-HidlComposer::HidlComposer(const std::string& serviceName) : mWriter(kWriterInitialSize) {
+HidlComposer::HidlComposer(const std::string& serviceName)
+      : mWriter(kWriterInitialSize) {
     mComposer = V2_1::IComposer::getService(serviceName);
 
     if (mComposer == nullptr) {
@@ -245,6 +264,11 @@ bool HidlComposer::isSupported(OptionalFeature feature) const {
     }
 }
 
+bool HidlComposer::isVrrSupported() const {
+    // VRR is not supported on the HIDL composer.
+    return false;
+};
+
 std::vector<Capability> HidlComposer::getCapabilities() {
     std::vector<Capability> capabilities;
     mComposer->getCapabilities([&](const auto& tmpCapabilities) {
@@ -255,6 +279,7 @@ std::vector<Capability> HidlComposer::getCapabilities() {
 
 std::string HidlComposer::dumpDebugInfo() {
     std::string info;
+    info += std::string(mComposer->descriptor) + "\n";
     mComposer->dumpDebugInfo([&](const auto& tmpInfo) { info = tmpInfo.c_str(); });
 
     return info;
@@ -274,11 +299,7 @@ void HidlComposer::registerCallback(const sp<IComposerCallback>& callback) {
     }
 }
 
-void HidlComposer::resetCommands() {
-    mWriter.reset();
-}
-
-Error HidlComposer::executeCommands() {
+Error HidlComposer::executeCommands(Display) {
     return execute();
 }
 
@@ -457,6 +478,14 @@ Error HidlComposer::getDisplayConfigs(Display display, std::vector<Config>* outC
     return error;
 }
 
+#if ANDROID_VERSION_MAJOR >= 14
+Error HidlComposer::getDisplayConfigurations(Display, int32_t /*maxFrameIntervalNs*/,
+                                             std::vector<DisplayConfiguration>*) {
+    LOG_ALWAYS_FATAL("getDisplayConfigurations should not have been called on this, as "
+                     "it's a HWC3 interface version 3 feature");
+}
+#endif
+
 Error HidlComposer::getDisplayName(Display display, std::string* outName) {
     Error error = kDefaultError;
     mClient->getDisplayName(display, [&](const auto& tmpError, const auto& tmpName) {
@@ -497,13 +526,13 @@ Error HidlComposer::hasDisplayIdleTimerCapability(Display, bool*) {
                      "OptionalFeature::KernelIdleTimer is not supported on HIDL");
 }
 
-Error HidlComposer::getHdrCapabilities(Display display, std::vector<Hdr>* outTypes,
+Error HidlComposer::getHdrCapabilities(Display display, std::vector<Hdr>* outHdrTypes,
                                        float* outMaxLuminance, float* outMaxAverageLuminance,
                                        float* outMinLuminance) {
     Error error = kDefaultError;
     if (mClient_2_3) {
         mClient_2_3->getHdrCapabilities_2_3(display,
-                                            [&](const auto& tmpError, const auto& tmpTypes,
+                                            [&](const auto& tmpError, const auto& tmpHdrTypes,
                                                 const auto& tmpMaxLuminance,
                                                 const auto& tmpMaxAverageLuminance,
                                                 const auto& tmpMinLuminance) {
@@ -512,14 +541,18 @@ Error HidlComposer::getHdrCapabilities(Display display, std::vector<Hdr>* outTyp
                                                     return;
                                                 }
 
-                                                *outTypes = tmpTypes;
+#if ANDROID_VERSION_MAJOR < 14
+                                                *outHdrTypes = tmpHdrTypes;
+#else
+                                                *outHdrTypes = translate<ui::Hdr>(tmpHdrTypes);
+#endif
                                                 *outMaxLuminance = tmpMaxLuminance;
                                                 *outMaxAverageLuminance = tmpMaxAverageLuminance;
                                                 *outMinLuminance = tmpMinLuminance;
                                             });
     } else {
         mClient->getHdrCapabilities(display,
-                                    [&](const auto& tmpError, const auto& tmpTypes,
+                                    [&](const auto& tmpError, const auto& tmpHdrTypes,
                                         const auto& tmpMaxLuminance,
                                         const auto& tmpMaxAverageLuminance,
                                         const auto& tmpMinLuminance) {
@@ -528,10 +561,14 @@ Error HidlComposer::getHdrCapabilities(Display display, std::vector<Hdr>* outTyp
                                             return;
                                         }
 
-                                        outTypes->clear();
-                                        for (auto type : tmpTypes) {
-                                            outTypes->push_back(static_cast<Hdr>(type));
+#if ANDROID_VERSION_MAJOR < 14
+                                        outHdrTypes->clear();
+                                        for (auto type : tmpHdrTypes) {
+                                            outHdrTypes->push_back(static_cast<Hdr>(type));
                                         }
+#else
+                                        *outHdrTypes = translate<ui::Hdr>(tmpHdrTypes);
+#endif
 
                                         *outMaxLuminance = tmpMaxLuminance;
                                         *outMaxAverageLuminance = tmpMaxAverageLuminance;
@@ -541,6 +578,12 @@ Error HidlComposer::getHdrCapabilities(Display display, std::vector<Hdr>* outTyp
 
     return error;
 }
+
+#if ANDROID_VERSION_MAJOR >= 14
+Error HidlComposer::getOverlaySupport(OverlayProperties* /*outProperties*/) {
+    return Error::NONE;
+}
+#endif
 
 Error HidlComposer::getReleaseFences(Display display, std::vector<Layer>* outLayers,
                                      std::vector<int>* outReleaseFences) {
@@ -570,7 +613,8 @@ Error HidlComposer::setActiveConfig(Display display, Config config) {
 
 Error HidlComposer::setClientTarget(Display display, uint32_t slot, const sp<GraphicBuffer>& target,
                                     int acquireFence, Dataspace dataspace,
-                                    const std::vector<IComposerClient::Rect>& damage) {
+                                    const std::vector<IComposerClient::Rect>& damage,
+                                    float /*hdrSdrRatio*/) {
     mWriter.selectDisplay(display);
 
     const native_handle_t* handle = nullptr;
@@ -634,7 +678,8 @@ Error HidlComposer::setClientTargetSlotCount(Display display) {
 }
 
 Error HidlComposer::validateDisplay(Display display, nsecs_t /*expectedPresentTime*/,
-                                    uint32_t* outNumTypes, uint32_t* outNumRequests) {
+                                    int32_t /*frameIntervalNs*/, uint32_t* outNumTypes,
+                                    uint32_t* outNumRequests) {
     ATRACE_NAME("HwcValidateDisplay");
     mWriter.selectDisplay(display);
     mWriter.validateDisplay();
@@ -650,8 +695,9 @@ Error HidlComposer::validateDisplay(Display display, nsecs_t /*expectedPresentTi
 }
 
 Error HidlComposer::presentOrValidateDisplay(Display display, nsecs_t /*expectedPresentTime*/,
-                                             uint32_t* outNumTypes, uint32_t* outNumRequests,
-                                             int* outPresentFence, uint32_t* state) {
+                                             int32_t /*frameIntervalNs*/, uint32_t* outNumTypes,
+                                             uint32_t* outNumRequests, int* outPresentFence,
+                                             uint32_t* state) {
     ATRACE_NAME("HwcPresentOrValidateDisplay");
     mWriter.selectDisplay(display);
     mWriter.presentOrvalidateDisplay();
@@ -1311,6 +1357,24 @@ Error HidlComposer::getPreferredBootDisplayConfig(Display /*displayId*/, Config*
 }
 #endif
 
+#if ANDROID_VERSION_MAJOR >= 14
+Error HidlComposer::getHdrConversionCapabilities(std::vector<HdrConversionCapability>*) {
+    return Error::UNSUPPORTED;
+}
+
+Error HidlComposer::setHdrConversionStrategy(HdrConversionStrategy, Hdr*) {
+    return Error::UNSUPPORTED;
+}
+
+Error HidlComposer::setRefreshRateChangedCallbackDebugEnabled(Display, bool) {
+    return Error::UNSUPPORTED;
+}
+
+Error HidlComposer::notifyExpectedPresent(Display, nsecs_t, int32_t) {
+    return Error::UNSUPPORTED;
+}
+#endif
+
 Error HidlComposer::getClientTargetProperty(
         Display display, ClientTargetProperty* outClientTargetProperty) {
 #if ANDROID_VERSION_MAJOR < 13
@@ -1363,8 +1427,15 @@ void HidlComposer::registerCallback(ComposerCallback& callback) {
     const bool vsyncSwitchingSupported =
             isSupported(Hwc2::Composer::OptionalFeature::RefreshRateSwitching);
 
+#if ANDROID_VERSION_MAJOR < 12
+    registerCallback(new ComposerCallbackBridge(callback, vsyncSwitchingSupported));
+#else
     registerCallback(sp<ComposerCallbackBridge>::make(callback, vsyncSwitchingSupported));
+#endif
 }
+
+void HidlComposer::onHotplugConnect(Display) {}
+void HidlComposer::onHotplugDisconnect(Display) {}
 
 CommandReader::~CommandReader() {
     resetData();
