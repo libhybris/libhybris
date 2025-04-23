@@ -54,14 +54,18 @@ public:
     }
 
     void onComposerHalVsync(hal::HWDisplayId display, int64_t timestamp,
-                            std::optional<hal::VsyncPeriodNanos>) {
+                            uint32_t /*vsyncPeriodNanos*/) {
         listener->on_vsync_received(listener, 0, display, timestamp);
     }
 
+#if ANDROID_VERSION_MAJOR >= 11
     void onComposerHalVsyncPeriodTimingChanged(hal::HWDisplayId,
                                                const hal::VsyncPeriodChangeTimeline&) { }
     void onComposerHalSeamlessPossible(hal::HWDisplayId) { }
+#endif
+#if ANDROID_VERSION_MAJOR >= 13
     void onComposerHalVsyncIdle(hal::HWDisplayId) { }
+#endif
 #if ANDROID_VERSION_MAJOR >= 14
     void onRefreshRateChangedDebug(const HWC2::RefreshRateChangedDebugData&) override { }
 #endif

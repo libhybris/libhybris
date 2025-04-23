@@ -26,8 +26,7 @@ ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 9 && echo true),true)
 LOCAL_C_INCLUDES += \
     hardware/interfaces/graphics/composer/2.1/utils/command-buffer/include
 LOCAL_HEADER_LIBRARIES := \
-    android.hardware.graphics.composer@2.1-command-buffer \
-    android.hardware.graphics.composer@2.4-command-buffer
+    android.hardware.graphics.composer@2.1-command-buffer
 else
 LOCAL_STATIC_LIBRARIES := \
     libhwcomposer-command-buffer
@@ -37,9 +36,6 @@ LOCAL_SHARED_LIBRARIES := \
     android.frameworks.vr.composer@1.0 \
     android.hardware.graphics.allocator@2.0 \
     android.hardware.graphics.composer@2.1 \
-    android.hardware.graphics.composer@2.2 \
-    android.hardware.graphics.composer@2.3 \
-    android.hardware.graphics.composer@2.4 \
     android.hardware.configstore@1.0 \
     android.hardware.configstore-utils \
     libcutils \
@@ -62,9 +58,6 @@ LOCAL_SHARED_LIBRARIES := \
 LOCAL_EXPORT_SHARED_LIBRARY_HEADERS := \
     android.hardware.graphics.allocator@2.0 \
     android.hardware.graphics.composer@2.1 \
-    android.hardware.graphics.composer@2.2 \
-    android.hardware.graphics.composer@2.3 \
-    android.hardware.graphics.composer@2.4 \
     libhidlbase \
     libhidltransport \
     libhwbinder
@@ -74,6 +67,43 @@ LOCAL_CFLAGS += \
     -DANDROID_VERSION_MAJOR=$(ANDROID_VERSION_MAJOR) \
     -DANDROID_VERSION_MINOR=$(ANDROID_VERSION_MINOR) \
     -DANDROID_VERSION_PATCH=$(ANDROID_VERSION_PATCH)
+
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -le 10 && echo true),true)
+LOCAL_CFLAGS += -std=c++1z
+endif
+
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 9 && echo true),true)
+LOCAL_HEADER_LIBRARIES += \
+    android.hardware.graphics.composer@2.2-command-buffer
+
+LOCAL_SHARED_LIBRARIES += \
+    android.hardware.graphics.composer@2.2
+
+LOCAL_EXPORT_SHARED_LIBRARY_HEADERS += \
+    android.hardware.graphics.composer@2.2
+endif
+
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 10 && echo true),true)
+LOCAL_HEADER_LIBRARIES += \
+    android.hardware.graphics.composer@2.3-command-buffer
+
+LOCAL_SHARED_LIBRARIES += \
+    android.hardware.graphics.composer@2.3
+
+LOCAL_EXPORT_SHARED_LIBRARY_HEADERS += \
+    android.hardware.graphics.composer@2.3
+endif
+
+ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 11 && echo true),true)
+LOCAL_HEADER_LIBRARIES += \
+    android.hardware.graphics.composer@2.4-command-buffer
+
+LOCAL_SHARED_LIBRARIES += \
+    android.hardware.graphics.composer@2.4
+
+LOCAL_EXPORT_SHARED_LIBRARY_HEADERS += \
+    android.hardware.graphics.composer@2.4
+endif
 
 ifeq ($(shell test $(ANDROID_VERSION_MAJOR) -ge 13 && echo true),true)
 LOCAL_SRC_FILES += AidlComposerHal.cpp

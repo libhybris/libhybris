@@ -23,7 +23,8 @@
 #endif
 #include "HidlComposerHal.h"
 
-namespace android::Hwc2 {
+namespace android {
+namespace Hwc2 {
 
 Composer::~Composer() = default;
 
@@ -36,4 +37,5 @@ std::unique_ptr<Composer> Composer::create(const std::string& serviceName) {
     return std::make_unique<HidlComposer>(serviceName);
 }
 
-} // namespace android::Hwc2
+} // namespace Hwc2
+} // namespace android
