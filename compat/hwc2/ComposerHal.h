@@ -23,13 +23,27 @@
 #pragma clang diagnostic ignored "-Wconversion"
 #pragma clang diagnostic ignored "-Wextra"
 
-#include <composer-command-buffer/2.4/ComposerCommandBuffer.h>
 #include <gui/BufferQueue.h>
-#include <gui/HdrMetadata.h>
 #include <math/mat4.h>
-#include <ui/DisplayedFrameStats.h>
 #include <ui/GraphicBuffer.h>
 #include <utils/StrongPointer.h>
+
+#if ANDROID_VERSION_MAJOR < 9
+#include <IComposerCommandBuffer.h>
+#elif ANDROID_VERSION_MAJOR < 10
+#include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
+#elif ANDROID_VERSION_MAJOR < 11
+#include <composer-command-buffer/2.3/ComposerCommandBuffer.h>
+#else
+#include <composer-command-buffer/2.4/ComposerCommandBuffer.h>
+#endif
+
+#if ANDROID_VERSION_MAJOR >= 9
+#include <gui/HdrMetadata.h>
+#endif
+#if ANDROID_VERSION_MAJOR >= 10
+#include <ui/DisplayedFrameStats.h>
+#endif
 
 #if ANDROID_VERSION_MAJOR >= 13
 #include <aidl/android/hardware/graphics/common/DisplayDecorationSupport.h>
@@ -41,7 +55,6 @@
 #include <aidl/android/hardware/graphics/composer3/IComposerCallback.h>
 #include <aidl/android/hardware/graphics/common/Transform.h>
 #endif
-
 #if ANDROID_VERSION_MAJOR >= 14
 #include <aidl/android/hardware/graphics/common/HdrConversionCapability.h>
 #include <aidl/android/hardware/graphics/common/HdrConversionStrategy.h>
@@ -64,24 +77,62 @@ namespace Hwc2 {
 namespace types = hardware::graphics::common;
 
 namespace V2_1 = hardware::graphics::composer::V2_1;
+#if ANDROID_VERSION_MAJOR >= 9
 namespace V2_2 = hardware::graphics::composer::V2_2;
+#endif
+#if ANDROID_VERSION_MAJOR >= 10
 namespace V2_3 = hardware::graphics::composer::V2_3;
+#endif
+#if ANDROID_VERSION_MAJOR >= 11
 namespace V2_4 = hardware::graphics::composer::V2_4;
+#endif
 #if ANDROID_VERSION_MAJOR >= 13
 namespace V3_0 = ::aidl::android::hardware::graphics::composer3;
 #endif
 
 using types::V1_0::ColorTransform;
 using types::V1_0::Transform;
+
+#if ANDROID_VERSION_MAJOR < 9
+using types::V1_0::ColorMode;
+using types::V1_0::Dataspace;
+using types::V1_0::PixelFormat;
+#elif ANDROID_VERSION_MAJOR < 10
+using types::V1_1::ColorMode;
+using types::V1_1::Dataspace;
+using types::V1_1::PixelFormat;
+using types::V1_1::RenderIntent;
+#else
 using types::V1_1::RenderIntent;
 using types::V1_2::ColorMode;
 using types::V1_2::Dataspace;
 using types::V1_2::PixelFormat;
+#endif
 
 using V2_1::Config;
 using V2_1::Display;
 using V2_1::Error;
 using V2_1::Layer;
+
+#if ANDROID_VERSION_MAJOR < 9
+using V2_1::CommandReaderBase;
+using V2_1::CommandWriterBase;
+using V2_1::IComposer;
+using V2_1::IComposerCallback;
+using V2_1::IComposerClient;
+#elif ANDROID_VERSION_MAJOR < 10
+using V2_2::CommandReaderBase;
+using V2_2::CommandWriterBase;
+using V2_2::IComposer;
+using V2_2::IComposerCallback;
+using V2_2::IComposerClient;
+#elif ANDROID_VERSION_MAJOR < 11
+using V2_3::CommandReaderBase;
+using V2_3::CommandWriterBase;
+using V2_3::IComposer;
+using V2_3::IComposerCallback;
+using V2_3::IComposerClient;
+#else
 using V2_4::CommandReaderBase;
 using V2_4::CommandWriterBase;
 using V2_4::IComposer;
@@ -89,16 +140,28 @@ using V2_4::IComposerCallback;
 using V2_4::IComposerClient;
 using V2_4::VsyncPeriodChangeTimeline;
 using V2_4::VsyncPeriodNanos;
+#endif
+
+#if ANDROID_VERSION_MAJOR >= 9
 using PerFrameMetadata = IComposerClient::PerFrameMetadata;
 using PerFrameMetadataKey = IComposerClient::PerFrameMetadataKey;
+#endif
+#if ANDROID_VERSION_MAJOR >= 10
 using PerFrameMetadataBlob = IComposerClient::PerFrameMetadataBlob;
+#endif
 
 #if ANDROID_VERSION_MAJOR < 13
 using Capability = IComposer::Capability;
-using ClientTargetProperty = IComposerClient::ClientTargetProperty;
 using Color = IComposerClient::Color;
 using Composition = IComposerClient::Composition;
+
+#if ANDROID_VERSION_MAJOR >= 10
 using DisplayCapability = IComposerClient::DisplayCapability;
+#endif // ANDROID_VERSION_MAJOR >= 10
+#if ANDROID_VERSION_MAJOR >= 11
+using ClientTargetProperty = IComposerClient::ClientTargetProperty;
+#endif // ANDROID_VERSION_MAJOR >= 11
+
 #else
 using AidlTransform = ::aidl::android::hardware::graphics::common::Transform;
 using V3_0::Capability;
@@ -108,7 +171,9 @@ using V3_0::DisplayCapability;
 using ClientTargetProperty = V3_0::ClientTargetPropertyWithBrightness;
 #endif
 
-#if ANDROID_VERSION_MAJOR < 14
+#if ANDROID_VERSION_MAJOR < 10
+using types::V1_0::Hdr;
+#elif ANDROID_VERSION_MAJOR < 14
 using types::V1_2::Hdr;
 #else
 using aidl::android::hardware::graphics::common::Hdr;
@@ -186,7 +251,11 @@ public:
                                   int acquireFence, Dataspace dataspace,
                                   const std::vector<IComposerClient::Rect>& damage,
                                   float hdrSdrRatio) = 0;
+#if ANDROID_VERSION_MAJOR < 9
+    virtual Error setColorMode(Display display, ColorMode mode) = 0;
+#else
     virtual Error setColorMode(Display display, ColorMode mode, RenderIntent renderIntent) = 0;
+#endif
     virtual Error setColorTransform(Display display, const float* matrix) = 0;
     virtual Error setOutputBuffer(Display display, const native_handle_t* buffer,
                                   int releaseFence) = 0;
@@ -231,6 +300,7 @@ public:
                                         const std::vector<IComposerClient::Rect>& visible) = 0;
     virtual Error setLayerZOrder(Display display, Layer layer, uint32_t z) = 0;
 
+#if ANDROID_VERSION_MAJOR >= 9
     // Composer HAL 2.2
     virtual Error setLayerPerFrameMetadata(
             Display display, Layer layer,
@@ -240,7 +310,9 @@ public:
     virtual Error getRenderIntents(Display display, ColorMode colorMode,
             std::vector<RenderIntent>* outRenderIntents) = 0;
     virtual Error getDataspaceSaturationMatrix(Dataspace dataspace, mat4* outMatrix) = 0;
+#endif
 
+#if ANDROID_VERSION_MAJOR >= 10
     // Composer HAL 2.3
     virtual Error getDisplayIdentificationData(Display display, uint8_t* outPort,
                                                std::vector<uint8_t>* outData) = 0;
@@ -253,6 +325,8 @@ public:
                                                    uint8_t componentMask, uint64_t maxFrames) = 0;
     virtual Error getDisplayedContentSample(Display display, uint64_t maxFrames, uint64_t timestamp,
                                             DisplayedFrameStats* outStats) = 0;
+    virtual Error getDisplayCapabilities(Display display,
+                                         std::vector<DisplayCapability>* outCapabilities) = 0;
     virtual Error setLayerPerFrameMetadataBlobs(
             Display display, Layer layer, const std::vector<PerFrameMetadataBlob>& metadata) = 0;
     // Options for setting the display brightness
@@ -269,10 +343,10 @@ public:
     };
     virtual Error setDisplayBrightness(Display display, float brightness, float brightnessNits,
                                        const DisplayBrightnessOptions& options) = 0;
+#endif
 
+#if ANDROID_VERSION_MAJOR >= 11
     // Composer HAL 2.4
-    virtual Error getDisplayCapabilities(Display display,
-                                         std::vector<DisplayCapability>* outCapabilities) = 0;
     virtual V2_4::Error getDisplayConnectionType(
             Display display, IComposerClient::DisplayConnectionType* outType) = 0;
     virtual V2_4::Error getDisplayVsyncPeriod(Display display,
@@ -296,6 +370,7 @@ public:
 
     virtual Error getClientTargetProperty(
             Display display, ClientTargetProperty* outClientTargetProperty) = 0;
+#endif
 
 #if ANDROID_VERSION_MAJOR >= 13
     // AIDL Composer
@@ -315,10 +390,6 @@ public:
 #endif
 #if ANDROID_VERSION_MAJOR >= 14
     virtual Error getOverlaySupport(V3_0::OverlayProperties* outProperties) = 0;
-#endif
-    virtual void onHotplugConnect(Display) = 0;
-    virtual void onHotplugDisconnect(Display) = 0;
-#if ANDROID_VERSION_MAJOR >= 14
     virtual Error getHdrConversionCapabilities(
             std::vector<::aidl::android::hardware::graphics::common::HdrConversionCapability>*) = 0;
     virtual Error setHdrConversionStrategy(
@@ -327,6 +398,9 @@ public:
     virtual Error notifyExpectedPresent(Display, nsecs_t expectedPresentTime,
                                     int32_t frameIntervalNs) = 0;
 #endif
+
+    virtual void onHotplugConnect(Display) = 0;
+    virtual void onHotplugDisconnect(Display) = 0;
 };
 
 } // namespace Hwc2

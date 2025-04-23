@@ -16,9 +16,7 @@
 
 #pragma once
 
-#include <android-base/expected.h>
 #include <android-base/thread_annotations.h>
-#include <gui/HdrMetadata.h>
 #include <math/mat4.h>
 #include <ui/HdrCapabilities.h>
 #include <ui/Region.h>
@@ -35,17 +33,19 @@
 #include "ComposerHal.h"
 #include "Hal.h"
 
-#if ANDROID_VERSION_MAJOR >= 12
-#include <ui/StaticDisplayInfo.h>
-#else
-namespace android::ui {
-enum class DisplayConnectionType { Internal, External };
-}
+#if ANDROID_VERSION_MAJOR >= 9
+#include <gui/HdrMetadata.h>
 #endif
-
+#if ANDROID_VERSION_MAJOR == 11
+#include <ui/DisplayInfo.h>
+namespace android::ui {
+    using android::DisplayConnectionType;
+}
+#elif ANDROID_VERSION_MAJOR >= 12
+#include <ui/StaticDisplayInfo.h>
+#endif
 #if ANDROID_VERSION_MAJOR >= 13
 #include <ftl/future.h>
-
 #include <aidl/android/hardware/graphics/common/DisplayDecorationSupport.h>
 #include <aidl/android/hardware/graphics/composer3/Capability.h>
 #include <aidl/android/hardware/graphics/composer3/ClientTargetPropertyWithBrightness.h>
@@ -91,11 +91,15 @@ struct ComposerCallback {
 #endif
     virtual void onComposerHalRefresh(hal::HWDisplayId) = 0;
     virtual void onComposerHalVsync(hal::HWDisplayId, nsecs_t timestamp,
-                                    std::optional<hal::VsyncPeriodNanos>) = 0;
+                                    uint32_t vsyncPeriodNanos) = 0;
+#if ANDROID_VERSION_MAJOR >= 11
     virtual void onComposerHalVsyncPeriodTimingChanged(hal::HWDisplayId,
                                                        const hal::VsyncPeriodChangeTimeline&) = 0;
     virtual void onComposerHalSeamlessPossible(hal::HWDisplayId) = 0;
+#endif
+#if ANDROID_VERSION_MAJOR >= 13
     virtual void onComposerHalVsyncIdle(hal::HWDisplayId) = 0;
+#endif
 #if ANDROID_VERSION_MAJOR >= 14
     virtual void onRefreshRateChangedDebug(const RefreshRateChangedDebugData&) = 0;
 #endif
@@ -121,11 +125,14 @@ public:
         getCapabilities() const { return mCapabilities; };
 
     uint32_t getMaxVirtualDisplayCount() const;
+
+#if ANDROID_VERSION_MAJOR >= 10
     hal::Error getDisplayIdentificationData(hal::HWDisplayId hwcDisplayId, uint8_t* outPort,
                                        std::vector<uint8_t>* outData) const;
+#endif
 
     hal::Error createVirtualDisplay(uint32_t width, uint32_t height,
-            android::ui::PixelFormat* format, Display** outDisplay);
+            hal::PixelFormat* format, Display** outDisplay);
     void destroyDisplay(hal::HWDisplayId displayId);
 
     void onHotplug(hal::HWDisplayId displayId, hal::Connection connection);
@@ -236,8 +243,10 @@ public:
     virtual hal::HWDisplayId getId() const = 0;
     virtual bool isConnected() const = 0;
     virtual void setConnected(bool connected) = 0; // For use by HWComposer only
+#if ANDROID_VERSION_MAJOR >= 10
     virtual bool hasCapability(
             hal::DisplayCapability) const = 0;
+#endif
     virtual bool isVsyncPeriodSwitchSupported() const = 0;
     virtual bool hasDisplayIdleTimerCapability() const = 0;
     virtual void onLayerDestroyed(hal::HWLayerId layerId) = 0;
@@ -251,12 +260,15 @@ public:
             std::unordered_map<Layer*, hal::Composition>*
                     outTypes) = 0;
     [[nodiscard]] virtual hal::Error getColorModes(std::vector<hal::ColorMode>* outModes) const = 0;
+
+#if ANDROID_VERSION_MAJOR >= 9
     // Returns a bitmask which contains HdrMetadata::Type::*.
     [[nodiscard]] virtual int32_t getSupportedPerFrameMetadata() const = 0;
     [[nodiscard]] virtual hal::Error getRenderIntents(
             hal::ColorMode colorMode, std::vector<hal::RenderIntent>* outRenderIntents) const = 0;
     [[nodiscard]] virtual hal::Error getDataspaceSaturationMatrix(hal::Dataspace dataspace,
                                                                   android::mat4* outMatrix) = 0;
+#endif
 
     // Doesn't call into the HWC2 device, so no errors are possible
     [[nodiscard]] virtual std::vector<std::shared_ptr<const Config>> getConfigs()
@@ -265,24 +277,7 @@ public:
     [[nodiscard]] virtual hal::Error getRequests(
             hal::DisplayRequest* outDisplayRequests,
             std::unordered_map<Layer*, hal::LayerRequest>* outLayerRequests) = 0;
-    [[nodiscard]] virtual hal::Error getConnectionType(ui::DisplayConnectionType*) const = 0;
-    [[nodiscard]] virtual hal::Error supportsDoze(bool* outSupport) const = 0;
-    [[nodiscard]] virtual hal::Error getHdrCapabilities(
-            android::HdrCapabilities* outCapabilities) const = 0;
-#if ANDROID_VERSION_MAJOR >= 14
-    [[nodiscard]] virtual hal::Error getOverlaySupport(
-            aidl::android::hardware::graphics::composer3::OverlayProperties* outProperties)
-            const = 0;
-#endif
-    [[nodiscard]] virtual hal::Error getDisplayedContentSamplingAttributes(
-            hal::PixelFormat* outFormat, hal::Dataspace* outDataspace,
-            uint8_t* outComponentMask) const = 0;
-    [[nodiscard]] virtual hal::Error setDisplayContentSamplingEnabled(bool enabled,
-                                                                      uint8_t componentMask,
-                                                                      uint64_t maxFrames) const = 0;
-    [[nodiscard]] virtual hal::Error getDisplayedContentSample(
-            uint64_t maxFrames, uint64_t timestamp,
-            android::DisplayedFrameStats* outStats) const = 0;
+
     [[nodiscard]] virtual hal::Error getReleaseFences(
             std::unordered_map<Layer*, android::sp<android::Fence>>* outFences) const = 0;
     [[nodiscard]] virtual hal::Error present(android::sp<android::Fence>* outPresentFence) = 0;
@@ -290,8 +285,12 @@ public:
             uint32_t slot, const android::sp<android::GraphicBuffer>& target,
             const android::sp<android::Fence>& acquireFence, hal::Dataspace dataspace,
             float hdrSdrRatio) = 0;
+#if ANDROID_VERSION_MAJOR < 9
+    [[nodiscard]] virtual hal::Error setColorMode(hal::ColorMode mode) = 0;
+#else
     [[nodiscard]] virtual hal::Error setColorMode(hal::ColorMode mode,
                                                   hal::RenderIntent renderIntent) = 0;
+#endif
     [[nodiscard]] virtual hal::Error setColorTransform(const android::mat4& matrix) = 0;
     [[nodiscard]] virtual hal::Error setOutputBuffer(
             const android::sp<android::GraphicBuffer>& buffer,
@@ -306,6 +305,21 @@ public:
                                                        uint32_t* outNumRequests,
                                                        android::sp<android::Fence>* outPresentFence,
                                                        uint32_t* state) = 0;
+
+#if ANDROID_VERSION_MAJOR >= 10
+    [[nodiscard]] virtual hal::Error getDisplayedContentSamplingAttributes(
+            hal::PixelFormat* outFormat, hal::Dataspace* outDataspace,
+            uint8_t* outComponentMask) const = 0;
+    [[nodiscard]] virtual hal::Error setDisplayContentSamplingEnabled(bool enabled,
+                                                                      uint8_t componentMask,
+                                                                      uint64_t maxFrames) const = 0;
+    [[nodiscard]] virtual hal::Error getDisplayedContentSample(
+            uint64_t maxFrames, uint64_t timestamp,
+            android::DisplayedFrameStats* outStats) const = 0;
+
+    [[nodiscard]] virtual hal::Error supportsDoze(bool* outSupport) const = 0;
+    [[nodiscard]] virtual hal::Error getHdrCapabilities(
+            android::HdrCapabilities* outCapabilities) const = 0;
 #if ANDROID_VERSION_MAJOR >= 13
     [[nodiscard]] virtual ftl::Future<hal::Error> setDisplayBrightness(
 #else
@@ -313,30 +327,44 @@ public:
 #endif
             float brightness, float brightnessNits,
             const Hwc2::Composer::DisplayBrightnessOptions& options) = 0;
+#endif // ANDROID_VERSION_MAJOR >= 10
+
+#if ANDROID_VERSION_MAJOR >= 11
+    [[nodiscard]] virtual hal::Error getConnectionType(ui::DisplayConnectionType*) const = 0;
+
     [[nodiscard]] virtual hal::Error getDisplayVsyncPeriod(
             nsecs_t* outVsyncPeriod) const = 0;
     [[nodiscard]] virtual hal::Error setActiveConfigWithConstraints(
             hal::HWConfigId configId, const hal::VsyncPeriodChangeConstraints& constraints,
             hal::VsyncPeriodChangeTimeline* outTimeline) = 0;
+
+    [[nodiscard]] virtual hal::Error setAutoLowLatencyMode(bool on) = 0;
+    [[nodiscard]] virtual hal::Error getSupportedContentTypes(
+            std::vector<hal::ContentType>*) const = 0;
+    [[nodiscard]] virtual hal::Error setContentType(hal::ContentType) = 0;
+
+    [[nodiscard]] virtual hal::Error getClientTargetProperty(
+            hal::ClientTargetProperty* outClientTargetProperty) = 0;
+#endif
+
 #if ANDROID_VERSION_MAJOR >= 13
     [[nodiscard]] virtual hal::Error setBootDisplayConfig(hal::HWConfigId configId) = 0;
     [[nodiscard]] virtual hal::Error clearBootDisplayConfig() = 0;
     [[nodiscard]] virtual hal::Error getPreferredBootDisplayConfig(
             hal::HWConfigId* configId) const = 0;
-#endif
-    [[nodiscard]] virtual hal::Error setAutoLowLatencyMode(bool on) = 0;
-    [[nodiscard]] virtual hal::Error getSupportedContentTypes(
-            std::vector<hal::ContentType>*) const = 0;
-    [[nodiscard]] virtual hal::Error setContentType(hal::ContentType) = 0;
-    [[nodiscard]] virtual hal::Error getClientTargetProperty(
-            hal::ClientTargetProperty* outClientTargetProperty) = 0;
-#if ANDROID_VERSION_MAJOR >= 13
+
     [[nodiscard]] virtual hal::Error getDisplayDecorationSupport(
             std::optional<aidl::android::hardware::graphics::common::DisplayDecorationSupport>*
                     support) = 0;
     [[nodiscard]] virtual hal::Error setIdleTimerEnabled(std::chrono::milliseconds timeout) = 0;
     [[nodiscard]] virtual hal::Error getPhysicalDisplayOrientation(
             Hwc2::AidlTransform* outTransform) const = 0;
+#endif
+
+#if ANDROID_VERSION_MAJOR >= 14
+    [[nodiscard]] virtual hal::Error getOverlaySupport(
+            aidl::android::hardware::graphics::composer3::OverlayProperties* outProperties)
+            const = 0;
 #endif
 };
 
@@ -361,11 +389,14 @@ public:
                                hal::Composition>* outTypes)
             override;
     hal::Error getColorModes(std::vector<hal::ColorMode>* outModes) const override;
+
+#if ANDROID_VERSION_MAJOR >= 9
     // Returns a bitmask which contains HdrMetadata::Type::*.
     int32_t getSupportedPerFrameMetadata() const override;
     hal::Error getRenderIntents(hal::ColorMode colorMode,
                                 std::vector<hal::RenderIntent>* outRenderIntents) const override;
     hal::Error getDataspaceSaturationMatrix(hal::Dataspace, android::mat4* outMatrix) override;
+#endif
 
     // Doesn't call into the HWC2 device, so no errors are possible
     std::vector<std::shared_ptr<const Config>> getConfigs() const override;
@@ -374,27 +405,18 @@ public:
     hal::Error getRequests(
             hal::DisplayRequest* outDisplayRequests,
             std::unordered_map<HWC2::Layer*, hal::LayerRequest>* outLayerRequests) override;
-    hal::Error getConnectionType(ui::DisplayConnectionType*) const override;
-    hal::Error supportsDoze(bool* outSupport) const override EXCLUDES(mDisplayCapabilitiesMutex);
-    hal::Error getHdrCapabilities(android::HdrCapabilities* outCapabilities) const override;
-#if ANDROID_VERSION_MAJOR >= 14
-    hal::Error getOverlaySupport(aidl::android::hardware::graphics::composer3::OverlayProperties*
-                                         outProperties) const override;
-#endif
-    hal::Error getDisplayedContentSamplingAttributes(hal::PixelFormat* outFormat,
-                                                     hal::Dataspace* outDataspace,
-                                                     uint8_t* outComponentMask) const override;
-    hal::Error setDisplayContentSamplingEnabled(bool enabled, uint8_t componentMask,
-                                                uint64_t maxFrames) const override;
-    hal::Error getDisplayedContentSample(uint64_t maxFrames, uint64_t timestamp,
-                                         android::DisplayedFrameStats* outStats) const override;
+
     hal::Error getReleaseFences(std::unordered_map<HWC2::Layer*, android::sp<android::Fence>>*
                                         outFences) const override;
     hal::Error present(android::sp<android::Fence>* outPresentFence) override;
     hal::Error setClientTarget(uint32_t slot, const android::sp<android::GraphicBuffer>& target,
                                const android::sp<android::Fence>& acquireFence,
                                hal::Dataspace dataspace, float hdrSdrRatio) override;
+#if ANDROID_VERSION_MAJOR < 9
+    hal::Error setColorMode(hal::ColorMode) override;
+#else
     hal::Error setColorMode(hal::ColorMode, hal::RenderIntent) override;
+#endif
     hal::Error setColorTransform(const android::mat4& matrix) override;
     hal::Error setOutputBuffer(const android::sp<android::GraphicBuffer>&,
                                const android::sp<android::Fence>& releaseFence) override;
@@ -406,6 +428,16 @@ public:
                                  uint32_t* outNumTypes, uint32_t* outNumRequests,
                                  android::sp<android::Fence>* outPresentFence,
                                  uint32_t* state) override;
+#if ANDROID_VERSION_MAJOR >= 10
+    hal::Error getDisplayedContentSamplingAttributes(hal::PixelFormat* outFormat,
+                                                     hal::Dataspace* outDataspace,
+                                                     uint8_t* outComponentMask) const override;
+    hal::Error setDisplayContentSamplingEnabled(bool enabled, uint8_t componentMask,
+                                                uint64_t maxFrames) const override;
+    hal::Error getDisplayedContentSample(uint64_t maxFrames, uint64_t timestamp,
+                                         android::DisplayedFrameStats* outStats) const override;
+    hal::Error supportsDoze(bool* outSupport) const override EXCLUDES(mDisplayCapabilitiesMutex);
+    hal::Error getHdrCapabilities(android::HdrCapabilities* outCapabilities) const override;
 #if ANDROID_VERSION_MAJOR >= 13
     ftl::Future<hal::Error> setDisplayBrightness(
 #else
@@ -413,34 +445,49 @@ public:
 #endif
             float brightness, float brightnessNits,
             const Hwc2::Composer::DisplayBrightnessOptions& options) override;
+#endif // ANDROID_VERSION_MAJOR >= 10
+
+#if ANDROID_VERSION_MAJOR >= 11
+    hal::Error getConnectionType(ui::DisplayConnectionType*) const override;
+
     hal::Error getDisplayVsyncPeriod(nsecs_t* outVsyncPeriod) const override;
     hal::Error setActiveConfigWithConstraints(hal::HWConfigId configId,
                                               const hal::VsyncPeriodChangeConstraints& constraints,
                                               hal::VsyncPeriodChangeTimeline* outTimeline) override;
-#if ANDROID_VERSION_MAJOR >= 13
-    hal::Error setBootDisplayConfig(hal::HWConfigId configId) override;
-    hal::Error clearBootDisplayConfig() override;
-    hal::Error getPreferredBootDisplayConfig(hal::HWConfigId* configId) const override;
-#endif
+
     hal::Error setAutoLowLatencyMode(bool on) override;
     hal::Error getSupportedContentTypes(
             std::vector<hal::ContentType>* outSupportedContentTypes) const override;
     hal::Error setContentType(hal::ContentType) override;
+
     hal::Error getClientTargetProperty(
             hal::ClientTargetProperty* outClientTargetProperty) override;
+#endif
+
 #if ANDROID_VERSION_MAJOR >= 13
+    hal::Error setBootDisplayConfig(hal::HWConfigId configId) override;
+    hal::Error clearBootDisplayConfig() override;
+    hal::Error getPreferredBootDisplayConfig(hal::HWConfigId* configId) const override;
+
     hal::Error getDisplayDecorationSupport(
             std::optional<aidl::android::hardware::graphics::common::DisplayDecorationSupport>*
                     support) override;
     hal::Error setIdleTimerEnabled(std::chrono::milliseconds timeout) override;
 #endif
 
+#if ANDROID_VERSION_MAJOR >= 14
+    hal::Error getOverlaySupport(aidl::android::hardware::graphics::composer3::OverlayProperties*
+                                         outProperties) const override;
+#endif
+
     // Other Display methods
     hal::HWDisplayId getId() const override { return mId; }
     bool isConnected() const override { return mIsConnected; }
     void setConnected(bool connected) override; // For use by Device only
+#if ANDROID_VERSION_MAJOR >= 10
     bool hasCapability(hal::DisplayCapability)
             const override EXCLUDES(mDisplayCapabilitiesMutex);
+#endif
     bool isVsyncPeriodSwitchSupported() const override;
     bool hasDisplayIdleTimerCapability() const override;
     void onLayerDestroyed(hal::HWLayerId layerId) override;
@@ -476,11 +523,13 @@ private:
     Layers mLayers;
     std::unordered_map<hal::HWConfigId, std::shared_ptr<const Config>> mConfigs;
 
+#if ANDROID_VERSION_MAJOR >= 10
     mutable std::mutex mDisplayCapabilitiesMutex;
     std::once_flag mDisplayCapabilityQueryFlag;
     std::optional<
             std::unordered_set<hal::DisplayCapability>>
             mDisplayCapabilities GUARDED_BY(mDisplayCapabilitiesMutex);
+#endif
 };
 
 } // namespace impl
@@ -503,8 +552,10 @@ public:
     [[nodiscard]] virtual hal::Error setCompositionType(
             hal::Composition type) = 0;
     [[nodiscard]] virtual hal::Error setDataspace(hal::Dataspace dataspace) = 0;
+#if ANDROID_VERSION_MAJOR >= 9
     [[nodiscard]] virtual hal::Error setPerFrameMetadata(const int32_t supportedPerFrameMetadata,
                                                          const android::HdrMetadata& metadata) = 0;
+#endif
     [[nodiscard]] virtual hal::Error setDisplayFrame(const android::Rect& frame) = 0;
     [[nodiscard]] virtual hal::Error setPlaneAlpha(float alpha) = 0;
     [[nodiscard]] virtual hal::Error setSidebandStream(const native_handle_t* stream) = 0;
@@ -514,12 +565,16 @@ public:
     [[nodiscard]] virtual hal::Error setZOrder(uint32_t z) = 0;
 
     // Composer HAL 2.3
+#if ANDROID_VERSION_MAJOR >= 10
     [[nodiscard]] virtual hal::Error setColorTransform(const android::mat4& matrix) = 0;
+#endif
 
     // Composer HAL 2.4
+#if ANDROID_VERSION_MAJOR >= 11
     [[nodiscard]] virtual hal::Error setLayerGenericMetadata(const std::string& name,
                                                              bool mandatory,
                                                              const std::vector<uint8_t>& value) = 0;
+#endif
 
 #if ANDROID_VERSION_MAJOR >= 13
     // AIDL HAL
@@ -554,8 +609,10 @@ public:
     hal::Error setCompositionType(
             hal::Composition type) override;
     hal::Error setDataspace(hal::Dataspace dataspace) override;
+#if ANDROID_VERSION_MAJOR >= 9
     hal::Error setPerFrameMetadata(const int32_t supportedPerFrameMetadata,
                                    const android::HdrMetadata& metadata) override;
+#endif
     hal::Error setDisplayFrame(const android::Rect& frame) override;
     hal::Error setPlaneAlpha(float alpha) override;
     hal::Error setSidebandStream(const native_handle_t* stream) override;
@@ -565,11 +622,15 @@ public:
     hal::Error setZOrder(uint32_t z) override;
 
     // Composer HAL 2.3
+#if ANDROID_VERSION_MAJOR >= 10
     hal::Error setColorTransform(const android::mat4& matrix) override;
+#endif
 
     // Composer HAL 2.4
+#if ANDROID_VERSION_MAJOR >= 11
     hal::Error setLayerGenericMetadata(const std::string& name, bool mandatory,
                                        const std::vector<uint8_t>& value) override;
+#endif
 
 #if ANDROID_VERSION_MAJOR >= 13
     // AIDL HAL
@@ -594,7 +655,9 @@ private:
     android::Region mDamageRegion = android::Region::INVALID_REGION;
     android::Region mBlockingRegion = android::Region::INVALID_REGION;
     hal::Dataspace mDataSpace = hal::Dataspace::UNKNOWN;
+#if ANDROID_VERSION_MAJOR >= 9
     android::HdrMetadata mHdrMetadata;
+#endif
     android::mat4 mColorMatrix;
     uint32_t mBufferSlot;
 };

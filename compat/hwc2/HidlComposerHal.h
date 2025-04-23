@@ -29,14 +29,27 @@
 #pragma clang diagnostic ignored "-Wconversion"
 #pragma clang diagnostic ignored "-Wextra"
 
-#include <composer-command-buffer/2.4/ComposerCommandBuffer.h>
 #include <gui/BufferQueue.h>
-#include <gui/HdrMetadata.h>
 #include <math/mat4.h>
-#include <ui/DisplayedFrameStats.h>
 #include <ui/GraphicBuffer.h>
 #include <utils/StrongPointer.h>
 
+#if ANDROID_VERSION_MAJOR < 9
+#include <IComposerCommandBuffer.h>
+#elif ANDROID_VERSION_MAJOR < 10
+#include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
+#elif ANDROID_VERSION_MAJOR < 11
+#include <composer-command-buffer/2.3/ComposerCommandBuffer.h>
+#else
+#include <composer-command-buffer/2.4/ComposerCommandBuffer.h>
+#endif
+
+#if ANDROID_VERSION_MAJOR >= 9
+#include <gui/HdrMetadata.h>
+#endif
+#if ANDROID_VERSION_MAJOR >= 10
+#include <ui/DisplayedFrameStats.h>
+#endif
 #if ANDROID_VERSION_MAJOR >= 13
 #include <aidl/android/hardware/graphics/composer3/Composition.h>
 #endif
@@ -44,29 +57,70 @@
 // TODO(b/129481165): remove the #pragma below and fix conversion issues
 #pragma clang diagnostic pop // ignored "-Wconversion -Wextra"
 
-namespace android::Hwc2 {
+namespace android {
+namespace Hwc2 {
 
 namespace types = hardware::graphics::common;
 
 namespace V2_1 = hardware::graphics::composer::V2_1;
+#if ANDROID_VERSION_MAJOR >= 9
 namespace V2_2 = hardware::graphics::composer::V2_2;
+#endif
+#if ANDROID_VERSION_MAJOR >= 10
 namespace V2_3 = hardware::graphics::composer::V2_3;
+#endif
+#if ANDROID_VERSION_MAJOR >= 11
 namespace V2_4 = hardware::graphics::composer::V2_4;
+#endif
 
 using types::V1_0::ColorTransform;
 using types::V1_0::Transform;
+
+#if ANDROID_VERSION_MAJOR < 9
+using types::V1_0::ColorMode;
+using types::V1_0::Dataspace;
+using types::V1_0::PixelFormat;
+#elif ANDROID_VERSION_MAJOR < 10
+using types::V1_1::ColorMode;
+using types::V1_1::Dataspace;
+using types::V1_1::PixelFormat;
 using types::V1_1::RenderIntent;
+#else // ANDROID_VERSION_MAJOR >= 10
 using types::V1_2::ColorMode;
 using types::V1_2::Dataspace;
+using types::V1_2::PixelFormat;
+using types::V1_1::RenderIntent;
+
 #if ANDROID_VERSION_MAJOR < 14
 using types::V1_2::Hdr;
 #endif
-using types::V1_2::PixelFormat;
+
+#endif // ANDROID_VERSION_MAJOR < 9
 
 using V2_1::Config;
 using V2_1::Display;
 using V2_1::Error;
 using V2_1::Layer;
+
+#if ANDROID_VERSION_MAJOR < 9
+using V2_1::CommandReaderBase;
+using V2_1::CommandWriterBase;
+using V2_1::IComposer;
+using V2_1::IComposerCallback;
+using V2_1::IComposerClient;
+#elif ANDROID_VERSION_MAJOR < 10
+using V2_2::CommandReaderBase;
+using V2_2::CommandWriterBase;
+using V2_2::IComposer;
+using V2_2::IComposerCallback;
+using V2_2::IComposerClient;
+#elif ANDROID_VERSION_MAJOR < 11
+using V2_3::CommandReaderBase;
+using V2_3::CommandWriterBase;
+using V2_3::IComposer;
+using V2_3::IComposerCallback;
+using V2_3::IComposerClient;
+#else
 using V2_4::CommandReaderBase;
 using V2_4::CommandWriterBase;
 using V2_4::IComposer;
@@ -74,9 +128,15 @@ using V2_4::IComposerCallback;
 using V2_4::IComposerClient;
 using V2_4::VsyncPeriodChangeTimeline;
 using V2_4::VsyncPeriodNanos;
+#endif
+
+#if ANDROID_VERSION_MAJOR >= 9
 using PerFrameMetadata = IComposerClient::PerFrameMetadata;
 using PerFrameMetadataKey = IComposerClient::PerFrameMetadataKey;
+#endif
+#if ANDROID_VERSION_MAJOR >= 10
 using PerFrameMetadataBlob = IComposerClient::PerFrameMetadataBlob;
+#endif
 
 class CommandReader : public CommandReaderBase {
 public:
@@ -116,9 +176,11 @@ public:
     // Get what stage succeeded during PresentOrValidate: Present or Validate
     void takePresentOrValidateStage(Display display, uint32_t* state);
 
+#if ANDROID_VERSION_MAJOR >= 11
     // Get the client target properties requested by hardware composer.
     void takeClientTargetProperty(Display display,
                                   IComposerClient::ClientTargetProperty* outClientTargetProperty);
+#endif
 
 private:
     void resetData();
@@ -130,7 +192,9 @@ private:
     bool parseSetPresentFence(uint16_t length);
     bool parseSetReleaseFences(uint16_t length);
     bool parseSetPresentOrValidateDisplayResult(uint16_t length);
+#if ANDROID_VERSION_MAJOR >= 11
     bool parseSetClientTargetProperty(uint16_t length);
+#endif
 
     struct ReturnData {
         uint32_t displayRequests = 0;
@@ -148,12 +212,14 @@ private:
 
         uint32_t presentOrValidateState;
 
+#if ANDROID_VERSION_MAJOR >= 11
         // Composer 2.4 implementation can return a client target property
         // structure to indicate the client target properties that hardware
         // composer requests. The composer client must change the client target
         // properties to match this request.
         IComposerClient::ClientTargetProperty clientTargetProperty{PixelFormat::RGBA_8888,
                                                                    Dataspace::UNKNOWN};
+#endif
     };
 
     std::vector<CommandError> mErrors;
@@ -237,7 +303,11 @@ public:
                           int acquireFence, Dataspace dataspace,
                           const std::vector<IComposerClient::Rect>& damage,
                           float hdrSdrRatio) override;
+#if ANDROID_VERSION_MAJOR < 9
+    Error setColorMode(Display display, ColorMode mode) override;
+#else
     Error setColorMode(Display display, ColorMode mode, RenderIntent renderIntent) override;
+#endif
     Error setColorTransform(Display display, const float* matrix) override;
     Error setOutputBuffer(Display display, const native_handle_t* buffer,
                           int releaseFence) override;
@@ -279,6 +349,7 @@ public:
                                 const std::vector<IComposerClient::Rect>& visible) override;
     Error setLayerZOrder(Display display, Layer layer, uint32_t z) override;
 
+#if ANDROID_VERSION_MAJOR >= 9
     // Composer HAL 2.2
     Error setLayerPerFrameMetadata(
             Display display, Layer layer,
@@ -288,7 +359,9 @@ public:
     Error getRenderIntents(Display display, ColorMode colorMode,
                            std::vector<RenderIntent>* outRenderIntents) override;
     Error getDataspaceSaturationMatrix(Dataspace dataspace, mat4* outMatrix) override;
+#endif
 
+#if ANDROID_VERSION_MAJOR >= 10
     // Composer HAL 2.3
     Error getDisplayIdentificationData(Display display, uint8_t* outPort,
                                        std::vector<uint8_t>* outData) override;
@@ -300,17 +373,17 @@ public:
                                            uint64_t maxFrames) override;
     Error getDisplayedContentSample(Display display, uint64_t maxFrames, uint64_t timestamp,
                                     DisplayedFrameStats* outStats) override;
+    Error getDisplayCapabilities(Display display, std::vector<DisplayCapability>*
+                                 outCapabilities) override;
     Error setLayerPerFrameMetadataBlobs(
             Display display, Layer layer,
             const std::vector<IComposerClient::PerFrameMetadataBlob>& metadata) override;
     Error setDisplayBrightness(Display display, float brightness, float brightnessNits,
                                const DisplayBrightnessOptions& options) override;
+#endif
 
+#if ANDROID_VERSION_MAJOR >= 11
     // Composer HAL 2.4
-    Error getDisplayCapabilities(
-            Display display,
-            std::vector<DisplayCapability>*
-                    outCapabilities) override;
     V2_4::Error getDisplayConnectionType(Display display,
                                          IComposerClient::DisplayConnectionType* outType) override;
     V2_4::Error getDisplayVsyncPeriod(Display display, VsyncPeriodNanos* outVsyncPeriod) override;
@@ -332,6 +405,7 @@ public:
             Display display,
             ClientTargetProperty*
                     outClientTargetProperty) override;
+#endif
 
 #if ANDROID_VERSION_MAJOR >= 13
     // AIDL Composer HAL
@@ -381,9 +455,15 @@ private:
     sp<V2_1::IComposer> mComposer;
 
     sp<V2_1::IComposerClient> mClient;
+#if ANDROID_VERSION_MAJOR >= 9
     sp<V2_2::IComposerClient> mClient_2_2;
+#endif
+#if ANDROID_VERSION_MAJOR >= 10
     sp<V2_3::IComposerClient> mClient_2_3;
+#endif
+#if ANDROID_VERSION_MAJOR >= 11
     sp<IComposerClient> mClient_2_4;
+#endif
 
     // 64KiB minus a small space for metadata such as read/write pointers
     static constexpr size_t kWriterInitialSize = 64 * 1024 / sizeof(uint32_t) - 16;
@@ -396,4 +476,5 @@ private:
     CommandReader mReader;
 };
 
-} // namespace android::Hwc2
+} // namespace Hwc2
+} // namespace android

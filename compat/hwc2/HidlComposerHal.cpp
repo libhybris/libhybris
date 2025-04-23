@@ -24,8 +24,7 @@
 
 #include "HidlComposerHal.h"
 
-#include <android/binder_manager.h>
-#include <composer-command-buffer/2.2/ComposerCommandBuffer.h>
+//#include <android/binder_manager.h>
 #include <hidl/HidlTransportSupport.h>
 #include <hidl/HidlTransportUtils.h>
 #include <log/log.h>
@@ -91,13 +90,14 @@ public:
 
     Return<void> onVsync(Display display, int64_t timestamp) override {
         if (!mVsyncSwitchingSupported) {
-            mCallback.onComposerHalVsync(display, timestamp, std::nullopt);
+            mCallback.onComposerHalVsync(display, timestamp, 0);
         } else {
             ALOGW("Unexpected onVsync callback on composer >= 2.4, ignoring.");
         }
         return Void();
     }
 
+#if ANDROID_VERSION_MAJOR >= 11
     Return<void> onVsync_2_4(Display display, int64_t timestamp,
                              VsyncPeriodNanos vsyncPeriodNanos) override {
         if (mVsyncSwitchingSupported) {
@@ -118,6 +118,7 @@ public:
         mCallback.onComposerHalSeamlessPossible(display);
         return Void();
     }
+#endif
 
 private:
     ComposerCallback& mCallback;
@@ -180,7 +181,9 @@ private:
 
 // assume NO_RESOURCES when Status::isOk returns false
 constexpr Error kDefaultError = Error::NO_RESOURCES;
+#if ANDROID_VERSION_MAJOR >= 11
 constexpr V2_4::Error kDefaultError_2_4 = static_cast<V2_4::Error>(kDefaultError);
+#endif
 
 template <typename T, typename U>
 T unwrapRet(Return<T>& ret, const U& default_val) {
@@ -215,6 +218,7 @@ HidlComposer::HidlComposer(const std::string& serviceName)
         LOG_ALWAYS_FATAL("failed to get hwcomposer service");
     }
 
+#if ANDROID_VERSION_MAJOR >= 11
     if (sp<IComposer> composer_2_4 = IComposer::castFrom(mComposer)) {
         composer_2_4->createClient_2_4([&](const auto& tmpError, const auto& tmpClient) {
             if (tmpError == V2_4::Error::NONE) {
@@ -224,7 +228,10 @@ HidlComposer::HidlComposer(const std::string& serviceName)
                 mClient_2_4 = tmpClient;
             }
         });
-    } else if (sp<V2_3::IComposer> composer_2_3 = V2_3::IComposer::castFrom(mComposer)) {
+    } else
+#endif
+#if ANDROID_VERSION_MAJOR >= 10
+    if (sp<V2_3::IComposer> composer_2_3 = V2_3::IComposer::castFrom(mComposer)) {
         composer_2_3->createClient_2_3([&](const auto& tmpError, const auto& tmpClient) {
             if (tmpError == Error::NONE) {
                 mClient = tmpClient;
@@ -232,18 +239,22 @@ HidlComposer::HidlComposer(const std::string& serviceName)
                 mClient_2_3 = tmpClient;
             }
         });
-    } else {
+    } else
+#endif
+    {
         mComposer->createClient([&](const auto& tmpError, const auto& tmpClient) {
             if (tmpError != Error::NONE) {
                 return;
             }
 
             mClient = tmpClient;
+#if ANDROID_VERSION_MAJOR >= 9
             if (sp<V2_2::IComposer> composer_2_2 = V2_2::IComposer::castFrom(mComposer)) {
                 mClient_2_2 = V2_2::IComposerClient::castFrom(mClient);
                 LOG_ALWAYS_FATAL_IF(mClient_2_2 == nullptr,
                                     "IComposer 2.2 did not return IComposerClient 2.2");
             }
+#endif
         });
     }
 
@@ -255,7 +266,9 @@ HidlComposer::HidlComposer(const std::string& serviceName)
 bool HidlComposer::isSupported(OptionalFeature feature) const {
     switch (feature) {
         case OptionalFeature::RefreshRateSwitching:
+#if ANDROID_VERSION_MAJOR >= 11
             return mClient_2_4 != nullptr;
+#endif
         case OptionalFeature::ExpectedPresentTime:
         case OptionalFeature::DisplayBrightnessCommand:
         case OptionalFeature::KernelIdleTimer:
@@ -289,9 +302,11 @@ void HidlComposer::registerCallback(const sp<IComposerCallback>& callback) {
     android::hardware::setMinSchedulerPolicy(callback, SCHED_FIFO, 2);
 
     auto ret = [&]() {
+#if ANDROID_VERSION_MAJOR >= 11
         if (mClient_2_4) {
             return mClient_2_4->registerCallback_2_4(callback);
         }
+#endif
         return mClient->registerCallback(callback);
     }();
     if (!ret.isOk()) {
@@ -312,6 +327,7 @@ Error HidlComposer::createVirtualDisplay(uint32_t width, uint32_t height, PixelF
                                          Display* outDisplay) {
     const uint32_t bufferSlotCount = 1;
     Error error = kDefaultError;
+#if ANDROID_VERSION_MAJOR >= 9
     if (mClient_2_2) {
         mClient_2_2->createVirtualDisplay_2_2(width, height,
                                               static_cast<types::V1_1::PixelFormat>(*format),
@@ -324,10 +340,12 @@ Error HidlComposer::createVirtualDisplay(uint32_t width, uint32_t height, PixelF
                                                   }
 
                                                   *outDisplay = tmpDisplay;
-                                                  *format = static_cast<types::V1_2::PixelFormat>(
+                                                  *format = static_cast<PixelFormat>(
                                                           tmpFormat);
                                               });
-    } else {
+    } else
+#endif
+    {
         mClient->createVirtualDisplay(width, height, static_cast<types::V1_0::PixelFormat>(*format),
                                       bufferSlotCount,
                                       [&](const auto& tmpError, const auto& tmpDisplay,
@@ -400,6 +418,7 @@ Error HidlComposer::getChangedCompositionTypes(
 Error HidlComposer::getColorModes(Display display, std::vector<ColorMode>* outModes) {
     Error error = kDefaultError;
 
+#if ANDROID_VERSION_MAJOR >= 10
     if (mClient_2_3) {
         mClient_2_3->getColorModes_2_3(display, [&](const auto& tmpError, const auto& tmpModes) {
             error = tmpError;
@@ -409,7 +428,10 @@ Error HidlComposer::getColorModes(Display display, std::vector<ColorMode>* outMo
 
             *outModes = tmpModes;
         });
-    } else if (mClient_2_2) {
+    } else
+#endif
+#if ANDROID_VERSION_MAJOR >= 9
+    if (mClient_2_2) {
         mClient_2_2->getColorModes_2_2(display, [&](const auto& tmpError, const auto& tmpModes) {
             error = tmpError;
             if (error != Error::NONE) {
@@ -420,7 +442,9 @@ Error HidlComposer::getColorModes(Display display, std::vector<ColorMode>* outMo
                 outModes->push_back(static_cast<ColorMode>(colorMode));
             }
         });
-    } else {
+    } else
+#endif
+    {
         mClient->getColorModes(display, [&](const auto& tmpError, const auto& tmpModes) {
             error = tmpError;
             if (error != Error::NONE) {
@@ -438,6 +462,7 @@ Error HidlComposer::getColorModes(Display display, std::vector<ColorMode>* outMo
 Error HidlComposer::getDisplayAttribute(Display display, Config config,
                                         IComposerClient::Attribute attribute, int32_t* outValue) {
     Error error = kDefaultError;
+#if ANDROID_VERSION_MAJOR >= 11
     if (mClient_2_4) {
         mClient_2_4->getDisplayAttribute_2_4(display, config, attribute,
                                              [&](const auto& tmpError, const auto& tmpValue) {
@@ -448,7 +473,9 @@ Error HidlComposer::getDisplayAttribute(Display display, Config config,
 
                                                  *outValue = tmpValue;
                                              });
-    } else {
+    } else
+#endif
+    {
         mClient->getDisplayAttribute(display, config,
                                      static_cast<V2_1::IComposerClient::Attribute>(attribute),
                                      [&](const auto& tmpError, const auto& tmpValue) {
@@ -530,6 +557,7 @@ Error HidlComposer::getHdrCapabilities(Display display, std::vector<Hdr>* outHdr
                                        float* outMaxLuminance, float* outMaxAverageLuminance,
                                        float* outMinLuminance) {
     Error error = kDefaultError;
+#if ANDROID_VERSION_MAJOR >= 10
     if (mClient_2_3) {
         mClient_2_3->getHdrCapabilities_2_3(display,
                                             [&](const auto& tmpError, const auto& tmpHdrTypes,
@@ -550,7 +578,9 @@ Error HidlComposer::getHdrCapabilities(Display display, std::vector<Hdr>* outHdr
                                                 *outMaxAverageLuminance = tmpMaxAverageLuminance;
                                                 *outMinLuminance = tmpMinLuminance;
                                             });
-    } else {
+    } else
+#endif
+    {
         mClient->getHdrCapabilities(display,
                                     [&](const auto& tmpError, const auto& tmpHdrTypes,
                                         const auto& tmpMaxLuminance,
@@ -626,14 +656,24 @@ Error HidlComposer::setClientTarget(Display display, uint32_t slot, const sp<Gra
     return Error::NONE;
 }
 
+#if ANDROID_VERSION_MAJOR < 9
+Error HidlComposer::setColorMode(Display display, ColorMode mode) {
+#else
 Error HidlComposer::setColorMode(Display display, ColorMode mode, RenderIntent renderIntent) {
+#endif
     hardware::Return<Error> ret(kDefaultError);
+#if ANDROID_VERSION_MAJOR >= 10
     if (mClient_2_3) {
         ret = mClient_2_3->setColorMode_2_3(display, mode, renderIntent);
-    } else if (mClient_2_2) {
+    } else
+#endif
+#if ANDROID_VERSION_MAJOR >= 9
+    if (mClient_2_2) {
         ret = mClient_2_2->setColorMode_2_2(display, static_cast<types::V1_1::ColorMode>(mode),
                                             renderIntent);
-    } else {
+    } else
+#endif
+    {
         ret = mClient->setColorMode(display, static_cast<types::V1_0::ColorMode>(mode));
     }
     return unwrapRet(ret);
@@ -657,9 +697,12 @@ Error HidlComposer::setOutputBuffer(Display display, const native_handle_t* buff
 
 Error HidlComposer::setPowerMode(Display display, IComposerClient::PowerMode mode) {
     Return<Error> ret(Error::UNSUPPORTED);
+#if ANDROID_VERSION_MAJOR >= 9
     if (mClient_2_2) {
         ret = mClient_2_2->setPowerMode_2_2(display, mode);
-    } else if (mode != IComposerClient::PowerMode::ON_SUSPEND) {
+    } else if (mode != IComposerClient::PowerMode::ON_SUSPEND)
+#endif
+    {
         ret = mClient->setPowerMode(display, static_cast<V2_1::IComposerClient::PowerMode>(mode));
     }
 
@@ -921,9 +964,12 @@ Error HidlComposer::execute() {
             error = Error::NO_RESOURCES;
         }
     };
+#if ANDROID_VERSION_MAJOR >= 9
     if (mClient_2_2) {
         ret = mClient_2_2->executeCommands_2_2(commandLength, commandHandles, hidl_callback);
-    } else {
+    } else
+#endif
+    {
         ret = mClient->executeCommands(commandLength, commandHandles, hidl_callback);
     }
     // executeCommands can fail because of out-of-fd and we do not want to
@@ -956,6 +1002,7 @@ Error HidlComposer::execute() {
 
 // Composer HAL 2.2
 
+#if ANDROID_VERSION_MAJOR >= 9
 Error HidlComposer::setLayerPerFrameMetadata(
         Display display, Layer layer,
         const std::vector<IComposerClient::PerFrameMetadata>& perFrameMetadatas) {
@@ -977,6 +1024,7 @@ std::vector<IComposerClient::PerFrameMetadataKey> HidlComposer::getPerFrameMetad
     }
 
     Error error = kDefaultError;
+#if ANDROID_VERSION_MAJOR >= 10
     if (mClient_2_3) {
         mClient_2_3->getPerFrameMetadataKeys_2_3(display,
                                                  [&](const auto& tmpError, const auto& tmpKeys) {
@@ -989,7 +1037,9 @@ std::vector<IComposerClient::PerFrameMetadataKey> HidlComposer::getPerFrameMetad
                                                      }
                                                      keys = tmpKeys;
                                                  });
-    } else {
+    } else
+#endif
+    {
         mClient_2_2
                 ->getPerFrameMetadataKeys(display, [&](const auto& tmpError, const auto& tmpKeys) {
                     error = tmpError;
@@ -1026,9 +1076,12 @@ Error HidlComposer::getRenderIntents(Display display, ColorMode colorMode,
         *outRenderIntents = tmpKeys;
     };
 
+#if ANDROID_VERSION_MAJOR >= 10
     if (mClient_2_3) {
         mClient_2_3->getRenderIntents_2_3(display, colorMode, getRenderIntentsLambda);
-    } else {
+    } else
+#endif
+    {
         mClient_2_2->getRenderIntents(display, static_cast<types::V1_1::ColorMode>(colorMode),
                                       getRenderIntentsLambda);
     }
@@ -1054,9 +1107,11 @@ Error HidlComposer::getDataspaceSaturationMatrix(Dataspace dataspace, mat4* outM
 
     return error;
 }
+#endif
 
 // Composer HAL 2.3
 
+#if ANDROID_VERSION_MAJOR >= 10
 Error HidlComposer::getDisplayIdentificationData(Display display, uint8_t* outPort,
                                                  std::vector<uint8_t>* outData) {
     if (!mClient_2_3) {
@@ -1175,30 +1230,31 @@ Error HidlComposer::setDisplayBrightness(Display display, float brightness, floa
     return mClient_2_3->setDisplayBrightness(display, brightness);
 }
 
-// Composer HAL 2.4
-
 Error HidlComposer::getDisplayCapabilities(Display display,
                                            std::vector<DisplayCapability>* outCapabilities) {
     if (!mClient_2_3) {
         return Error::UNSUPPORTED;
     }
 
-    V2_4::Error error = kDefaultError_2_4;
+    Error error = kDefaultError;
+#if ANDROID_VERSION_MAJOR >= 11
     if (mClient_2_4) {
         mClient_2_4->getDisplayCapabilities_2_4(display,
                                                 [&](const auto& tmpError, const auto& tmpCaps) {
-                                                    error = tmpError;
-                                                    if (error != V2_4::Error::NONE) {
+                                                    error = static_cast<Error>(tmpError);
+                                                    if (error != Error::NONE) {
                                                         return;
                                                     }
                                                     *outCapabilities =
                                                             translate<DisplayCapability>(tmpCaps);
                                                 });
-    } else {
+    } else
+#endif // ANDROID_VERSION_MAJOR >= 11
+    {
         mClient_2_3
                 ->getDisplayCapabilities(display, [&](const auto& tmpError, const auto& tmpCaps) {
-                    error = static_cast<V2_4::Error>(tmpError);
-                    if (error != V2_4::Error::NONE) {
+                    error = tmpError;
+                    if (error != Error::NONE) {
                         return;
                     }
 
@@ -1206,9 +1262,13 @@ Error HidlComposer::getDisplayCapabilities(Display display,
                 });
     }
 
-    return static_cast<Error>(error);
+    return error;
 }
+#endif // ANDROID_VERSION_MAJOR >= 10
 
+// Composer HAL 2.4
+
+#if ANDROID_VERSION_MAJOR >= 11
 V2_4::Error HidlComposer::getDisplayConnectionType(
         Display display, IComposerClient::DisplayConnectionType* outType) {
     using Error = V2_4::Error;
@@ -1343,38 +1403,6 @@ V2_4::Error HidlComposer::getLayerGenericMetadataKeys(
     return error;
 }
 
-#if ANDROID_VERSION_MAJOR >= 13
-Error HidlComposer::setBootDisplayConfig(Display /*displayId*/, Config) {
-    return Error::UNSUPPORTED;
-}
-
-Error HidlComposer::clearBootDisplayConfig(Display /*displayId*/) {
-    return Error::UNSUPPORTED;
-}
-
-Error HidlComposer::getPreferredBootDisplayConfig(Display /*displayId*/, Config*) {
-    return Error::UNSUPPORTED;
-}
-#endif
-
-#if ANDROID_VERSION_MAJOR >= 14
-Error HidlComposer::getHdrConversionCapabilities(std::vector<HdrConversionCapability>*) {
-    return Error::UNSUPPORTED;
-}
-
-Error HidlComposer::setHdrConversionStrategy(HdrConversionStrategy, Hdr*) {
-    return Error::UNSUPPORTED;
-}
-
-Error HidlComposer::setRefreshRateChangedCallbackDebugEnabled(Display, bool) {
-    return Error::UNSUPPORTED;
-}
-
-Error HidlComposer::notifyExpectedPresent(Display, nsecs_t, int32_t) {
-    return Error::UNSUPPORTED;
-}
-#endif
-
 Error HidlComposer::getClientTargetProperty(
         Display display, ClientTargetProperty* outClientTargetProperty) {
 #if ANDROID_VERSION_MAJOR < 13
@@ -1393,8 +1421,21 @@ Error HidlComposer::getClientTargetProperty(
 #endif
     return Error::NONE;
 }
+#endif // ANDROID_VERSION_MAJOR >= 11
 
 #if ANDROID_VERSION_MAJOR >= 13
+Error HidlComposer::setBootDisplayConfig(Display /*displayId*/, Config) {
+    return Error::UNSUPPORTED;
+}
+
+Error HidlComposer::clearBootDisplayConfig(Display /*displayId*/) {
+    return Error::UNSUPPORTED;
+}
+
+Error HidlComposer::getPreferredBootDisplayConfig(Display /*displayId*/, Config*) {
+    return Error::UNSUPPORTED;
+}
+
 Error HidlComposer::setLayerBrightness(Display, Layer, float) {
     return Error::NONE;
 }
@@ -1423,6 +1464,24 @@ Error HidlComposer::getPhysicalDisplayOrientation(Display, AidlTransform*) {
 }
 #endif
 
+#if ANDROID_VERSION_MAJOR >= 14
+Error HidlComposer::getHdrConversionCapabilities(std::vector<HdrConversionCapability>*) {
+    return Error::UNSUPPORTED;
+}
+
+Error HidlComposer::setHdrConversionStrategy(HdrConversionStrategy, Hdr*) {
+    return Error::UNSUPPORTED;
+}
+
+Error HidlComposer::setRefreshRateChangedCallbackDebugEnabled(Display, bool) {
+    return Error::UNSUPPORTED;
+}
+
+Error HidlComposer::notifyExpectedPresent(Display, nsecs_t, int32_t) {
+    return Error::UNSUPPORTED;
+}
+#endif
+
 void HidlComposer::registerCallback(ComposerCallback& callback) {
     const bool vsyncSwitchingSupported =
             isSupported(Hwc2::Composer::OptionalFeature::RefreshRateSwitching);
@@ -1448,7 +1507,8 @@ Error CommandReader::parse() {
     uint16_t length = 0;
 
     while (!isEmpty()) {
-        if (!beginCommand(&command, &length)) {
+        if (!beginCommand(reinterpret_cast<V2_1::IComposerClient::Command*>(&command),
+            &length)) {
             break;
         }
 
@@ -1475,9 +1535,11 @@ Error CommandReader::parse() {
             case IComposerClient::Command ::SET_PRESENT_OR_VALIDATE_DISPLAY_RESULT:
                 parsed = parseSetPresentOrValidateDisplayResult(length);
                 break;
+#if ANDROID_VERSION_MAJOR >= 11
             case IComposerClient::Command::SET_CLIENT_TARGET_PROPERTY:
                 parsed = parseSetClientTargetProperty(length);
                 break;
+#endif
             default:
                 parsed = false;
                 break;
@@ -1607,6 +1669,7 @@ bool CommandReader::parseSetPresentOrValidateDisplayResult(uint16_t length) {
     return true;
 }
 
+#if ANDROID_VERSION_MAJOR >= 11
 bool CommandReader::parseSetClientTargetProperty(uint16_t length) {
     if (length != CommandWriterBase::kSetClientTargetPropertyLength || !mCurrentReturnData) {
         return false;
@@ -1615,6 +1678,7 @@ bool CommandReader::parseSetClientTargetProperty(uint16_t length) {
     mCurrentReturnData->clientTargetProperty.dataspace = static_cast<Dataspace>(readSigned());
     return true;
 }
+#endif
 
 void CommandReader::resetData() {
     mErrors.clear();
@@ -1727,6 +1791,7 @@ void CommandReader::takePresentOrValidateStage(Display display, uint32_t* state)
     *state = data.presentOrValidateState;
 }
 
+#if ANDROID_VERSION_MAJOR >= 11
 void CommandReader::takeClientTargetProperty(
         Display display, IComposerClient::ClientTargetProperty* outClientTargetProperty) {
     auto found = mReturnData.find(display);
@@ -1741,6 +1806,7 @@ void CommandReader::takeClientTargetProperty(
     ReturnData& data = found->second;
     *outClientTargetProperty = data.clientTargetProperty;
 }
+#endif
 
 } // namespace Hwc2
 } // namespace android

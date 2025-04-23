@@ -52,7 +52,9 @@ using android::Fence;
 using android::FloatRect;
 using android::GraphicBuffer;
 using android::HdrCapabilities;
+#if ANDROID_VERSION_MAJOR >= 9
 using android::HdrMetadata;
+#endif
 using android::Rect;
 using android::Region;
 using android::sp;
@@ -63,6 +65,7 @@ using namespace android::hardware::graphics::composer::hal;
 
 namespace Hwc2 = android::Hwc2;
 
+#if ANDROID_VERSION_MAJOR >= 9
 namespace {
 
 inline bool hasMetadataKey(const std::set<Hwc2::PerFrameMetadataKey>& keys,
@@ -71,6 +74,7 @@ inline bool hasMetadataKey(const std::set<Hwc2::PerFrameMetadataKey>& keys,
 }
 
 } // namespace anonymous
+#endif // ANDROID_VERSION_MAJOR >= 9
 
 // Device methods
 
@@ -99,11 +103,13 @@ uint32_t Device::getMaxVirtualDisplayCount() const
     return mComposer->getMaxVirtualDisplayCount();
 }
 
+#if ANDROID_VERSION_MAJOR >= 10
 Error Device::getDisplayIdentificationData(hal::HWDisplayId hwcDisplayId, uint8_t* outPort,
                                            std::vector<uint8_t>* outData) const {
     auto intError = mComposer->getDisplayIdentificationData(hwcDisplayId, outPort, outData);
     return static_cast<Error>(intError);
 }
+#endif
 
 Error Device::createVirtualDisplay(uint32_t width, uint32_t height,
         hal::PixelFormat* format, Display** outDisplay)
@@ -336,6 +342,7 @@ bool Display::isVsyncPeriodSwitchSupported() const {
     return mComposer.isSupported(android::Hwc2::Composer::OptionalFeature::RefreshRateSwitching);
 }
 
+#if ANDROID_VERSION_MAJOR >= 11
 Error Display::getDisplayVsyncPeriod(nsecs_t* outVsyncPeriod) const {
     ALOGV("[%" PRIu64 "] getDisplayVsyncPeriod", mId);
 
@@ -363,6 +370,7 @@ Error Display::getDisplayVsyncPeriod(nsecs_t* outVsyncPeriod) const {
 
     return error;
 }
+#endif
 
 Error Display::getActiveConfigIndex(int* outIndex) const {
     ALOGV("[%" PRIu64 "] getActiveConfigIndex", mId);
@@ -438,6 +446,7 @@ Error Display::getColorModes(std::vector<ColorMode>* outModes) const
     return static_cast<Error>(intError);
 }
 
+#if ANDROID_VERSION_MAJOR >= 9
 int32_t Display::getSupportedPerFrameMetadata() const
 {
     int32_t supportedPerFrameMetadata = 0;
@@ -467,10 +476,12 @@ int32_t Display::getSupportedPerFrameMetadata() const
         supportedPerFrameMetadata |= HdrMetadata::Type::CTA861_3;
     }
 
+#if ANDROID_VERSION_MAJOR >= 10
     // HDR10PLUS
     if (hasMetadataKey(keys, Hwc2::PerFrameMetadataKey::HDR10_PLUS_SEI)) {
         supportedPerFrameMetadata |= HdrMetadata::Type::HDR10PLUS;
     }
+#endif
 
     return supportedPerFrameMetadata;
 }
@@ -487,6 +498,7 @@ Error Display::getDataspaceSaturationMatrix(Dataspace dataspace, android::mat4* 
     auto intError = mComposer.getDataspaceSaturationMatrix(dataspace, outMatrix);
     return static_cast<Error>(intError);
 }
+#endif // ANDROID_VERSION_MAJOR >= 9
 
 std::vector<std::shared_ptr<const Display::Config>> Display::getConfigs() const
 {
@@ -534,21 +546,7 @@ Error Display::getRequests(HWC2::DisplayRequest* outDisplayRequests,
     return Error::NONE;
 }
 
-Error Display::getConnectionType(ui::DisplayConnectionType* outType) const {
-    if (mType != DisplayType::PHYSICAL) return Error::BAD_DISPLAY;
-
-    using ConnectionType = Hwc2::IComposerClient::DisplayConnectionType;
-    ConnectionType connectionType;
-    const auto error = static_cast<Error>(mComposer.getDisplayConnectionType(mId, &connectionType));
-    if (error != Error::NONE) {
-        return error;
-    }
-
-    *outType = connectionType == ConnectionType::INTERNAL ? ui::DisplayConnectionType::Internal
-                                                          : ui::DisplayConnectionType::External;
-    return Error::NONE;
-}
-
+#if ANDROID_VERSION_MAJOR >= 10
 bool Display::hasCapability(DisplayCapability capability) const {
     std::scoped_lock lock(mDisplayCapabilitiesMutex);
     if (mDisplayCapabilities) {
@@ -594,13 +592,6 @@ Error Display::getHdrCapabilities(HdrCapabilities* outCapabilities) const
     return Error::NONE;
 }
 
-#if ANDROID_VERSION_MAJOR >= 14
-Error Display::getOverlaySupport(OverlayProperties* outProperties) const {
-    auto intError = mComposer.getOverlaySupport(outProperties);
-    return static_cast<Error>(intError);
-}
-#endif
-
 Error Display::getDisplayedContentSamplingAttributes(hal::PixelFormat* outFormat,
                                                      Dataspace* outDataspace,
                                                      uint8_t* outComponentMask) const {
@@ -621,6 +612,31 @@ Error Display::getDisplayedContentSample(uint64_t maxFrames, uint64_t timestamp,
     auto intError = mComposer.getDisplayedContentSample(mId, maxFrames, timestamp, outStats);
     return static_cast<Error>(intError);
 }
+#endif // ANDROID_VERSION_MAJOR >= 10
+
+#if ANDROID_VERSION_MAJOR >= 11
+Error Display::getConnectionType(ui::DisplayConnectionType* outType) const {
+    if (mType != DisplayType::PHYSICAL) return Error::BAD_DISPLAY;
+
+    using ConnectionType = Hwc2::IComposerClient::DisplayConnectionType;
+    ConnectionType connectionType;
+    const auto error = static_cast<Error>(mComposer.getDisplayConnectionType(mId, &connectionType));
+    if (error != Error::NONE) {
+        return error;
+    }
+
+    *outType = connectionType == ConnectionType::INTERNAL ? ui::DisplayConnectionType::Internal
+                                                          : ui::DisplayConnectionType::External;
+    return Error::NONE;
+}
+#endif
+
+#if ANDROID_VERSION_MAJOR >= 14
+Error Display::getOverlaySupport(OverlayProperties* outProperties) const {
+    auto intError = mComposer.getOverlaySupport(outProperties);
+    return static_cast<Error>(intError);
+}
+#endif
 
 Error Display::getReleaseFences(std::unordered_map<HWC2::Layer*, sp<Fence>>* outFences) const {
     std::vector<Hwc2::Layer> layerIds;
@@ -674,6 +690,7 @@ Error Display::present(sp<Fence>* outPresentFence)
     return Error::NONE;
 }
 
+#if ANDROID_VERSION_MAJOR >= 11
 Error Display::setActiveConfigWithConstraints(hal::HWConfigId configId,
                                               const VsyncPeriodChangeConstraints& constraints,
                                               VsyncPeriodChangeTimeline* outTimeline) {
@@ -713,6 +730,7 @@ Error Display::setActiveConfigWithConstraints(hal::HWConfigId configId,
     outTimeline->refreshTimeNanos = now;
     return static_cast<Error>(intError_2_4);
 }
+#endif // ANDROID_VERSION_MAJOR >= 11
 
 Error Display::setClientTarget(uint32_t slot, const sp<GraphicBuffer>& target,
                                const sp<Fence>& acquireFence, Dataspace dataspace,
@@ -725,11 +743,19 @@ Error Display::setClientTarget(uint32_t slot, const sp<GraphicBuffer>& target,
     return static_cast<Error>(intError);
 }
 
+#if ANDROID_VERSION_MAJOR < 9
+Error Display::setColorMode(ColorMode mode)
+{
+    auto intError = mComposer.setColorMode(mId, mode);
+    return static_cast<Error>(intError);
+}
+#else
 Error Display::setColorMode(ColorMode mode, RenderIntent renderIntent)
 {
     auto intError = mComposer.setColorMode(mId, mode, renderIntent);
     return static_cast<Error>(intError);
 }
+#endif
 
 Error Display::setColorTransform(const android::mat4& matrix) {
     auto intError = mComposer.setColorTransform(mId, matrix.asArray());
@@ -752,6 +778,7 @@ Error Display::setPowerMode(PowerMode mode)
     auto intError = mComposer.setPowerMode(mId, intMode);
 
     if (mode == PowerMode::ON) {
+#if ANDROID_VERSION_MAJOR >= 10
         std::call_once(mDisplayCapabilityQueryFlag, [this]() {
             std::vector<DisplayCapability> tmpCapabilities;
             auto error =
@@ -775,6 +802,7 @@ Error Display::setPowerMode(PowerMode mode)
                 }
             }
         });
+#endif // ANDROID_VERSION_MAJOR >= 10
     }
 
     return static_cast<Error>(intError);
@@ -842,7 +870,7 @@ ftl::Future<Error> Display::setDisplayBrightness(
         return static_cast<Error>(intError);
     });
 }
-#else
+#elif ANDROID_VERSION_MAJOR >= 10
 Error Display::setDisplayBrightness(
         float brightness, float brightnessNits,
         const Hwc2::Composer::DisplayBrightnessOptions& options) {
@@ -869,6 +897,7 @@ Error Display::getPreferredBootDisplayConfig(hal::HWConfigId* configId) const {
 }
 #endif
 
+#if ANDROID_VERSION_MAJOR >= 11
 Error Display::setAutoLowLatencyMode(bool on) {
     auto intError = mComposer.setAutoLowLatencyMode(mId, on);
     return static_cast<Error>(intError);
@@ -893,6 +922,7 @@ Error Display::getClientTargetProperty(
     const auto error = mComposer.getClientTargetProperty(mId, outClientTargetProperty);
     return static_cast<Error>(error);
 }
+#endif // ANDROID_VERSION_MAJOR >= 11
 
 #if ANDROID_VERSION_MAJOR >= 13
 Error Display::getDisplayDecorationSupport(
@@ -942,7 +972,9 @@ void Display::loadConfig(HWConfigId configId) {
                           .setVsyncPeriod(getAttribute(configId, hal::Attribute::VSYNC_PERIOD))
                           .setDpiX(getAttribute(configId, hal::Attribute::DPI_X))
                           .setDpiY(getAttribute(configId, hal::Attribute::DPI_Y))
+#if ANDROID_VERSION_MAJOR >= 11
                           .setConfigGroup(getAttribute(configId, hal::Attribute::CONFIG_GROUP))
+#endif
                           .build();
     mConfigs.emplace(configId, std::move(config));
 }
@@ -1131,6 +1163,7 @@ Error Layer::setDataspace(Dataspace dataspace)
     return static_cast<Error>(intError);
 }
 
+#if ANDROID_VERSION_MAJOR >= 9
 Error Layer::setPerFrameMetadata(const int32_t supportedPerFrameMetadata,
         const android::HdrMetadata& metadata)
 {
@@ -1183,6 +1216,7 @@ Error Layer::setPerFrameMetadata(const int32_t supportedPerFrameMetadata,
         return error;
     }
 
+#if ANDROID_VERSION_MAJOR >= 10
     std::vector<Hwc2::PerFrameMetadataBlob> perFrameMetadataBlobs;
     if (validTypes & HdrMetadata::HDR10PLUS) {
         if (CC_UNLIKELY(mHdrMetadata.hdr10plus.size() == 0)) {
@@ -1192,10 +1226,13 @@ Error Layer::setPerFrameMetadata(const int32_t supportedPerFrameMetadata,
         perFrameMetadataBlobs.push_back(
                 {Hwc2::PerFrameMetadataKey::HDR10_PLUS_SEI, mHdrMetadata.hdr10plus});
     }
-
     return static_cast<Error>(
             mComposer.setLayerPerFrameMetadataBlobs(mDisplay->getId(), mId, perFrameMetadataBlobs));
+#else
+    return Error::NONE;
+#endif
 }
+#endif // ANDROID_VERSION_MAJOR >= 9
 
 Error Layer::setDisplayFrame(const Rect& frame)
 {
@@ -1284,6 +1321,7 @@ Error Layer::setZOrder(uint32_t z)
 }
 
 // Composer HAL 2.3
+#if ANDROID_VERSION_MAJOR >= 10
 Error Layer::setColorTransform(const android::mat4& matrix) {
     if (CC_UNLIKELY(!mDisplay)) {
         return Error::BAD_DISPLAY;
@@ -1300,8 +1338,10 @@ Error Layer::setColorTransform(const android::mat4& matrix) {
     mColorMatrix = matrix;
     return error;
 }
+#endif
 
 // Composer HAL 2.4
+#if ANDROID_VERSION_MAJOR >= 11
 Error Layer::setLayerGenericMetadata(const std::string& name, bool mandatory,
                                      const std::vector<uint8_t>& value) {
     if (CC_UNLIKELY(!mDisplay)) {
@@ -1312,9 +1352,10 @@ Error Layer::setLayerGenericMetadata(const std::string& name, bool mandatory,
             mComposer.setLayerGenericMetadata(mDisplay->getId(), mId, name, mandatory, value);
     return static_cast<Error>(intError);
 }
+#endif
 
-#if ANDROID_VERSION_MAJOR >= 13
 // AIDL HAL
+#if ANDROID_VERSION_MAJOR >= 13
 Error Layer::setBrightness(float brightness) {
     if (CC_UNLIKELY(!mDisplay)) {
         return Error::BAD_DISPLAY;
