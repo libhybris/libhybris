@@ -71,6 +71,8 @@ static EGLContext  (*_eglCreateContext)(EGLDisplay dpy, EGLConfig config,
 static EGLSurface  (*_eglGetCurrentSurface)(EGLint readdraw) = NULL;
 
 static EGLBoolean  (*_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface) = NULL;
+static EGLBoolean  (*_eglSwapBuffersWithDamageKHR)(EGLDisplay dpy, EGLSurface surface, EGLint *rects, EGLint n_rects) = NULL;
+static EGLBoolean  (*_eglSwapBuffersWithDamageEXT)(EGLDisplay dpy, EGLSurface surface, EGLint *rects, EGLint n_rects) = NULL;
 
 
 static EGLImageKHR (*_eglCreateImageKHR)(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list) = NULL;
@@ -441,19 +443,33 @@ HYBRIS_IMPLEMENT_FUNCTION1(egl, EGLBoolean, eglWaitNative, EGLint);
 
 EGLBoolean _my_eglSwapBuffersWithDamageEXT(EGLDisplay dpy, EGLSurface surface, EGLint *rects, EGLint n_rects)
 {
-	EGLNativeWindowType win;
+	EGLNativeWindowType win = 0;
 	EGLBoolean ret;
 	HYBRIS_TRACE_BEGIN("hybris-egl", "eglSwapBuffersWithDamageEXT", "");
 	HYBRIS_DLSYSM(egl, &_eglSwapBuffers, "eglSwapBuffers");
+	HYBRIS_DLSYSM(egl, &_eglSwapBuffersWithDamageKHR, "eglSwapBuffersWithDamageKHR");
+	HYBRIS_DLSYSM(egl, &_eglSwapBuffersWithDamageEXT, "eglSwapBuffersWithDamageEXT");
 
 	if (egl_helper_has_mapping(surface)) {
 		win = egl_helper_get_mapping(surface);
+	}
+
+	if (win) {
 		ws_prepareSwap(dpy, win, rects, n_rects);
-		ret = (*_eglSwapBuffers)(dpy, surface);
-		ws_finishSwap(dpy, win);
+	}
+
+	if (_eglSwapBuffersWithDamageKHR) {
+		ret = (*_eglSwapBuffersWithDamageKHR)(dpy, surface, rects, n_rects);
+	} else if (_eglSwapBuffersWithDamageEXT) {
+		ret = (*_eglSwapBuffersWithDamageEXT)(dpy, surface, rects, n_rects);
 	} else {
 		ret = (*_eglSwapBuffers)(dpy, surface);
 	}
+
+	if (win) {
+		ws_finishSwap(dpy, win);
+	}
+
 	HYBRIS_TRACE_END("hybris-egl", "eglSwapBuffersWithDamageEXT", "");
 	return ret;
 }
@@ -526,6 +542,7 @@ struct FuncNamePair {
 static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 	OVERRIDE_MY(eglCreateImageKHR),
 	OVERRIDE_MY(eglSwapBuffersWithDamageEXT),
+	OVERRIDE_TO(eglSwapBuffersWithDamageKHR, _my_eglSwapBuffersWithDamageEXT),
 	OVERRIDE_MY(glEGLImageTargetTexture2DOES),
 	OVERRIDE_MY(eglDestroyImageKHR),
 	OVERRIDE_SAMENAME(eglGetError),
