@@ -162,17 +162,6 @@ AC_ARG_WITH(default-egl-platform,
   [ ])
 AC_SUBST(DEFAULT_EGL_PLATFORM)
 
-if test "x$arch" = "xarm" -o "x$arch" = "xx86"; then
-  DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib:/system/lib:/odm/lib"
-else
-  DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib64:/system/lib64:/odm/lib64"
-fi
-AC_ARG_WITH(default-hybris-ld-library-path,
-  [  --with-default-hybris-ld-library-path=PATH1:PATH2:...     Use PATH1:PATH2 for default HYBRIS_LD_LIBRARY_PATH if not specified by environment ],
-  [ DEFAULT_HYBRIS_LD_LIBRARY_PATH="$withval" ],
-  [ ])
-AC_SUBST(DEFAULT_HYBRIS_LD_LIBRARY_PATH)
-
 AC_ARG_WITH(android-headers,
   [  --with-android-headers=DIR     Use android headers available in DIR. See utils/extract-headers.sh ],
   [
@@ -271,6 +260,25 @@ AM_CONDITIONAL([HAS_ANDROID_4_1_0], [test $android_headers_major -ge 4 -a $andro
 AM_CONDITIONAL([HAS_ANDROID_4_0_3], [test $android_headers_major -ge 4 -a $android_headers_patch -ge 3 ])
 AM_CONDITIONAL([HAS_ANDROID_4_0_0], [test $android_headers_major -ge 4 -a $android_headers_minor -ge 0 ])
 AM_CONDITIONAL([HAS_ANDROID_2_3_0], [test $android_headers_major -ge 2 -a $android_headers_minor -ge 3 ])
+
+if test $android_headers_major -ge 7; then
+  if test "x$arch" = "xarm" -o "x$arch" = "xx86"; then
+    DEFAULT_HYBRIS_LD_LIBRARY_PATH="/system/lib:/odm/lib:/vendor/lib"
+  else
+    DEFAULT_HYBRIS_LD_LIBRARY_PATH="/system/lib64:/odm/lib64:/vendor/lib64"
+  fi
+else
+  if test "x$arch" = "xarm" -o "x$arch" = "xx86"; then
+    DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib:/system/lib:/odm/lib"
+  else
+    DEFAULT_HYBRIS_LD_LIBRARY_PATH="/vendor/lib64:/system/lib64:/odm/lib64"
+  fi
+fi
+AC_ARG_WITH(default-hybris-ld-library-path,
+  [  --with-default-hybris-ld-library-path=PATH1:PATH2:...     Use PATH1:PATH2 for default HYBRIS_LD_LIBRARY_PATH if not specified by environment ],
+  [ DEFAULT_HYBRIS_LD_LIBRARY_PATH="$withval" ],
+  [ ])
+AC_SUBST(DEFAULT_HYBRIS_LD_LIBRARY_PATH)
 
 AC_ARG_ENABLE(mali-quirks,
   [  --enable-mali-quirks            Enable Mali GPU driver quirks (default=disabled)],
