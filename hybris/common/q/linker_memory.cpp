@@ -40,6 +40,7 @@
 
 #define gettid() syscall(SYS_gettid)
 
+#if DISABLED_FOR_HYBRIS_SUPPORT
 static BionicAllocator g_bionic_allocator;
 static std::atomic<pid_t> fallback_tid(0);
 
@@ -98,3 +99,4 @@ void* reallocarray(void* p, size_t item_count, size_t item_size) {
 void free(void* ptr) {
   get_allocator().free(ptr);
 }
+#endif

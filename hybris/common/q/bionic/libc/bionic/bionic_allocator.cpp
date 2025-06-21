@@ -348,7 +348,7 @@ void* BionicAllocator::realloc(void* ptr, size_t size) {
   }
 
   if (size == 0) {
-    //free(ptr);
+    free(ptr);
     return nullptr;
   }
 
@@ -370,7 +370,7 @@ void* BionicAllocator::realloc(void* ptr, size_t size) {
   if (old_size < size) {
     void *result = alloc(size);
     memcpy(result, ptr, old_size);
-    //free(ptr);
+    free(ptr);
     return result;
   }
 
@@ -392,7 +392,7 @@ void BionicAllocator::free(void* ptr) {
       async_safe_fatal("invalid pointer %p (invalid allocator address for the page)", ptr);
     }
 
-    //allocator->free(ptr);
+    allocator->free(ptr);
   }
 }
 
