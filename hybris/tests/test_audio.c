@@ -15,6 +15,9 @@
  *
  */
 
+/* Allows system/audio.h to see strdup() */
+#define _POSIX_C_SOURCE 200809L
+
 #include <android-config.h>
 #include <memory.h>
 #include <assert.h>
