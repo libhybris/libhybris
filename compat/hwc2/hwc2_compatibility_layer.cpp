@@ -241,12 +241,15 @@ hwc2_error_t hwc2_compat_display_set_client_target(hwc2_compat_display_t* displa
                                             const int32_t acquireFenceFd,
                                             android_dataspace_t dataspace)
 {
-    android::sp<android::GraphicBuffer> target(
-        new android::GraphicBuffer(buffer->handle,
-            android::GraphicBuffer::WRAP_HANDLE,
-            buffer->width, buffer->height,
-            buffer->format, /* layerCount */ 1,
-            buffer->usage, buffer->stride));
+    android::sp<android::GraphicBuffer> target = nullptr;
+
+    if (buffer) {
+        target = new android::GraphicBuffer(buffer->handle,
+                     android::GraphicBuffer::WRAP_HANDLE,
+                     buffer->width, buffer->height,
+                     buffer->format, /* layerCount */ 1,
+                     buffer->usage, buffer->stride);
+    }
 
     android::sp<android::Fence> acquireFence(
             new android::Fence(acquireFenceFd));
