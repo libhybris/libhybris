@@ -59,6 +59,7 @@ public:
     static void resize_callback(struct wl_egl_window *egl_window, void *);
     static void destroy_window_callback(void *data);
     struct wl_event_queue *wl_queue;
+    struct wl_egl_window *m_window;
 
 protected:
     // overloads from BaseNativeWindow
@@ -90,7 +91,6 @@ private:
 
     std::list<WaylandNativeWindowBuffer *> m_bufList;
     std::list<WaylandNativeWindowBuffer *> fronted;
-    struct wl_egl_window *m_window;
     struct wl_display *m_display;
     int m_width;
     int m_height;

@@ -30,6 +30,7 @@ struct ws_vulkan_interface {
 
 /* Defined in vulkan.c */
 extern struct ws_vulkan_interface hybris_vulkan_interface;
+struct WaylandDisplay;
 
 struct ws_module {
     void (*init_module)(struct ws_vulkan_interface *vulkan_interface);
@@ -40,6 +41,8 @@ struct ws_module {
     VkResult (*vkCreateWaylandSurfaceKHR)(VkInstance instance, const VkWaylandSurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
     VkBool32 (*vkGetPhysicalDeviceWaylandPresentationSupportKHR)(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, struct wl_display* display);
     void (*vkDestroySurfaceKHR)(VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator);
+    VkResult (*vkGetPhysicalDeviceSurfaceCapabilitiesKHR)(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities);
+    VkResult (*vkCreateSwapchainKHR)(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain);
 #endif
     void (*vkSetInstanceProcAddrFunc)(PFN_vkVoidFunction addr);
 };
@@ -50,6 +53,13 @@ VkResult ws_vkCreateInstance(const VkInstanceCreateInfo *pCreateInfo, const VkAl
 VkResult ws_vkCreateWaylandSurfaceKHR(VkInstance instance, const VkWaylandSurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
 VkBool32 ws_vkGetPhysicalDeviceWaylandPresentationSupportKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, struct wl_display* display);
 void ws_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator);
+VkResult ws_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities);
+VkResult ws_vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain);
+
+int vulkan_wayland_has_mapping(VkSurfaceKHR surface);
+void vulkan_wayland_push_mapping(VkSurfaceKHR surface, struct WaylandDisplay *wdpy);
+struct WaylandDisplay *vulkan_wayland_pop_mapping(VkSurfaceKHR surface);
+struct WaylandDisplay *vulkan_wayland_get_mapping(VkSurfaceKHR surface);
 #endif
 void ws_vkSetInstanceProcAddrFunc(PFN_vkVoidFunction addr);
 #endif
