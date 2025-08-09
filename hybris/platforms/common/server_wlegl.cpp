@@ -62,10 +62,7 @@ server_wlegl_create_handle(struct wl_client *client,
 		return;
 	}
 
-	handle = server_wlegl_handle_create(id);
-	wl_array_copy(&handle->ints, ints);
-	handle->num_fds = num_fds;
-	wl_client_add_resource(client, &handle->resource);
+	handle = server_wlegl_handle_create(client, id, num_fds, ints);
 }
 
 static void

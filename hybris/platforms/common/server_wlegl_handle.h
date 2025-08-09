@@ -30,8 +30,9 @@
 #include <wayland-server.h>
 #include <cutils/native_handle.h>
 #include <system/window.h>
+
 struct server_wlegl_handle {
-	struct wl_resource resource;
+	struct wl_resource *resource;
 
 	struct wl_array ints;
 	struct wl_array fds;
@@ -40,13 +41,12 @@ struct server_wlegl_handle {
 };
 
 server_wlegl_handle *
-server_wlegl_handle_create(uint32_t id);
+server_wlegl_handle_create(wl_client *client, uint32_t id,
+                           int32_t num_fds,
+                           struct wl_array *ints);
 
-static inline server_wlegl_handle *
-server_wlegl_handle_from(struct wl_resource *resource)
-{
-	return reinterpret_cast<server_wlegl_handle *>(resource->data);
-}
+server_wlegl_handle *
+server_wlegl_handle_from(struct wl_resource *resource);
 
 buffer_handle_t
 server_wlegl_handle_to_native(server_wlegl_handle *handle);
