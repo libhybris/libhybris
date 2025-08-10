@@ -229,23 +229,7 @@ int WaylandNativeWindow::setSwapInterval(int interval) {
 
 void WaylandNativeWindow::releaseBuffer(struct wl_buffer *buffer)
 {
-    std::list<WaylandNativeWindowBuffer *>::iterator it = posted.begin();
-
-    for (; it != posted.end(); ++it)
-    {
-        if ((*it)->wlbuffer == buffer)
-            break;
-    }
-
-    if (it != posted.end())
-    {
-        WaylandNativeWindowBuffer* pwnb = *it;
-        posted.erase(it);
-        TRACE("released posted buffer: %p", buffer);
-        pwnb->busy = 0;
-        unlock();
-        return;
-    }
+    std::list<WaylandNativeWindowBuffer *>::iterator it;
 
     it = fronted.begin();
 

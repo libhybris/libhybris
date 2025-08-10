@@ -230,13 +230,6 @@ extern "C" void waylandws_DestroyWindow(EGLNativeWindowType win)
 	window->common.decRef(&window->common);
 }
 
-extern "C" int waylandws_post(EGLNativeWindowType win, void *buffer)
-{
-	struct wl_egl_window *eglwin = (struct wl_egl_window *) win;
-
-	return ((WaylandNativeWindow *) eglwin->driver_private)->postBuffer((ANativeWindowBuffer *) buffer);
-}
-
 /**
  * Loads libhybris's libEGL at runtime to call hybris_egl_display_get_mapping()
  */
@@ -290,15 +283,10 @@ extern "C" wl_buffer *waylandws_createWlBuffer(EGLDisplay dpy, EGLImageKHR image
 
 extern "C" __eglMustCastToProperFunctionPointerType waylandws_eglGetProcAddress(const char *procname)
 {
-	if (strcmp(procname, "eglHybrisWaylandPostBuffer") == 0)
-	{
-		return (__eglMustCastToProperFunctionPointerType) waylandws_post;
-	}
-	else if (strcmp(procname, "eglCreateWaylandBufferFromImageWL") == 0)
+	if (strcmp(procname, "eglCreateWaylandBufferFromImageWL") == 0)
     {
         return (__eglMustCastToProperFunctionPointerType) waylandws_createWlBuffer;
     }
-	else
 	return eglplatformcommon_eglGetProcAddress(procname);
 }
 

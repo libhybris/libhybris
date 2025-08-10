@@ -71,61 +71,6 @@ void WaylandNativeWindow::destroyWlEGLWindow()
     wl_egl_window_destroy(m_window);
 }
 
-int WaylandNativeWindow::postBuffer(ANativeWindowBuffer* buffer)
-{
-    TRACE("");
-    WaylandNativeWindowBuffer *wnb = NULL;
-
-    lock();
-    std::list<WaylandNativeWindowBuffer *>::iterator it = post_registered.begin();
-    for (; it != post_registered.end(); ++it)
-    {
-        if ((*it)->other == buffer)
-        {
-            wnb = (*it);
-            break;
-        }
-    }
-    unlock();
-    if (!wnb)
-    {
-        wnb = new WaylandNativeWindowBuffer(buffer);
-
-        wnb->common.incRef(&wnb->common);
-        buffer->common.incRef(&buffer->common);
-    }
-
-    int ret = 0;
-
-    lock();
-    wnb->busy = 1;
-    ret = readQueue(false);
-
-    if (ret < 0) {
-        unlock();
-        return ret;
-    }
-
-    if (wnb->wlbuffer == NULL)
-    {
-        wnb->wlbuffer_from_native_handle(m_android_wlegl, m_display, wl_queue);
-        TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
-        wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
-        wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
-        post_registered.push_back(wnb);
-    }
-    TRACE("%p DAMAGE AREA: %dx%d", wnb, wnb->width, wnb->height);
-    wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
-    wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
-    wl_surface_commit(m_window->surface);
-    wl_display_flush(m_display);
-
-    posted.push_back(wnb);
-    unlock();
-
-    return NO_ERROR;
-}
-
 int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fenceFd){
     HYBRIS_TRACE_BEGIN("wayland-platform", "dequeueBuffer", "");
 
