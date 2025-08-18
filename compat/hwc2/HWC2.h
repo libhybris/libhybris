@@ -78,6 +78,10 @@ using aidl::android::hardware::graphics::common::DisplayHotplugEvent;
 using aidl::android::hardware::graphics::composer3::RefreshRateChangedDebugData;
 #endif
 
+#if ANDROID_VERSION_MAJOR >= 15
+using aidl::android::hardware::drm::HdcpLevels;
+#endif
+
 // Implement this interface to receive hardware composer events.
 //
 // These callback functions will generally be called on a hwbinder thread, but
@@ -102,6 +106,10 @@ struct ComposerCallback {
 #endif
 #if ANDROID_VERSION_MAJOR >= 14
     virtual void onRefreshRateChangedDebug(const RefreshRateChangedDebugData&) = 0;
+#endif
+#if ANDROID_VERSION_MAJOR >= 15
+    virtual void onComposerHalHdcpLevelsChanged(hal::HWDisplayId,
+                                                const HdcpLevels&) = 0;
 #endif
 
 protected:

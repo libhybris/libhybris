@@ -234,6 +234,14 @@ public:
     }
 #endif
 
+#if ANDROID_VERSION_MAJOR >= 15
+    ::ndk::ScopedAStatus onHdcpLevelsChanged(int64_t in_display,
+            const ::aidl::android::hardware::drm::HdcpLevels& in_levels) override {
+        mCallback.onComposerHalHdcpLevelsChanged(in_display, in_levels);
+        return ::ndk::ScopedAStatus::ok();
+    }
+#endif
+
 private:
     HWC2::ComposerCallback& mCallback;
 };
