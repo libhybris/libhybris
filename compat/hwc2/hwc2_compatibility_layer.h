@@ -1,1 +1,1 @@
-../../../libhybris/hybris/include/hybris/hwc2/hwc2_compatibility_layer.h
+../../hybris/include/hybris/hwc2/hwc2_compatibility_layer.h
