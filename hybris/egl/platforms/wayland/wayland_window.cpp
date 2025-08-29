@@ -198,10 +198,22 @@ int WaylandNativeWindow::dequeueBuffer(BaseNativeWindowBuffer **buffer, int *fen
 
 void WaylandNativeWindow::prepareSwap(EGLint *damage_rects, EGLint damage_n_rects)
 {
+    setSurfaceDamage(reinterpret_cast<android_native_rect_t*>(damage_rects), damage_n_rects);
+}
+
+int WaylandNativeWindow::setSurfaceDamage(android_native_rect_t *rects, size_t n_rects)
+{
     lock();
-    m_damage_rects = damage_rects;
-    m_damage_n_rects = damage_n_rects;
+    if (m_damage_rects) {
+        free(m_damage_rects);
+    }
+    size_t size = sizeof(EGLint) * 4 * n_rects;
+    m_damage_rects = (EGLint*)malloc(size);
+    memcpy(m_damage_rects, rects, size);
+    m_damage_n_rects = n_rects;
     unlock();
+
+    return NO_ERROR;
 }
 
 void WaylandNativeWindow::finishSwap()
@@ -250,6 +262,14 @@ void WaylandNativeWindow::finishSwap()
     }
 
     wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
+    /* FIXME:
+    if (m_damage_rects) {
+        for (int nr = 0; nr < m_damage_n_rects; nr++) {
+            EGLint *rect = &m_damage_rects[nr * 4];
+            wl_surface_damage(m_window->surface, rect[0], rect[1], rect[2], rect[3]);
+        }
+    } else {...}
+    */
     wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
     wl_surface_commit(m_window->surface);
     // Some compositors, namely Weston, queue buffer release events instead
@@ -263,6 +283,9 @@ void WaylandNativeWindow::finishSwap()
     m_window->attached_width = wnb->width;
     m_window->attached_height = wnb->height;
 
+    if (m_damage_rects) {
+        free(m_damage_rects);
+    }
     m_damage_rects = NULL;
     m_damage_n_rects = 0;
     unlock();
