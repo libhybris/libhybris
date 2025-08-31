@@ -326,15 +326,16 @@ extern "C" __eglMustCastToProperFunctionPointerType eglplatformcommon_eglGetProc
 
 extern "C" const char *eglplatformcommon_eglQueryString(EGLDisplay dpy, EGLint name, const char *(*real_eglQueryString)(EGLDisplay dpy, EGLint name))
 {
+	const char *ret = (*real_eglQueryString)(dpy, name);
 #ifdef WANT_WAYLAND
-	if (name == EGL_EXTENSIONS)
+	if (ret && name == EGL_EXTENSIONS)
 	{
-		const char *ret = (*real_eglQueryString)(dpy, name);
 		static char eglextensionsbuf[2048];
-		snprintf(eglextensionsbuf, 2046, "%sEGL_HYBRIS_native_buffer2 EGL_HYBRIS_WL_acquire_native_buffer EGL_WL_bind_wayland_display", ret ? ret : "");
+		snprintf(eglextensionsbuf, 2046, "%s %s", ret,
+			"EGL_HYBRIS_native_buffer2 EGL_HYBRIS_WL_acquire_native_buffer EGL_WL_bind_wayland_display"
+		);
 		ret = eglextensionsbuf;
-		return ret;
 	}
 #endif
-	return (*real_eglQueryString)(dpy, name);
+	return ret;
 }
