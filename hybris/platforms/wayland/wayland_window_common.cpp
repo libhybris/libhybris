@@ -446,7 +446,6 @@ void WaylandNativeWindow::destroyBuffers()
     for (; it!=m_bufList.end(); ++it)
     {
         destroyBuffer(*it);
-        it = m_bufList.erase(it);
     }
     m_bufList.clear();
     m_freeBufs = 0;
