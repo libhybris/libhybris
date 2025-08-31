@@ -471,6 +471,7 @@ unsigned int FbDevNativeWindow::getUsage() const
  */
 int FbDevNativeWindow::setUsage(uint64_t usage)
 {
+    usage |= GRALLOC_USAGE_HW_FB;
     m_allocateBuffers = (m_usage != usage);
     TRACE("usage=x%" PRIx64 " m_allocateBuffers=%d", usage, m_allocateBuffers);
     m_usage = usage;
@@ -514,7 +515,9 @@ void FbDevNativeWindow::reallocateBuffers()
     for(int i = 0; i < m_bufferCount; i++)
     {
         FbDevNativeWindowBuffer *fbnb = new FbDevNativeWindowBuffer(hybris_gralloc_fbdev_width(),
-                            hybris_gralloc_fbdev_height(), hybris_gralloc_fbdev_format(), m_usage|GRALLOC_USAGE_HW_FB);
+                                                                    hybris_gralloc_fbdev_height(),
+                                                                    m_bufFormat,
+                                                                    m_usage);
 
         fbnb->common.incRef(&fbnb->common);
 
