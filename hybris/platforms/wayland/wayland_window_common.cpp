@@ -174,7 +174,7 @@ WaylandNativeWindow::WaylandNativeWindow(struct wl_egl_window *window,
     // This is the default as per the EGL documentation
     this->m_swap_interval = 1;
 
-    m_usage=GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
+    m_usage = GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&cond, NULL);
     m_queueReads = 0;
@@ -519,11 +519,13 @@ int WaylandNativeWindow::setBuffersDimensions(int width, int height) {
 }
 
 int WaylandNativeWindow::setUsage(uint64_t usage) {
+    usage |= GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
+
     lock();
-    if ((usage | GRALLOC_USAGE_HW_TEXTURE) != m_usage)
+    if (usage != m_usage)
     {
         TRACE("old-usage:x%" PRIx64 " new-usage:x%" PRIx64, m_usage, usage);
-        m_usage = usage | GRALLOC_USAGE_HW_TEXTURE;
+        m_usage = usage;
         /* Buffers will be re-allocated when dequeued */
     } else {
         TRACE("usage:x%" PRIx64, usage);
