@@ -50,7 +50,6 @@ public:
     void frame();
     void resize(unsigned int width, unsigned int height);
     void releaseBuffer(struct wl_buffer *buffer);
-    int postBuffer(ANativeWindowBuffer *buffer);
 
     virtual int setSwapInterval(int interval);
 
@@ -91,8 +90,6 @@ private:
 
     std::list<WaylandNativeWindowBuffer *> m_bufList;
     std::list<WaylandNativeWindowBuffer *> fronted;
-    std::list<WaylandNativeWindowBuffer *> posted;
-    std::list<WaylandNativeWindowBuffer *> post_registered;
     struct wl_egl_window *m_window;
     struct wl_display *m_display;
     WaylandNativeWindowBuffer *m_lastBuffer;

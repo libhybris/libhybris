@@ -93,20 +93,5 @@
             <param><ptype>struct wl_resource *</ptype> <name>wlBuffer</name></param>
             <param><ptype>EGLClientBuffer *</ptype> <name>buffer</name></param>
         </command>
-
-        <!--
-            ??? No associated extension ???
-            The function is implemented in eglplatform_wayland.cpp. The only
-            reference I found outside of libhybris is at [1]. And that's the
-            old version; the newer version no longer uses this function.
-
-            [1] https://github.com/krnlyng/sfdroid_renderer
-        -->
-
-        <command>
-            <proto>int <name>eglHybrisWaylandPostBuffer</name></proto>
-            <param><ptype>EGLNativeWindowType</ptype> <name>win</name></param>
-            <param><ptype>void *</ptype> <name>buffer</name></param>
-        </command>
     </commands>
 </registry>

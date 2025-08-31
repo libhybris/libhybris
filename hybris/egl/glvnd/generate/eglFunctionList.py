@@ -257,8 +257,5 @@ EGL_FUNCTIONS = (
 
     # EGL_HYBRIS_WL_acquire_native_buffer
     _eglFunc("eglHybrisAcquireNativeBufferWL",       "display"),
-
-    # ??? No associated extension ??? (see comment in egl_hybris.xml)
-    _eglFunc("eglHybrisWaylandPostBuffer",           "current"),
 )
 
