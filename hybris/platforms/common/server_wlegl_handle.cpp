@@ -76,6 +76,8 @@ server_wlegl_handle_dtor(struct wl_resource *resource)
 server_wlegl_handle *
 server_wlegl_handle_from(struct wl_resource *resource)
 {
+	if (!resource || !wl_resource_instance_of(resource, &android_wlegl_handle_interface, &server_handle_impl))
+		return NULL;
 	return static_cast<server_wlegl_handle *>(wl_resource_get_user_data(resource));
 }
 
@@ -101,6 +103,9 @@ server_wlegl_handle_create(wl_client *client, uint32_t id, int32_t num_fds, wl_a
 buffer_handle_t
 server_wlegl_handle_to_native(server_wlegl_handle *handle)
 {
+	if (!handle)
+		return NULL;
+
 	native_handle_t *native;
 	int numFds = handle->fds.size / sizeof(int);
 	int numInts = handle->ints.size / sizeof(int32_t);

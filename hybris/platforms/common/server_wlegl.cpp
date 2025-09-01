@@ -40,12 +40,6 @@ extern "C" {
 
 #include <hybris/gralloc/gralloc.h>
 
-static inline server_wlegl *
-server_wlegl_from(struct wl_resource *resource)
-{
-	return reinterpret_cast<server_wlegl *>(wl_resource_get_user_data(resource));
-}
-
 static void
 server_wlegl_create_handle(struct wl_client *client,
 			   struct wl_resource *resource,
@@ -93,7 +87,7 @@ server_wlegl_create_buffer(struct wl_client *client,
 	if (!native) {
 		wl_resource_post_error(resource,
 				       ANDROID_WLEGL_ERROR_BAD_HANDLE,
-				       "fd count mismatch");
+				       "bad handle or fd count mismatch");
 		return;
 	}
 
@@ -177,6 +171,14 @@ static const struct android_wlegl_interface server_wlegl_impl = {
 	server_wlegl_create_buffer,
 	server_wlegl_get_server_buffer_handle,
 };
+
+server_wlegl *
+server_wlegl_from(struct wl_resource *resource)
+{
+	if (!resource || !wl_resource_instance_of(resource, &android_wlegl_interface, &server_wlegl_impl))
+		return NULL;
+	return static_cast<server_wlegl *>(wl_resource_get_user_data(resource));
+}
 
 static void
 server_wlegl_bind(struct wl_client *client, void *data,
