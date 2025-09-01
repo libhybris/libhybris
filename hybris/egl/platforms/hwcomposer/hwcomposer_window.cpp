@@ -475,6 +475,11 @@ int HWComposerNativeWindow::setBufferCount(int count)
     return NO_ERROR;
 }
 
+int HWComposerNativeWindow::setSurfaceDamage(android_native_rect_t *rects, size_t n_rects)
+{
+    return NO_ERROR;
+}
+
 void HWComposerNativeWindow::allocateBuffers()
 {
     // This function gets called from dequeue which already locked
