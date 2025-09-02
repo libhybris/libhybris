@@ -43,4 +43,7 @@ server_wlegl_create(struct wl_display *wldpy);
 void
 server_wlegl_destroy(server_wlegl *wlegl);
 
+server_wlegl *
+server_wlegl_from(struct wl_resource *);
+
 #endif /* SERVER_WLEGL_H */

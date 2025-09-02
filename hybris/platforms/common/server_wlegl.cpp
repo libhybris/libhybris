@@ -40,12 +40,6 @@ extern "C" {
 
 #include <hybris/gralloc/gralloc.h>
 
-static inline server_wlegl *
-server_wlegl_from(struct wl_resource *resource)
-{
-	return reinterpret_cast<server_wlegl *>(wl_resource_get_user_data(resource));
-}
-
 static void
 server_wlegl_create_handle(struct wl_client *client,
 			   struct wl_resource *resource,
@@ -62,10 +56,7 @@ server_wlegl_create_handle(struct wl_client *client,
 		return;
 	}
 
-	handle = server_wlegl_handle_create(id);
-	wl_array_copy(&handle->ints, ints);
-	handle->num_fds = num_fds;
-	wl_client_add_resource(client, &handle->resource);
+	handle = server_wlegl_handle_create(client, id, num_fds, ints);
 }
 
 static void
@@ -96,7 +87,7 @@ server_wlegl_create_buffer(struct wl_client *client,
 	if (!native) {
 		wl_resource_post_error(resource,
 				       ANDROID_WLEGL_ERROR_BAD_HANDLE,
-				       "fd count mismatch");
+				       "bad handle or fd count mismatch");
 		return;
 	}
 
@@ -118,13 +109,14 @@ static void
 server_wlegl_get_server_buffer_handle(wl_client *client, wl_resource *res, uint32_t id, int32_t width, int32_t height, int32_t format, int32_t usage)
 {
 	if (width == 0 || height == 0) {
-		wl_resource_post_error(res, 0, "invalid buffer size: %u,%u\n", width, height);
+		wl_resource_post_error(res,
+				       ANDROID_WLEGL_ERROR_BAD_VALUE,
+				       "bad width (%d) or height (%d)",
+				       width, height);
 		return;
 	}
 
 	server_wlegl *wlegl = server_wlegl_from(res);
-
-	wl_resource *resource = wl_resource_create(client, &android_wlegl_server_buffer_handle_interface, wl_resource_get_version(res), id);
 
 	buffer_handle_t _handle;
 	int _stride;
@@ -146,10 +138,16 @@ server_wlegl_get_server_buffer_handle(wl_client *client, wl_resource *res, uint3
 	int r = hybris_gralloc_allocate(width, height, format, (uint32_t)usage, &_handle, (uint32_t*)&_stride);
 	if (r) {
 		HYBRIS_ERROR_LOG(SERVER_WLEGL, "failed to allocate buffer\n");
-		wl_resource_destroy(resource);
+		wl_resource_post_error(res,
+				       ANDROID_WLEGL_ERROR_BAD_VALUE,
+				       "failed to allocate buffer: possibly bad format (x%x) or usage (x%x)",
+				       format, usage);
 		return;
 	}
+
 	server_wlegl_buffer *buffer = server_wlegl_buffer_create_server(client, width, height, _stride, format, usage, _handle, wlegl);
+
+	wl_resource *resource = wl_resource_create(client, &android_wlegl_server_buffer_handle_interface, wl_resource_get_version(res), id);
 
 	struct wl_array ints;
 	int *ints_data;
@@ -173,6 +171,14 @@ static const struct android_wlegl_interface server_wlegl_impl = {
 	server_wlegl_create_buffer,
 	server_wlegl_get_server_buffer_handle,
 };
+
+server_wlegl *
+server_wlegl_from(struct wl_resource *resource)
+{
+	if (!resource || !wl_resource_instance_of(resource, &android_wlegl_interface, &server_wlegl_impl))
+		return NULL;
+	return static_cast<server_wlegl *>(wl_resource_get_user_data(resource));
+}
 
 static void
 server_wlegl_bind(struct wl_client *client, void *data,
