@@ -473,6 +473,7 @@ HYBRIS_IMPLEMENT_FUNCTION3(egl, EGLBoolean, eglCopyBuffers, EGLDisplay, EGLSurfa
 static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list)
 {
 	HYBRIS_DLSYSM(egl, &_eglCreateImageKHR, "eglCreateImageKHR");
+	struct _EGLDisplay *display = hybris_egl_display_get_mapping(dpy);
 	EGLContext newctx = ctx;
 	EGLenum newtarget = target;
 	EGLClientBuffer newbuffer = buffer;
@@ -489,8 +490,9 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 	struct egl_image *image;
 	image = malloc(sizeof *image);
 	image->egl_image = eik;
-	image->egl_buffer = buffer;
 	image->target = target;
+	image->ws_dpy = display;
+	image->ws_buffer = newbuffer;
 
 	return (EGLImageKHR)image;
 }
