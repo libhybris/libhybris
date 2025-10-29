@@ -117,6 +117,8 @@ HWComposerNativeWindowBuffer::HWComposerNativeWindowBuffer(unsigned int width,
 HWComposerNativeWindowBuffer::~HWComposerNativeWindowBuffer()
 {
     TRACE("%p", this);
+    if (fenceFd != -1)
+        close(fenceFd);
     hybris_gralloc_release(handle, 1);
 }
 
