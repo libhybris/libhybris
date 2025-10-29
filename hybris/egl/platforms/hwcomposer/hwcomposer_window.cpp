@@ -131,6 +131,11 @@ HWComposerNativeWindow::HWComposerNativeWindow(unsigned int width, unsigned int 
     m_usage = GRALLOC_USAGE_HW_COMPOSER|GRALLOC_USAGE_HW_FB;
     m_bufferCount = 2;
     m_nextBuffer = 0;
+    m_transformHint = 0;
+
+    char *transform_rot = getenv("HYBRIS_HAL_TRANSFORM_ROT");
+    if (transform_rot)
+        m_transformHint = atoi(transform_rot);
 }
 
 HWComposerNativeWindow::~HWComposerNativeWindow()
@@ -411,12 +416,8 @@ unsigned int HWComposerNativeWindow::type() const
  */
 unsigned int HWComposerNativeWindow::transformHint() const
 {
-    TRACE("");
-    char* transform_rot = getenv("HYBRIS_HAL_TRANSFORM_ROT");
-    if (transform_rot)
-        return atoi(transform_rot);
-    else
-        return 0;
+    TRACE("transform=%d", m_transformHint);
+    return m_transformHint;
 }
 
 /*
