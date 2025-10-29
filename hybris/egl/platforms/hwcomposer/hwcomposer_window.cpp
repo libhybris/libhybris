@@ -411,12 +411,15 @@ unsigned int HWComposerNativeWindow::type() const
  */
 unsigned int HWComposerNativeWindow::transformHint() const
 {
-    TRACE("");
-    char* transform_rot = getenv("HYBRIS_HAL_TRANSFORM_ROT");
-    if (transform_rot)
-        return atoi(transform_rot);
-    else
-        return 0;
+    static int transformHint = -1;
+    if (transformHint == -1) {
+        transformHint = 0;
+        char* transform_rot = getenv("HYBRIS_HAL_TRANSFORM_ROT");
+        if (transform_rot)
+            transformHint = atoi(transform_rot);
+    }
+    TRACE("transform=%d", transformHint);
+    return transformHint;
 }
 
 /*
