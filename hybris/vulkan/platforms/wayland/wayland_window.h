@@ -109,6 +109,8 @@ private:
     size_t m_damage_n_rects;
     struct wl_callback *frame_callback;
     int m_swap_interval;
+    struct wl_display *wl_dpy_wrapper;
+    struct wl_surface *wl_surface_wrapper;
 };
 
 #endif
