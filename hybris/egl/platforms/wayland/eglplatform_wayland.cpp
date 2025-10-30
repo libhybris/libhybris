@@ -68,6 +68,7 @@ struct WaylandDisplay {
 	wl_event_queue *queue;
 	wl_registry *registry;
 	android_wlegl *wlegl;
+	bool owns_connection;
 };
 
 extern "C" void waylandws_init_module(struct ws_egl_interface *egl_iface)
@@ -134,11 +135,20 @@ static const wl_callback_listener callback_listener = {
 extern "C" _EGLDisplay *waylandws_GetDisplay(EGLNativeDisplayType display)
 {
 	WaylandDisplay *wdpy = new WaylandDisplay;
-	wdpy->wl_dpy = display ? (wl_display *)display : wl_display_connect(NULL);
 	wdpy->wlegl = NULL;
 	wdpy->registry = NULL;
 	wdpy->queue = NULL;
 	wdpy->init_count = 0;
+	wdpy->owns_connection = false;
+	wdpy->wl_dpy = (wl_display *) display;
+	if (!wdpy->wl_dpy) {
+		wdpy->wl_dpy = wl_display_connect(NULL);
+		if (!wdpy->wl_dpy) {
+			fprintf(stderr, "Fatal: failed to connect to the server!");
+			abort();
+		}
+		wdpy->owns_connection = true;
+	}
 
 	return &wdpy->base;
 }
@@ -146,6 +156,8 @@ extern "C" _EGLDisplay *waylandws_GetDisplay(EGLNativeDisplayType display)
 extern "C" void waylandws_releaseDisplay(_EGLDisplay *dpy)
 {
 	WaylandDisplay *wdpy = (WaylandDisplay *)dpy;
+	if (wdpy->owns_connection)
+		wl_display_disconnect(wdpy->wl_dpy);
 	delete wdpy;
 }
 
