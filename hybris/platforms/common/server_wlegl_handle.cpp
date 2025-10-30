@@ -35,7 +35,7 @@ add_fd(struct wl_client *client, struct wl_resource *resource, int32_t fd)
 
 	if (handle->fds.size >= handle->num_fds * sizeof(int)) {
 		close(fd);
-		wl_resource_post_error(&handle->resource,
+		wl_resource_post_error(handle->resource,
 				       ANDROID_WLEGL_HANDLE_ERROR_TOO_MANY_FDS,
 				       "too many file descriptors");
 		return;
@@ -74,22 +74,28 @@ server_wlegl_handle_dtor(struct wl_resource *resource)
 }
 
 server_wlegl_handle *
-server_wlegl_handle_create(uint32_t id)
+server_wlegl_handle_from(struct wl_resource *resource)
+{
+	if (!resource || !wl_resource_instance_of(resource, &android_wlegl_handle_interface, &server_handle_impl))
+		return NULL;
+	return static_cast<server_wlegl_handle *>(wl_resource_get_user_data(resource));
+}
+
+server_wlegl_handle *
+server_wlegl_handle_create(wl_client *client, uint32_t id, int32_t num_fds, wl_array *ints)
 {
 	server_wlegl_handle *handle = new server_wlegl_handle;
 
 	memset(handle, 0, sizeof(*handle));
 
-	handle->resource.object.id = id;
-	handle->resource.object.interface = &android_wlegl_handle_interface;
-	handle->resource.object.implementation =
-		(void (**)(void))&server_handle_impl;
-
-	handle->resource.destroy = server_wlegl_handle_dtor;
-	handle->resource.data = handle;
+	handle->resource = wl_resource_create(client, &android_wlegl_handle_interface, 1, id);
+	wl_resource_set_implementation(handle->resource, &server_handle_impl, handle, server_wlegl_handle_dtor);
 
 	wl_array_init(&handle->ints);
 	wl_array_init(&handle->fds);
+
+	wl_array_copy(&handle->ints, ints);
+	handle->num_fds = num_fds;
 
 	return handle;
 }
@@ -97,6 +103,9 @@ server_wlegl_handle_create(uint32_t id)
 buffer_handle_t
 server_wlegl_handle_to_native(server_wlegl_handle *handle)
 {
+	if (!handle)
+		return NULL;
+
 	native_handle_t *native;
 	int numFds = handle->fds.size / sizeof(int);
 	int numInts = handle->ints.size / sizeof(int32_t);
