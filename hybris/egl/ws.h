@@ -27,18 +27,19 @@ struct ws_egl_interface {
 	EGLNativeWindowType (*get_mapping)(EGLSurface surface);
 };
 
-struct egl_image
-{
-    EGLImageKHR egl_image;
-    EGLClientBuffer egl_buffer;
-    EGLenum target;
-};
-
 /* Defined in egl.c */
 extern struct ws_egl_interface hybris_egl_interface;
 
 struct _EGLDisplay {
 	EGLDisplay dpy;
+};
+
+struct egl_image
+{
+	EGLImageKHR egl_image;
+	EGLenum target;
+	struct _EGLDisplay *ws_dpy;
+	EGLClientBuffer ws_buffer;
 };
 
 struct ws_module {
