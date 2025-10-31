@@ -68,6 +68,8 @@ struct WaylandDisplay {
 	wl_event_queue *queue;
 	wl_registry *registry;
 	android_wlegl *wlegl;
+	wl_display *wl_dpy_wrapper;
+	bool owns_connection;
 };
 
 extern "C" void waylandws_init_module(struct ws_egl_interface *egl_iface)
@@ -134,11 +136,21 @@ static const wl_callback_listener callback_listener = {
 extern "C" _EGLDisplay *waylandws_GetDisplay(EGLNativeDisplayType display)
 {
 	WaylandDisplay *wdpy = new WaylandDisplay;
-	wdpy->wl_dpy = display ? (wl_display *)display : wl_display_connect(NULL);
 	wdpy->wlegl = NULL;
 	wdpy->registry = NULL;
 	wdpy->queue = NULL;
+	wdpy->wl_dpy_wrapper = NULL;
 	wdpy->init_count = 0;
+	wdpy->owns_connection = false;
+	wdpy->wl_dpy = (wl_display *) display;
+	if (!wdpy->wl_dpy) {
+		wdpy->wl_dpy = wl_display_connect(NULL);
+		if (!wdpy->wl_dpy) {
+			fprintf(stderr, "Fatal: failed to connect to the server!");
+			abort();
+		}
+		wdpy->owns_connection = true;
+	}
 
 	return &wdpy->base;
 }
@@ -146,6 +158,8 @@ extern "C" _EGLDisplay *waylandws_GetDisplay(EGLNativeDisplayType display)
 extern "C" void waylandws_releaseDisplay(_EGLDisplay *dpy)
 {
 	WaylandDisplay *wdpy = (WaylandDisplay *)dpy;
+	if (wdpy->owns_connection)
+		wl_display_disconnect(wdpy->wl_dpy);
 	delete wdpy;
 }
 
@@ -155,12 +169,12 @@ extern "C" void waylandws_eglInitialized(_EGLDisplay *dpy)
 
 	if (wdpy->init_count == 0) {
 		wdpy->queue = wl_display_create_queue(wdpy->wl_dpy);
-		wdpy->registry = wl_display_get_registry(wdpy->wl_dpy);
-		wl_proxy_set_queue((wl_proxy *) wdpy->registry, wdpy->queue);
+		wdpy->wl_dpy_wrapper = (struct wl_display *) wl_proxy_create_wrapper(wdpy->wl_dpy);
+		wl_proxy_set_queue((struct wl_proxy *) wdpy->wl_dpy_wrapper, wdpy->queue);
+		wdpy->registry = wl_display_get_registry(wdpy->wl_dpy_wrapper);
 		wl_registry_add_listener(wdpy->registry, &registry_listener, wdpy);
 
-		wl_callback *cb = wl_display_sync(wdpy->wl_dpy);
-		wl_proxy_set_queue((wl_proxy *) cb, wdpy->queue);
+		wl_callback *cb = wl_display_sync(wdpy->wl_dpy_wrapper);
 		wl_callback_add_listener(cb, &callback_listener, wdpy);
 	}
 
@@ -181,9 +195,11 @@ extern "C" void waylandws_Terminate(_EGLDisplay *dpy)
 			assert(ret >= 0);
 			android_wlegl_destroy(wdpy->wlegl);
 			wl_registry_destroy(wdpy->registry);
+			wl_proxy_wrapper_destroy(wdpy->wl_dpy_wrapper);
 			wl_event_queue_destroy(wdpy->queue);
 			wdpy->wlegl = NULL;
 			wdpy->registry = NULL;
+			wdpy->wl_dpy_wrapper = NULL;
 			wdpy->queue = NULL;
 		}
 	}

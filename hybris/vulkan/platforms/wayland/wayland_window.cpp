@@ -180,24 +180,27 @@ void WaylandNativeWindow::presentBuffer(WaylandNativeWindowBuffer *wnb)
         wnb->init(m_android_wlegl, m_display, wl_queue);
         TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
         wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
-        wl_proxy_set_queue((struct wl_proxy *) wnb->wlbuffer, this->wl_queue);
     }
 
     if (m_swap_interval > 0) {
-        this->frame_callback = wl_surface_frame(m_window->surface);
+        this->frame_callback = wl_surface_frame(wl_surface_wrapper);
         wl_callback_add_listener(this->frame_callback, &frame_listener, this);
-        wl_proxy_set_queue((struct wl_proxy *) this->frame_callback, this->wl_queue);
     }
 
-    wl_surface_attach(m_window->surface, wnb->wlbuffer, 0, 0);
-    wl_surface_damage(m_window->surface, 0, 0, wnb->width, wnb->height);
-    wl_surface_commit(m_window->surface);
-    // Some compositors, namely Weston, queue buffer release events instead
-    // of sending them immediately.  If a frame event is used, this should
-    // not be a problem.  Without a frame event, we need to send a sync
-    // request to ensure that they get flushed.
-    wl_callback_destroy(wl_display_sync(m_display));
+    wl_surface_attach(wl_surface_wrapper, wnb->wlbuffer, 0, 0);
+    wl_surface_damage(wl_surface_wrapper, 0, 0, wnb->width, wnb->height);
+    wl_surface_commit(wl_surface_wrapper);
+
+    // If we're not waiting for a frame callback then we'll at least throttle
+    // to a sync callback so that we always give a chance for the compositor to
+    // handle the commit and send a release event before checking for a free buffer.
+    if (this->frame_callback == NULL) {
+        this->frame_callback = wl_display_sync(wl_dpy_wrapper);
+        wl_callback_add_listener(this->frame_callback, &frame_listener, this);
+    }
+
     wl_display_flush(m_display);
+
     fronted.push_back(wnb);
 
     m_window->attached_width = wnb->width;
