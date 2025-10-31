@@ -241,17 +241,20 @@ hwc2_error_t hwc2_compat_display_set_client_target(hwc2_compat_display_t* displa
                                             const int32_t acquireFenceFd,
                                             android_dataspace_t dataspace)
 {
-    android::sp<android::GraphicBuffer> target(
-        new android::GraphicBuffer(buffer->handle,
-            android::GraphicBuffer::WRAP_HANDLE,
-            buffer->width, buffer->height,
-            buffer->format, /* layerCount */ 1,
-            buffer->usage, buffer->stride));
+    android::sp<android::GraphicBuffer> target = nullptr;
+
+    if (buffer) {
+        target = new android::GraphicBuffer(buffer->handle,
+                     android::GraphicBuffer::WRAP_HANDLE,
+                     buffer->width, buffer->height,
+                     buffer->format, /* layerCount */ 1,
+                     buffer->usage, buffer->stride);
+    }
 
     android::sp<android::Fence> acquireFence(
             new android::Fence(acquireFenceFd));
 
-    HWC2::Error error = display->self->setClientTarget(0, target,
+    HWC2::Error error = display->self->setClientTarget(slot, target,
                                         acquireFence, HAL_DATASPACE_UNKNOWN);
 
     return static_cast<hwc2_error_t>(error);
@@ -296,7 +299,7 @@ hwc2_error_t hwc2_compat_layer_set_buffer(hwc2_compat_layer_t* layer,
     android::sp<android::Fence> acquireFence(
             new android::Fence(acquireFenceFd));
 
-    HWC2::Error error = layer->self->setBuffer(0, target, acquireFence);
+    HWC2::Error error = layer->self->setBuffer(slot, target, acquireFence);
 
     return static_cast<hwc2_error_t>(error);
 }
