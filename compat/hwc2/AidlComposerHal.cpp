@@ -23,6 +23,7 @@
 #include <android-base/file.h>
 #include <android/binder_ibinder_platform.h>
 #include <android/binder_manager.h>
+#include <android/binder_process.h>
 #include <gui/TraceUtils.h>
 #include <log/log.h>
 #include <utils/Trace.h>
@@ -258,6 +259,10 @@ AidlComposer::AidlComposer(const std::string& serviceName) {
         LOG_ALWAYS_FATAL("Can't create AidlComposerClient, fallback to HIDL");
         return;
     }
+
+    // Start the binder thread pool if not already started for AIDL composer
+    ABinderProcess_setThreadPoolMaxThreadCount(1);
+    ABinderProcess_startThreadPool();
 
 #if ANDROID_VERSION_MAJOR >= 14
     addReader(translate<Display>(kSingleReaderKey));
