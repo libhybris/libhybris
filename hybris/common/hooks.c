@@ -86,6 +86,7 @@ extern int my_property_list(void (*propfn)(const char *key, const char *value, v
 #define bool int
 
 #include "dso_handle_counters.h"
+#include "tls_patcher.h"
 
 #ifdef WANT_ARM_TRACING
 #include "wrappers.h"
@@ -96,9 +97,9 @@ static int locale_inited = 0;
 static hybris_hook_cb hook_callback = NULL;
 
 #ifdef WANT_ARM_TRACING
-static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, void *(_create_wrapper)(const char*, void*, int), int wrapping_enabled) = NULL;
+static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, hybris_tls_patcher_t tls_patcher, void *(_create_wrapper)(const char*, void*, int), int wrapping_enabled) = NULL;
 #else
-static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) = NULL;
+static void (*_android_linker_init)(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support, hybris_tls_patcher_t tls_patcher) = NULL;
 #endif
 static void* __hybris_get_hooked_symbol(const char *sym, const char *requester);
 
@@ -2373,9 +2374,11 @@ __THROW int _hybris_hook___snprintf_chk (char *__restrict __s, size_t __n, int _
     return ret;
 }
 
-static __thread void *tls_hooks[16];
+static __attribute__((tls_model ("initial-exec")))
+       __thread void *tls_hooks[16];
 
-static void *_hybris_hook___get_tls_hooks()
+__attribute__((__visibility__("default")))
+void *_hybris_hook___get_tls_hooks()
 {
     TRACE_HOOK("");
     return tls_hooks;
@@ -3630,11 +3633,18 @@ static void __hybris_linker_init()
 #if WANT_LINKER_Q
     _android_shared_globals = dlsym(linker_handle, "android_shared_globals");
 #endif
+
+    hybris_tls_patcher_t tls_patcher = NULL;
+#ifdef __aarch64__
+    if (getenv("HYBRIS_PATCH_TLS") != NULL)
+        tls_patcher = hybris_patch_tls;
+#endif
+
     /* Now its time to setup the linker itself */
 #ifdef WANT_ARM_TRACING
-    _android_linker_init(sdk_version, __hybris_get_hooked_symbol, enable_linker_gdb_support, create_wrapper, wrappers_enabled());
+    _android_linker_init(sdk_version, __hybris_get_hooked_symbol, enable_linker_gdb_support, tls_patcher, create_wrapper, wrappers_enabled());
 #else
-    _android_linker_init(sdk_version, __hybris_get_hooked_symbol, enable_linker_gdb_support);
+    _android_linker_init(sdk_version, __hybris_get_hooked_symbol, enable_linker_gdb_support, tls_patcher);
 #endif
 
     if (_android_set_application_target_sdk_version) {
