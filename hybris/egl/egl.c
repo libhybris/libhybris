@@ -336,6 +336,8 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 
 	if (result != EGL_NO_SURFACE)
 		egl_helper_push_mapping(result, win);
+	else
+		ws_DestroyWindow(win);
 
 	HYBRIS_TRACE_END("hybris-egl", "eglCreateWindowSurface", "");
 	return result;
