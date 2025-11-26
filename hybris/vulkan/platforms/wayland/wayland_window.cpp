@@ -188,7 +188,26 @@ void WaylandNativeWindow::presentBuffer(WaylandNativeWindowBuffer *wnb)
     }
 
     wl_surface_attach(wl_surface_wrapper, wnb->wlbuffer, 0, 0);
-    wl_surface_damage(wl_surface_wrapper, 0, 0, wnb->width, wnb->height);
+
+    // If the compositor doesn't support damage_buffer, we deliberately
+    // ignore the damage region and post maximum damage, due to
+    // https://bugs.freedesktop.org/78190
+    if (wl_proxy_get_version((struct wl_proxy *) wl_surface_wrapper) >=
+        WL_SURFACE_DAMAGE_BUFFER_SINCE_VERSION) {
+        if (m_damage_n_rects > 0) {
+            for (size_t i = 0; i < m_damage_n_rects; i++) {
+                const android_native_rect_t *rect = &m_damage_rects[i];
+                wl_surface_damage_buffer(wl_surface_wrapper,
+                                         rect->left, wnb->height - rect->top - rect->bottom,
+                                         rect->right, rect->bottom);
+            }
+        } else {
+            wl_surface_damage_buffer(wl_surface_wrapper, 0, 0, INT32_MAX, INT32_MAX);
+        }
+    } else {
+        wl_surface_damage(wl_surface_wrapper, 0, 0, INT32_MAX, INT32_MAX);
+    }
+
     wl_surface_commit(wl_surface_wrapper);
 
     // If we're not waiting for a frame callback then we'll at least throttle
