@@ -310,6 +310,19 @@ EGLBoolean eglTerminate(EGLDisplay dpy)
 const char * eglQueryString(EGLDisplay dpy, EGLint name)
 {
 	HYBRIS_DLSYSM(egl, &_eglQueryString, "eglQueryString");
+
+#ifdef WANT_WAYLAND
+	if (dpy == EGL_NO_DISPLAY && name == EGL_EXTENSIONS) {
+		const char *ret = _eglQueryString(dpy, name);
+		static char eglextensionsbuf[2048];
+		snprintf(eglextensionsbuf, 2046, "%s %s", ret,
+			"EGL_EXT_client_extensions EGL_EXT_platform_wayland EGL_KHR_platform_wayland"
+		);
+		ret = eglextensionsbuf;
+		return ret;
+	}
+#endif
+
 	return ws_eglQueryString(dpy, name, _eglQueryString);
 }
 
