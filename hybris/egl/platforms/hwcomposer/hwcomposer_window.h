@@ -88,6 +88,8 @@ private:
     int m_height;
 
     pthread_mutex_t m_mutex;
+
+    unsigned int m_transformHint;
 };
 
 #endif
