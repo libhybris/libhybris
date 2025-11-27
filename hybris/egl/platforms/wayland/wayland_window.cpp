@@ -158,16 +158,6 @@ void WaylandNativeWindow::finishSwap()
         return;
     }
 
-    WaylandNativeWindowBuffer *wnb = queue.front();
-    if (!wnb) {
-        wnb = m_lastBuffer;
-    } else {
-        queue.pop_front();
-    }
-    assert(wnb);
-    m_lastBuffer = wnb;
-    wnb->busy = 1;
-
     ret = readQueue(false);
     if (this->frame_callback) {
         do {
@@ -175,16 +165,9 @@ void WaylandNativeWindow::finishSwap()
         } while (this->frame_callback && ret != -1);
     }
     if (ret < 0) {
-        HYBRIS_TRACE_END("wayland-platform", "queueBuffer_wait_for_frame_callback", "-%p", wnb);
+        HYBRIS_TRACE_END("wayland-platform", "queueBuffer_wait_for_frame_callback", "");
         unlock();
         return;
-    }
-
-    if (wnb->wlbuffer == NULL)
-    {
-        wnb->init(m_android_wlegl, m_display, wl_queue);
-        TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
-        wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
     }
 
     if (m_swap_interval > 0) {
@@ -192,24 +175,45 @@ void WaylandNativeWindow::finishSwap()
         wl_callback_add_listener(this->frame_callback, &frame_listener, this);
     }
 
-    wl_surface_attach(wl_surface_wrapper, wnb->wlbuffer, 0, 0);
+    WaylandNativeWindowBuffer *wnb = NULL;
+    if (!queue.empty()) {
+        wnb = queue.front();
+        queue.pop_front();
+    }
+
+    if (wnb) {
+        assert(wnb->busy == 1);
+
+        if (!wnb->wlbuffer) {
+            wnb->init(m_android_wlegl, m_display, wl_queue);
+            TRACE("%p add listener with %p inside", wnb, wnb->wlbuffer);
+            wl_buffer_add_listener(wnb->wlbuffer, &wl_buffer_listener, this);
+        }
+
+        wl_surface_attach(wl_surface_wrapper, wnb->wlbuffer, 0, 0);
+
+        m_window->attached_width = wnb->width;
+        m_window->attached_height = wnb->height;
+
+        fronted.push_back(wnb);
+    }
 
     // If the compositor doesn't support damage_buffer, we deliberately
     // ignore the damage region and post maximum damage, due to
     // https://bugs.freedesktop.org/78190
     if (wl_proxy_get_version((struct wl_proxy *) wl_surface_wrapper) >=
         WL_SURFACE_DAMAGE_BUFFER_SINCE_VERSION) {
-        if (m_damage_n_rects > 0) {
+        if (m_damage_n_rects > 0 && m_window->attached_height > 0) {
             for (int i = 0; i < m_damage_n_rects; i++) {
                 const int *rect = &m_damage_rects[i * 4];
                 wl_surface_damage_buffer(wl_surface_wrapper,
-                                         rect[0], wnb->height - rect[1] - rect[3],
+                                         rect[0], m_window->attached_height - rect[1] - rect[3],
                                          rect[2], rect[3]);
             }
-        } else {
+        } else if (wnb) {
             wl_surface_damage_buffer(wl_surface_wrapper, 0, 0, INT32_MAX, INT32_MAX);
         }
-    } else {
+    } else if (wnb) {
         wl_surface_damage(wl_surface_wrapper, 0, 0, INT32_MAX, INT32_MAX);
     }
 
@@ -224,11 +228,6 @@ void WaylandNativeWindow::finishSwap()
     }
 
     wl_display_flush(m_display);
-
-    fronted.push_back(wnb);
-
-    m_window->attached_width = wnb->width;
-    m_window->attached_height = wnb->height;
 
     m_damage_rects = NULL;
     m_damage_n_rects = 0;
