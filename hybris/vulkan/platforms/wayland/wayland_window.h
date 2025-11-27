@@ -92,7 +92,6 @@ private:
     std::list<WaylandNativeWindowBuffer *> fronted;
     struct wl_egl_window *m_window;
     struct wl_display *m_display;
-    WaylandNativeWindowBuffer *m_lastBuffer;
     int m_width;
     int m_height;
     int m_format;

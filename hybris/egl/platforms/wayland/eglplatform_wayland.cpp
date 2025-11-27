@@ -55,9 +55,6 @@ extern "C" {
 
 static const char *  (*_eglQueryString)(EGLDisplay dpy, EGLint name) = NULL;
 static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char *procname) = NULL;
-static EGLSyncKHR (*_eglCreateSyncKHR)(EGLDisplay dpy, EGLenum type, const EGLint *attrib_list) = NULL;
-static EGLBoolean (*_eglDestroySyncKHR)(EGLDisplay dpy, EGLSyncKHR sync) = NULL;
-static EGLint (*_eglClientWaitSyncKHR)(EGLDisplay dpy, EGLSyncKHR sync, EGLint flags, EGLTimeKHR timeout) = NULL;
 
 struct WaylandDisplay {
 	_EGLDisplay base;
@@ -76,33 +73,6 @@ extern "C" void waylandws_init_module(struct ws_egl_interface *egl_iface)
 {
 	hybris_gralloc_initialize(0);
 	eglplatformcommon_init(egl_iface);
-}
-
-static void _init_egl_funcs(EGLDisplay display)
-{
-	if (_eglQueryString != NULL)
-		return;
-
-	_eglQueryString = (const char * (*)(void*, int))
-			hybris_android_egl_dlsym("eglQueryString");
-	assert(_eglQueryString);
-	_eglGetProcAddress = (__eglMustCastToProperFunctionPointerType (*)(const char *))
-			hybris_android_egl_dlsym("eglGetProcAddress");
-	assert(_eglGetProcAddress);
-
-	const char *extensions = (*_eglQueryString)(display, EGL_EXTENSIONS);
-
-	if (strstr(extensions, "EGL_KHR_fence_sync")) {
-		_eglCreateSyncKHR = (PFNEGLCREATESYNCKHRPROC)
-				(*_eglGetProcAddress)("eglCreateSyncKHR");
-		assert(_eglCreateSyncKHR);
-		_eglDestroySyncKHR = (PFNEGLDESTROYSYNCKHRPROC)
-				(*_eglGetProcAddress)("eglDestroySyncKHR");
-		assert(_eglDestroySyncKHR);
-		_eglClientWaitSyncKHR = (PFNEGLCLIENTWAITSYNCKHRPROC)
-				(*_eglGetProcAddress)("eglClientWaitSyncKHR");
-		assert(_eglClientWaitSyncKHR);
-	}
 }
 
 static void registry_handle_global(void *data, wl_registry *registry, uint32_t name, const char *interface, uint32_t version)
@@ -294,13 +264,7 @@ extern "C" void waylandws_prepareSwap(EGLDisplay dpy, EGLNativeWindowType win, E
 
 extern "C" void waylandws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win)
 {
-	_init_egl_funcs(dpy);
 	WaylandNativeWindow *window = static_cast<WaylandNativeWindow *>((struct ANativeWindow *)win);
-	if (_eglCreateSyncKHR) {
-		EGLSyncKHR sync = (*_eglCreateSyncKHR)(dpy, EGL_SYNC_FENCE_KHR, NULL);
-		(*_eglClientWaitSyncKHR)(dpy, sync, EGL_SYNC_FLUSH_COMMANDS_BIT_KHR, EGL_FOREVER_KHR);
-		(*_eglDestroySyncKHR)(dpy, sync);
-	}
 	window->finishSwap();
 }
 
