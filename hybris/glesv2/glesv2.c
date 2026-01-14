@@ -281,12 +281,20 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION6(glesv2, glTexStorage3D, GLenum, GLsizei, GLenum,
 HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glGetInternalformativ, GLenum, GLenum, GLenum, GLsizei, GLint *);
 
 static void         (*_glEGLImageTargetTexture2DOES) (GLenum target, GLeglImageOES image) = NULL;
+static void         (*_glEGLImageTargetRenderbufferStorageOES) (GLenum target, GLeglImageOES image) = NULL;
 
 void glEGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
 {
        HYBRIS_DLSYSM(glesv2, &_glEGLImageTargetTexture2DOES, "glEGLImageTargetTexture2DOES");
        struct egl_image *img = image;
        (*_glEGLImageTargetTexture2DOES)(target, img ? img->egl_image : NULL);
+}
+
+void glEGLImageTargetRenderbufferStorageOES (GLenum target, GLeglImageOES image)
+{
+       HYBRIS_DLSYSM(glesv2, &_glEGLImageTargetRenderbufferStorageOES, "glEGLImageTargetRenderbufferStorageOES");
+       struct egl_image *img = image;
+       (*_glEGLImageTargetRenderbufferStorageOES)(target, img ? img->egl_image : NULL);
 }
 
 /* GLES 3.1 */
