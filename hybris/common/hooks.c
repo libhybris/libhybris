@@ -1413,7 +1413,13 @@ struct bionic_sbuf {
 };
 #endif
 
-typedef off_t bionic_fpos_t;
+#if defined(__LP64__)
+typedef int64_t bionic_off_t;
+#else
+// bionic uses 32-bit off_t on 32-bit architectures
+typedef __kernel_off_t bionic_off_t;
+#endif
+typedef bionic_off_t bionic_fpos_t;
 typedef off64_t bionic_fpos64_t;
 
 /* "struct __sFILE" from bionic/libc/include/stdio.h */
@@ -1628,7 +1634,7 @@ static int _hybris_hook_fseek(FILE *fp, long offset, int whence)
     return fseek(_get_actual_fp(fp), offset, whence);
 }
 
-static int _hybris_hook_fseeko(FILE *fp, off_t offset, int whence)
+static int _hybris_hook_fseeko(FILE *fp, bionic_off_t offset, int whence)
 {
     TRACE_HOOK("fp %p offset %ld whence %d", fp, offset, whence);
 
@@ -1671,14 +1677,14 @@ static long _hybris_hook_ftell(FILE *fp)
     return ftell(_get_actual_fp(fp));
 }
 
-static off_t _hybris_hook_ftello(FILE *fp)
+static bionic_off_t _hybris_hook_ftello(FILE *fp)
 {
     TRACE_HOOK("fp %p", fp);
 
     return ftello(_get_actual_fp(fp));
 }
 
-static off_t _hybris_hook_ftello64(FILE *fp)
+static off64_t _hybris_hook_ftello64(FILE *fp)
 {
     TRACE_HOOK("fp %p", fp);
 
@@ -2558,7 +2564,7 @@ static char* _hybris_hook_setlocale(int category, const char *locale)
 }
 
 static void* _hybris_hook_mmap(void *addr, size_t len, int prot,
-                  int flags, int fd, off_t offset)
+                  int flags, int fd, bionic_off_t offset)
 {
     TRACE_HOOK("addr %p len %zu prot %i flags %i fd %i offset %ld",
                addr, len, prot, flags, fd, offset);
@@ -3251,7 +3257,11 @@ static struct _hook hooks_mm[] = {
     HOOK_DIRECT(localeconv),
     HOOK_DIRECT(setlocale),
     /* sys/mman.h */
+#if defined(LP64)
     HOOK_DIRECT(mmap),
+#else
+    HOOK_INDIRECT(mmap),
+#endif
     HOOK_DIRECT(munmap),
     /* wchar.h */
     HOOK_DIRECT_NO_DEBUG(wmemchr),
