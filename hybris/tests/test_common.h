@@ -61,13 +61,14 @@ class HWComposer2 : public HWComposer
 private:
 	hwc2_compat_layer_t *layer;
 	hwc2_compat_display_t *hwcDisplay;
-	int lastPresentFence = -1;
+	HWComposerNativeWindowBuffer *lastBuffer;
 protected:
 	void present(HWComposerNativeWindowBuffer *buffer);
 
 public:
 	HWComposer2(unsigned int width, unsigned int height, unsigned int format,
 	            hwc2_compat_display_t *display, hwc2_compat_layer_t *layer);
+	~HWComposer2();
 };
 
 #endif
