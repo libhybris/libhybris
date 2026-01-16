@@ -77,6 +77,7 @@ static EGLImageKHR (*_eglCreateImageKHR)(EGLDisplay dpy, EGLContext ctx, EGLenum
 static EGLBoolean (*_eglDestroyImageKHR) (EGLDisplay dpy, EGLImageKHR image) = NULL;
 
 static void (*_glEGLImageTargetTexture2DOES) (GLenum target, GLeglImageOES image) = NULL;
+static void (*_glEGLImageTargetRenderbufferStorageOES) (GLenum target, GLeglImageOES image) = NULL;
 
 static __eglMustCastToProperFunctionPointerType (*_eglGetProcAddress)(const char *procname) = NULL;
 
@@ -506,6 +507,13 @@ static void _my_glEGLImageTargetTexture2DOES(GLenum target, GLeglImageOES image)
 	(*_glEGLImageTargetTexture2DOES)(target, img ? img->egl_image : NULL);
 }
 
+static void _my_glEGLImageTargetRenderbufferStorageOES(GLenum target, GLeglImageOES image)
+{
+	HYBRIS_DLSYSM(glesv2, &_glEGLImageTargetRenderbufferStorageOES, "glEGLImageTargetRenderbufferStorageOES");
+	struct egl_image *img = image;
+	(*_glEGLImageTargetRenderbufferStorageOES)(target, img ? img->egl_image : NULL);
+}
+
 EGLBoolean _my_eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 {
 	HYBRIS_DLSYSM(egl, &_eglDestroyImageKHR, "eglDestroyImageKHR");
@@ -531,6 +539,7 @@ static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 	OVERRIDE_MY(eglCreateImageKHR),
 	OVERRIDE_MY(eglSwapBuffersWithDamageEXT),
 	OVERRIDE_MY(glEGLImageTargetTexture2DOES),
+	OVERRIDE_MY(glEGLImageTargetRenderbufferStorageOES),
 	OVERRIDE_MY(eglDestroyImageKHR),
 	OVERRIDE_SAMENAME(eglGetError),
 	OVERRIDE_SAMENAME(eglGetDisplay),
