@@ -56,6 +56,13 @@ HWComposer2::HWComposer2(unsigned int width, unsigned int height,
 {
 	this->layer = layer;
 	this->hwcDisplay = display;
+	this->lastBuffer = NULL;
+}
+
+HWComposer2::~HWComposer2()
+{
+	if (lastBuffer)
+		lastBuffer->common.decRef(&lastBuffer->common);
 }
 
 void HWComposer2::present(HWComposerNativeWindowBuffer *buffer)
@@ -113,16 +120,26 @@ void HWComposer2::present(HWComposerNativeWindowBuffer *buffer)
 	}
 
 	int fenceFd = hwc2_compat_out_fences_get_fence(fences, layer);
-	if (fenceFd != -1)
-		setFenceBufferFd(buffer, fenceFd);
+	setFenceBufferFd(buffer, fenceFd);
 
 	hwc2_compat_out_fences_destroy(fences);
 
-	if (lastPresentFence != -1) {
-		sync_wait(lastPresentFence, -1);
-		close(lastPresentFence);
+
+	// HWC2 present fences signal when the frame n is displayed on screen
+	// and the buffer for the previous frame n-1 is no longer needed.
+	if (lastBuffer) {
+		int fenceFd = getFenceBufferFd(lastBuffer);
+		if (fenceFd != -1)
+			close(fenceFd);
+		setFenceBufferFd(lastBuffer, presentFence);
+		lastBuffer->common.decRef(&lastBuffer->common);
+	} else if (presentFence != -1) {
+		close(presentFence);
 	}
-	lastPresentFence = presentFence;
+
+	lastBuffer = buffer;
+	// Prevent the buffer from being destroyed if reallocation happens
+	lastBuffer->common.incRef(&lastBuffer->common);
 }
 
 void onVsyncReceived(HWC2EventListener* listener, int32_t sequenceId,
