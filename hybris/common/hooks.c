@@ -2899,6 +2899,62 @@ int _hybris_hook_android_fdsan_close_with_tag(int fd, uint64_t tag)
     return close(fd);
 }
 
+/*
+ * Workaround for Mali's libGLES_meow.so, which does a funky stuff with TLS.
+ *
+ * First, it allocates a pthread TLS with pthread_key_create(). But then, in
+ * order to access that value without pthread_getspecific(), it sets a constant
+ * value with pthread_setspecific() and then, get this, scan the memory starting
+ * from the "thread pointer" in hope to find an offset in which the value for
+ * this key is stored (!).
+ *
+ * This works on Bionic because they essentially treats pthread TLS as part of
+ * "static" TLS (TLS for main executable and linked-in shared libraries).
+ * However, this falls apart for GLibC because it keeps the first few pthread
+ * TLS as part of the thread descriptor, which stays before the thread pointer
+ * (for ARM64 - see [1]). And when it can't find the right offset, it'll use a
+ * fallback offset of TLS_SLOT_OPENGL which, turns out, is used for other
+ * purposes inside libGLES_meow.so itself! As the result, the TLS gets
+ * cloberred, which leads to the lib's TLS struct being allocated on every
+ * frame, leaking it.
+ *
+ * [1]: https://elixir.bootlin.com/glibc/glibc-2.37/source/sysdeps/aarch64/nptl/tls.h#L86
+ *
+ * Now, luckily we can workaround that issue. Before it does any of that, it'll
+ * dlsym() a function called MEOW_get_tls_meow_offset() (from itself, mind you),
+ * and call it to see if the offset is already known. I can only presume that
+ * this is a shared code used between the lib and its plugin. But this allows us
+ * to hook this function and provide our own offset, which we obtain by
+ * allocating our own TLS space and subtract thread pointer from it. With this,
+ * the TLS slot is no longer cloberred and libGLES_meow.so can use it to its
+ * heart's content.
+ *
+ * Because this technique inherently requires static TLS slot relative to thread
+ * pointer, tls_model ("initial-exec") attribute is used to ensure that's always
+ * the case. This means dlopen()'ing libhybris-common (or libs that use it) is
+ * not guaranteed to succeed (because static TLS area is scarce resource), but
+ * a.) that should be rare enough, glibc does reserve some static TLS slots for
+ * this purpose [2], and b.) that's obvious compared to a random crash inside
+ * proprietary libGLES_meow.so.
+ *
+ * [2]: https://sourceware.org/bugzilla/show_bug.cgi?id=25051
+ *
+ * Don't ask how I obtain this knowledge.
+ */
+
+#ifdef MALI_QUIRKS
+static ssize_t _hybris_hook_MEOW_get_tls_meow_offset()
+{
+    static __thread __attribute__((tls_model ("initial-exec")))
+        void * meow_tls_storage = NULL;
+
+    ssize_t offset = (void *)&meow_tls_storage - __builtin_thread_pointer();
+    TRACE("MEOW tls offset = %zd", offset);
+
+    return offset;
+}
+#endif
+
 // old property hooks for pre-android 8 approach
 static struct _hook hooks_properties[] = {
     HOOK_INDIRECT(property_get),
@@ -3218,6 +3274,10 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(__fsetlocking),
     HOOK_INDIRECT(_flushlbf),
     HOOK_INDIRECT(__fpurge),
+    /* misc/vendor workaround */
+#ifdef MALI_QUIRKS
+    HOOK_INDIRECT(MEOW_get_tls_meow_offset),
+#endif
 };
 
 static struct _hook hooks_mm[] = {
