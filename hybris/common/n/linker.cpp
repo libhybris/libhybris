@@ -232,7 +232,7 @@ static const char* const kAsanDefaultLdPaths[] = {
 std::vector<std::string> split(const std::string &text, const std::string &sep) {
   std::vector<std::string> tokens;
   std::size_t start = 0, end = 0;
-  while ((end = text.find(sep, start)) != std::string::npos) {
+  while ((end = text.find_first_of(sep, start)) != std::string::npos) {
     tokens.push_back(text.substr(start, end - start));
     start = end + 1;
   }
@@ -4771,9 +4771,11 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
 
   const char* ldpath_env = nullptr;
   const char* ldpreload_env = nullptr;
+  const char* ldshim_libs_env = nullptr;
   if (!getauxval(AT_SECURE)) {
     ldpath_env = getenv("HYBRIS_LD_LIBRARY_PATH");
     ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
+    ldshim_libs_env = getenv("HYBRIS_LD_SHIM_LIBS");
   }
 
   if (ldpath_env)
@@ -4781,6 +4783,7 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
   else
     parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
   parse_LD_PRELOAD(ldpreload_env);
+  parse_LD_SHIM_LIBS(ldshim_libs_env);
 
   if (sdk_version > 0)
     set_application_target_sdk_version(sdk_version);
