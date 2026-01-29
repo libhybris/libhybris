@@ -22,6 +22,7 @@
 #include <hybris/common/binding.h>
 
 #include "hooks_shm.h"
+#include "hooks/atexit.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -2307,8 +2308,6 @@ int _hybris_hook_clearenv(void)
     return clearenv();
 }
 
-extern int __cxa_atexit(void (*)(void*), void*, void*);
-extern void __cxa_finalize(void * d);
 extern int __cxa_thread_atexit(void (*dtor)(void *), void *obj,
                                void *dso_symbol);
 
@@ -3202,8 +3201,8 @@ static struct _hook hooks_common[] = {
     /* grp.h */
     HOOK_DIRECT_NO_DEBUG(getgrgid),
     /* C++ ABI */
-    HOOK_DIRECT_NO_DEBUG(__cxa_atexit),
-    HOOK_DIRECT_NO_DEBUG(__cxa_finalize),
+    HOOK_INDIRECT(__cxa_atexit),
+    HOOK_INDIRECT(__cxa_finalize),
     HOOK_INDIRECT(__cxa_thread_atexit),
     /* sys/prctl.h */
     HOOK_INDIRECT(prctl),
