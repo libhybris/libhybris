@@ -2583,6 +2583,15 @@ static void* _hybris_hook_mmap(void *addr, size_t len, int prot,
     return mmap(addr, len, prot, flags, fd, offset);
 }
 
+static void* _hybris_hook_mmap64(void *addr, size_t len, int prot,
+                  int flags, int fd, off64_t offset)
+{
+    TRACE_HOOK("addr %p len %zu prot %i flags %i fd %i offset %ld",
+               addr, len, prot, flags, fd, offset);
+
+    return mmap64(addr, len, prot, flags, fd, offset);
+}
+
 static int _hybris_hook_munmap(void *addr, size_t length)
 {
     TRACE_HOOK("addr %p length %zu", addr, length);
@@ -3274,6 +3283,7 @@ static struct _hook hooks_mm[] = {
 #else
     HOOK_INDIRECT(mmap),
 #endif
+    HOOK_DIRECT(mmap64),
     HOOK_DIRECT(munmap),
     /* wchar.h */
     HOOK_DIRECT_NO_DEBUG(wmemchr),
