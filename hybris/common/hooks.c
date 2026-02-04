@@ -339,6 +339,17 @@ static void *_hybris_hook_malloc(size_t size)
     return res;
 }
 
+static void *_hybris_hook_aligned_alloc(size_t alignment, size_t size)
+{
+    TRACE_HOOK("alignment %zu size %zu", alignment, size);
+
+    void *res = aligned_alloc(alignment, size);
+
+    TRACE_HOOK("res %p", res);
+
+    return res;
+}
+
 #ifdef WANT_ADRENO_QUIRKS
 static void *_hybris_hook_malloc45(size_t size)
 {
@@ -2922,6 +2933,7 @@ static struct _hook hooks_common[] = {
     HOOK_DIRECT(getenv),
     HOOK_DIRECT_NO_DEBUG(printf),
     HOOK_INDIRECT(malloc),
+    HOOK_INDIRECT(aligned_alloc),
     HOOK_INDIRECT(free),
     HOOK_DIRECT_NO_DEBUG(calloc),
     HOOK_DIRECT_NO_DEBUG(free),
