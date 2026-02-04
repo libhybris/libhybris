@@ -379,6 +379,7 @@ HWComposer *create_hwcomposer1_window()
 HWComposer *create_hwcomposer_window()
 {
 #if HAS_HWCOMPOSER2_HEADERS
+#if ANDROID_VERSION_MAJOR < 8
 	int err;
 	hw_module_t *hwcModule = 0;
 	hwc_composer_device_1_t *hwcDevicePtr = 0;
@@ -395,6 +396,9 @@ HWComposer *create_hwcomposer_window()
 
 	hwc_close_1(hwcDevicePtr);
 	if (hwc_version == HWC_DEVICE_API_VERSION_2_0) {
+#else
+	if (true) {
+#endif
 		return create_hwcomposer2_window();
 	} else
 #endif
