@@ -1018,6 +1018,42 @@ static int _hybris_hook_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t 
     return pthread_cond_wait(realcond, realmutex);
 }
 
+static int _hybris_hook_pthread_cond_clockwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
+                 clockid_t clock_id, const struct timespec *abstime)
+{
+    /* Both cond and mutex can be statically initialized, check for both */
+    uintptr_t cvalue = (*(uintptr_t *) cond);
+    uintptr_t mvalue = (*(uintptr_t *) mutex);
+
+    TRACE_HOOK("cond %p mutex %p abstime %p", cond, mutex, abstime);
+
+    if (hybris_check_android_shared_cond(cvalue) ||
+        hybris_check_android_shared_mutex(mvalue)) {
+        LOGD("Shared condition/mutex with Android, not waiting.");
+        return 0;
+    }
+
+    pthread_cond_t *realcond = (pthread_cond_t *) cvalue;
+    if (hybris_is_pointer_in_shm((void*)cvalue))
+        realcond = (pthread_cond_t *)hybris_get_shmpointer((hybris_shm_pointer_t)cvalue);
+
+    if (cvalue <= ANDROID_TOP_ADDR_VALUE_COND) {
+        realcond = hybris_alloc_init_cond();
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
+    }
+
+    pthread_mutex_t *realmutex = (pthread_mutex_t *) mvalue;
+    if (hybris_is_pointer_in_shm((void*)mvalue))
+        realmutex = (pthread_mutex_t *)hybris_get_shmpointer((hybris_shm_pointer_t)mvalue);
+
+    if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
+        realmutex = hybris_alloc_init_mutex(mvalue);
+        *((uintptr_t *) mutex) = (uintptr_t) realmutex;
+    }
+
+    return pthread_cond_clockwait(realcond, realmutex, clock_id, abstime);
+}
+
 static int _hybris_hook_pthread_cond_timedwait(pthread_cond_t *cond,
                 pthread_mutex_t *mutex, const struct timespec *abstime)
 {
@@ -3043,6 +3079,7 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(pthread_cond_broadcast),
     HOOK_INDIRECT(pthread_cond_signal),
     HOOK_INDIRECT(pthread_cond_wait),
+    HOOK_INDIRECT(pthread_cond_clockwait),
     HOOK_INDIRECT(pthread_cond_timedwait),
     HOOK_TO(pthread_cond_timedwait_monotonic, _hybris_hook_pthread_cond_timedwait),
     HOOK_TO(pthread_cond_timedwait_monotonic_np, _hybris_hook_pthread_cond_timedwait),
