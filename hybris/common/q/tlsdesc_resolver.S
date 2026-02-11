@@ -29,7 +29,7 @@
 #include <platform/bionic/tls_defines.h>
 #include <private/bionic_asm.h>
 
-.globl __tls_get_addr
+.globl hybris_linker_tls_get_addr
 
 // These resolver functions must preserve every register except x0. They set x0
 // to the offset of the TLS symbol relative to the thread pointer.
@@ -50,10 +50,12 @@ ENTRY_PRIVATE(tlsdesc_resolver_dynamic)
 
   mrs x19, tpidr_el0            // __get_tls()
   ldr x20, [x19, #(TLS_SLOT_DTV * 8)]
-  ldr x21, [x20]                // TlsDtv::generation
 
   ldr x0, [x0, #8]              // TlsDynamicResolverArg*
   ldr x22, [x0]                 // TlsDynamicResolverArg::generation
+
+  cbz x20, .fallback            // hybris: TLS_SLOT_DTV might be uninitialized
+  ldr x21, [x20]                // TlsDtv::generation
 
   cmp x21, x22
   b.lo .fallback
@@ -149,7 +151,7 @@ ENTRY_PRIVATE(tlsdesc_resolver_dynamic_slow_path)
   SAVE_VEC_PAIR(q30, q31, 80)
 
   add x0, x0, #8
-  bl __tls_get_addr
+  bl hybris_linker_tls_get_addr
   mrs x1, tpidr_el0 // __get_tls()
   sub x0, x0, x1
 

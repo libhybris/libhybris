@@ -308,6 +308,7 @@ static ExecutableInfo load_executable(const char* orig_path) {
   return result;
 }
 
+#ifdef DISABLED_FOR_HYBRIS_SUPPORT
 static ElfW(Addr) linker_main(KernelArgumentBlock& args, const char* exe_to_load) {
   ProtectedDataGuard guard;
 
@@ -316,7 +317,6 @@ static ElfW(Addr) linker_main(KernelArgumentBlock& args, const char* exe_to_load
   gettimeofday(&t0, 0);
 #endif
 
-#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   // Sanitize the environment.
   __libc_init_AT_SECURE(args.envp);
 
@@ -332,7 +332,6 @@ static ElfW(Addr) linker_main(KernelArgumentBlock& args, const char* exe_to_load
     .post_dump = &notify_gdb_of_libraries,
   };
   debuggerd_init(&callbacks);
-#endif
 #endif
 
   g_linker_logger.ResetState();
@@ -477,9 +476,7 @@ static ElfW(Addr) linker_main(KernelArgumentBlock& args, const char* exe_to_load
 
   linker_finalize_static_tls();
 
-#ifdef DISABLED_FOR_HYBRIS_SUPPORT
   __libc_init_main_thread_final();
-#endif
 
   if (!get_cfi_shadow()->InitialLinkDone(solist)) __linker_cannot_link(g_argv[0]);
 
@@ -535,6 +532,7 @@ static ElfW(Addr) linker_main(KernelArgumentBlock& args, const char* exe_to_load
   TRACE("[ Ready to execute \"%s\" @ %p ]", si->get_realpath(), reinterpret_cast<void*>(entry));
   return entry;
 }
+#endif // DISABLED_FOR_HYBRIS_SUPPORT
 
 /* Compute the load-bias of an existing executable. This shall only
  * be used to compute the load bias of an executable or shared library
@@ -782,6 +780,12 @@ static const char* get_executable_path() {
 }
 
 void* (*_get_hooked_symbol)(const char *sym, const char *requester);
+
+// hybris: static TLS storage lives in the linker's own initial-exec TLS.
+extern "C" __attribute__((tls_model("initial-exec"))) __thread void* hybris_tls_storage[];
+extern size_t tls_tp_base;
+extern ssize_t g_hybris_static_tls_tp_offset;
+
 #ifdef WANT_ARM_TRACING
 void *(*_create_wrapper)(const char *symbol, void *function, int wrapper_type);
 int _wrapping_enabled = 0;
@@ -789,6 +793,14 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
 #else
 extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(const char*, const char*), int enable_linker_gdb_support) {
 #endif
+  // hybris: initial-exec TLS offsets are constant across threads, so the
+  // offset of hybris_tls_storage computed here is valid process-wide. It backs
+  // bionic's static TLS, and the TPREL/TLSDESC relocations turn it into
+  // tls_tp_base. Must be set before any code with TLS relocations is loaded.
+  g_hybris_static_tls_tp_offset = reinterpret_cast<char*>(hybris_tls_storage) -
+                                  reinterpret_cast<char*>(__get_tls());
+  tls_tp_base = -g_hybris_static_tls_tp_offset;
+
   // Get a few environment variables.
   const char* LD_DEBUG = getenv("HYBRIS_LD_DEBUG");
   if (LD_DEBUG != nullptr) {

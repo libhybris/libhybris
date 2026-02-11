@@ -2906,10 +2906,12 @@ static bool is_tls_reloc(ElfW(Word) type) {
   }
 }
 
+extern ssize_t g_hybris_static_tls_tp_offset;
+extern size_t tls_tp_base;
+
 template<typename ElfRelIteratorT>
 bool soinfo::relocate(const VersionTracker& version_tracker, ElfRelIteratorT&& rel_iterator,
                       const soinfo_list_t& global_group, const soinfo_list_t& local_group) {
-  const size_t tls_tp_base = 0/*__libc_shared_globals()->static_tls_layout.offset_thread_pointer()*/;
   std::vector<std::pair<TlsDescriptor*, size_t>> deferred_tlsdesc_relocs;
 
   for (size_t idx = 0; rel_iterator.has_next(); ++idx) {
@@ -3499,7 +3501,13 @@ bool soinfo::prelink_image() {
       }
       return false;
     }
-    tls_ = std::unique_ptr<soinfo_tls>(new soinfo_tls());
+    // hybris: prelink_image() can run more than once for the same soinfo. Keep
+    // the existing soinfo_tls so its module_id survives - a fresh one reads as
+    // unregistered, and register_soinfo_tls() would then hand out a second
+    // static TLS range and orphan the one already in use.
+    if (tls_ == nullptr) {
+      tls_ = std::unique_ptr<soinfo_tls>(new soinfo_tls());
+    }
     tls_->segment = tls_segment;
   }
 
