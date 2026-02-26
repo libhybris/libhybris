@@ -683,7 +683,7 @@ VULKAN_IDLOAD(vkCreatePrivateDataSlotEXT);
 VULKAN_IDLOAD(vkDestroyPrivateDataSlotEXT);
 VULKAN_IDLOAD(vkSetPrivateDataEXT);
 VULKAN_IDLOAD(vkGetPrivateDataEXT);
-#if VK_HEADER_VERSION >= 269
+#if VK_HEADER_VERSION >= 269 && defined(VK_ENABLE_BETA_EXTENSIONS)
 VULKAN_IDLOAD(vkCreateCudaModuleNV);
 VULKAN_IDLOAD(vkGetCudaModuleCacheNV);
 VULKAN_IDLOAD(vkCreateCudaFunctionNV);
