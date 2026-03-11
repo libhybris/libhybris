@@ -26,6 +26,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef WANT_VULKAN_X11_STUBS
+#include <X11/Xlib.h>
+#include <xcb/xcb.h>
+#include <X11/extensions/Xrandr.h>
+#endif
+
 #include <hybris/common/binding.h>
 #include <hybris/common/floating_point_abi.h>
 #include "config.h"
@@ -5902,6 +5908,83 @@ VKAPI_ATTR void VKAPI_CALL vkCmdDrawMeshTasksIndirectCountEXT( VkCommandBuffer  
     ((void (*)( VkCommandBuffer  , VkBuffer  , VkDeviceSize  , VkBuffer  , VkDeviceSize  , uint32_t  , uint32_t  ))
         android_dlsym(vulkan_handle, "vkCmdDrawMeshTasksIndirectCountEXT"))
             (commandBuffer, buffer, offset, countBuffer, countBufferOffset, maxDrawCount, stride);
+}
+
+#endif
+
+/* X11 stubs */
+
+#ifdef WANT_VULKAN_X11_STUBS
+
+typedef VkFlags VkXlibSurfaceCreateFlagsKHR;
+typedef struct VkXlibSurfaceCreateInfoKHR {
+    VkStructureType                sType;
+    const void*                    pNext;
+    VkXlibSurfaceCreateFlagsKHR    flags;
+    Display*                       dpy;
+    Window                         window;
+} VkXlibSurfaceCreateInfoKHR;
+
+VKAPI_ATTR VkResult VKAPI_CALL vkCreateXlibSurfaceKHR(
+    VkInstance                                  instance,
+    const VkXlibSurfaceCreateInfoKHR*           pCreateInfo,
+    const VkAllocationCallbacks*                pAllocator,
+    VkSurfaceKHR*                               pSurface)
+{
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL vkGetPhysicalDeviceXlibPresentationSupportKHR(
+    VkPhysicalDevice                            physicalDevice,
+    uint32_t                                    queueFamilyIndex,
+    Display*                                    dpy,
+    VisualID                                    visualID)
+{
+    return VK_FALSE;
+}
+
+typedef VkFlags VkXcbSurfaceCreateFlagsKHR;
+typedef struct VkXcbSurfaceCreateInfoKHR {
+    VkStructureType               sType;
+    const void*                   pNext;
+    VkXcbSurfaceCreateFlagsKHR    flags;
+    xcb_connection_t*             connection;
+    xcb_window_t                  window;
+} VkXcbSurfaceCreateInfoKHR;
+
+VKAPI_ATTR VkResult VKAPI_CALL vkCreateXcbSurfaceKHR(
+    VkInstance                                  instance,
+    const VkXcbSurfaceCreateInfoKHR*            pCreateInfo,
+    const VkAllocationCallbacks*                pAllocator,
+    VkSurfaceKHR*                               pSurface)
+{
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL vkGetPhysicalDeviceXcbPresentationSupportKHR(
+    VkPhysicalDevice                            physicalDevice,
+    uint32_t                                    queueFamilyIndex,
+    xcb_connection_t*                           connection,
+    xcb_visualid_t                              visual_id)
+{
+    return VK_FALSE;
+}
+
+VKAPI_ATTR VkResult VKAPI_CALL vkAcquireXlibDisplayEXT(
+    VkPhysicalDevice                            physicalDevice,
+    Display*                                    dpy,
+    VkDisplayKHR                                display)
+{
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
+}
+
+VKAPI_ATTR VkResult VKAPI_CALL vkGetRandROutputDisplayEXT(
+    VkPhysicalDevice                            physicalDevice,
+    Display*                                    dpy,
+    RROutput                                    rrOutput,
+    VkDisplayKHR*                               pDisplay)
+{
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
 }
 
 #endif
