@@ -1199,7 +1199,7 @@ int open_executable(const char* path, off64_t* file_offset, std::string* realpat
   return open_library_at_path(&zip_archive_cache, path, file_offset, realpath);
 }
 
-const char* fix_dt_needed(const char* dt_needed, const char* sopath __unused) {
+const char* fix_dt_needed(const char* dt_needed, const char* sopath __attribute__((__unused__))) {
 #if !defined(__LP64__)
   // Work around incorrect DT_NEEDED entries for old apps: http://b/21364029
   int app_target_api_level = get_application_target_sdk_version();
@@ -2873,7 +2873,7 @@ bool soinfo::relocate_relr() {
 
 #if !defined(__mips__)
 #if defined(USE_RELA)
-static ElfW(Addr) get_addend(ElfW(Rela)* rela, ElfW(Addr) reloc_addr __unused) {
+static ElfW(Addr) get_addend(ElfW(Rela)* rela, ElfW(Addr) reloc_addr __attribute__((__unused__))) {
   return rela->r_addend;
 }
 #else
