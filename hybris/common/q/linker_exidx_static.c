@@ -38,7 +38,7 @@
 extern unsigned __exidx_end;
 extern unsigned __exidx_start;
 
-_Unwind_Ptr __gnu_Unwind_Find_exidx(_Unwind_Ptr pc __unused,
+_Unwind_Ptr __gnu_Unwind_Find_exidx(_Unwind_Ptr pc __attribute__((__unused__)),
                                     int* pcount)
 {
   *pcount = (__exidx_end-__exidx_start)/8;
