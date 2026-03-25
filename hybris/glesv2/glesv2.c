@@ -23,8 +23,11 @@
 #include <GLES2/gl2ext.h>
 
 #include <dlfcn.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <hybris/common/binding.h>
 
@@ -96,7 +99,6 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetBufferParameteriv, GLenum, GLenum, 
 HYBRIS_IMPLEMENT_FUNCTION0(glesv2, GLenum, glGetError);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glGetFloatv, GLenum, GLfloat *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetFramebufferAttachmentParameteriv, GLenum, GLenum, GLenum, GLint *);
-HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glGetIntegerv, GLenum, GLint *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetProgramiv, GLuint, GLenum, GLint *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetProgramInfoLog, GLuint, GLsizei, GLsizei *, GLchar *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetRenderbufferParameteriv, GLenum, GLenum, GLint *);
@@ -104,7 +106,30 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetShaderiv, GLuint, GLenum, GLint *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetShaderInfoLog, GLuint, GLsizei, GLsizei *, GLchar *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetShaderPrecisionFormat, GLenum, GLenum, GLint *, GLint *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetShaderSource, GLuint, GLsizei, GLsizei *, GLchar *);
-HYBRIS_IMPLEMENT_FUNCTION1(glesv2, const GLubyte *, glGetString, GLenum);
+
+const GLubyte *(*_glGetString) (GLenum name) = NULL;
+
+const GLubyte *glGetString (GLenum name)
+{
+	HYBRIS_DLSYSM(glesv2, &_glGetString, "glGetString");
+	const char *ret = (const char *)_glGetString(name);
+        if (ret && name == GL_EXTENSIONS)
+        {
+		const char* v = (const char*)glGetString(GL_VERSION);
+		int gles_major = 0;
+		sscanf(v, "OpenGL ES %d", &gles_major);
+		if (!strstr(ret, "GL_EXT_unpack_subimage") && gles_major >= 3)
+		{
+			static unsigned char glesextensionsbuf[8192];
+			snprintf(glesextensionsbuf, 8190, "%s %s", ret,
+				 "GL_EXT_unpack_subimage "
+			);
+			ret = glesextensionsbuf;
+		}
+	}
+	return ret;
+}
+
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetTexParameterfv, GLenum, GLenum, GLfloat *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetTexParameteriv, GLenum, GLenum, GLint *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glGetUniformfv, GLuint, GLint, GLfloat *);
@@ -123,7 +148,6 @@ HYBRIS_IMPLEMENT_FUNCTION1(glesv2, GLboolean, glIsShader, GLuint);
 HYBRIS_IMPLEMENT_FUNCTION1(glesv2, GLboolean, glIsTexture, GLuint);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv2, glLineWidth, GLfloat);
 HYBRIS_IMPLEMENT_VOID_FUNCTION1(glesv2, glLinkProgram, GLuint);
-HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glPixelStorei, GLenum, GLint);
 HYBRIS_IMPLEMENT_VOID_FUNCTION2(glesv2, glPolygonOffset, GLfloat, GLfloat);
 HYBRIS_IMPLEMENT_VOID_FUNCTION7(glesv2, glReadPixels, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, void *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION0(glesv2, glReleaseShaderCompiler);
@@ -235,7 +259,118 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glClearBufferiv, GLenum, GLint, const GL
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glClearBufferuiv, GLenum, GLint, const GLuint *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION3(glesv2, glClearBufferfv, GLenum, GLint, const GLfloat *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glClearBufferfi, GLenum, GLint, GLfloat, GLint);
-HYBRIS_IMPLEMENT_FUNCTION2(glesv2, const GLubyte *, glGetStringi, GLenum, GLuint);
+const GLubyte *(*_glGetStringi) (GLenum name, GLuint index) = NULL;
+static void (*_glGetIntegerv)(GLenum pname, GLint *data) = NULL;
+void (*_glPixelStorei)(GLenum pname, GLint param) = NULL;
+
+bool has_unpack_subimage = false;
+static GLint max_extensions = 0;
+bool glGetString_init_done = false;
+
+void init_glGetString()
+{
+	HYBRIS_DLSYSM(glesv2, &_glGetStringi, "glGetStringi");
+	HYBRIS_DLSYSM(glesv2, &_glGetIntegerv, "glGetIntegerv");
+	HYBRIS_DLSYSM(glesv2, &_glPixelStorei, "glPixelStorei");
+
+	_glGetIntegerv(GL_NUM_EXTENSIONS, &max_extensions);
+	for (GLint i = 0; i < max_extensions; i++) {
+		const char *ext = (const char *)_glGetStringi(GL_EXTENSIONS, i);
+		if (strcmp(ext, "GL_EXT_unpack_subimage") == 0)
+		{
+			has_unpack_subimage = true;
+			return;
+		}
+	}
+	// Dont try to implement if we are on gles<3
+	const char* v = (const char*)glGetString(GL_VERSION);
+        int gles_major = 0;
+        sscanf(v, "OpenGL ES %d", &gles_major);
+
+	if(gles_major >= 3)
+		has_unpack_subimage = false;
+	else
+		has_unpack_subimage = true;
+}
+
+void glGetIntegerv (GLenum pname, GLint *data)
+{
+	if(!glGetString_init_done)
+	{
+		init_glGetString();
+	}
+
+	if(!has_unpack_subimage)
+	{
+		switch(pname)
+		{
+			case GL_UNPACK_ROW_LENGTH_EXT:
+				_glGetIntegerv(GL_UNPACK_ROW_LENGTH, data);
+				break;
+			case GL_UNPACK_SKIP_ROWS_EXT:
+				_glGetIntegerv(GL_UNPACK_SKIP_ROWS, data);
+				break;
+			case GL_UNPACK_SKIP_PIXELS_EXT:
+				_glGetIntegerv(GL_UNPACK_SKIP_PIXELS, data);
+				break;
+			default:
+				_glGetIntegerv(pname, data);
+				break;
+		}
+	} else {
+		_glGetIntegerv(pname, data);
+	}
+
+	if(!has_unpack_subimage && pname == GL_NUM_EXTENSIONS)
+	{
+		*data += 1;
+	}
+}
+
+void glPixelStorei (GLenum pname, GLint param)
+{
+	if(!glGetString_init_done)
+	{
+		init_glGetString();
+	}
+
+	if(!has_unpack_subimage)
+	{
+		switch(pname)
+		{
+			case GL_UNPACK_ROW_LENGTH_EXT:
+				_glPixelStorei(GL_UNPACK_ROW_LENGTH, param);
+				break;
+			case GL_UNPACK_SKIP_ROWS_EXT:
+				_glPixelStorei(GL_UNPACK_SKIP_ROWS, param);
+				break;
+			case GL_UNPACK_SKIP_PIXELS_EXT:
+				_glPixelStorei(GL_UNPACK_SKIP_PIXELS, param);
+				break;
+			default:
+				_glPixelStorei(pname, param);
+				break;
+		}
+	} else {
+		_glPixelStorei(pname, param);
+	}
+}
+
+const GLubyte *glGetStringi (GLenum name, GLuint index)
+{
+	if(!glGetString_init_done)
+	{
+		init_glGetString();
+	}
+
+	if (!has_unpack_subimage && name == GL_EXTENSIONS && index == max_extensions)
+	{
+		return (const GLubyte *)"GL_EXT_unpack_subimage";
+	}
+
+        return _glGetStringi(name, index);
+}
+
 HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glCopyBufferSubData, GLenum, GLenum, GLintptr, GLintptr, GLsizeiptr);
 HYBRIS_IMPLEMENT_VOID_FUNCTION4(glesv2, glGetUniformIndices, GLuint, GLsizei, const GLchar *const *, GLuint *);
 HYBRIS_IMPLEMENT_VOID_FUNCTION5(glesv2, glGetActiveUniformsiv, GLuint, GLsizei, const GLuint *, GLenum, GLint *);
