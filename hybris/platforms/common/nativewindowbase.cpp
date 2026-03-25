@@ -58,6 +58,9 @@ BaseNativeWindowBuffer::BaseNativeWindowBuffer()
 	ANativeWindowBuffer::format = 0;
 	ANativeWindowBuffer::usage = 0;
 	ANativeWindowBuffer::handle = 0;
+#if ANDROID_VERSION_MAJOR>=8
+	ANativeWindowBuffer::layerCount = 1;
+#endif
 
 	refcount = 0;
 }

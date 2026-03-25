@@ -42,7 +42,7 @@ static const struct wl_buffer_interface server_wlegl_buffer_impl = {
 server_wlegl_buffer *
 server_wlegl_buffer_from(struct wl_resource *buffer)
 {
-	if (!buffer || !wl_resource_instance_of(buffer, &wl_buffer_interface, &server_wlegl_buffer_impl))
+	if (!buffer)
 		return NULL;
 	return static_cast<server_wlegl_buffer *>(wl_resource_get_user_data(buffer));
 }

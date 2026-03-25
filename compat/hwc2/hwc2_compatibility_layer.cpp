@@ -36,38 +36,42 @@ public:
         listener(listener) { }
 
 #if ANDROID_VERSION_MAJOR < 14
-    void onComposerHalHotplug(hal::HWDisplayId display, hal::Connection connection) {
+    void onComposerHalHotplug(hal::HWDisplayId display, hal::Connection connection) override {
         listener->on_hotplug_received(listener, 0, display,
                                     connection == hal::Connection::CONNECTED,
                                     true);
     }
 #else
-    void onComposerHalHotplugEvent(hal::HWDisplayId display, HWC2::DisplayHotplugEvent event) {
+    void onComposerHalHotplugEvent(hal::HWDisplayId display, HWC2::DisplayHotplugEvent event) override {
         listener->on_hotplug_received(listener, 0, display,
                                     event == HWC2::DisplayHotplugEvent::CONNECTED,
                                     true);
     }
 #endif
 
-    void onComposerHalRefresh(hal::HWDisplayId display) {
+    void onComposerHalRefresh(hal::HWDisplayId display) override {
         listener->on_refresh_received(listener, 0, display);
     }
 
     void onComposerHalVsync(hal::HWDisplayId display, int64_t timestamp,
-                            uint32_t /*vsyncPeriodNanos*/) {
+                            uint32_t /*vsyncPeriodNanos*/) override {
         listener->on_vsync_received(listener, 0, display, timestamp);
     }
 
 #if ANDROID_VERSION_MAJOR >= 11
     void onComposerHalVsyncPeriodTimingChanged(hal::HWDisplayId,
-                                               const hal::VsyncPeriodChangeTimeline&) { }
-    void onComposerHalSeamlessPossible(hal::HWDisplayId) { }
+                                               const hal::VsyncPeriodChangeTimeline&) override { }
+    void onComposerHalSeamlessPossible(hal::HWDisplayId) override { }
 #endif
 #if ANDROID_VERSION_MAJOR >= 13
-    void onComposerHalVsyncIdle(hal::HWDisplayId) { }
+    void onComposerHalVsyncIdle(hal::HWDisplayId) override { }
 #endif
 #if ANDROID_VERSION_MAJOR >= 14
     void onRefreshRateChangedDebug(const HWC2::RefreshRateChangedDebugData&) override { }
+#endif
+
+#if ANDROID_VERSION_MAJOR >= 15
+    void onComposerHalHdcpLevelsChanged(hal::HWDisplayId, const HWC2::HdcpLevels&) override {};
 #endif
 
     virtual ~HWComposerCallback() { };

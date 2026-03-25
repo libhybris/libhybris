@@ -114,7 +114,7 @@ void (*_android_get_LD_LIBRARY_PATH)(char* buffer, size_t buffer_size) = NULL;
 void (*_android_update_LD_LIBRARY_PATH)(const char* ld_library_path) = NULL;
 void *(*_android_dlopen_ext)(const char* filename, int flag, const void* extinfo) = NULL;
 void (*_android_set_application_target_sdk_version)(uint32_t target) = NULL;
-uint32_t (*_android_get_application_target_sdk_version)() = NULL;
+int (*_android_get_application_target_sdk_version)() = NULL;
 void *(*_android_create_namespace)(const char* name,
                                  const char* ld_library_path,
                                  const char* default_library_path,
@@ -333,6 +333,17 @@ static void *_hybris_hook_malloc(size_t size)
     TRACE_HOOK("size %zu", size);
 
     void *res = malloc(size);
+
+    TRACE_HOOK("res %p", res);
+
+    return res;
+}
+
+static void *_hybris_hook_aligned_alloc(size_t alignment, size_t size)
+{
+    TRACE_HOOK("alignment %zu size %zu", alignment, size);
+
+    void *res = aligned_alloc(alignment, size);
 
     TRACE_HOOK("res %p", res);
 
@@ -1005,6 +1016,42 @@ static int _hybris_hook_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t 
     }
 
     return pthread_cond_wait(realcond, realmutex);
+}
+
+static int _hybris_hook_pthread_cond_clockwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
+                 clockid_t clock_id, const struct timespec *abstime)
+{
+    /* Both cond and mutex can be statically initialized, check for both */
+    uintptr_t cvalue = (*(uintptr_t *) cond);
+    uintptr_t mvalue = (*(uintptr_t *) mutex);
+
+    TRACE_HOOK("cond %p mutex %p abstime %p", cond, mutex, abstime);
+
+    if (hybris_check_android_shared_cond(cvalue) ||
+        hybris_check_android_shared_mutex(mvalue)) {
+        LOGD("Shared condition/mutex with Android, not waiting.");
+        return 0;
+    }
+
+    pthread_cond_t *realcond = (pthread_cond_t *) cvalue;
+    if (hybris_is_pointer_in_shm((void*)cvalue))
+        realcond = (pthread_cond_t *)hybris_get_shmpointer((hybris_shm_pointer_t)cvalue);
+
+    if (cvalue <= ANDROID_TOP_ADDR_VALUE_COND) {
+        realcond = hybris_alloc_init_cond();
+        *((uintptr_t *) cond) = (uintptr_t) realcond;
+    }
+
+    pthread_mutex_t *realmutex = (pthread_mutex_t *) mvalue;
+    if (hybris_is_pointer_in_shm((void*)mvalue))
+        realmutex = (pthread_mutex_t *)hybris_get_shmpointer((hybris_shm_pointer_t)mvalue);
+
+    if (mvalue <= ANDROID_TOP_ADDR_VALUE_MUTEX) {
+        realmutex = hybris_alloc_init_mutex(mvalue);
+        *((uintptr_t *) mutex) = (uintptr_t) realmutex;
+    }
+
+    return pthread_cond_clockwait(realcond, realmutex, clock_id, abstime);
 }
 
 static int _hybris_hook_pthread_cond_timedwait(pthread_cond_t *cond,
@@ -2572,6 +2619,15 @@ static void* _hybris_hook_mmap(void *addr, size_t len, int prot,
     return mmap(addr, len, prot, flags, fd, offset);
 }
 
+static void* _hybris_hook_mmap64(void *addr, size_t len, int prot,
+                  int flags, int fd, off64_t offset)
+{
+    TRACE_HOOK("addr %p len %zu prot %i flags %i fd %i offset %ld",
+               addr, len, prot, flags, fd, offset);
+
+    return mmap64(addr, len, prot, flags, fd, offset);
+}
+
 static int _hybris_hook_munmap(void *addr, size_t length)
 {
     TRACE_HOOK("addr %p length %zu", addr, length);
@@ -2821,7 +2877,7 @@ void _hybris_hook_android_set_application_target_sdk_version(uint32_t target)
     _android_set_application_target_sdk_version(target);
 }
 
-uint32_t _hybris_hook_android_get_application_target_sdk_version()
+int _hybris_hook_android_get_application_target_sdk_version()
 {
     TRACE("");
 
@@ -2922,6 +2978,7 @@ static struct _hook hooks_common[] = {
     HOOK_DIRECT(getenv),
     HOOK_DIRECT_NO_DEBUG(printf),
     HOOK_INDIRECT(malloc),
+    HOOK_INDIRECT(aligned_alloc),
     HOOK_INDIRECT(free),
     HOOK_DIRECT_NO_DEBUG(calloc),
     HOOK_DIRECT_NO_DEBUG(free),
@@ -3022,6 +3079,7 @@ static struct _hook hooks_common[] = {
     HOOK_INDIRECT(pthread_cond_broadcast),
     HOOK_INDIRECT(pthread_cond_signal),
     HOOK_INDIRECT(pthread_cond_wait),
+    HOOK_INDIRECT(pthread_cond_clockwait),
     HOOK_INDIRECT(pthread_cond_timedwait),
     HOOK_TO(pthread_cond_timedwait_monotonic, _hybris_hook_pthread_cond_timedwait),
     HOOK_TO(pthread_cond_timedwait_monotonic_np, _hybris_hook_pthread_cond_timedwait),
@@ -3262,6 +3320,7 @@ static struct _hook hooks_mm[] = {
 #else
     HOOK_INDIRECT(mmap),
 #endif
+    HOOK_DIRECT(mmap64),
     HOOK_DIRECT(munmap),
     /* wchar.h */
     HOOK_DIRECT_NO_DEBUG(wmemchr),
@@ -3807,7 +3866,7 @@ void android_set_application_target_sdk_version(uint32_t target)
     _android_set_application_target_sdk_version(target);
 }
 
-uint32_t android_get_application_target_sdk_version()
+int android_get_application_target_sdk_version()
 {
     ENSURE_LINKER_IS_LOADED();
 
@@ -3928,7 +3987,7 @@ void hybris_set_application_target_sdk_version(uint32_t target)
     android_set_application_target_sdk_version(target);
 }
 
-uint32_t hybris_get_application_target_sdk_version()
+int hybris_get_application_target_sdk_version()
 {
     return android_get_application_target_sdk_version();
 }

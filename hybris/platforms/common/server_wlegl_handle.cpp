@@ -76,7 +76,7 @@ server_wlegl_handle_dtor(struct wl_resource *resource)
 server_wlegl_handle *
 server_wlegl_handle_from(struct wl_resource *resource)
 {
-	if (!resource || !wl_resource_instance_of(resource, &android_wlegl_handle_interface, &server_handle_impl))
+	if (!resource)
 		return NULL;
 	return static_cast<server_wlegl_handle *>(wl_resource_get_user_data(resource));
 }
