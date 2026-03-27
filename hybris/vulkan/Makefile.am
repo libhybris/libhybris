@@ -30,4 +30,8 @@ libvulkan_la_LDFLAGS = \
 	$(top_builddir)/hardware/libhardware.la \
 	-version-info 3:183:2
 
+if WANT_VULKAN_X11_STUBS
+libvulkan_la_CFLAGS += -DWANT_VULKAN_X11_STUBS
+endif
+
 endif
