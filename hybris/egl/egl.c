@@ -598,7 +598,7 @@ static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 };
 static EGLBoolean _eglHybrisOverrideFunctions_sorted = EGL_FALSE;
 
-#undef OVERRIDE_SANENAME
+#undef OVERRIDE_SAMENAME
 #undef OVERRIDE_MY
 #undef OVERRIDE_TO
 
