@@ -190,7 +190,11 @@ static VkResult waylandws_vkCreateInstance(const VkInstanceCreateInfo *pCreateIn
     VkResult result;
     // Temporary array to replace wayland surface extension with Android surface extension
     char **enabledExtensions = (char **)malloc(pCreateInfo->enabledExtensionCount * sizeof(char *));
-    uint32_t i;
+    uint32_t i, out_count = 0;
+
+    if (enabledExtensions == NULL) {
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
 
     if (_vkCreateInstance == NULL) {
         _vkCreateInstance = (VkResult (*)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *))
@@ -198,20 +202,41 @@ static VkResult waylandws_vkCreateInstance(const VkInstanceCreateInfo *pCreateIn
     }
 
     for (i = 0; i < pCreateInfo->enabledExtensionCount; i++) {
-        enabledExtensions[i] = (char *)malloc(VK_MAX_EXTENSION_NAME_SIZE * sizeof(char));
-        if (strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME) == 0) {
-            strncpy(enabledExtensions[i], VK_KHR_ANDROID_SURFACE_EXTENSION_NAME, VK_MAX_EXTENSION_NAME_SIZE);
-        } else {
-            strncpy(enabledExtensions[i], pCreateInfo->ppEnabledExtensionNames[i], VK_MAX_EXTENSION_NAME_SIZE);
+        const char *ext = pCreateInfo->ppEnabledExtensionNames[i];
+
+        // Skip unsupported VK_KHR_display on Wayland
+        if (strcmp(ext, VK_KHR_DISPLAY_EXTENSION_NAME) == 0) {
+            continue;
         }
+
+        enabledExtensions[out_count] = (char *)malloc(VK_MAX_EXTENSION_NAME_SIZE * sizeof(char));
+        if (enabledExtensions[out_count] == NULL) {
+            uint32_t j;
+            for (j = 0; j < out_count; j++) {
+                free(enabledExtensions[j]);
+            }
+            free(enabledExtensions);
+            return VK_ERROR_OUT_OF_HOST_MEMORY;
+        }
+
+        if (strcmp(ext, VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME) == 0) {
+            strncpy(enabledExtensions[out_count], VK_KHR_ANDROID_SURFACE_EXTENSION_NAME, VK_MAX_EXTENSION_NAME_SIZE);
+        } else {
+            strncpy(enabledExtensions[out_count], ext, VK_MAX_EXTENSION_NAME_SIZE);
+        }
+
+        enabledExtensions[out_count][VK_MAX_EXTENSION_NAME_SIZE - 1] = '\0';
+        out_count++;
     }
+
+    createInfo.enabledExtensionCount = out_count;
     createInfo.ppEnabledExtensionNames = (const char * const *)enabledExtensions;
 
     // Call actual vkCreateInstance
     result = (*_vkCreateInstance)(&createInfo, pAllocator, pInstance);
 
     // Free temporary array
-    for (i = 0; i < pCreateInfo->enabledExtensionCount; i++) {
+    for (i = 0; i < out_count; i++) {
         free(enabledExtensions[i]);
     }
     free(enabledExtensions);
