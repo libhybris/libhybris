@@ -73,6 +73,9 @@ static EGLSurface  (*_eglGetCurrentSurface)(EGLint readdraw) = NULL;
 static EGLBoolean  (*_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface) = NULL;
 
 
+static EGLImage (*_eglCreateImage)(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLAttrib *attrib_list) = NULL;
+static EGLBoolean (*_eglDestroyImage)(EGLDisplay dpy, EGLImage image) = NULL;
+
 static EGLImageKHR (*_eglCreateImageKHR)(EGLDisplay dpy, EGLContext ctx, EGLenum target, EGLClientBuffer buffer, const EGLint *attrib_list) = NULL;
 static EGLBoolean (*_eglDestroyImageKHR) (EGLDisplay dpy, EGLImageKHR image) = NULL;
 
@@ -513,6 +516,43 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 	return (EGLImageKHR)image;
 }
 
+static EGLImage _my_eglCreateImage(EGLDisplay dpy, EGLContext ctx, EGLenum target,
+		EGLClientBuffer buffer, const EGLAttrib *attrib_list)
+{
+	HYBRIS_DLSYSM(egl, &_eglCreateImage, "eglCreateImage");
+
+	if (_eglCreateImage != NULL) {
+		struct _EGLDisplay *display = hybris_egl_display_get_mapping(dpy);
+		EGLContext newctx = ctx;
+		EGLenum newtarget = target;
+		EGLClientBuffer newbuffer = buffer;
+		const EGLAttrib *newattrib_list = attrib_list;
+
+		EGLImage ei = (*_eglCreateImage)(dpy, newctx, newtarget, newbuffer, newattrib_list);
+
+		if (ei == EGL_NO_IMAGE) {
+			return EGL_NO_IMAGE;
+		}
+
+		struct egl_image *image;
+		image = malloc(sizeof *image);
+		image->egl_image = (EGLImageKHR) ei;
+		image->target = target;
+		image->ws_dpy = display;
+		image->ws_buffer = newbuffer;
+
+		return (EGLImage) image;
+	}
+
+	return (EGLImage) _my_eglCreateImageKHR(dpy, ctx, target, buffer, (const EGLint *) attrib_list);
+}
+
+EGLImage eglCreateImage(EGLDisplay dpy, EGLContext ctx, EGLenum target,
+		EGLClientBuffer buffer, const EGLAttrib *attrib_list)
+{
+	return _my_eglCreateImage(dpy, ctx, target, buffer, attrib_list);
+}
+
 static void _my_glEGLImageTargetTexture2DOES(GLenum target, GLeglImageOES image)
 {
 	HYBRIS_DLSYSM(glesv2, &_glEGLImageTargetTexture2DOES, "glEGLImageTargetTexture2DOES");
@@ -539,6 +579,22 @@ EGLBoolean _my_eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 	return ret;
 }
 
+EGLBoolean _my_eglDestroyImage(EGLDisplay dpy, EGLImage image)
+{
+	HYBRIS_DLSYSM(egl, &_eglDestroyImage, "eglDestroyImage");
+	struct egl_image *img = (struct egl_image *) image;
+	if (_eglDestroyImage != NULL) {
+		EGLBoolean ret = (*_eglDestroyImage)(dpy, img ? (EGLImage) img->egl_image : EGL_NO_IMAGE);
+		if (ret == EGL_TRUE) {
+			free(img);
+			return EGL_TRUE;
+		}
+		return ret;
+	}
+
+	return _my_eglDestroyImageKHR(dpy, (EGLImageKHR) image);
+}
+
 struct FuncNamePair {
 	const char * name;
 	__eglMustCastToProperFunctionPointerType func;
@@ -550,10 +606,12 @@ struct FuncNamePair {
 
 static struct FuncNamePair _eglHybrisOverrideFunctions[] = {
 	OVERRIDE_MY(eglCreateImageKHR),
+	OVERRIDE_MY(eglCreateImage),
 	OVERRIDE_MY(eglSwapBuffersWithDamageEXT),
 	OVERRIDE_MY(glEGLImageTargetTexture2DOES),
 	OVERRIDE_MY(glEGLImageTargetRenderbufferStorageOES),
 	OVERRIDE_MY(eglDestroyImageKHR),
+	OVERRIDE_MY(eglDestroyImage),
 	OVERRIDE_SAMENAME(eglGetError),
 	OVERRIDE_SAMENAME(eglGetDisplay),
 	OVERRIDE_SAMENAME(eglGetPlatformDisplay),
