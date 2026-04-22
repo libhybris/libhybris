@@ -41,7 +41,7 @@ static VkResult nullws_vkEnumerateInstanceExtensionProperties(const char* pLayer
     return (*_vkEnumerateInstanceExtensionProperties)(pLayerName, pPropertyCount, pProperties);
 }
 
-VkResult nullws_vkCreateInstance(const VkInstanceCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkInstance *pInstance)
+static VkResult nullws_vkCreateInstance(const VkInstanceCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkInstance *pInstance)
 {
     if (_vkCreateInstance == NULL) {
         _vkCreateInstance = (VkResult (*)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *))
@@ -67,6 +67,16 @@ static VkBool32 nullws_vkGetPhysicalDeviceWaylandPresentationSupportKHR(VkPhysic
 static void nullws_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator)
 {
 }
+
+static VkResult nullws_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities)
+{
+    return VK_ERROR_SURFACE_LOST_KHR;
+}
+
+static VkResult nullws_vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain)
+{
+    return VK_ERROR_OUT_OF_HOST_MEMORY;
+}
 #endif
 
 static void nullws_vkSetInstanceProcAddrFunc(PFN_vkVoidFunction addr)
@@ -83,6 +93,8 @@ struct ws_module ws_module_info = {
     nullws_vkCreateWaylandSurfaceKHR,
     nullws_vkGetPhysicalDeviceWaylandPresentationSupportKHR,
     nullws_vkDestroySurfaceKHR,
+    nullws_vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
+    nullws_vkCreateSwapchainKHR,
 #endif
     nullws_vkSetInstanceProcAddrFunc,
 };

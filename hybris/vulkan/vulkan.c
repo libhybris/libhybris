@@ -122,6 +122,16 @@ void vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkAllo
 {
     ws_vkDestroySurfaceKHR(instance, surface, pAllocator);
 }
+
+VkResult vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities)
+{
+    return ws_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, pSurfaceCapabilities);
+}
+
+VkResult vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain)
+{
+    return ws_vkCreateSwapchainKHR(device, pCreateInfo, pAllocator, pSwapchain);
+}
 #else
 VULKAN_IDLOAD(vkDestroySurfaceKHR);
 #endif
@@ -145,6 +155,10 @@ PFN_vkVoidFunction vkGetInstanceProcAddr(VkInstance instance, const char* pName)
         return (PFN_vkVoidFunction)vkGetPhysicalDeviceWaylandPresentationSupportKHR;
     } else if (!strcmp(pName, "vkDestroySurfaceKHR")) {
         return (PFN_vkVoidFunction)vkDestroySurfaceKHR;
+    } else if (!strcmp(pName, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR")) {
+        return (PFN_vkVoidFunction)vkGetPhysicalDeviceSurfaceCapabilitiesKHR;
+    } else if (!strcmp(pName, "vkCreateSwapchainKHR")) {
+        return (PFN_vkVoidFunction)vkCreateSwapchainKHR;
 #endif
     }
 
@@ -358,10 +372,8 @@ VULKAN_IDLOAD(vkGetDeviceImageMemoryRequirements);
 VULKAN_IDLOAD(vkGetDeviceImageSparseMemoryRequirements);
 #endif
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceSupportKHR);
-VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceCapabilitiesKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfaceFormatsKHR);
 VULKAN_IDLOAD(vkGetPhysicalDeviceSurfacePresentModesKHR);
-VULKAN_IDLOAD(vkCreateSwapchainKHR);
 VULKAN_IDLOAD(vkDestroySwapchainKHR);
 VULKAN_IDLOAD(vkGetSwapchainImagesKHR);
 VULKAN_IDLOAD(vkAcquireNextImageKHR);
@@ -671,7 +683,7 @@ VULKAN_IDLOAD(vkCreatePrivateDataSlotEXT);
 VULKAN_IDLOAD(vkDestroyPrivateDataSlotEXT);
 VULKAN_IDLOAD(vkSetPrivateDataEXT);
 VULKAN_IDLOAD(vkGetPrivateDataEXT);
-#if VK_HEADER_VERSION >= 269
+#if VK_HEADER_VERSION >= 269 && defined(VK_ENABLE_BETA_EXTENSIONS)
 VULKAN_IDLOAD(vkCreateCudaModuleNV);
 VULKAN_IDLOAD(vkGetCudaModuleCacheNV);
 VULKAN_IDLOAD(vkCreateCudaFunctionNV);

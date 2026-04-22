@@ -52,9 +52,13 @@ struct WaylandDisplay {
     android_wlegl *wlegl;
     WaylandNativeWindow *window;
     wl_display *wl_dpy_wrapper;
+
+    int current_swapchain_width;
+    int current_swapchain_height;
 };
 
 static bool init_done = false;
+static VkInstance g_instance = VK_NULL_HANDLE;
 
 /* Keep track of active Vulkan window surfaces */
 static std::map<VkSurfaceKHR,struct WaylandDisplay *> _surface_window_map;
@@ -84,11 +88,24 @@ struct WaylandDisplay *vulkan_wayland_pop_mapping(VkSurfaceKHR surface)
     return result;
 }
 
+struct WaylandDisplay *vulkan_wayland_get_mapping(VkSurfaceKHR surface)
+{
+    std::map<VkSurfaceKHR, struct WaylandDisplay *>::iterator it;
+    it = _surface_window_map.find(surface);
+
+    if (it != _surface_window_map.end())
+        return it->second;
+    return NULL;
+}
+
 static VkResult (*_vkCreateAndroidSurfaceKHR)(VkInstance instance, const VkAndroidSurfaceCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface) = NULL;
 static PFN_vkVoidFunction (*_vkDestroySurfaceKHR)(VkInstance instance, VkSurfaceKHR surface, const VkAllocationCallbacks* pAllocator) = NULL;
 static VkResult (*_vkEnumerateInstanceExtensionProperties)(const char *pLayerName, uint32_t *pPropertyCount, VkExtensionProperties *pProperties) = NULL;
 static VkResult (*_vkCreateInstance)(const VkInstanceCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkInstance *pInstance) = NULL;
 static PFN_vkVoidFunction (*_vkGetInstanceProcAddr)(VkInstance instance, const char *pName) = NULL;
+static PFN_vkVoidFunction (*_vkGetDeviceProcAddr)(VkDevice device, const char *pName) = NULL;
+static VkResult (*_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities) = NULL;
+static VkResult (*_vkCreateSwapchainKHR)(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain) = NULL;
 
 extern "C" void waylandws_init_module(struct ws_vulkan_interface *vulkan_iface)
 {
@@ -165,13 +182,19 @@ static VkResult waylandws_vkEnumerateInstanceExtensionProperties(const char* pLa
     return res;
 }
 
-VkResult waylandws_vkCreateInstance(const VkInstanceCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkInstance *pInstance)
+static VkResult waylandws_vkCreateInstance(const VkInstanceCreateInfo *pCreateInfo,
+                                           const VkAllocationCallbacks *pAllocator,
+                                           VkInstance *pInstance)
 {
     VkInstanceCreateInfo createInfo = *pCreateInfo;
     VkResult result;
     // Temporary array to replace wayland surface extension with Android surface extension
     char **enabledExtensions = (char **)malloc(pCreateInfo->enabledExtensionCount * sizeof(char *));
-    uint32_t i;
+    uint32_t i, out_count = 0;
+
+    if (enabledExtensions == NULL) {
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
 
     if (_vkCreateInstance == NULL) {
         _vkCreateInstance = (VkResult (*)(const VkInstanceCreateInfo *, const VkAllocationCallbacks *, VkInstance *))
@@ -179,23 +202,48 @@ VkResult waylandws_vkCreateInstance(const VkInstanceCreateInfo *pCreateInfo, con
     }
 
     for (i = 0; i < pCreateInfo->enabledExtensionCount; i++) {
-        enabledExtensions[i] = (char *)malloc(VK_MAX_EXTENSION_NAME_SIZE * sizeof(char));
-        if (strcmp(pCreateInfo->ppEnabledExtensionNames[i], VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME) == 0) {
-            strncpy(enabledExtensions[i], VK_KHR_ANDROID_SURFACE_EXTENSION_NAME, VK_MAX_EXTENSION_NAME_SIZE);
-        } else {
-            strncpy(enabledExtensions[i], pCreateInfo->ppEnabledExtensionNames[i], VK_MAX_EXTENSION_NAME_SIZE);
+        const char *ext = pCreateInfo->ppEnabledExtensionNames[i];
+
+        // Skip unsupported VK_KHR_display on Wayland
+        if (strcmp(ext, VK_KHR_DISPLAY_EXTENSION_NAME) == 0) {
+            continue;
         }
+
+        enabledExtensions[out_count] = (char *)malloc(VK_MAX_EXTENSION_NAME_SIZE * sizeof(char));
+        if (enabledExtensions[out_count] == NULL) {
+            uint32_t j;
+            for (j = 0; j < out_count; j++) {
+                free(enabledExtensions[j]);
+            }
+            free(enabledExtensions);
+            return VK_ERROR_OUT_OF_HOST_MEMORY;
+        }
+
+        if (strcmp(ext, VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME) == 0) {
+            strncpy(enabledExtensions[out_count], VK_KHR_ANDROID_SURFACE_EXTENSION_NAME, VK_MAX_EXTENSION_NAME_SIZE);
+        } else {
+            strncpy(enabledExtensions[out_count], ext, VK_MAX_EXTENSION_NAME_SIZE);
+        }
+
+        enabledExtensions[out_count][VK_MAX_EXTENSION_NAME_SIZE - 1] = '\0';
+        out_count++;
     }
-    createInfo.ppEnabledExtensionNames = enabledExtensions;
+
+    createInfo.enabledExtensionCount = out_count;
+    createInfo.ppEnabledExtensionNames = (const char * const *)enabledExtensions;
 
     // Call actual vkCreateInstance
     result = (*_vkCreateInstance)(&createInfo, pAllocator, pInstance);
 
     // Free temporary array
-    for (i = 0; i < pCreateInfo->enabledExtensionCount; i++) {
+    for (i = 0; i < out_count; i++) {
         free(enabledExtensions[i]);
     }
     free(enabledExtensions);
+
+    if (result == VK_SUCCESS) {
+        g_instance = *pInstance;
+    }
 
     return result;
 }
@@ -221,6 +269,8 @@ static VkResult waylandws_vkCreateWaylandSurfaceKHR(VkInstance instance,
 
     wdpy->wl_dpy = pCreateInfo->display;
     wdpy->wlegl = NULL;
+    wdpy->current_swapchain_width = 0;
+    wdpy->current_swapchain_height = 0;
     wdpy->queue = wl_display_create_queue(wdpy->wl_dpy);
     wdpy->wl_dpy_wrapper = (struct wl_display *) wl_proxy_create_wrapper(wdpy->wl_dpy);
     wl_proxy_set_queue((struct wl_proxy *) wdpy->wl_dpy_wrapper, wdpy->queue);
@@ -234,13 +284,43 @@ static VkResult waylandws_vkCreateWaylandSurfaceKHR(VkInstance instance,
     while (ret == 0 && !wdpy->wlegl) {
         ret = wl_display_dispatch_queue(wdpy->wl_dpy, wdpy->queue);
     }
-    assert(ret >= 0);
+
+    if (ret < 0) {
+        HYBRIS_ERROR("Failed to dispatch Wayland queue: %d", ret);
+        delete wdpy;
+        HYBRIS_TRACE_END("hybris-vulkan", "vkCreateWaylandSurfaceKHR", "");
+        return VK_ERROR_SURFACE_LOST_KHR;
+    }
+
+    if (!wdpy->wlegl) {
+        HYBRIS_ERROR("android_wlegl extension not available");
+        delete wdpy;
+        HYBRIS_TRACE_END("hybris-vulkan", "vkCreateWaylandSurfaceKHR", "");
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
 
     window = wl_egl_window_create(pCreateInfo->surface, 1, 1);
+
+    if (!window) {
+        HYBRIS_ERROR("Failed to create wl_egl_window");
+        freeWaylandDisplay(wdpy);
+        HYBRIS_TRACE_END("hybris-vulkan", "vkCreateWaylandSurfaceKHR", "");
+        return VK_ERROR_SURFACE_LOST_KHR;
+    }
 
     HYBRIS_TRACE_BEGIN("native-vulkan", "vkCreateWaylandSurfaceKHR", "");
 
     win = new WaylandNativeWindow((struct wl_egl_window *)window, wdpy->wl_dpy, wdpy->wlegl);
+
+    if (!win) {
+        HYBRIS_ERROR("Failed to create WaylandNativeWindow");
+        wl_egl_window_destroy(window);
+        freeWaylandDisplay(wdpy);
+        HYBRIS_TRACE_END("native-vulkan", "vkCreateWaylandSurfaceKHR", "");
+        HYBRIS_TRACE_END("hybris-vulkan", "vkCreateWaylandSurfaceKHR", "");
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
     win->common.incRef(&win->common);
     createInfo.sType = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
     createInfo.pNext = NULL;
@@ -261,6 +341,76 @@ static VkResult waylandws_vkCreateWaylandSurfaceKHR(VkInstance instance,
     }
 
     HYBRIS_TRACE_END("hybris-vulkan", "vkCreateWaylandSurfaceKHR", "");
+    return result;
+}
+
+static VkResult waylandws_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice,
+                                                                    VkSurfaceKHR surface,
+                                                                    VkSurfaceCapabilitiesKHR *pSurfaceCapabilities)
+{
+    VkResult result;
+
+    if (_vkGetPhysicalDeviceSurfaceCapabilitiesKHR == NULL) {
+        assert(g_instance != VK_NULL_HANDLE && "vkGetPhysicalDeviceSurfaceCapabilitiesKHR called before vkCreateInstance");
+        _vkGetPhysicalDeviceSurfaceCapabilitiesKHR = (VkResult (*)(VkPhysicalDevice, VkSurfaceKHR, VkSurfaceCapabilitiesKHR *))
+            (*_vkGetInstanceProcAddr)(g_instance, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR");
+    }
+
+    result = (*_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)(physicalDevice, surface, pSurfaceCapabilities);
+
+    if (result == VK_SUCCESS && vulkan_wayland_has_mapping(surface)) {
+        pSurfaceCapabilities->currentExtent.width  = 0xFFFFFFFF;
+        pSurfaceCapabilities->currentExtent.height = 0xFFFFFFFF;
+        pSurfaceCapabilities->minImageExtent.width  = 1;
+        pSurfaceCapabilities->minImageExtent.height = 1;
+        pSurfaceCapabilities->maxImageExtent.width  = 16384;
+        pSurfaceCapabilities->maxImageExtent.height = 16384;
+
+        pSurfaceCapabilities->supportedCompositeAlpha |= VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    }
+
+    return result;
+}
+
+static VkResult waylandws_vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain)
+{
+    VkResult result;
+
+    if (_vkGetDeviceProcAddr == NULL) {
+        assert(g_instance != VK_NULL_HANDLE && "vkGetDeviceProcAddr requested before vkCreateInstance");
+        _vkGetDeviceProcAddr = (PFN_vkVoidFunction (*)(VkDevice, const char *))
+            (*_vkGetInstanceProcAddr)(g_instance, "vkGetDeviceProcAddr");
+    }
+
+    if (_vkCreateSwapchainKHR == NULL) {
+        _vkCreateSwapchainKHR = (VkResult (*)(VkDevice, const VkSwapchainCreateInfoKHR *, const VkAllocationCallbacks *, VkSwapchainKHR *))
+            (*_vkGetDeviceProcAddr)(device, "vkCreateSwapchainKHR");
+    }
+
+    if (_vkCreateSwapchainKHR == NULL) {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+    }
+
+    // Check if this is a Wayland surface and resize the window
+    struct WaylandDisplay *wdpy = vulkan_wayland_get_mapping(pCreateInfo->surface);
+    if (wdpy && wdpy->window) {
+        int new_width = pCreateInfo->imageExtent.width;
+        int new_height = pCreateInfo->imageExtent.height;
+
+        if (new_width != wdpy->current_swapchain_width || new_height != wdpy->current_swapchain_height) {
+            HYBRIS_DEBUG("Resizing Wayland window from %dx%d to %dx%d",
+                         wdpy->current_swapchain_width, wdpy->current_swapchain_height,
+                         new_width, new_height);
+
+            wl_egl_window_resize(wdpy->window->m_window, new_width, new_height, 0, 0);
+
+            wdpy->current_swapchain_width = new_width;
+            wdpy->current_swapchain_height = new_height;
+        }
+    }
+
+    result = (*_vkCreateSwapchainKHR)(device, pCreateInfo, pAllocator, pSwapchain);
+
     return result;
 }
 
@@ -301,5 +451,7 @@ struct ws_module ws_module_info = {
     waylandws_vkCreateWaylandSurfaceKHR,
     waylandws_vkGetPhysicalDeviceWaylandPresentationSupportKHR,
     waylandws_vkDestroySurfaceKHR,
+    waylandws_vkGetPhysicalDeviceSurfaceCapabilitiesKHR,
+    waylandws_vkCreateSwapchainKHR,
     waylandws_vkSetInstanceProcAddrFunc,
 };
