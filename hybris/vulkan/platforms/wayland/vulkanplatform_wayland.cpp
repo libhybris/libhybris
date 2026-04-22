@@ -103,6 +103,7 @@ static PFN_vkVoidFunction (*_vkDestroySurfaceKHR)(VkInstance instance, VkSurface
 static VkResult (*_vkEnumerateInstanceExtensionProperties)(const char *pLayerName, uint32_t *pPropertyCount, VkExtensionProperties *pProperties) = NULL;
 static VkResult (*_vkCreateInstance)(const VkInstanceCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkInstance *pInstance) = NULL;
 static PFN_vkVoidFunction (*_vkGetInstanceProcAddr)(VkInstance instance, const char *pName) = NULL;
+static PFN_vkVoidFunction (*_vkGetDeviceProcAddr)(VkDevice device, const char *pName) = NULL;
 static VkResult (*_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities) = NULL;
 static VkResult (*_vkCreateSwapchainKHR)(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain) = NULL;
 
@@ -204,7 +205,7 @@ static VkResult waylandws_vkCreateInstance(const VkInstanceCreateInfo *pCreateIn
             strncpy(enabledExtensions[i], pCreateInfo->ppEnabledExtensionNames[i], VK_MAX_EXTENSION_NAME_SIZE);
         }
     }
-    createInfo.ppEnabledExtensionNames = enabledExtensions;
+    createInfo.ppEnabledExtensionNames = (const char * const *)enabledExtensions;
 
     // Call actual vkCreateInstance
     result = (*_vkCreateInstance)(&createInfo, pAllocator, pInstance);
@@ -215,7 +216,9 @@ static VkResult waylandws_vkCreateInstance(const VkInstanceCreateInfo *pCreateIn
     }
     free(enabledExtensions);
 
-    g_instance = *pInstance;
+    if (result == VK_SUCCESS) {
+        g_instance = *pInstance;
+    }
 
     return result;
 }
@@ -348,9 +351,19 @@ static VkResult waylandws_vkCreateSwapchainKHR(VkDevice device, const VkSwapchai
 {
     VkResult result;
 
+    if (_vkGetDeviceProcAddr == NULL) {
+        assert(g_instance != VK_NULL_HANDLE && "vkGetDeviceProcAddr requested before vkCreateInstance");
+        _vkGetDeviceProcAddr = (PFN_vkVoidFunction (*)(VkDevice, const char *))
+            (*_vkGetInstanceProcAddr)(g_instance, "vkGetDeviceProcAddr");
+    }
+
     if (_vkCreateSwapchainKHR == NULL) {
         _vkCreateSwapchainKHR = (VkResult (*)(VkDevice, const VkSwapchainCreateInfoKHR *, const VkAllocationCallbacks *, VkSwapchainKHR *))
-            (*_vkGetInstanceProcAddr)(NULL, "vkCreateSwapchainKHR");
+            (*_vkGetDeviceProcAddr)(device, "vkCreateSwapchainKHR");
+    }
+
+    if (_vkCreateSwapchainKHR == NULL) {
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 
     // Check if this is a Wayland surface and resize the window
