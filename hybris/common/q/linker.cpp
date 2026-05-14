@@ -1148,6 +1148,21 @@ static int open_library_on_paths(ZipArchiveCache* zip_archive_cache,
   return -1;
 }
 
+static std::string join_string (const std::vector<std::string> &vec) {
+  std::string ret;
+  bool first = true;
+
+  for (const std::string & str : vec) {
+    if (!first)
+      ret += ", ";
+
+    ret += str;
+    first = false;
+  }
+
+  return ret;
+}
+
 static int open_library(android_namespace_t* ns,
                         ZipArchiveCache* zip_archive_cache,
                         const char* name, soinfo *needed_by,
@@ -1180,10 +1195,12 @@ static int open_library(android_namespace_t* ns,
   }
 
   // Otherwise we try LD_LIBRARY_PATH first, and fall back to the default library path
-  TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),ns->get_ld_library_paths());
+  TRACE("[ opening %s from namespace %s from {%s} ]", name, ns->get_name(),
+    join_string(ns->get_ld_library_paths()).c_str());
   int fd = open_library_on_paths(zip_archive_cache, name, file_offset, ns->get_ld_library_paths(), realpath);
   if (fd == -1 && needed_by != nullptr) {
-    TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),needed_by->get_dt_runpath());
+    TRACE("[ opening %s from namespace %s from {%s} ]", name, ns->get_name(),
+      join_string(needed_by->get_dt_runpath()).c_str());
     fd = open_library_on_paths(zip_archive_cache, name, file_offset, needed_by->get_dt_runpath(), realpath);
     // Check if the library is accessible
     if (fd != -1 && !ns->is_accessible(*realpath)) {
@@ -1193,7 +1210,8 @@ static int open_library(android_namespace_t* ns,
   }
 
   if (fd == -1) {
-    TRACE("[ opening %s from namespace %s from %s]", name, ns->get_name(),ns->get_default_library_paths());
+    TRACE("[ opening %s from namespace %s from {%s} ]", name, ns->get_name(),
+      join_string(ns->get_default_library_paths()).c_str());
     fd = open_library_on_paths(zip_archive_cache, name, file_offset, ns->get_default_library_paths(), realpath);
   }
 
