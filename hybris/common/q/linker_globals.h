@@ -40,12 +40,19 @@
 
 #define DL_ERR(fmt, x...) \
     do { \
-      fprintf(stderr, fmt, ##x); \
-      fprintf(stderr, "\n"); \
+      snprintf( \
+        linker_get_error_buffer(), \
+        linker_get_error_buffer_size(), \
+        fmt, ##x); \
     } while (false)
 
+/* Hybris: '#' tells __bionic_format_dlerror() to skip printing this error. */
 #define DL_ERR_NO_PRINT(fmt, x...) \
     do { \
+      snprintf( \
+        linker_get_error_buffer(), \
+        linker_get_error_buffer_size(), \
+        "#" fmt, ##x); \
     } while (false)
 
 #define DL_WARN(fmt, x...) \
