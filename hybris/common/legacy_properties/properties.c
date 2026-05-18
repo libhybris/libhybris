@@ -36,6 +36,10 @@
 #include <poll.h>
 
 #include <hybris/properties/properties.h>
+#ifndef __GLIBC__
+#include <hybris/common/musl_compat.h>
+#endif
+
 #include "properties_p.h"
 
 static const char property_service_socket[] = "/dev/socket/" PROP_SERVICE_NAME;

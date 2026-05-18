@@ -45,6 +45,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#ifndef __GLIBC__
+#include <hybris/common/musl_compat.h>
+#endif
+
 #include "test_common.h"
 
 int shot_counter = 1;

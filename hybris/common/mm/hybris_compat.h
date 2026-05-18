@@ -32,6 +32,9 @@
 
 #include <string.h>
 #include <memory.h>
+#ifndef __GLIBC__
+#include <hybris/common/musl_compat.h>
+#endif
 
 extern "C" size_t strlcpy(char *dest, const char *src, size_t size);
 extern "C" size_t strlcat(char *dst, const char *src, size_t size);

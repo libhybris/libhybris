@@ -80,6 +80,10 @@ extern int my_property_list(void (*propfn)(const char *key, const char *value, v
 
 #include <hybris/common/hooks.h>
 
+#ifndef __GLIBC__
+#include <hybris/common/musl_compat.h>
+#endif
+
 #include <android-config.h>
 
 // this is also used in bionic:
