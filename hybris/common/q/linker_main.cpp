@@ -802,10 +802,15 @@ extern "C" void android_linker_init(int sdk_version, void* (*get_hooked_symbol)(
     ldpreload_env = getenv("HYBRIS_LD_PRELOAD");
   }
 
+  bool wants_linkerconfig =
+    getenv("HYBRIS_USE_VENDOR_NAMESPACE") != NULL &&
+    access("/linkerconfig/ld.config.txt", R_OK) == 0;
+
   if (ldpath_env)
     parse_LD_LIBRARY_PATH(ldpath_env);
-  else
+  else if (!wants_linkerconfig)
     parse_LD_LIBRARY_PATH(DEFAULT_HYBRIS_LD_LIBRARY_PATH);
+
   parse_LD_PRELOAD(ldpreload_env);
 
   DEBUG("sdk_version %d\n", sdk_version);
