@@ -1467,7 +1467,11 @@ typedef int64_t bionic_off_t;
 typedef __kernel_off_t bionic_off_t;
 #endif
 typedef bionic_off_t bionic_fpos_t;
+#ifdef _LARGEFILE64_SOURCE
 typedef off64_t bionic_fpos64_t;
+#else
+typedef off_t bionic_fpos64_t;
+#endif
 
 /* "struct __sFILE" from bionic/libc/include/stdio.h */
 struct bionic_file {
@@ -1584,10 +1588,14 @@ static int _hybris_hook_fgetpos(FILE *fp, bionic_fpos_t *pos)
 {
     TRACE_HOOK("fp %p pos %p", fp, pos);
 
+#ifdef __GLIBC__
     fpos_t my_fpos;
     int ret = fgetpos(_get_actual_fp(fp), &my_fpos);
 
     *pos = my_fpos.__pos;
+#else
+    int ret = fgetpos(_get_actual_fp(fp), pos);
+#endif
 
     return ret;
 }
@@ -1596,10 +1604,14 @@ static int _hybris_hook_fgetpos64(FILE *fp, bionic_fpos64_t *pos)
 {
     TRACE_HOOK("fp %p pos %p", fp, pos);
 
+#ifdef __GLIBC__
     fpos64_t my_fpos;
     int ret = fgetpos64(_get_actual_fp(fp), &my_fpos);
 
     *pos = my_fpos.__pos;
+#else
+    int ret = fgetpos(_get_actual_fp(fp), pos);
+#endif
 
     return ret;
 }
@@ -1688,33 +1700,49 @@ static int _hybris_hook_fseeko(FILE *fp, bionic_off_t offset, int whence)
     return fseeko(_get_actual_fp(fp), offset, whence);
 }
 
+#ifdef _LARGEFILE64_SOURCE
 static int _hybris_hook_fseeko64(FILE *fp, off64_t offset, int whence)
+#else
+static int _hybris_hook_fseeko64(FILE *fp, off_t offset, int whence)
+#endif
 {
     TRACE_HOOK("fp %p offset %ld whence %d", fp, offset, whence);
 
+#ifdef _LARGEFILE64_SOURCE
     return fseeko64(_get_actual_fp(fp), offset, whence);
+#else
+    return fseeko(_get_actual_fp(fp), offset, whence);
+#endif
 }
 
 static int _hybris_hook_fsetpos(FILE *fp, const bionic_fpos_t *pos)
 {
     TRACE_HOOK("fp %p pos %p", fp, pos);
 
+#ifdef __GLIBC__
     fpos_t my_fpos;
     my_fpos.__pos = *pos;
     memset(&my_fpos.__state, 0, sizeof(mbstate_t));
 
     return fsetpos(_get_actual_fp(fp), &my_fpos);
+#else
+    return fsetpos(_get_actual_fp(fp), pos);
+#endif
 }
 
 static int _hybris_hook_fsetpos64(FILE *fp, const bionic_fpos64_t *pos)
 {
     TRACE_HOOK("fp %p pos %p", fp, pos);
 
+#ifdef __GLIBC__
     fpos64_t my_fpos;
     my_fpos.__pos = *pos;
     memset(&my_fpos.__state, 0, sizeof(mbstate_t));
 
     return fsetpos64(_get_actual_fp(fp), &my_fpos);
+#else
+    return fsetpos(_get_actual_fp(fp), pos);
+#endif
 }
 
 static long _hybris_hook_ftell(FILE *fp)
@@ -1731,11 +1759,19 @@ static bionic_off_t _hybris_hook_ftello(FILE *fp)
     return ftello(_get_actual_fp(fp));
 }
 
+#ifdef _LARGEFILE64_SOURCE
 static off64_t _hybris_hook_ftello64(FILE *fp)
+#else
+static off_t _hybris_hook_ftello64(FILE *fp)
+#endif
 {
     TRACE_HOOK("fp %p", fp);
 
+#ifdef _LARGEFILE64_SOURCE
     return ftello64(_get_actual_fp(fp));
+#else
+    return ftello(_get_actual_fp(fp));
+#endif
 }
 
 static size_t _hybris_hook_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *fp)
@@ -2093,7 +2129,16 @@ static int _hybris_hook_scandirat(int fd, const char *dir,
     int i = 0;
     size_t nItems = 0;
 
+#ifdef __GLIBC__
     int res = scandirat(fd, dir, &namelist_r, NULL, NULL);
+#else
+    char cwd[PATH_MAX];
+    getcwd(cwd, sizeof(cwd));
+
+    fchdir(fd);
+    int res = scandir(dir, &namelist_r, NULL, NULL);
+    chdir(cwd);
+#endif
 
     if (res != 0 && namelist_r != NULL) {
 
@@ -2544,7 +2589,12 @@ static char* _hybris_hook__gnu_strerror_r(int errnum, char *buf, size_t buf_len)
 {
     TRACE_HOOK("errnum %d buf '%s' buf len %zu", errnum, buf, buf_len);
 
+#ifdef __GLIBC__
     return strerror_r(errnum, buf, buf_len);
+#else
+    strerror_r(errnum, buf, buf_len);
+    return buf;
+#endif
 }
 
 static int _hybris_hook_mprotect(void *addr, size_t len, int prot)
