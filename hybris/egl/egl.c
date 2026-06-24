@@ -317,7 +317,7 @@ const char * eglQueryString(EGLDisplay dpy, EGLint name)
 		const char *ret = _eglQueryString(dpy, name);
 		static char eglextensionsbuf[2048];
 		snprintf(eglextensionsbuf, 2046, "%s %s", ret,
-			"EGL_EXT_client_extensions EGL_EXT_platform_wayland EGL_KHR_platform_wayland"
+			"EGL_EXT_client_extensions EGL_EXT_platform_wayland EGL_KHR_platform_wayland EGL_EXT_platform_base"
 		);
 		ret = eglextensionsbuf;
 		return ret;

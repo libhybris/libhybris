@@ -99,7 +99,7 @@ __eglGLVNDGetVendorString(int name)
         return
             "EGL_KHR_platform_android"
 #ifdef WANT_WAYLAND
-            " EGL_EXT_platform_wayland EGL_KHR_platform_wayland"
+            " EGL_EXT_platform_wayland EGL_KHR_platform_wayland EGL_EXT_platform_base"
 #endif
             ;
     }
