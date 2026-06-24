@@ -33,6 +33,10 @@
 #include <sys/shm.h>
 #include <sys/mman.h>
 
+#ifndef __GLIBC__
+#include <hybris/common/musl_compat.h>
+#endif
+
 /* Debug */
 #include "logging.h"
 #define LOGD(message, ...) HYBRIS_DEBUG_LOG(HOOKS, message, ##__VA_ARGS__)
