@@ -3685,7 +3685,9 @@ static void __hybris_linker_init()
     _android_dlvsym = dlsym(linker_handle, "android_dlvsym");
     _android_dladdr = dlsym(linker_handle, "android_dladdr");
     _android_dlclose = dlsym(linker_handle, "android_dlclose");
+#if defined(__arm__)
     _android_dl_unwind_find_exidx = dlsym(linker_handle, "android_dl_unwind_find_exidx");
+#endif
     _android_dl_iterate_phdr = dlsym(linker_handle, "android_dl_iterate_phdr");
     _android_get_LD_LIBRARY_PATH = dlsym(linker_handle, "android_get_LD_LIBRARY_PATH");
     _android_update_LD_LIBRARY_PATH = dlsym(linker_handle, "android_update_LD_LIBRARY_PATH");
