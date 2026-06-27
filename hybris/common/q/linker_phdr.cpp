@@ -49,6 +49,8 @@
 #include "private/CFIShadow.h" // For kLibraryAlignment
 #include "private/bionic_prctl.h"
 
+#include "../tls_patcher.h"
+
 static int GetTargetElfMachine() {
 #if defined(__arm__)
   return EM_ARM;
@@ -598,6 +600,8 @@ bool ElfReader::ReserveAddressSpace(address_space_params* address_space) {
   return true;
 }
 
+extern hybris_tls_patcher_t _tls_patcher;
+
 bool ElfReader::LoadSegments() {
   for (size_t i = 0; i < phdr_num_; ++i) {
     const ElfW(Phdr)* phdr = &phdr_table_[i];
@@ -651,11 +655,16 @@ bool ElfReader::LoadSegments() {
         add_dlwarning(name_.c_str(), "W+E load segments");
       }
 
+      int orig_prot = prot;
       if ((prot & PROT_EXEC) != 0) {
         // hybris: make sure executable code is mapped as readable to neutralize
         // https://source.android.com/devices/tech/debug/execute-only-memory
         // without this libgcc's unwind on host may crash
         prot |= PROT_READ;
+
+        // hybris: allow TLS patcher to modify executable segments
+        if (_tls_patcher)
+          prot |= PROT_WRITE;
       }
 
       void* seg_addr = mmap64(reinterpret_cast<void*>(seg_page_start),
@@ -667,6 +676,19 @@ bool ElfReader::LoadSegments() {
       if (seg_addr == MAP_FAILED) {
         DL_ERR("couldn't map \"%s\" segment %zd: %s", name_.c_str(), i, strerror(errno));
         return false;
+      }
+
+      // hybris: run TLS patcher on executable segments
+      if (_tls_patcher && (prot & PROT_EXEC) != 0) {
+        _tls_patcher(seg_addr, file_length, name_.c_str());
+
+        if ((orig_prot & PROT_WRITE) == 0) {
+          // Restore write protection
+          prot &= ~PROT_WRITE;
+          if (mprotect(seg_addr, file_length, prot) < 0) {
+            DL_ERR("couldn't mprotect \"%s\" segment %zd: %s", name_.c_str(), i, strerror(errno));
+          }
+        }
       }
     }
 

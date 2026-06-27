@@ -50,6 +50,11 @@ libhybris_common_la_SOURCES += \
 	wrapper_code_generic_arm.c
 endif
 
+if WANT_ARCH_ARM64
+libhybris_common_la_SOURCES += \
+	tls_patcher.c
+endif
+
 libhybris_common_la_CPPFLAGS = \
 	-I$(top_srcdir)/include \
 	$(ANDROID_HEADERS_CFLAGS) \
