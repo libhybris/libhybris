@@ -88,6 +88,47 @@ void ws_vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const VkA
     _init_ws();
     ws->vkDestroySurfaceKHR(instance, surface, pAllocator);
 }
+
+VkResult ws_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceCapabilitiesKHR *pSurfaceCapabilities)
+{
+    _init_ws();
+    return ws->vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, pSurfaceCapabilities);
+}
+
+VkResult ws_vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain)
+{
+    _init_ws();
+    return ws->vkCreateSwapchainKHR(device, pCreateInfo, pAllocator, pSwapchain);
+}
+
+int vulkan_wayland_has_mapping(VkSurfaceKHR surface)
+{
+    _init_ws();
+    // This is a bit of a hack. For now, we'll assume the platform module exports these symbols
+    extern int vulkan_wayland_has_mapping(VkSurfaceKHR surface);
+    return vulkan_wayland_has_mapping(surface);
+}
+
+void vulkan_wayland_push_mapping(VkSurfaceKHR surface, struct WaylandDisplay *wdpy)
+{
+    _init_ws();
+    extern void vulkan_wayland_push_mapping(VkSurfaceKHR surface, struct WaylandDisplay *wdpy);
+    vulkan_wayland_push_mapping(surface, wdpy);
+}
+
+struct WaylandDisplay *vulkan_wayland_pop_mapping(VkSurfaceKHR surface)
+{
+    _init_ws();
+    extern struct WaylandDisplay *vulkan_wayland_pop_mapping(VkSurfaceKHR surface);
+    return vulkan_wayland_pop_mapping(surface);
+}
+
+struct WaylandDisplay *vulkan_wayland_get_mapping(VkSurfaceKHR surface)
+{
+    _init_ws();
+    extern struct WaylandDisplay *vulkan_wayland_get_mapping(VkSurfaceKHR surface);
+    return vulkan_wayland_get_mapping(surface);
+}
 #endif
 
 void ws_vkSetInstanceProcAddrFunc(PFN_vkVoidFunction addr)
