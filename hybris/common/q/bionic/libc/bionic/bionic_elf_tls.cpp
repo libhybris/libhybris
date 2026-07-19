@@ -30,7 +30,9 @@
 
 #include <async_safe/CHECK.h>
 #include <async_safe/log.h>
+#include <malloc.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
 #include <unistd.h>
@@ -202,7 +204,6 @@ static size_t calculate_new_dtv_count() {
 // TlsModules held.
 static void update_tls_dtv(bionic_tcb* tcb) {
   const TlsModules& modules = __libc_shared_globals()->tls_modules;
-  BionicAllocator& allocator = __libc_shared_globals()->tls_allocator;
 
   // If DTV hasn't been ever initialized, the DTV slot should be NULL
   const bool has_dtv = hybris_dtv_slot != nullptr;
@@ -224,8 +225,12 @@ static void update_tls_dtv(bionic_tcb* tcb) {
   if (modules.module_count > old_cnt) {
     size_t new_cnt = calculate_new_dtv_count();
     TlsDtv* const old_dtv = has_dtv ? __get_tcb_dtv(tcb) : NULL;
-    TlsDtv* const new_dtv = static_cast<TlsDtv*>(allocator.alloc(dtv_size_in_bytes(new_cnt)));
-    // TlsDtv* const new_dtv = static_cast<TlsDtv*>(malloc(dtv_size_in_bytes(new_cnt)));
+    // hybris: allocate from glibc (we run in a glibc process). calloc zeroes
+    // the new module slots, which the __tls_get_addr fast path relies on.
+    TlsDtv* const new_dtv = static_cast<TlsDtv*>(calloc(1, dtv_size_in_bytes(new_cnt)));
+    if (new_dtv == nullptr) {
+      async_safe_fatal("hybris: DTV allocation failed (%zu bytes)", dtv_size_in_bytes(new_cnt));
+    }
     if (has_dtv) {
       memcpy(new_dtv, old_dtv, dtv_size_in_bytes(old_cnt));
     }
@@ -254,10 +259,12 @@ static void update_tls_dtv(bionic_tcb* tcb) {
     if (modules.on_destruction_cb != nullptr) {
       void* dtls_begin = dtv->modules[i];
       void* dtls_end =
-          static_cast<void*>(static_cast<char*>(dtls_begin) + allocator.get_chunk_size(dtls_begin));
+          static_cast<void*>(static_cast<char*>(dtls_begin) + malloc_usable_size(dtls_begin));
       modules.on_destruction_cb(dtls_begin, dtls_end);
     }
-    //allocator.free(dtv->modules[i]);
+    // hybris: the block is not freed. A retired slot can be taken over by
+    // another module, and if that one is static the pointer here is into
+    // hybris_tls_storage, which must never reach free().
     dtv->modules[i] = nullptr;
   }
 
@@ -301,7 +308,15 @@ __attribute__((noinline)) static void* tls_get_addr_slow_path(const TlsIndex* ti
   void* mod_ptr = dtv->modules[module_idx];
   if (mod_ptr == nullptr) {
     const TlsSegment& segment = modules.module_table[module_idx].segment;
-    mod_ptr = __libc_shared_globals()->tls_allocator.memalign(segment.alignment, segment.size);
+    // hybris: allocate from glibc. posix_memalign needs an alignment that is a
+    // power of 2 and a multiple of sizeof(void*); segment.alignment is already
+    // a power of 2. Unlike a fresh mmap, the returned memory is not zeroed, so
+    // clear it: the segment's .tbss tail (size > init_size) must read as zero.
+    size_t align = MAX(segment.alignment, sizeof(void*));
+    if (posix_memalign(&mod_ptr, align, segment.size) != 0 || mod_ptr == nullptr) {
+      async_safe_fatal("hybris: TLS module allocation failed (%zu bytes)", segment.size);
+    }
+    memset(mod_ptr, 0, segment.size);
     if (segment.init_size > 0) {
       memcpy(mod_ptr, segment.init_ptr, segment.init_size);
     }
@@ -353,7 +368,6 @@ extern "C" void* TLS_GET_ADDR(const TlsIndex* ti) TLS_GET_ADDR_CCONV {
 // The caller must have already blocked signals.
 void __free_dynamic_tls(bionic_tcb* tcb) {
   TlsModules& modules = __libc_shared_globals()->tls_modules;
-  BionicAllocator& allocator = __libc_shared_globals()->tls_allocator;
 
   // If we didn't allocate any dynamic memory, skip out early without taking
   // the lock.
@@ -362,7 +376,7 @@ void __free_dynamic_tls(bionic_tcb* tcb) {
     return;
   }
 
-  // We need the write lock to use the allocator.
+  // Take the write lock before touching the shared DTV/module state.
   ScopedWriteLock locker(&modules.rwlock);
 
   // First free everything in the current DTV.
@@ -375,17 +389,16 @@ void __free_dynamic_tls(bionic_tcb* tcb) {
     if (modules.on_destruction_cb != nullptr) {
       void* dtls_begin = dtv->modules[i];
       void* dtls_end =
-          static_cast<void*>(static_cast<char*>(dtls_begin) + allocator.get_chunk_size(dtls_begin));
+          static_cast<void*>(static_cast<char*>(dtls_begin) + malloc_usable_size(dtls_begin));
       modules.on_destruction_cb(dtls_begin, dtls_end);
     }
-
-    //allocator.free(dtv->modules[i]);
   }
 
-  // Now free the thread's list of DTVs.
+  // hybris: neither the module blocks above nor the DTVs themselves are freed,
+  // so a thread that used dynamic TLS leaks them. Doing it properly means
+  // telling apart pointers into hybris_tls_storage from heap ones first.
   while (dtv->generation != kTlsGenerationNone) {
     TlsDtv* next = dtv->next;
-    //allocator.free(dtv);
     dtv = next;
   }
 
