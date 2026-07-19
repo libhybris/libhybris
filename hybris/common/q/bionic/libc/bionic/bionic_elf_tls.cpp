@@ -204,8 +204,8 @@ static void update_tls_dtv(bionic_tcb* tcb) {
   const TlsModules& modules = __libc_shared_globals()->tls_modules;
   BionicAllocator& allocator = __libc_shared_globals()->tls_allocator;
 
-  // If DTV hasn't been ever initialized, TLS_SLOT_DTV should be NULL
-  const bool has_dtv = tcb->tls_slot(TLS_SLOT_DTV) != nullptr;
+  // If DTV hasn't been ever initialized, the DTV slot should be NULL
+  const bool has_dtv = hybris_dtv_slot != nullptr;
 
   // Use the generation counter from the shared globals instead of the local
   // copy, which won't be initialized yet if __tls_get_addr is called before
@@ -271,7 +271,7 @@ extern "C" void hybris_linker_tls_init_thread() {
   bionic_tcb* tcb = __get_bionic_tcb();
   TlsDtv* dtv = __get_tcb_dtv(tcb);
 
-  size_t old_generation = (tcb->tls_slot(TLS_SLOT_DTV) != nullptr)
+  size_t old_generation = (hybris_dtv_slot != nullptr)
     ? dtv->generation : 0;
 
   {
@@ -327,9 +327,9 @@ __attribute__((noinline)) static void* tls_get_addr_slow_path(const TlsIndex* ti
 // TLS_GET_ADDR_CCONV is unset. 32-bit x86 uses ___tls_get_addr instead and a
 // regparm() calling convention.
 extern "C" void* TLS_GET_ADDR(const TlsIndex* ti) TLS_GET_ADDR_CCONV {
-  // hybris: TLS_SLOT_DTV of thread local storage might be uninitialized
+  // hybris: the DTV slot might be uninitialized on this thread
   bionic_tcb* tcb = __get_bionic_tcb();
-  if (tcb->tls_slot(TLS_SLOT_DTV) == nullptr)
+  if (hybris_dtv_slot == nullptr)
     return tls_get_addr_slow_path(ti);
 
   TlsDtv* dtv = __get_tcb_dtv(tcb);
@@ -390,7 +390,7 @@ void __free_dynamic_tls(bionic_tcb* tcb) {
   }
 
   // Clear the DTV slot. The DTV must not be used again with this thread.
-  tcb->tls_slot(TLS_SLOT_DTV) = nullptr;
+  hybris_dtv_slot = nullptr;
 }
 
 // Invokes all the registered thread_exit callbacks, if any.

@@ -64,6 +64,15 @@ extern "C" __attribute__((tls_model ("initial-exec"))) __thread void* hybris_tls
 ssize_t g_hybris_static_tls_tp_offset = 0;
 size_t tls_tp_base = 0;
 
+// hybris: per-thread bionic DTV pointer. Lives in the linker's own
+// initial-exec TLS instead of a raw bionic TLS slot: slots are relative to
+// the glibc thread pointer, and writing e.g. slot 2 (tp+16 on arm64) can
+// alias TLS data of the main executable or an early-loaded library. Being a
+// single pointer, it always fits glibc's static TLS surplus even though the
+// linker is dlopened. The TLSDESC resolvers reach it through an initial-exec
+// GOTTPREL relocation (see tlsdesc_resolver.S), same as this C++ access.
+extern "C" __attribute__((tls_model("initial-exec"))) __thread void* hybris_dtv_slot = nullptr;
+
 // hybris: StaticTlsLayout only ever hands out fresh offsets, which is fine for
 // bionic, where static TLS modules are never unloaded. Blobs here can be
 // dlclosed, so keep the ranges their modules leave behind and hand them out
