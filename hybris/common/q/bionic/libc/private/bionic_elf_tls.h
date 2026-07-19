@@ -163,8 +163,10 @@ struct TlsModules {
   CallbackHolder* thread_exit_callback_tail_node;
 };
 
-void __init_static_tls(void* static_tls);
+void __init_static_tls(void* static_tls, size_t min_generation = 0);
 void __init_static_tls_module(size_t module_idx);
+
+extern "C" void hybris_linker_tls_init_thread();
 
 // Dynamic Thread Vector. Each thread has a different DTV. For each module
 // (executable or solib), the DTV has a pointer to that module's TLS memory. The

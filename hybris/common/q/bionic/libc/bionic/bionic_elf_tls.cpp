@@ -137,7 +137,7 @@ static void init_static_tls_segment(char* static_tls, const TlsModule& module) {
   }
 }
 
-void __init_static_tls(void* static_tls) {
+void __init_static_tls(void* static_tls, size_t min_generation) {
   if (static_tls == nullptr) {
     static_tls = hybris_tls_storage;
   }
@@ -151,6 +151,12 @@ void __init_static_tls(void* static_tls) {
     // an unloaded module leaves a slot a dynamic one can take, so keep walking
     // instead of stopping at the first dynamic module.
     if (module.static_offset == SIZE_MAX) {
+      continue;
+    }
+
+    // Only initialize modules loaded after our current generation, so we don't
+    // clobber TLS data the thread already touched in older modules.
+    if (module.first_generation <= min_generation) {
       continue;
     }
 
@@ -256,6 +262,27 @@ static void update_tls_dtv(bionic_tcb* tcb) {
   }
 
   dtv->generation = atomic_load(&modules.generation);
+}
+
+// Called from the tlsdesc_resolver_static slow path when a thread's DTV
+// generation is stale. Syncs the DTV, then initializes only the static
+// modules registered since this thread's last sync.
+extern "C" void hybris_linker_tls_init_thread() {
+  bionic_tcb* tcb = __get_bionic_tcb();
+  TlsDtv* dtv = __get_tcb_dtv(tcb);
+
+  size_t old_generation = (tcb->tls_slot(TLS_SLOT_DTV) != nullptr)
+    ? dtv->generation : 0;
+
+  {
+    TlsModules& modules = __libc_shared_globals()->tls_modules;
+    ScopedSignalBlocker ssb;
+    ScopedWriteLock locker(&modules.rwlock);
+    update_tls_dtv(tcb);
+  }
+
+  // dtv->generation has been updated by update_tls_dtv
+  __init_static_tls(nullptr, old_generation);
 }
 
 __attribute__((noinline)) static void* tls_get_addr_slow_path(const TlsIndex* ti) {
