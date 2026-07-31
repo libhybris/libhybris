@@ -32,6 +32,7 @@ extern struct ws_egl_interface hybris_egl_interface;
 
 struct _EGLDisplay {
 	EGLDisplay dpy;
+	EGLNativeDisplayType native_display;
 };
 
 struct egl_image
@@ -73,5 +74,6 @@ void ws_prepareSwap(EGLDisplay dpy, EGLNativeWindowType win, EGLint *damage_rect
 void ws_finishSwap(EGLDisplay dpy, EGLNativeWindowType win);
 void ws_setSwapInterval(EGLDisplay dpy, EGLNativeWindowType win, EGLint interval);
 void ws_releaseDisplay(struct _EGLDisplay *dpy);
+EGLBoolean ws_releaseUnusedDisplays(void);
 
 #endif

@@ -138,6 +138,18 @@ void ws_releaseDisplay(struct _EGLDisplay *dpy)
 	}
 }
 
+EGLBoolean ws_releaseUnusedDisplays(void)
+{
+	EGLBoolean released = EGL_FALSE;
+	pthread_mutex_lock(&mutex);
+	if (ws_init_count == 0) {
+		hybris_egl_display_release_mappings();
+		released = EGL_TRUE;
+	}
+	pthread_mutex_unlock(&mutex);
+	return released;
+}
+
 EGLNativeWindowType ws_CreateWindow(EGLNativeWindowType win, struct _EGLDisplay *display)
 {
 	assert(ws != NULL);

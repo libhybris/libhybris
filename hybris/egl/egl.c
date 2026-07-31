@@ -260,12 +260,22 @@ EGLDisplay __eglHybrisGetPlatformDisplayCommon(EGLenum platform,
 	}
 
 	struct _EGLDisplay *dpy = hybris_egl_display_get_mapping(real_display);
+	if (dpy && dpy->native_display != (EGLNativeDisplayType)display_id) {
+		// The mapping belongs to a previous native display. Drop it so
+		// the new one gets fresh ws state, unless it is still in use.
+		if (!ws_releaseUnusedDisplays()) {
+			HYBRIS_WARN("eglGetDisplay: another native display is still initialized");
+			return EGL_NO_DISPLAY;
+		}
+		dpy = NULL;
+	}
 	if (!dpy) {
 		dpy = ws_GetDisplay(display_id);
 		if (!dpy) {
 			return EGL_NO_DISPLAY;
 		}
 		dpy->dpy = real_display;
+		dpy->native_display = (EGLNativeDisplayType)display_id;
 		_addMapping(dpy);
 	}
 
