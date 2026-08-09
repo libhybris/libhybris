@@ -81,16 +81,20 @@ AM_CONDITIONAL( [WANT_UBUNTU_CAMERA_HEADERS], [test x"$ubuntu_camera_headers" = 
 
 AC_ARG_ENABLE(wayland,
   [  --enable-wayland            Enable wayland support (default=disabled)],
-  [wayland=$enableval
-	PKG_CHECK_MODULES(WAYLAND_CLIENT, wayland-client,, exit)
-	PKG_CHECK_MODULES(WAYLAND_SERVER, wayland-server,, exit)
-	PKG_CHECK_MODULES(WAYLAND_EGL, [wayland-egl >= 1.15],, exit)
+  [wayland=$enableval],
+  [wayland="no"])
+AS_IF([test "x$wayland" = "xyes"], [
+	PKG_CHECK_MODULES(WAYLAND_CLIENT, wayland-client,,
+		[AC_MSG_ERROR([wayland-client development files not found (required by --enable-wayland)])])
+	PKG_CHECK_MODULES(WAYLAND_SERVER, wayland-server,,
+		[AC_MSG_ERROR([wayland-server development files not found (required by --enable-wayland)])])
+	PKG_CHECK_MODULES(WAYLAND_EGL, [wayland-egl >= 1.15],,
+		[AC_MSG_ERROR([wayland-egl >= 1.15 development files not found (required by --enable-wayland)])])
 	WAYLAND_PREFIX=`$PKG_CONFIG --variable=prefix wayland-client`
 
 	AC_PATH_PROG([WAYLAND_SCANNER], [wayland-scanner],, [${WAYLAND_PREFIX}/bin$PATH_SEPARATOR$PATH])
 	AC_DEFINE(WANT_WAYLAND, [], [We want Wayland support])
-],
-  [wayland="no"])
+])
 AM_CONDITIONAL( [WANT_WAYLAND], [test x"$wayland" = x"yes"])
 
 AC_ARG_ENABLE(glvnd,
