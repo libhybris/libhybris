@@ -82,7 +82,7 @@
 
 #define MIN_TLS_SLOT              -1 // update this value when reserving a slot
 #define TLS_SLOT_BIONIC_TLS       -1
-#define TLS_SLOT_DTV              0
+#define TLS_SLOT_DTV              2
 #define TLS_SLOT_THREAD_ID        1
 #define TLS_SLOT_APP              2 // was historically used for errno
 #define TLS_SLOT_OPENGL           3

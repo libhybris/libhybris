@@ -29,14 +29,55 @@
 #include <platform/bionic/tls_defines.h>
 #include <private/bionic_asm.h>
 
-.globl __tls_get_addr
+.globl hybris_linker_tls_get_addr
 
 // These resolver functions must preserve every register except x0. They set x0
 // to the offset of the TLS symbol relative to the thread pointer.
 
 ENTRY_PRIVATE(tlsdesc_resolver_static)
+  stp x19, x20, [sp, #-32]!
+  .cfi_def_cfa_offset 32
+  .cfi_rel_offset x19, 0
+  .cfi_rel_offset x20, 8
+  stp x21, x22, [sp, #16]
+  .cfi_rel_offset x21, 16
+  .cfi_rel_offset x22, 24
+
+  mrs x19, tpidr_el0            // __get_tls()
+  adrp x20, :gottprel:hybris_dtv_slot
+  ldr x20, [x20, #:gottprel_lo12:hybris_dtv_slot] // IE TP offset, filled by glibc
+  ldr x20, [x19, x20]           // hybris DTV slot (&TlsDtv::generation)
+
+  cbz x20, .static_fallback     // No DTV? Slow path.
+
+  adrp x21, __libc_tls_generation_copy
+  ldr x21, [x21, :lo12:__libc_tls_generation_copy] // Global generation
+
+  ldr x22, [x20]                // Thread generation (DTV[0])
+
+  cmp x22, x21
+  b.lo .static_fallback         // Thread generation < Global generation? Slow path.
+
+  ldp x21, x22, [sp, #16]
+  .cfi_restore x21
+  .cfi_restore x22
+  ldp x19, x20, [sp], #32
+  .cfi_adjust_cfa_offset -32
+  .cfi_restore x19
+  .cfi_restore x20
+
   ldr x0, [x0, #8]
   ret
+
+.static_fallback:
+  ldp x21, x22, [sp, #16]
+  .cfi_restore x21
+  .cfi_restore x22
+  ldp x19, x20, [sp], #32
+  .cfi_adjust_cfa_offset -32
+  .cfi_restore x19
+  .cfi_restore x20
+  b tlsdesc_resolver_static_slow_path
 END(tlsdesc_resolver_static)
 
 ENTRY_PRIVATE(tlsdesc_resolver_dynamic)
@@ -49,11 +90,15 @@ ENTRY_PRIVATE(tlsdesc_resolver_dynamic)
   .cfi_rel_offset x22, 24
 
   mrs x19, tpidr_el0            // __get_tls()
-  ldr x20, [x19, #(TLS_SLOT_DTV * 8)]
-  ldr x21, [x20]                // TlsDtv::generation
+  adrp x20, :gottprel:hybris_dtv_slot
+  ldr x20, [x20, #:gottprel_lo12:hybris_dtv_slot] // IE TP offset, filled by glibc
+  ldr x20, [x19, x20]           // hybris DTV slot (&TlsDtv::generation)
 
   ldr x0, [x0, #8]              // TlsDynamicResolverArg*
   ldr x22, [x0]                 // TlsDynamicResolverArg::generation
+
+  cbz x20, .fallback            // hybris: DTV slot might be uninitialized
+  ldr x21, [x20]                // TlsDtv::generation
 
   cmp x21, x22
   b.lo .fallback
@@ -149,7 +194,7 @@ ENTRY_PRIVATE(tlsdesc_resolver_dynamic_slow_path)
   SAVE_VEC_PAIR(q30, q31, 80)
 
   add x0, x0, #8
-  bl __tls_get_addr
+  bl hybris_linker_tls_get_addr
   mrs x1, tpidr_el0 // __get_tls()
   sub x0, x0, x1
 
@@ -185,6 +230,78 @@ ENTRY_PRIVATE(tlsdesc_resolver_dynamic_slow_path)
   .cfi_def_cfa_offset 0
   ret
 END(tlsdesc_resolver_dynamic_slow_path)
+
+ENTRY_PRIVATE(tlsdesc_resolver_static_slow_path)
+  sub sp, sp, #(8 * 84)
+  .cfi_def_cfa_offset (8 * 84)
+  SAVE_GPR_PAIR(x29, x30, 0)
+  mov x29, sp
+
+  SAVE_GPR_PAIR(x1,  x2,  2)
+  SAVE_GPR_PAIR(x3,  x4,  4)
+  SAVE_GPR_PAIR(x5,  x6,  6)
+  SAVE_GPR_PAIR(x7,  x8,  8)
+  SAVE_GPR_PAIR(x9,  x10, 10)
+  SAVE_GPR_PAIR(x11, x12, 12)
+  SAVE_GPR_PAIR(x13, x14, 14)
+  SAVE_GPR_PAIR(x15, x16, 16)
+  SAVE_REG(x17, 18)
+  SAVE_REG(x0, 19) // Save TlsDescriptor*
+
+  SAVE_VEC_PAIR(q0,  q1,  20)
+  SAVE_VEC_PAIR(q2,  q3,  24)
+  SAVE_VEC_PAIR(q4,  q5,  28)
+  SAVE_VEC_PAIR(q6,  q7,  32)
+  SAVE_VEC_PAIR(q8,  q9,  36)
+  SAVE_VEC_PAIR(q10, q11, 40)
+  SAVE_VEC_PAIR(q12, q13, 44)
+  SAVE_VEC_PAIR(q14, q15, 48)
+  SAVE_VEC_PAIR(q16, q17, 52)
+  SAVE_VEC_PAIR(q18, q19, 56)
+  SAVE_VEC_PAIR(q20, q21, 60)
+  SAVE_VEC_PAIR(q22, q23, 64)
+  SAVE_VEC_PAIR(q24, q25, 68)
+  SAVE_VEC_PAIR(q26, q27, 72)
+  SAVE_VEC_PAIR(q28, q29, 76)
+  SAVE_VEC_PAIR(q30, q31, 80)
+
+  bl hybris_linker_tls_init_thread
+
+  RESTORE_REG(x0, 19) // Restore TlsDescriptor*
+  ldr x0, [x0, #8]    // Get offset from descriptor
+
+  RESTORE_REG_PAIR(q30, q31, 80)
+  RESTORE_REG_PAIR(q28, q29, 76)
+  RESTORE_REG_PAIR(q26, q27, 72)
+  RESTORE_REG_PAIR(q24, q25, 68)
+  RESTORE_REG_PAIR(q22, q23, 64)
+  RESTORE_REG_PAIR(q20, q21, 60)
+  RESTORE_REG_PAIR(q18, q19, 56)
+  RESTORE_REG_PAIR(q16, q17, 52)
+  RESTORE_REG_PAIR(q14, q15, 48)
+  RESTORE_REG_PAIR(q12, q13, 44)
+  RESTORE_REG_PAIR(q10, q11, 40)
+  RESTORE_REG_PAIR(q8,  q9,  36)
+  RESTORE_REG_PAIR(q6,  q7,  32)
+  RESTORE_REG_PAIR(q4,  q5,  28)
+  RESTORE_REG_PAIR(q2,  q3,  24)
+  RESTORE_REG_PAIR(q0,  q1,  20)
+
+  RESTORE_REG(x17, 18)
+  RESTORE_REG_PAIR(x15, x16, 16)
+  RESTORE_REG_PAIR(x13, x14, 14)
+  RESTORE_REG_PAIR(x11, x12, 12)
+  RESTORE_REG_PAIR(x9,  x10, 10)
+  RESTORE_REG_PAIR(x7,  x8,  8)
+  RESTORE_REG_PAIR(x5,  x6,  6)
+  RESTORE_REG_PAIR(x3,  x4,  4)
+  RESTORE_REG_PAIR(x1,  x2,  2)
+
+  RESTORE_REG_PAIR(x29, x30, 0)
+  add sp, sp, #(8 * 84)
+  .cfi_def_cfa_offset 0
+  ret
+END(tlsdesc_resolver_static_slow_path)
 
 // The address of an unresolved weak TLS symbol evaluates to NULL with TLSDESC.
 // The value returned by this function is added to the thread pointer, so return

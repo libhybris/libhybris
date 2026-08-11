@@ -182,13 +182,20 @@ static inline  bionic_tls& __get_bionic_tls() {
   return *static_cast<bionic_tls*>(__get_tls()[TLS_SLOT_BIONIC_TLS]);
 }
 
-static inline  TlsDtv* __get_tcb_dtv(bionic_tcb* tcb) {
-  uintptr_t dtv_slot = reinterpret_cast<uintptr_t>(tcb->tls_slot(TLS_SLOT_DTV));
+// hybris: the DTV pointer is kept in the linker's own initial-exec TLS
+// (see linker_tls.cpp) rather than in a raw bionic TLS slot, which would
+// alias glibc TLS data relative to the thread pointer. Like the original
+// TLS_SLOT_DTV, it points at TlsDtv::generation, so the TLSDESC resolver
+// fast path can index modules without an extra add.
+extern "C" __attribute__((tls_model("initial-exec"))) __thread void* hybris_dtv_slot;
+
+static inline  TlsDtv* __get_tcb_dtv(bionic_tcb* tcb __attribute__((unused))) {
+  uintptr_t dtv_slot = reinterpret_cast<uintptr_t>(hybris_dtv_slot);
   return reinterpret_cast<TlsDtv*>(dtv_slot - offsetof(TlsDtv, generation));
 }
 
-static inline void __set_tcb_dtv(bionic_tcb* tcb, TlsDtv* val) {
-  tcb->tls_slot(TLS_SLOT_DTV) = &val->generation;
+static inline void __set_tcb_dtv(bionic_tcb* tcb __attribute__((unused)), TlsDtv* val) {
+  hybris_dtv_slot = &val->generation;
 }
 
 extern "C" __LIBC_HIDDEN__ int __set_tls(void* ptr);

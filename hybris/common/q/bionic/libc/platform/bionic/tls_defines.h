@@ -88,13 +88,13 @@
 #define MIN_TLS_SLOT (-2)  // update this value when reserving a slot
 #define TLS_SLOT_NATIVE_BRIDGE_GUEST_STATE (-2)
 #define TLS_SLOT_BIONIC_TLS     (-1)
-#define TLS_SLOT_DTV              0
+#define TLS_SLOT_DTV              2
 #define TLS_SLOT_THREAD_ID        1
 #define TLS_SLOT_APP                // was historically used for errno
-#define TLS_SLOT_OPENGL           2
-#define TLS_SLOT_OPENGL_API       5
-#define TLS_SLOT_STACK_GUARD      6
-#define TLS_SLOT_SANITIZER        7 // was historically used for dlerror
+#define TLS_SLOT_OPENGL           3
+#define TLS_SLOT_OPENGL_API       4
+#define TLS_SLOT_STACK_GUARD      5
+#define TLS_SLOT_SANITIZER        6 // was historically used for dlerror
 #define TLS_SLOT_ART_THREAD_SELF
 
 // The maximum slot is fixed by the minimum TLS alignment in Bionic executables.
