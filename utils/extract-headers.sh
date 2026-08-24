@@ -114,11 +114,14 @@ extract_headers_to() {
         if [ -d $SOURCE_PATH ]; then
             for file in $SOURCE_PATH/*; do
                 echo "    $1/$(basename $file)"
-                cp -L $file $TARGET_DIRECTORY/
+                # -R because some of these directories have subdirectories:
+                # system/media/audio/include/system holds audio_effects/, which
+                # the audio_effect.h next to it includes from.
+                cp -RL $file $TARGET_DIRECTORY/ || exit 1
             done
         else
             echo "    $1"
-            cp -L $SOURCE_PATH $TARGET_DIRECTORY/
+            cp -L $SOURCE_PATH $TARGET_DIRECTORY/ || exit 1
         fi
         shift
     done
