@@ -59,14 +59,25 @@ fi
 # try to extract if from the version_defaults.mk
 if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
     VERSION_DEFAULTS=$ANDROID_ROOT/build/core/version_defaults.mk
+    # Android 14 deleted version_defaults.mk; the version is a release build
+    # flag now, declared with its default in build/release/build_flags.scl.
+    VERSION_FLAGS=$ANDROID_ROOT/build/release/build_flags.scl
 
-    echo "not all version fields supplied:  trying to extract from $VERSION_DEFAULTS"
-    if [ ! -f $VERSION_DEFAULTS ]; then
-        error "$VERSION_DEFAULTS not found"
+    if [ -f $VERSION_DEFAULTS ]; then
+        VERSION_SOURCE=$VERSION_DEFAULTS
+        echo "not all version fields supplied:  trying to extract from $VERSION_SOURCE"
+        PLATFORM_VERSION=$(awk '/PLATFORM_VERSION([A-Z0-9.]*|_LAST_STABLE) := ([0-9.]+)/ { print $3; }' < $VERSION_SOURCE)
+    else
+        VERSION_SOURCE=$VERSION_FLAGS
+        echo "not all version fields supplied:  trying to extract from $VERSION_SOURCE"
+        if [ ! -f $VERSION_FLAGS ]; then
+            error "neither $VERSION_DEFAULTS nor $VERSION_FLAGS found"
+        fi
+        PLATFORM_VERSION=$(sed -n 's/.*"RELEASE_PLATFORM_VERSION_LAST_STABLE".*"\([0-9][0-9.]*\)".*/\1/p' $VERSION_FLAGS | head -n 1)
     fi
 
     IFS="." read MAJOR MINOR PATCH PATCH2 PATCH3 <<EOF
-$(IFS="." awk '/PLATFORM_VERSION([A-Z0-9.]*|_LAST_STABLE) := ([0-9.]+)/ { print $3; }' < $VERSION_DEFAULTS)
+$PLATFORM_VERSION
 EOF
     if [ x$MINOR = x ]; then
          MINOR=0
@@ -75,7 +86,7 @@ EOF
          PATCH=0
     fi
     if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
-        error "Cannot read PLATFORM_VERSION from ${VERSION_DEFAULTS}."
+        error "Cannot read PLATFORM_VERSION from ${VERSION_SOURCE}."
         error "Please specify MAJOR, MINOR and PATCH manually to continue."
         exit 1
     fi
