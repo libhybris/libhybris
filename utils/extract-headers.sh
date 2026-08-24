@@ -59,14 +59,25 @@ fi
 # try to extract if from the version_defaults.mk
 if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
     VERSION_DEFAULTS=$ANDROID_ROOT/build/core/version_defaults.mk
+    # Android 14 deleted version_defaults.mk; the version is a release build
+    # flag now, declared with its default in build/release/build_flags.scl.
+    VERSION_FLAGS=$ANDROID_ROOT/build/release/build_flags.scl
 
-    echo "not all version fields supplied:  trying to extract from $VERSION_DEFAULTS"
-    if [ ! -f $VERSION_DEFAULTS ]; then
-        error "$VERSION_DEFAULTS not found"
+    if [ -f $VERSION_DEFAULTS ]; then
+        VERSION_SOURCE=$VERSION_DEFAULTS
+        echo "not all version fields supplied:  trying to extract from $VERSION_SOURCE"
+        PLATFORM_VERSION=$(awk '/PLATFORM_VERSION([A-Z0-9.]*|_LAST_STABLE) := ([0-9.]+)/ { print $3; }' < $VERSION_SOURCE)
+    else
+        VERSION_SOURCE=$VERSION_FLAGS
+        echo "not all version fields supplied:  trying to extract from $VERSION_SOURCE"
+        if [ ! -f $VERSION_FLAGS ]; then
+            error "neither $VERSION_DEFAULTS nor $VERSION_FLAGS found"
+        fi
+        PLATFORM_VERSION=$(sed -n 's/.*"RELEASE_PLATFORM_VERSION_LAST_STABLE".*"\([0-9][0-9.]*\)".*/\1/p' $VERSION_FLAGS | head -n 1)
     fi
 
     IFS="." read MAJOR MINOR PATCH PATCH2 PATCH3 <<EOF
-$(IFS="." awk '/PLATFORM_VERSION([A-Z0-9.]*|_LAST_STABLE) := ([0-9.]+)/ { print $3; }' < $VERSION_DEFAULTS)
+$PLATFORM_VERSION
 EOF
     if [ x$MINOR = x ]; then
          MINOR=0
@@ -75,7 +86,7 @@ EOF
          PATCH=0
     fi
     if [ x$MAJOR = x -o x$MINOR = x -o x$PATCH = x ]; then
-        error "Cannot read PLATFORM_VERSION from ${VERSION_DEFAULTS}."
+        error "Cannot read PLATFORM_VERSION from ${VERSION_SOURCE}."
         error "Please specify MAJOR, MINOR and PATCH manually to continue."
         exit 1
     fi
@@ -114,11 +125,14 @@ extract_headers_to() {
         if [ -d $SOURCE_PATH ]; then
             for file in $SOURCE_PATH/*; do
                 echo "    $1/$(basename $file)"
-                cp -L $file $TARGET_DIRECTORY/
+                # -R because some of these directories have subdirectories:
+                # system/media/audio/include/system holds audio_effects/, which
+                # the audio_effect.h next to it includes from.
+                cp -RL $file $TARGET_DIRECTORY/ || exit 1
             done
         else
             echo "    $1"
-            cp -L $SOURCE_PATH $TARGET_DIRECTORY/
+            cp -L $SOURCE_PATH $TARGET_DIRECTORY/ || exit 1
         fi
         shift
     done
@@ -209,8 +223,15 @@ extract_headers_to hardware_legacy \
 extract_headers_to cutils \
     system/core/include/cutils
 
+# liblog moved from system/core to system/logging in Android 12. Before that
+# system/core/include/log was itself a symlink to system/core/liblog/include/log,
+# so the real directory is the one to look for in either layout.
+LIBLOG_INCLUDE=system/core/liblog/include
+check_header_exists system/logging/liblog/include/log/log.h && \
+    LIBLOG_INCLUDE=system/logging/liblog/include
+
 extract_headers_to log \
-    system/core/include/log
+    $LIBLOG_INCLUDE/log
 
 extract_headers_to system \
     system/core/include/system
@@ -220,7 +241,7 @@ check_header_exists system/media/audio/include/system/audio.h && \
         system/media/audio/include/system
 
 extract_headers_to android \
-    system/core/include/android
+    $LIBLOG_INCLUDE/android
 
 check_header_exists bionic/libc/kernel/common/linux/sync.h && \
     extract_headers_to linux \
@@ -263,8 +284,14 @@ check_header_exists system/media/radio/include/system/radio_metadata.h && \
     extract_headers_to system \
         system/media/radio/include/system/radio_metadata.h
 
+# android_filesystem_config.h lives in libcutils; system/core/include/private
+# held a symlink to it that Android 13 dropped.
+ANDROID_FILESYSTEM_CONFIG=system/core/include/private/android_filesystem_config.h
+check_header_exists system/core/libcutils/include/private/android_filesystem_config.h && \
+    ANDROID_FILESYSTEM_CONFIG=system/core/libcutils/include/private/android_filesystem_config.h
+
 extract_headers_to private \
-    system/core/include/private/android_filesystem_config.h \
+    $ANDROID_FILESYSTEM_CONFIG \
     bionic/libc/private
 
 check_header_exists frameworks/native/libs/nativewindow/include/android/native_window.h && \
