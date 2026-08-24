@@ -212,8 +212,15 @@ extract_headers_to hardware_legacy \
 extract_headers_to cutils \
     system/core/include/cutils
 
+# liblog moved from system/core to system/logging in Android 12. Before that
+# system/core/include/log was itself a symlink to system/core/liblog/include/log,
+# so the real directory is the one to look for in either layout.
+LIBLOG_INCLUDE=system/core/liblog/include
+check_header_exists system/logging/liblog/include/log/log.h && \
+    LIBLOG_INCLUDE=system/logging/liblog/include
+
 extract_headers_to log \
-    system/core/include/log
+    $LIBLOG_INCLUDE/log
 
 extract_headers_to system \
     system/core/include/system
@@ -223,7 +230,7 @@ check_header_exists system/media/audio/include/system/audio.h && \
         system/media/audio/include/system
 
 extract_headers_to android \
-    system/core/include/android
+    $LIBLOG_INCLUDE/android
 
 check_header_exists bionic/libc/kernel/common/linux/sync.h && \
     extract_headers_to linux \
@@ -266,8 +273,14 @@ check_header_exists system/media/radio/include/system/radio_metadata.h && \
     extract_headers_to system \
         system/media/radio/include/system/radio_metadata.h
 
+# android_filesystem_config.h lives in libcutils; system/core/include/private
+# held a symlink to it that Android 13 dropped.
+ANDROID_FILESYSTEM_CONFIG=system/core/include/private/android_filesystem_config.h
+check_header_exists system/core/libcutils/include/private/android_filesystem_config.h && \
+    ANDROID_FILESYSTEM_CONFIG=system/core/libcutils/include/private/android_filesystem_config.h
+
 extract_headers_to private \
-    system/core/include/private/android_filesystem_config.h \
+    $ANDROID_FILESYSTEM_CONFIG \
     bionic/libc/private
 
 check_header_exists frameworks/native/libs/nativewindow/include/android/native_window.h && \
