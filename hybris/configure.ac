@@ -79,6 +79,12 @@ AC_ARG_ENABLE(ubuntu-camera-headers,
   [ubuntu_camera_headers="no"])
 AM_CONDITIONAL( [WANT_UBUNTU_CAMERA_HEADERS], [test x"$ubuntu_camera_headers" = x"yes"])
 
+AC_ARG_ENABLE(vulkan-x11-stubs,
+  [  --enable-vulkan-x11-stubs         Enable Vulkan X11 stubs (default=disabled)],
+  [vulkan_x11_stubs=$enableval],
+  [vulkan_x11_stubs="no"])
+AM_CONDITIONAL( [WANT_VULKAN_X11_STUBS], [test x"$vulkan_x11_stubs" = x"yes"])
+
 AC_ARG_ENABLE(wayland,
   [  --enable-wayland            Enable wayland support (default=disabled)],
   [wayland=$enableval
