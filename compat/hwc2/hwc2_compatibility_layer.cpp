@@ -37,15 +37,11 @@ public:
 
 #if ANDROID_VERSION_MAJOR < 14
     void onComposerHalHotplug(hal::HWDisplayId display, hal::Connection connection) override {
-        listener->on_hotplug_received(listener, 0, display,
-                                    connection == hal::Connection::CONNECTED,
-                                    true);
+        onHotplug(display, connection == hal::Connection::CONNECTED);
     }
 #else
     void onComposerHalHotplugEvent(hal::HWDisplayId display, HWC2::DisplayHotplugEvent event) override {
-        listener->on_hotplug_received(listener, 0, display,
-                                    event == HWC2::DisplayHotplugEvent::CONNECTED,
-                                    true);
+        onHotplug(display, event == HWC2::DisplayHotplugEvent::CONNECTED);
     }
 #endif
 
@@ -76,7 +72,19 @@ public:
 
     virtual ~HWComposerCallback() { };
 private:
+    void onHotplug(hal::HWDisplayId display, bool connected) {
+        // Keep the first connected display as primary across hotplug events.
+        if (connected && !hasPrimaryDisplay) {
+            primaryDisplay = display;
+            hasPrimaryDisplay = true;
+        }
+        listener->on_hotplug_received(listener, 0, display, connected,
+                                     hasPrimaryDisplay && display == primaryDisplay);
+    }
+
     HWC2EventListener *listener;
+    hal::HWDisplayId primaryDisplay = 0;
+    bool hasPrimaryDisplay = false;
 };
 
 struct hwc2_compat_device
