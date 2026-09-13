@@ -18,6 +18,7 @@
 #define HWC2_COMPATIBILITY_LAYER_H_
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <unistd.h>
 
@@ -57,6 +58,17 @@ extern "C" {
         float dpiY;
     } HWC2DisplayConfig;
 
+    typedef struct HWC2VsyncPeriodChangeConstraints {
+        int64_t desiredTimeNanos;
+        bool seamlessRequired;
+    } HWC2VsyncPeriodChangeConstraints;
+
+    typedef struct HWC2VsyncPeriodChangeTimeline {
+        int64_t newVsyncAppliedTimeNanos;
+        bool refreshRequired;
+        int64_t refreshTimeNanos;
+    } HWC2VsyncPeriodChangeTimeline;
+
     struct hwc2_compat_device;
     typedef struct hwc2_compat_device hwc2_compat_device_t;
 
@@ -87,6 +99,15 @@ extern "C" {
 
     HWC2DisplayConfig* hwc2_compat_display_get_active_config(
                                 hwc2_compat_display_t* display);
+    size_t hwc2_compat_display_get_config_count(hwc2_compat_display_t* display);
+    hwc2_error_t hwc2_compat_display_get_config(hwc2_compat_display_t* display,
+                                                size_t index,
+                                                HWC2DisplayConfig* config);
+    hwc2_error_t hwc2_compat_display_set_active_config_with_constraints(
+                                hwc2_compat_display_t* display,
+                                hwc2_config_t configId,
+                                const HWC2VsyncPeriodChangeConstraints* constraints,
+                                HWC2VsyncPeriodChangeTimeline* timeline);
 
     hwc2_error_t hwc2_compat_display_accept_changes(hwc2_compat_display_t* display);
     hwc2_compat_layer_t* hwc2_compat_display_create_layer(hwc2_compat_display_t*

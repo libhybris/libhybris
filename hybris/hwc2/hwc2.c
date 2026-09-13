@@ -48,6 +48,17 @@ HYBRIS_IMPLEMENT_VOID_FUNCTION2(hwc2, hwc2_compat_device_destroy_display,
 HYBRIS_IMPLEMENT_FUNCTION1(hwc2, HWC2DisplayConfig*,
                            hwc2_compat_display_get_active_config,
                            hwc2_compat_display_t*);
+HYBRIS_IMPLEMENT_FUNCTION1(hwc2, size_t,
+                           hwc2_compat_display_get_config_count,
+                           hwc2_compat_display_t*);
+HYBRIS_IMPLEMENT_FUNCTION3(hwc2, hwc2_error_t,
+                           hwc2_compat_display_get_config,
+                           hwc2_compat_display_t*, size_t, HWC2DisplayConfig*);
+HYBRIS_IMPLEMENT_FUNCTION4(hwc2, hwc2_error_t,
+                           hwc2_compat_display_set_active_config_with_constraints,
+                           hwc2_compat_display_t*, hwc2_config_t,
+                           const HWC2VsyncPeriodChangeConstraints*,
+                           HWC2VsyncPeriodChangeTimeline*);
 
 HYBRIS_IMPLEMENT_FUNCTION1(hwc2, hwc2_error_t,
                            hwc2_compat_display_accept_changes,

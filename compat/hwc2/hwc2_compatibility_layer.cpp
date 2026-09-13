@@ -192,6 +192,73 @@ HWC2DisplayConfig* hwc2_compat_display_get_active_config(
     return nullptr;
 }
 
+size_t hwc2_compat_display_get_config_count(hwc2_compat_display_t* display)
+{
+    if (!display || !display->self)
+        return 0;
+    return display->self->getConfigs().size();
+}
+
+hwc2_error_t hwc2_compat_display_get_config(hwc2_compat_display_t* display,
+                                             size_t index,
+                                             HWC2DisplayConfig* config)
+{
+    if (!display || !display->self)
+        return HWC2_ERROR_BAD_DISPLAY;
+    if (!config)
+        return HWC2_ERROR_BAD_PARAMETER;
+
+    auto configs = display->self->getConfigs();
+    if (index >= configs.size())
+        return HWC2_ERROR_BAD_CONFIG;
+
+    const auto& source = configs[index];
+    config->id = source->getId();
+    config->display = source->getDisplayId();
+    config->width = source->getWidth();
+    config->height = source->getHeight();
+    config->vsyncPeriod = source->getVsyncPeriod();
+    config->dpiX = source->getDpiX();
+    config->dpiY = source->getDpiY();
+    return HWC2_ERROR_NONE;
+}
+
+hwc2_error_t hwc2_compat_display_set_active_config_with_constraints(
+        hwc2_compat_display_t* display,
+        hwc2_config_t configId,
+        const HWC2VsyncPeriodChangeConstraints* constraints,
+        HWC2VsyncPeriodChangeTimeline* timeline)
+{
+    if (!display || !display->self)
+        return HWC2_ERROR_BAD_DISPLAY;
+    if (!constraints || !timeline)
+        return HWC2_ERROR_BAD_PARAMETER;
+
+#if ANDROID_VERSION_MAJOR >= 11
+    hal::VsyncPeriodChangeConstraints hwc2Constraints = {};
+    hwc2Constraints.desiredTimeNanos = constraints->desiredTimeNanos;
+    hwc2Constraints.seamlessRequired = constraints->seamlessRequired;
+
+    hal::VsyncPeriodChangeTimeline hwc2Timeline = {};
+    auto error = display->self->setActiveConfigWithConstraints(
+            configId, hwc2Constraints, &hwc2Timeline);
+
+    if (error == hal::Error::NONE) {
+        timeline->newVsyncAppliedTimeNanos =
+                hwc2Timeline.newVsyncAppliedTimeNanos;
+        timeline->refreshRequired = hwc2Timeline.refreshRequired;
+        timeline->refreshTimeNanos = hwc2Timeline.refreshTimeNanos;
+    }
+
+    return static_cast<hwc2_error_t>(error);
+#else
+    (void)configId;
+    (void)constraints;
+    (void)timeline;
+    return HWC2_ERROR_UNSUPPORTED;
+#endif
+}
+
 hwc2_error_t hwc2_compat_display_accept_changes(hwc2_compat_display_t* display)
 {
     hal::Error error = display->self->acceptChanges();
