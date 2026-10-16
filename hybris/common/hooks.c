@@ -2474,6 +2474,24 @@ static int _hybris_hook___cxa_thread_atexit(void (*dtor)(void *), void *obj,
     return ret;
 }
 
+/* Android DSO destructors must not run in the host process exit. Registering
+ * them through glibc runs them after the Android loader and its DSOs are done
+ * with, and the droid Bluetooth Audio HAL aborts there: its static providers
+ * are dispatched to abort-only destructor stubs. Keep Android exit handling on
+ * the Android side by dropping the registration.
+ *
+ * The cost is that no Bionic DSO exit-time destructor runs at all; a per-DSO
+ * list run from android_dlclose is the upgrade path if one has to clean up.
+ */
+static int _hybris_hook___cxa_atexit(void (*dtor)(void *), void *obj,
+                                     void *dso_handle)
+{
+    (void) dtor;
+    (void) obj;
+    (void) dso_handle;
+    return 0;
+}
+
 int _hybris_hook_prctl(int option, unsigned long arg2, unsigned long arg3,
              unsigned long arg4, unsigned long arg5)
 {
@@ -3260,7 +3278,7 @@ static struct _hook hooks_common[] = {
     /* grp.h */
     HOOK_DIRECT_NO_DEBUG(getgrgid),
     /* C++ ABI */
-    HOOK_DIRECT_NO_DEBUG(__cxa_atexit),
+    HOOK_INDIRECT(__cxa_atexit),
     HOOK_DIRECT_NO_DEBUG(__cxa_finalize),
     HOOK_INDIRECT(__cxa_thread_atexit),
     /* sys/prctl.h */
