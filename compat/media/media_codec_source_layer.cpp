@@ -20,6 +20,7 @@
 #undef LOG_TAG
 #define LOG_TAG "MediaCompatibilityLayer"
 
+#include <binder/ProcessState.h>
 #include <gui/Surface.h>
 
 #if ANDROID_VERSION_MAJOR>=11
@@ -257,6 +258,8 @@ MediaCodecSourceWrapper* media_codec_source_create(MediaMessageWrapper *format, 
     MediaCodecSourcePrivate *d = new MediaCodecSourcePrivate(NULL);
     if (!d)
         return NULL;
+
+    android::ProcessState::self()->startThreadPool();
 
     d->looper = new android::ALooper();
     d->looper->start();
