@@ -102,6 +102,11 @@ EGLBoolean ws_init(const char * egl_platform)
 }
 
 
+const char *ws_loaded_name(void)
+{
+	return ws ? ws_name : NULL;
+}
+
 struct _EGLDisplay *ws_GetDisplay(EGLNativeDisplayType display)
 {
 	assert(ws != NULL);

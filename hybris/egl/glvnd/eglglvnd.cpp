@@ -57,7 +57,9 @@ static std::string clientExtensionNoPlatform()
         // end might be string::npos, but removing start from ::npos shouldn't
         // cause any issue.
         auto ext = clientExtsOrig.substr(start, end - start);
-        if (ext.find("_platform_") == std::string::npos) {
+        // EGL_EXT_platform_base isn't a platform; it's added below.
+        if (ext != "EGL_EXT_platform_base" &&
+            ext.find("_platform_") == std::string::npos) {
             if (clientExts.empty()) {
                 clientExts = ext;
             } else {
@@ -69,6 +71,12 @@ static std::string clientExtensionNoPlatform()
         start = end + 1; // Skip the space.
                          // If end is npos then this value won't be used anyway.
     } while (end != std::string::npos);
+
+    // glvnd implements eglGetPlatformDisplayEXT() on top of our
+    // getPlatformDisplay hook, but only advertises it if a vendor does.
+    if (!clientExts.empty())
+        clientExts += ' ';
+    clientExts += "EGL_EXT_platform_base";
 
     return clientExts;
 }
@@ -98,6 +106,7 @@ __eglGLVNDGetVendorString(int name)
     if (name == __EGL_VENDOR_STRING_PLATFORM_EXTENSIONS) {
         return
             "EGL_KHR_platform_android"
+            " EGL_MESA_platform_surfaceless"
 #ifdef WANT_WAYLAND
             " EGL_EXT_platform_wayland EGL_KHR_platform_wayland"
 #endif
