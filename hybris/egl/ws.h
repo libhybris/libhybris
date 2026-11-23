@@ -60,6 +60,7 @@ struct ws_module {
 };
 
 EGLBoolean ws_init(const char * egl_platform);
+const char *ws_loaded_name(void);
 void ws_eglInitialized(struct _EGLDisplay *dpy);
 
 struct _EGLDisplay *ws_GetDisplay(EGLNativeDisplayType native);

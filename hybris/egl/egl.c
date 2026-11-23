@@ -224,9 +224,21 @@ EGLDisplay __eglHybrisGetPlatformDisplayCommon(EGLenum platform,
 	}
 
 	const char * hybris_ws;
+	const char * loaded_ws = ws_loaded_name();
+	// Only one ws can be loaded; share it instead of failing.
+	int share_loaded = 0;
+
 	switch (platform) {
 		case EGL_NONE:
-			hybris_ws = _defaultEglPlatform();
+			// eglGetDisplay()
+			share_loaded = loaded_ws && display_id == EGL_DEFAULT_DISPLAY;
+			hybris_ws = share_loaded ? loaded_ws : _defaultEglPlatform();
+			break;
+
+		case EGL_PLATFORM_SURFACELESS_MESA:
+			// No native windows, so any ws will do.
+			share_loaded = loaded_ws != NULL;
+			hybris_ws = share_loaded ? loaded_ws : "null";
 			break;
 
 		case EGL_PLATFORM_ANDROID_KHR:
